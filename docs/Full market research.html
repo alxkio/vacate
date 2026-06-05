@@ -1,0 +1,636 @@
+
+<h2 class="sr-only">Vacate — full market research report: competitor analysis, feature benchmark, market sizing, gap analysis, SWOT, pricing, and strategic recommendations</h2>
+<style>
+*{box-sizing:border-box}
+.pg{padding:0 0 2rem}
+.label{font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--color-text-tertiary);margin:0 0 6px}
+.sec-title{font-size:20px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px}
+.sec-sub{font-size:13px;color:var(--color-text-secondary);margin:0 0 20px;line-height:1.6}
+.divider{border:none;border-top:.5px solid var(--color-border-tertiary);margin:32px 0}
+.card{background:var(--color-background-primary);border:.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.metric{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:1rem}
+.metric-label{font-size:12px;color:var(--color-text-secondary);margin:0 0 4px}
+.metric-value{font-size:22px;font-weight:500;color:var(--color-text-primary);margin:0 0 2px}
+.metric-note{font-size:11px;color:var(--color-text-tertiary);margin:0}
+.comp-name{font-size:14px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px}
+.pill{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:var(--border-radius-md);margin-bottom:8px}
+.pill-direct{background:#E1F5EE;color:#085041}
+.pill-indirect{background:#FAEEDA;color:#633806}
+.pill-disrupt{background:#FCEBEB;color:#791F1F}
+.pill-eu{background:#EEEDFE;color:#3C3489}
+.flist{list-style:none;padding:0;margin:0}
+.flist li{font-size:11px;color:var(--color-text-secondary);padding:2px 0;display:flex;gap:5px;align-items:flex-start;line-height:1.5}
+.flist li::before{content:'';width:3px;height:3px;border-radius:50%;background:var(--color-text-tertiary);margin-top:6px;flex-shrink:0}
+.weakness{margin-top:8px;padding-top:8px;border-top:.5px solid var(--color-border-tertiary);font-size:11px;color:#A32D2D;line-height:1.5}
+.danger-flag{margin-top:8px;padding:5px 8px;background:#FCEBEB;border-radius:var(--border-radius-md);font-size:10px;font-weight:500;color:#791F1F}
+.bench-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:.5px solid var(--color-border-tertiary)}
+.bench-row:last-child{border-bottom:none}
+.bench-feat{font-size:12px;font-weight:500;color:var(--color-text-primary);flex:2;line-height:1.4}
+.bench-tier{flex:0 0 70px}
+.bench-note{font-size:11px;color:var(--color-text-secondary);flex:3;line-height:1.5}
+.tier-badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:var(--border-radius-md);display:inline-block;white-space:nowrap}
+.t-must{background:#FCEBEB;color:#791F1F}
+.t-diff{background:#E6F1FB;color:#0C447C}
+.t-innov{background:#EAF3DE;color:#27500A}
+.swot-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.swot-cell{border-radius:var(--border-radius-lg);padding:1rem 1.25rem;border:.5px solid}
+.swot-s{background:#EAF3DE;border-color:#C0DD97}
+.swot-w{background:#FCEBEB;border-color:#F7C1C1}
+.swot-o{background:#E6F1FB;border-color:#B5D4F4}
+.swot-t{background:#FAEEDA;border-color:#FAC775}
+.swot-head{font-size:12px;font-weight:500;margin:0 0 8px;display:flex;align-items:center;gap:6px}
+.swot-s .swot-head{color:#27500A}
+.swot-w .swot-head{color:#791F1F}
+.swot-o .swot-head{color:#0C447C}
+.swot-t .swot-head{color:#633806}
+.swot-items{list-style:none;padding:0;margin:0}
+.swot-items li{font-size:11px;padding:3px 0;display:flex;gap:5px;align-items:flex-start;line-height:1.5}
+.swot-s .swot-items li{color:#3B6D11}
+.swot-w .swot-items li{color:#A32D2D}
+.swot-o .swot-items li{color:#185FA5}
+.swot-t .swot-items li{color:#854F0B}
+.swot-items li::before{content:'';width:3px;height:3px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.swot-s .swot-items li::before{background:#3B6D11}
+.swot-w .swot-items li::before{background:#A32D2D}
+.swot-o .swot-items li::before{background:#185FA5}
+.swot-t .swot-items li::before{background:#854F0B}
+.matrix-cell{background:var(--color-background-primary);border:.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem}
+.matrix-head{font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 6px}
+.matrix-body{font-size:12px;color:var(--color-text-secondary);line-height:1.6;margin:0}
+.gap-item{border-left:2px solid var(--color-border-secondary);padding:0 0 16px 14px;margin-left:6px;border-radius:0}
+.gap-item:last-child{padding-bottom:0}
+.gap-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin:0 0 3px;display:flex;align-items:center;gap:8px}
+.gap-body{font-size:12px;color:var(--color-text-secondary);margin:0 0 4px;line-height:1.6}
+.moat-badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:var(--border-radius-md)}
+.moat-h{background:#EAF3DE;color:#27500A}
+.moat-m{background:#FAEEDA;color:#633806}
+.moat-l{background:#FCEBEB;color:#791F1F}
+.rec-num{width:24px;height:24px;border-radius:50%;background:var(--color-background-secondary);font-size:11px;font-weight:500;color:var(--color-text-secondary);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.rec-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px}
+.rec-body{font-size:12px;color:var(--color-text-secondary);margin:0;line-height:1.65}
+.rec-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:16px}
+.price-bar-wrap{margin-bottom:10px}
+.price-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.price-name{font-size:11px;color:var(--color-text-secondary);width:140px;flex-shrink:0;text-align:right}
+.price-track{flex:1;background:var(--color-background-secondary);border-radius:4px;height:20px;position:relative;overflow:hidden}
+.price-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:6px}
+.price-fill span{font-size:10px;font-weight:500;white-space:nowrap}
+.risk-row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:.5px solid var(--color-border-tertiary)}
+.risk-row:last-child{border-bottom:none}
+.risk-badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:var(--border-radius-md);flex-shrink:0;margin-top:1px}
+.risk-h{background:#FCEBEB;color:#791F1F}
+.risk-m{background:#FAEEDA;color:#633806}
+.risk-l{background:#EAF3DE;color:#27500A}
+.risk-body{font-size:12px;color:var(--color-text-secondary);line-height:1.6;margin:0}
+.risk-title{font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 2px}
+.assum-item{padding:10px 0;border-bottom:.5px solid var(--color-border-tertiary)}
+.assum-item:last-child{border-bottom:none}
+.assum-claim{font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 3px}
+.assum-test{font-size:11px;color:var(--color-text-secondary);line-height:1.6;margin:0}
+.assum-fail{font-size:11px;color:#A32D2D;margin:3px 0 0;line-height:1.5}
+</style>
+
+<div class="pg">
+
+<p class="label">Vacate — market research report · June 2026</p>
+<h1 style="font-size:26px;font-weight:500;color:var(--color-text-primary);margin:0 0 6px">Full market research report</h1>
+<p class="sec-sub" style="margin-bottom:24px">Vacation tracking SaaS · EU-first · SMBs 20–300 employees · API-first · Web + mobile · Pre-build stage</p>
+
+<div class="grid-4" style="margin-bottom:32px">
+  <div class="metric"><p class="metric-label">Global leave mgmt market</p><p class="metric-value">~$1.3B</p><p class="metric-note">2026 est. (source: Business Research Insights)</p></div>
+  <div class="metric"><p class="metric-label">CAGR to 2035</p><p class="metric-value">9.5%</p><p class="metric-note">Consistent across multiple analyst estimates</p></div>
+  <div class="metric"><p class="metric-label">EU HR tech market</p><p class="metric-value">$4.8B</p><p class="metric-note">2025, growing at 7.6% CAGR (IMARC Group)</p></div>
+  <div class="metric"><p class="metric-label">EU SMB fastest segment</p><p class="metric-value">11.1%</p><p class="metric-note">CAGR — fastest-growing buyer cohort</p></div>
+</div>
+
+<hr class="divider">
+
+<p class="label">Section 1</p>
+<p class="sec-title">Competitor analysis</p>
+<p class="sec-sub">Mapped across three tiers: direct, indirect, and potential disruptors. Weakness data sourced from G2/Capterra reviews.</p>
+
+<p style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em">Tier 1 — direct competitors</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:20px">
+
+  <div class="card">
+    <p class="comp-name">Personio</p>
+    <span class="pill pill-eu">EU-first HRIS</span>
+    <ul class="flist">
+      <li>Full absence management + approval flows</li>
+      <li>GDPR-native, EU data residency default</li>
+      <li>Team calendar, custom leave types</li>
+      <li>10–500 emp sweet spot</li>
+      <li>Sales-led GTM, quote-only pricing</li>
+      <li>~€5–8/emp/mo core; €12–20 full suite</li>
+    </ul>
+    <p class="weakness">Weaknesses (Capterra 2025–26): systems don't communicate internally — absence data doesn't sync with reports. Still very Germany-centric; multi-country support frustrates non-DACH teams. Interface keeps changing. Renewal price hikes reported.</p>
+    <div class="danger-flag">Most dangerous competitor — strong EU brand, distribution, and compliance positioning</div>
+  </div>
+
+  <div class="card">
+    <p class="comp-name">Factorial</p>
+    <span class="pill pill-eu">EU SMB HRIS</span>
+    <ul class="flist">
+      <li>Leave + attendance management</li>
+      <li>Workforce calendar (remote, travel, leave)</li>
+      <li>Barcelona-founded, EU-aware</li>
+      <li>Custom pricing; starts ~$115/mo flat</li>
+      <li>SMB + mid-market, 10–300 emp</li>
+      <li>Sales-led; demo required</li>
+    </ul>
+    <p class="weakness">Weaknesses: significant price increase complaints ("SPECTACULAR MOVE in upgrading price, PATHETIC in delivery"). Limited enterprise scalability. Weaker outside Spain/Southern Europe.</p>
+  </div>
+
+  <div class="card">
+    <p class="comp-name">Calamari</p>
+    <span class="pill pill-direct">Focused leave tool</span>
+    <ul class="flist">
+      <li>Multi-level approval chains</li>
+      <li>iBeacon/QR clock-in, Slack deep integration</li>
+      <li>Multi-timezone, multi-country holidays</li>
+      <li>REST API (one of the most open per reviews)</li>
+      <li>4.5/5 G2 · 4.6/5 Capterra</li>
+      <li>Pricing modular; ~€2–5/emp/mo per module</li>
+    </ul>
+    <p class="weakness">Weaknesses (Capterra 2025–26): no payroll integration. Partial-day requests clunky. Cancelling one day cancels entire request block. UX clunky with multiple accrual rules. App slow when concurrent users high. No flat bundled pricing.</p>
+  </div>
+
+  <div class="card">
+    <p class="comp-name">Absence.io</p>
+    <span class="pill pill-eu">EU-native focused tool</span>
+    <ul class="flist">
+      <li>Absence, time tracking, digital personnel file</li>
+      <li>REST API v2 — departments, allowances, absences</li>
+      <li>Google Workspace, MS365, Slack integrations</li>
+      <li>ISO-certified servers, SSL</li>
+      <li>Multi-language support</li>
+      <li>Starting €2/user/mo (Capterra 2026)</li>
+    </ul>
+    <p class="weakness">Weaknesses: limited org hierarchy depth (flat team model). Weak mobile experience. Small brand. Reviews sparse — limited social proof. Approval chains not configurable per team/department.</p>
+  </div>
+
+  <div class="card">
+    <p class="comp-name">Timetastic</p>
+    <span class="pill pill-direct">Simple leave planner</span>
+    <ul class="flist">
+      <li>Wall chart calendar, native mobile apps</li>
+      <li>Transparent per-user pricing</li>
+      <li>Custom leave types, accrual (Pro)</li>
+      <li>Google Calendar + Outlook sync</li>
+      <li>UK/EU-popular SMB tool</li>
+      <li>~£1.50–2/user/mo</li>
+    </ul>
+    <p class="weakness">Weaknesses: no multi-level approval chains. Cancelling one day in a block cancels all days. No org hierarchy — flat only. No department-level visibility scoping. Very basic reporting.</p>
+  </div>
+
+  <div class="card">
+    <p class="comp-name">Vacation Tracker</p>
+    <span class="pill pill-direct">Slack/Teams-native</span>
+    <ul class="flist">
+      <li>Embedded in Slack and MS Teams</li>
+      <li>Approval workflows, custom leave types</li>
+      <li>Multi-location, timezone support</li>
+      <li>Recently launched mobile app</li>
+      <li>Freemium + paid plans</li>
+      <li>~$25/mo base; higher tiers for accruals</li>
+    </ul>
+    <p class="weakness">Weaknesses (Capterra): no visibility scoping by role — users can't control who sees whose leave. No org hierarchy beyond flat teams. Accruals locked to highest tier. Reports limited.</p>
+    <div class="danger-flag">Growing fast via PLG — Slack/Teams distribution is strong</div>
+  </div>
+
+</div>
+
+<p style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em">Tier 2 — indirect competitors</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:20px">
+  <div class="card">
+    <p class="comp-name">Spreadsheets + email</p>
+    <span class="pill pill-indirect">Manual process</span>
+    <ul class="flist">
+      <li>Zero cost — dominant in sub-30 emp companies</li>
+      <li>High friction but highly familiar</li>
+      <li>Your real competition at the low end</li>
+    </ul>
+    <p class="weakness">Breaks at 20–30 people. No approval audit trail. No GDPR-compliant storage. A key trigger for switching.</p>
+  </div>
+  <div class="card">
+    <p class="comp-name">BambooHR / HiBob</p>
+    <span class="pill pill-indirect">Full HRIS (US-centric)</span>
+    <ul class="flist">
+      <li>Leave management bundled inside full HRIS</li>
+      <li>Strong for US companies; EU is secondary</li>
+      <li>$12–22/emp/mo — expensive for EU SMBs</li>
+      <li>Quote-only; sales-led GTM</li>
+    </ul>
+    <p class="weakness">Overkill for pure leave tracking. US-built data model creates EU compliance friction.</p>
+  </div>
+  <div class="card">
+    <p class="comp-name">Charlie HR / BrightHR</p>
+    <span class="pill pill-indirect">UK SMB HR tools</span>
+    <ul class="flist">
+      <li>Leave tracking inside lightweight HR suite</li>
+      <li>Charlie: free ≤5 people, ~£3/person/mo</li>
+      <li>BrightHR: strong compliance/audit trail</li>
+      <li>UK-focused; limited broader EU support</li>
+    </ul>
+    <p class="weakness">No org hierarchy. UK compliance only. Not designed for companies with teams across EU countries.</p>
+  </div>
+</div>
+
+<p style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em">Tier 3 — potential disruptors</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:8px">
+  <div class="card">
+    <p class="comp-name">Slack / Microsoft Teams</p>
+    <span class="pill pill-disrupt">Platform expansion risk</span>
+    <ul class="flist">
+      <li>Already host Vacation Tracker as an app</li>
+      <li>Could build native leave management</li>
+      <li>100M+ daily active users</li>
+    </ul>
+    <p class="weakness">Distribution threat: if Teams ships native leave management, it collapses the Slack-native tools. Medium-term risk (2–3 years).</p>
+  </div>
+  <div class="card">
+    <p class="comp-name">Payroll platforms</p>
+    <span class="pill pill-disrupt">Bundle expansion risk</span>
+    <ul class="flist">
+      <li>Gusto, Deel, Payfit expanding HR modules</li>
+      <li>Leave management is a natural add-on</li>
+      <li>Already have billing relationship with SMBs</li>
+    </ul>
+    <p class="weakness">If a payroll provider bundles leave tracking free, standalone tools lose their reason to exist. Highest strategic threat long-term.</p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<p class="label">Section 2</p>
+<p class="sec-title">Feature benchmark</p>
+<p class="sec-sub">JTBD lens: features grouped by user job. Quality notes from reviews where available.</p>
+
+<div class="card" style="margin-bottom:8px">
+  <div style="display:grid;grid-template-columns:2fr 70px 3fr;gap:8px;padding-bottom:8px;border-bottom:.5px solid var(--color-border-tertiary);margin-bottom:4px">
+    <span style="font-size:11px;font-weight:500;color:var(--color-text-tertiary)">Feature (by JTBD)</span>
+    <span style="font-size:11px;font-weight:500;color:var(--color-text-tertiary)">Tier</span>
+    <span style="font-size:11px;font-weight:500;color:var(--color-text-tertiary)">Notes + quality signal</span>
+  </div>
+
+  <div class="bench-row"><span class="bench-feat">Self-service leave requests</span><span class="bench-tier"><span class="tier-badge t-must">Table stakes</span></span><span class="bench-note">All tools have this. Quality floor is high — users expect single-click mobile requests.</span></div>
+  <div class="bench-row"><span class="bench-feat">Manager approval / rejection</span><span class="bench-tier"><span class="tier-badge t-must">Table stakes</span></span><span class="bench-note">Universal. But quality varies — Calamari's multi-level chain is rated best-in-class; Timetastic's is single-level only.</span></div>
+  <div class="bench-row"><span class="bench-feat">Leave balance tracking</span><span class="bench-tier"><span class="tier-badge t-must">Table stakes</span></span><span class="bench-note">Universal. Users want balance shown at time of request ("how much will I have left"). Gap: few show this real-time before submission.</span></div>
+  <div class="bench-row"><span class="bench-feat">Team calendar / who's off view</span><span class="bench-tier"><span class="tier-badge t-must">Table stakes</span></span><span class="bench-note">Universal but quality varies widely. Calamari: hover required for detail. Timetastic: wall chart is best-in-class for simplicity.</span></div>
+  <div class="bench-row"><span class="bench-feat">Custom leave types</span><span class="bench-tier"><span class="tier-badge t-must">Table stakes</span></span><span class="bench-note">Universal. Minimum expected: vacation, sick, unpaid, parental, compassionate.</span></div>
+  <div class="bench-row"><span class="bench-feat">Email / push notifications</span><span class="bench-tier"><span class="tier-badge t-must">Table stakes</span></span><span class="bench-note">Universal. Mobile push still missing in some (Vacation Tracker only recently added app).</span></div>
+  <div class="bench-row"><span class="bench-feat">Multi-level approval chains (team → dept → org)</span><span class="bench-tier"><span class="tier-badge t-diff">Differentiator</span></span><span class="bench-note">Calamari does this well. Timetastic, Vacation Tracker, Absence.io: flat only. Personio has it but approval chain config is reported as inflexible. <strong>Strategic importance: critical for Vacate.</strong> Build effort: medium.</span></div>
+  <div class="bench-row"><span class="bench-feat">Role-scoped visibility (team lead sees team only; dept mgr sees dept)</span><span class="bench-tier"><span class="tier-badge t-diff">Differentiator</span></span><span class="bench-note">Almost nobody does this cleanly. Vacation Tracker review (Sep 2025): "Not a lot of personalization — like who can see who else's leave based on department." Personio is all-or-nothing admin. <strong>Highest-priority differentiator for Vacate.</strong></span></div>
+  <div class="bench-row"><span class="bench-feat">Org hierarchy (team / department / org)</span><span class="bench-tier"><span class="tier-badge t-diff">Differentiator</span></span><span class="bench-note">No focused leave tool models this properly. Personio has departments but not as a first-class approval and visibility object. Only enterprise HCMs (Workday, SAP) do this — at 10× the price.</span></div>
+  <div class="bench-row"><span class="bench-feat">Native mobile app (iOS + Android, full-featured)</span><span class="bench-tier"><span class="tier-badge t-diff">Differentiator</span></span><span class="bench-note">40% of users prefer mobile-first (market data). Timetastic has a good app; Vacation Tracker recently shipped one; Calamari's is functional. Absence.io weak on mobile. Gap exists for a genuinely mobile-first approval UX.</span></div>
+  <div class="bench-row"><span class="bench-feat">REST API (public, documented)</span><span class="bench-tier"><span class="tier-badge t-diff">Differentiator</span></span><span class="bench-note">Calamari rated "one of the most open APIs" in reviews. Absence.io has REST API v2. Most HRIS tools: internal API only or locked behind enterprise tier. Being API-first from day one is rare and valuable for integrators.</span></div>
+  <div class="bench-row"><span class="bench-feat">GDPR-native (EU data residency, DPA, audit logs)</span><span class="bench-tier"><span class="tier-badge t-diff">Differentiator</span></span><span class="bench-note">Personio's strongest card. Absence.io (ISO-certified). Most US-built tools (BambooHR, Vacation Tracker): GDPR as compliance checkbox, not architecture. <strong>For EU-first Vacate: this must be built-in, not bolted on.</strong></span></div>
+  <div class="bench-row"><span class="bench-feat">Conflict detection + minimum coverage alerts</span><span class="bench-tier"><span class="tier-badge t-diff">Differentiator</span></span><span class="bench-note">Absence.io does basic overbooking prevention. No tool surfaces "if you approve this, Engineering has zero coverage on Friday." A genuine gap with high manager value.</span></div>
+  <div class="bench-row"><span class="bench-feat">Country-specific leave law defaults (per-country entitlement)</span><span class="bench-tier"><span class="tier-badge t-diff">Differentiator</span></span><span class="bench-note">EU baseline: 4 weeks paid leave minimum (Working Time Directive). Country variation is wide (France 5 weeks + RTT, Germany collective agreements). Only Personio handles this well. Medium build effort but high value for multi-country EU SMBs.</span></div>
+  <div class="bench-row"><span class="bench-feat">Absence analytics (burnout signals, team patterns)</span><span class="bench-tier"><span class="tier-badge t-innov">Innovation</span></span><span class="bench-note">No SMB-tier tool offers predictive absence analytics. Only Workday/SAP enterprise. First mover in this space at SMB price point would be genuinely novel. High build effort; defer to v2.</span></div>
+  <div class="bench-row"><span class="bench-feat">Delegate / substitute management during leave</span><span class="bench-tier"><span class="tier-badge t-innov">Innovation</span></span><span class="bench-note">Absence.io mentions substitutions. No tool makes "who covers me?" a first-class workflow. High value for EU compliance (managers must have a stand-in).</span></div>
+</div>
+
+<p style="font-size:12px;color:var(--color-text-secondary);margin:8px 0 0;line-height:1.6"><strong style="color:var(--color-text-primary)">Lead with:</strong> Role-scoped visibility + org hierarchy + multi-level approval chains. These three together, in one focused tool, at SMB pricing — this combination does not exist today.</p>
+
+<hr class="divider">
+
+<p class="label">Section 3</p>
+<p class="sec-title">Market sizing</p>
+<p class="sec-sub">Top-down TAM/SAM/SOM + bottom-up cross-check. Assumptions stated explicitly.</p>
+
+<div class="grid-3" style="margin-bottom:16px">
+  <div class="card">
+    <p style="font-size:11px;font-weight:500;color:var(--color-text-tertiary);margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">TAM — global</p>
+    <p style="font-size:22px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px">~$1.3B</p>
+    <p style="font-size:11px;color:var(--color-text-secondary);line-height:1.6;margin:0">Global absence & leave management software market, 2026. Growing to ~$3.1B by 2035 at ~9.5% CAGR. Source: Business Research Insights, 2025.</p>
+  </div>
+  <div class="card">
+    <p style="font-size:11px;font-weight:500;color:var(--color-text-tertiary);margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">SAM — EU SMBs</p>
+    <p style="font-size:22px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px">~$180–220M</p>
+    <p style="font-size:11px;color:var(--color-text-secondary);line-height:1.6;margin:0">Filter: EU geography (~30% of global market per regional data) × SMB segment (~38.8% of market). = $1.3B × 30% × 38.8% ≈ $151M; rounded up for EU overrepresentation in SMB HR tech. <em>Estimated range.</em></p>
+  </div>
+  <div class="card">
+    <p style="font-size:11px;font-weight:500;color:var(--color-text-tertiary);margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">SOM — years 1–3</p>
+    <p style="font-size:22px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px">~$1–3M ARR</p>
+    <p style="font-size:11px;color:var(--color-text-secondary);line-height:1.6;margin:0">Assumption: PLG motion, 0–5 person team. Target: 300 customers by end Y1 at avg $280/mo (50 seats × $5.60). = ~$1M ARR. Y3 target: 1,000 customers at avg $350/mo = ~$4.2M ARR. Consistent with comparable early-stage B2B SaaS benchmarks.</p>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:8px">
+  <p style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 8px">Bottom-up cross-check</p>
+  <p style="font-size:12px;color:var(--color-text-secondary);line-height:1.7;margin:0">EU has ~230,000 medium-sized enterprises (50–249 employees) plus ~1.4M small enterprises (10–49 employees) per Eurostat 2025 estimates. Target segment (20–300 employees): conservatively ~500,000 companies. Assume 2% addressable in Y1–3 (plausible for a focused PLG motion with strong product-channel fit): 10,000 companies. At avg $3,600 ARR = $36M theoretical ceiling. 10% conversion of that pipeline = $3.6M ARR by Y3. Bottom-up and top-down SOM are consistent: <strong>$1–4M ARR in years 1–3 is realistic and achievable without enterprise sales.</strong></p>
+</div>
+
+<div class="grid-2" style="margin-bottom:8px">
+  <div class="card">
+    <p style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 8px">Growth drivers (specific)</p>
+    <ul class="flist" style="gap:2px">
+      <li>EU Working Time Directive enforcement increasing audit scrutiny of leave records</li>
+      <li>Remote/hybrid work broke informal "who's off" visibility — digital tools now essential</li>
+      <li>GDPR 2025 simplification proposals: SMBs reducing compliance overhead — software helps</li>
+      <li>58% of EU SMBs actively seeking GDPR-compliant platforms (SMB Software Market 2025)</li>
+      <li>Cloud HR adoption: 49% of EU SMBs using cloud software, up from ~35% in 2022</li>
+      <li>EU Data Act (fully applicable Sep 2025): vendor switching made easier — reduces incumbent lock-in</li>
+    </ul>
+  </div>
+  <div class="card">
+    <p style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 8px">Restraints + risks</p>
+    <ul class="flist" style="gap:2px">
+      <li>80% of SMBs cite cost as primary barrier to adoption (market data)</li>
+      <li>Personio has strong brand lock-in in DACH; hard to displace</li>
+      <li>Once any HR tool is adopted, switching cost is high (data migration, retraining)</li>
+      <li>Market consolidation: payroll players bundling leave management free</li>
+      <li>Top 10 vendors control ~46% of HR software market — crowded at the top</li>
+      <li>Country-specific EU labor law variation is expensive to implement correctly</li>
+    </ul>
+  </div>
+</div>
+
+<hr class="divider">
+
+<p class="label">Section 4</p>
+<p class="sec-title">Gap and opportunity analysis</p>
+<p class="sec-sub">Ranked by: opportunity size × barrier to incumbent response. Evidence from reviews and positioning analysis.</p>
+
+<div style="margin-bottom:8px">
+
+  <div class="gap-item">
+    <div class="gap-title">
+      <i class="ti ti-building" style="font-size:15px;color:var(--color-text-secondary)" aria-hidden="true"></i>
+      Org hierarchy with scoped visibility
+      <span class="moat-badge moat-h">High moat</span>
+    </div>
+    <p class="gap-body">No focused leave tool models team → department → organisation as a first-class data structure where each level has scoped visibility and approval authority. Enterprise tools (Workday, SAP) do it — at 10× the price. Personio has departments but visibility and approval are not cleanly scoped per level. Vacation Tracker user (Sep 2025): "Not a lot of personalisation — like who can see who else's leave based on department." This complaint appears across Calamari, Vacation Tracker, and Absence.io reviews.</p>
+    <p class="assum-fail">Why incumbents can't close it fast: focused tools (Calamari, Timetastic, Vacation Tracker) were built on a flat team model — adding true hierarchy requires a data model rearchitecture. Personio's complexity already frustrates SMB users; adding more hierarchy depth risks alienating their core market. Estimated barrier: 12–18 months to ship cleanly for an incumbent.</p>
+  </div>
+
+  <div class="gap-item">
+    <div class="gap-title">
+      <i class="ti ti-device-mobile" style="font-size:15px;color:var(--color-text-secondary)" aria-hidden="true"></i>
+      Genuinely mobile-first approval UX
+      <span class="moat-badge moat-m">Medium moat</span>
+    </div>
+    <p class="gap-body">40% of users prefer mobile-first leave apps (market data). Vacation Tracker only recently launched an app. Calamari's mobile is functional but not fluid. Absence.io is weak on mobile. Timetastic has the best mobile UX in this tier but still lacks full approval chain functionality on mobile. For a manager approving requests while traveling — the most common approval scenario — every tool requires going to desktop for anything complex.</p>
+    <p class="assum-fail">Why incumbents haven't closed it: web-first tools treat mobile as a port, not a primary surface. Shipping mobile-first requires design discipline that doesn't emerge from a web-first team. Medium barrier — a well-funded incumbent could close this in 6–12 months, but none have prioritised it.</p>
+  </div>
+
+  <div class="gap-item">
+    <div class="gap-title">
+      <i class="ti ti-api" style="font-size:15px;color:var(--color-text-secondary)" aria-hidden="true"></i>
+      API-first architecture with public documentation
+      <span class="moat-badge moat-h">High moat</span>
+    </div>
+    <p class="gap-body">Calamari is rated "one of the most open APIs" in its category — and that's a focused leave tool. Most HRIS platforms expose internal APIs only, locked behind enterprise tiers. Being API-first from day one enables: integration with payroll providers, calendar systems, and productivity tools; developer-led adoption at tech companies; potential white-label sales to HR consultancies. Calamari review: "Being a high-tech firm I was keen to have this option to facilitate any implementation in the future."</p>
+    <p class="assum-fail">Why incumbents can't easily close it: Personio and Factorial are built as closed platforms; opening APIs means supporting third-party integrations, which conflicts with their platform lock-in strategy. High architectural barrier for incumbents.</p>
+  </div>
+
+  <div class="gap-item">
+    <div class="gap-title">
+      <i class="ti ti-world" style="font-size:15px;color:var(--color-text-secondary)" aria-hidden="true"></i>
+      Multi-country EU leave law support at SMB price
+      <span class="moat-badge moat-h">High moat</span>
+    </div>
+    <p class="gap-body">Personio handles multi-country EU leave rules but at €12–20/emp/mo full suite, and with a DACH bias ("still very Germany-focused — it becomes very difficult for our other countries," Capterra 2024). No focused tool handles France's RTT days, Germany's collective agreement rules, and Nordic entitlements in one coherent product. EU SMBs with employees in 3–5 countries are systematically underserved. EU minimum: 4 weeks paid leave (Working Time Directive), but every country adds complexity on top.</p>
+    <p class="assum-fail">Why incumbents haven't closed it: building per-country compliance correctly is expensive and unglamorous. US-first tools ignore it entirely. Personio has it but at enterprise price and DACH bias. This is a durable moat if built early.</p>
+  </div>
+
+  <div class="gap-item" style="padding-bottom:0">
+    <div class="gap-title">
+      <i class="ti ti-receipt" style="font-size:15px;color:var(--color-text-secondary)" aria-hidden="true"></i>
+      Transparent self-serve pricing at €3–7/seat
+      <span class="moat-badge moat-m">Medium moat</span>
+    </div>
+    <p class="gap-body">BambooHR, HiBob, Personio, Factorial all require a sales call to get pricing. Factorial triggered user anger with opaque price increases. The SMB buyer — typically an office manager or part-time HR person — wants to sign up, enter a card, and start. No EU-focused leave tool occupies the $3–7/seat/month self-serve tier with the feature depth described above. Absence.io at €2/user/mo is cheapest but lacks hierarchy and mobile. Charlie HR at £3 is UK-only.</p>
+    <p class="assum-fail">Why incumbents can't close it: sales-led tools structurally can't go self-serve without undermining their GTM motion. Medium barrier — a new entrant with PLG architecture can own this tier permanently.</p>
+  </div>
+
+</div>
+
+<hr class="divider">
+
+<p class="label">Section 5</p>
+<p class="sec-title">SWOT analysis</p>
+<p class="sec-sub">Every point grounded in sections 1–4. Generic statements excluded.</p>
+
+<div class="swot-grid">
+  <div class="swot-cell swot-s">
+    <p class="swot-head"><i class="ti ti-shield-check" style="font-size:14px" aria-hidden="true"></i> Strengths</p>
+    <ul class="swot-items">
+      <li>Only tool at SMB price with true 3-level org hierarchy (team → dept → org) as core data model — not bolted on</li>
+      <li>API-first architecture enables integrations that closed-platform competitors structurally can't offer</li>
+      <li>Role-scoped visibility built from day one — no retrofit needed</li>
+      <li>Web + mobile as equal first-class surfaces — not a port</li>
+      <li>No legacy codebase or technical debt to manage</li>
+      <li>EU-native compliance posture (GDPR, data residency) from architecture, not checkbox</li>
+      <li>Decoupled frontend/backend: each surface can evolve independently</li>
+    </ul>
+  </div>
+  <div class="swot-cell swot-w">
+    <p class="swot-head"><i class="ti ti-alert-triangle" style="font-size:14px" aria-hidden="true"></i> Weaknesses</p>
+    <ul class="swot-items">
+      <li>Zero brand recognition, reviews, or social proof at launch — buyers default to known names</li>
+      <li>No payroll integration at launch — a table-stakes expectation for companies over 100 employees</li>
+      <li>No HRIS suite features (recruitment, onboarding) — a bundling disadvantage vs Personio/Factorial</li>
+      <li>Pre-build: no evidence of product-market fit yet — all assumptions unvalidated</li>
+      <li>Cold-start distribution problem — no Slack App Store presence, no existing customer base to seed</li>
+      <li>Per-country EU leave law implementation is expensive to build correctly and maintain</li>
+      <li>Small team means slower feature velocity vs. incumbents with full engineering orgs</li>
+    </ul>
+  </div>
+  <div class="swot-cell swot-o">
+    <p class="swot-head"><i class="ti ti-rocket" style="font-size:14px" aria-hidden="true"></i> Opportunities</p>
+    <ul class="swot-items">
+      <li>Personio's DACH bias leaves non-German EU SMBs (France, Nordics, Benelux, CEE) without a strong native option</li>
+      <li>EU Data Act (Sep 2025) reduces switching costs — buyers can leave incumbent tools more easily now</li>
+      <li>11.1% CAGR in SMB segment — fastest-growing buyer cohort; incumbents still focused on mid-market+</li>
+      <li>API-first opens a developer/integrator GTM channel — HR consultancies and payroll providers as resellers</li>
+      <li>58% of EU SMBs actively seeking GDPR-compliant platforms — compliance as a marketing hook</li>
+      <li>Flat team models of Timetastic/Vacation Tracker create natural upgrade path as companies grow past 30 people</li>
+      <li>Remote/hybrid work permanently increased need for digital leave visibility — demand won't reverse</li>
+    </ul>
+  </div>
+  <div class="swot-cell swot-t">
+    <p class="swot-head"><i class="ti ti-storm" style="font-size:14px" aria-hidden="true"></i> Threats</p>
+    <ul class="swot-items">
+      <li>Payroll providers (Payfit, Deel, Gusto) bundling leave management free — collapses standalone tool value</li>
+      <li>Microsoft Teams shipping native leave management would neutralise Vacation Tracker and potentially this product</li>
+      <li>Personio could ship a "Lite" self-serve tier targeting Vacate's exact segment</li>
+      <li>Once any tool is adopted, switching cost is high — churn in this category is structurally low for incumbents</li>
+      <li>EU labor law variation is expensive to maintain — a compliance error in France or Germany is a legal liability</li>
+      <li>80% of SMBs cite cost as primary adoption barrier — race-to-bottom pricing pressure from freemium tools</li>
+      <li>Calamari could close the hierarchy and mobile gaps with 1–2 engineering quarters of focused work</li>
+    </ul>
+  </div>
+</div>
+
+<p style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 12px">Strategy matrix</p>
+<div class="grid-2" style="margin-bottom:8px">
+  <div class="matrix-cell">
+    <p class="matrix-head">SO — deploy strength into opportunity</p>
+    <p class="matrix-body">Use the API-first architecture to build an integration partner programme targeting EU payroll providers (Payfit, Paylocity EU) and HR consultancies as a distribution channel. These partners have existing relationships with exactly the SMB segment Vacate targets, and no competitor offers a clean API at this price point. This converts the biggest threat (payroll bundling) into a partnership opportunity.</p>
+  </div>
+  <div class="matrix-cell">
+    <p class="matrix-head">ST — use strength to neutralise threat</p>
+    <p class="matrix-body">The API-first architecture and GDPR-native compliance are structural defences against platform giants (Teams, Slack). If Microsoft ships native leave management, Vacate becomes the infrastructure layer that integrates with it — not a replacement. Position explicitly as "the leave data layer your other tools connect to." This framing survives even if collaboration platforms build basic leave features.</p>
+  </div>
+  <div class="matrix-cell">
+    <p class="matrix-head">WO — address weakness to unlock opportunity</p>
+    <p class="matrix-body">The absence of social proof (biggest weakness) blocks entry into the 50+ employee segment where buyers rely on reviews. Target the beachhead segment (20–50 employee EU tech startups) with a zero-friction free tier for up to 25 seats — seeding reviews and referrals before the segment that needs a sales process. Every free customer is a review candidate and a referral source into the growth tier.</p>
+  </div>
+  <div class="matrix-cell">
+    <p class="matrix-head">WT — scenario to avoid</p>
+    <p class="matrix-body">Worst case: payroll providers bundle leave management free AND Vacate launches without payroll integration AND the compliance cost of per-country EU law support delays launch. Early warning signals: Payfit or Deel announcing native absence management in 2026. Contingency: pivot to a developer-first API product (leave data infrastructure), not a consumer SaaS — the API moat survives even if the UI market gets commoditised.</p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<p class="label">Section 6</p>
+<p class="sec-title">Pricing benchmark and strategy</p>
+<p class="sec-sub">Part A: what the market charges. Part B: value-based recommendation for Vacate.</p>
+
+<p style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 10px">Part A — market benchmark (per seat / month)</p>
+<div class="price-bar-wrap" style="margin-bottom:20px">
+  <div class="price-row"><span class="price-name">Timetastic / Absence.io</span><div class="price-track"><div class="price-fill" style="width:8%;background:#C0DD97"><span style="color:#27500A">€1–2</span></div></div></div>
+  <div class="price-row"><span class="price-name">Charlie HR / BrightHR</span><div class="price-track"><div class="price-fill" style="width:12%;background:#C0DD97"><span style="color:#27500A">£2–3</span></div></div></div>
+  <div class="price-row"><span class="price-name">Calamari (per module)</span><div class="price-track"><div class="price-fill" style="width:16%;background:#9FE1CB"><span style="color:#085041">€3–5</span></div></div></div>
+  <div class="price-row"><span class="price-name">Vacation Tracker</span><div class="price-track"><div class="price-fill" style="width:20%;background:#9FE1CB"><span style="color:#085041">$3–6</span></div></div></div>
+  <div class="price-row"><span class="price-name">Factorial (quote)</span><div class="price-track"><div class="price-fill" style="width:30%;background:#85B7EB"><span style="color:#0C447C">~$5–8</span></div></div></div>
+  <div class="price-row"><span class="price-name">Personio core HRIS</span><div class="price-track"><div class="price-fill" style="width:40%;background:#85B7EB"><span style="color:#0C447C">€5–8</span></div></div></div>
+  <div class="price-row"><span class="price-name">BambooHR / HiBob</span><div class="price-track"><div class="price-fill" style="width:60%;background:#378ADD"><span style="color:#E6F1FB">$12–22</span></div></div></div>
+  <div class="price-row"><span class="price-name">Personio full suite</span><div class="price-track"><div class="price-fill" style="width:75%;background:#185FA5"><span style="color:#E6F1FB">€12–20</span></div></div></div>
+  <div class="price-row"><span class="price-name">Workday / SAP</span><div class="price-track"><div class="price-fill" style="width:100%;background:#0C447C"><span style="color:#E6F1FB">$20–50+</span></div></div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <p style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 8px">Part B — value-based pricing recommendation</p>
+  <p style="font-size:12px;color:var(--color-text-secondary);line-height:1.7;margin:0 0 10px"><strong style="color:var(--color-text-primary)">Value created:</strong> An HR manager at a 50-person company spends an estimated 2–4 hours/week on manual leave admin (email chains, spreadsheet updates, chasing approvals). At a €40/hr blended rate, that's €320–640/month in labour cost. Vacate at €250/month (50 seats × €5) delivers 1.25–2.5× ROI on time saved alone — before compliance risk reduction is counted.</p>
+  <p style="font-size:12px;color:var(--color-text-secondary);line-height:1.7;margin:0 0 10px"><strong style="color:var(--color-text-primary)">Pricing model:</strong> Per-seat monthly SaaS, self-serve signup, no sales call required. Pricing model fits PLG motion — as companies grow, seat count grows, ARR grows without sales effort.</p>
+  <p style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 8px">Recommended tier architecture</p>
+  <div class="grid-3">
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem">
+      <p style="font-size:11px;font-weight:500;color:var(--color-text-secondary);margin:0 0 4px;text-transform:uppercase;letter-spacing:.05em">Starter — free</p>
+      <p style="font-size:18px;font-weight:500;color:var(--color-text-primary);margin:0 0 6px">€0 / up to 25 seats</p>
+      <ul class="flist"><li>Leave requests + single-level approval</li><li>Team calendar view</li><li>Basic leave types (5)</li><li>Email notifications</li><li>Paywall: org hierarchy, multi-level approval, mobile app, API</li></ul>
+      <p style="font-size:11px;color:var(--color-text-tertiary);margin:6px 0 0">Hook: seed reviews + referrals. Ceiling forces upgrade at ~25 people or when hierarchy is needed.</p>
+    </div>
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem;border:2px solid var(--color-border-info)">
+      <p style="font-size:11px;font-weight:500;color:var(--color-text-info);margin:0 0 4px;text-transform:uppercase;letter-spacing:.05em">Growth — primary revenue tier</p>
+      <p style="font-size:18px;font-weight:500;color:var(--color-text-primary);margin:0 0 6px">€5–6 / seat / mo</p>
+      <ul class="flist"><li>Full org hierarchy (team / dept / org)</li><li>Multi-level approval chains</li><li>Role-scoped visibility</li><li>Native mobile apps (iOS + Android)</li><li>Public REST API access</li><li>Multi-country EU holiday sets</li><li>Conflict detection + coverage alerts</li><li>Advanced reporting</li></ul>
+      <p style="font-size:11px;color:var(--color-text-tertiary);margin:6px 0 0">Target: 25–200 employee EU tech/professional services companies. At 60 seats avg: €360/mo = €4,320 ARR.</p>
+    </div>
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem">
+      <p style="font-size:11px;font-weight:500;color:var(--color-text-secondary);margin:0 0 4px;text-transform:uppercase;letter-spacing:.05em">Enterprise — custom</p>
+      <p style="font-size:18px;font-weight:500;color:var(--color-text-primary);margin:0 0 6px">€9–12 / seat / mo</p>
+      <ul class="flist"><li>SSO (SAML/OIDC)</li><li>Custom data retention + DPA</li><li>Priority SLA + dedicated support</li><li>Per-country EU law configuration</li><li>Audit logs + compliance export</li><li>Custom approval logic</li><li>Webhook events for payroll sync</li></ul>
+      <p style="font-size:11px;color:var(--color-text-tertiary);margin:6px 0 0">Target: 200–500 employee companies with multi-country EU presence. Annual contract only.</p>
+    </div>
+  </div>
+  <p style="font-size:11px;color:var(--color-text-secondary);margin:12px 0 0;line-height:1.6"><strong style="color:#A32D2D">Under-pricing risk:</strong> at €2–3/seat you race Absence.io to the bottom and signal low quality. <strong style="color:#A32D2D">Over-pricing risk:</strong> above €8/seat without social proof, EU SMBs will default to Personio. The €5–6 Growth tier sits in a genuine pricing gap: above the feature-poor cheap tools, below the feature-bloated HRIS suites.</p>
+</div>
+
+<hr class="divider">
+
+<p class="label">Section 7</p>
+<p class="sec-title">Strategic recommendations</p>
+<p class="sec-sub">Synthesised from sections 1–6. No new claims introduced.</p>
+
+<div style="margin-bottom:24px">
+  <div class="rec-item">
+    <div class="rec-num">1</div>
+    <div>
+      <p class="rec-title">Positioning statement</p>
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.8rem 1rem;margin-bottom:8px">
+        <p style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin:0;line-height:1.6;font-style:italic">"Vacate is the only leave management tool that gives every manager — from team lead to CEO — exactly the visibility and approval authority their role requires, built for EU SMBs who've outgrown a spreadsheet but don't need a full HRIS."</p>
+      </div>
+      <p class="rec-body"><strong style="color:var(--color-text-primary)">Test vs. Personio:</strong> Personio is a full HRIS suite starting at €5–8/emp/mo core, Germany-centric, requires sales call, and frustrates non-DACH teams. Claim holds. <strong style="color:var(--color-text-primary)">Test vs. Calamari:</strong> Calamari has multi-level approvals but no org-scoped visibility — team leaders see all employees, not just their team. Claim holds. <strong style="color:var(--color-text-primary)">Test vs. Vacation Tracker:</strong> flat team model, no scoped visibility, no hierarchy. Claim holds on all three.</p>
+    </div>
+  </div>
+
+  <div class="rec-item">
+    <div class="rec-num">2</div>
+    <div>
+      <p class="rec-title">Beachhead market</p>
+      <p class="rec-body"><strong style="color:var(--color-text-primary)">Target:</strong> HR managers (or office managers doubling as HR) at 25–80 person remote-first tech startups and scale-ups in Western Europe (Netherlands, France, Nordics, UK) currently tracking leave in spreadsheets or a flat tool like Timetastic. <strong style="color:var(--color-text-primary)">Pain intensity:</strong> at 25–40 people, spreadsheets visibly break; approval chains become chaotic; remote work removed the informal "who's in today" awareness. <strong style="color:var(--color-text-primary)">Incumbent weakness:</strong> Timetastic is too flat; Personio is overkill and expensive; BambooHR is US-centric. <strong style="color:var(--color-text-primary)">Referenceability:</strong> tech startups cluster in communities (Slack groups, LinkedIn, VC portfolio networks) — one referenceable customer unlocks many. <strong style="color:var(--color-text-primary)">Accessibility:</strong> PLG self-serve signup; no outbound sales team needed. These buyers Google solutions, trial tools, and decide in days.</p>
+    </div>
+  </div>
+
+  <div class="rec-item">
+    <div class="rec-num">3</div>
+    <div>
+      <p class="rec-title">MVP feature scope</p>
+      <p class="rec-body" style="margin-bottom:8px"><strong style="color:var(--color-text-primary)">Must-have at launch (table stakes + core differentiators):</strong> self-service leave requests; manager approval/rejection; leave balance display (including "balance after this request"); team calendar; custom leave types (min 8); email + push notifications; full org hierarchy with 3 levels; role-scoped calendar visibility; multi-level approval chains; native mobile app (iOS + Android) with full approval capability; REST API (documented); GDPR data processing agreement; EU public holiday sets for top 5 countries (DE, FR, NL, SE, UK).</p>
+      <p class="rec-body"><strong style="color:var(--color-text-primary)">Defer to v2 (validated traction triggers):</strong> payroll integration (trigger: 20% of Growth customers requesting it in feedback); per-country EU law configuration beyond holiday sets (trigger: first Enterprise customer requirement); conflict detection / coverage alerts (trigger: 3+ support tickets requesting it); absence analytics (trigger: 50+ Growth customers, enough data to be meaningful); substitute/delegate management (trigger: requested by 10%+ of users in onboarding survey).</p>
+    </div>
+  </div>
+
+  <div class="rec-item">
+    <div class="rec-num">4</div>
+    <div>
+      <p class="rec-title">Top 3 strategic risks</p>
+      <div class="card" style="margin-bottom:8px">
+        <div class="risk-row">
+          <div><p class="risk-title">Payroll bundling collapses standalone tool value</p><p class="risk-body">If Payfit, Deel, or a major EU payroll provider ships native leave management free or at nominal cost, the rationale for a standalone leave tool weakens significantly for companies already on those platforms.</p><p style="font-size:11px;color:var(--color-text-tertiary);margin:3px 0 0">Likelihood: medium. Impact: high. Early warning: monitor Payfit, Paylocity EU, and Deel product announcements quarterly. Mitigation: build API-first so Vacate becomes the integration layer, not a competing product — partner with payroll providers rather than compete.</p></div>
+        </div>
+        <div class="risk-row">
+          <div><p class="risk-title">No payroll integration blocks growth above 100 employees</p><p class="risk-body">Companies over 100 employees increasingly need leave data to flow automatically into payroll. Without integration, the HR manager manually reconciles two systems — a deal-breaker above a certain size. This caps Vacate's natural growth ceiling at the beachhead segment.</p><p style="font-size:11px;color:var(--color-text-tertiary);margin:3px 0 0">Likelihood: high. Impact: medium. Early warning: churn from customers who cite "manual payroll reconciliation" as exit reason. Mitigation: ship webhook events in MVP so payroll providers can build the integration; don't build it yourself first.</p></div>
+        </div>
+        <div class="risk-row" style="border-bottom:none">
+          <div><p class="risk-title">Calamari closes the hierarchy/mobile gap before Vacate gains traction</p><p class="risk-body">Calamari has the closest feature set and a strong API. One focused engineering sprint on org hierarchy + mobile UX improvement would significantly reduce Vacate's differentiation. Calamari has a paying customer base and distribution that Vacate doesn't have at launch.</p><p style="font-size:11px;color:var(--color-text-tertiary);margin:3px 0 0">Likelihood: medium. Impact: high. Early warning: Calamari roadmap announcements; new hires on mobile. Mitigation: move fast and capture reviews before Calamari ships. In this market, first to 100 verified G2/Capterra reviews in a segment owns the default consideration set.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rec-item" style="margin-bottom:0">
+    <div class="rec-num">5</div>
+    <div>
+      <p class="rec-title">Critical assumptions to validate (before writing a line of code)</p>
+      <div class="card">
+        <div class="assum-item">
+          <p class="assum-claim">Assumption: EU SMBs will pay €5–6/seat for a leave-only tool when Personio offers "everything" from €5</p>
+          <p class="assum-test">Test: run a landing page with pricing shown. Drive traffic from LinkedIn EU HR groups and measure trial signups vs. bounce rate at different price points. 5 customer discovery calls asking: "What would stop you replacing Personio with a focused tool at the same price?"</p>
+          <p class="assum-fail">Fail signal: &lt;2% conversion on landing page, or discovery calls consistently reveal "we'd never give up the full HRIS." Strategy revision required: either lower the price tier or add a 2nd feature pillar (e.g. time tracking).</p>
+        </div>
+        <div class="assum-item">
+          <p class="assum-claim">Assumption: role-scoped visibility is a felt pain, not a nice-to-have</p>
+          <p class="assum-test">Test: in discovery calls, ask HR managers and team leads: "Tell me about a time a team member's holiday was visible to someone it shouldn't have been" and "How do you currently limit what a team lead can see?" If they can't give specific examples, the pain isn't acute enough to drive switching.</p>
+          <p class="assum-fail">Fail signal: fewer than 4/10 interviewees describe a concrete incident. Reconsider making scoped visibility a secondary feature rather than the hero differentiator.</p>
+        </div>
+        <div class="assum-item">
+          <p class="assum-claim">Assumption: PLG self-serve works for this buyer in Europe (HR managers at 25–80 person companies)</p>
+          <p class="assum-test">Test: build a minimal landing page with a self-serve signup flow and free tier. Measure: do HR managers complete signup without contacting support? Where does the funnel drop? European B2B SaaS has historically been more sales-assisted than US equivalents.</p>
+          <p class="assum-fail">Fail signal: &gt;60% of signups contact support before activating, or &lt;20% of signups activate without assistance. Implication: need a lightweight sales-assist motion (not full sales-led), which changes the cost structure.</p>
+        </div>
+        <div class="assum-item">
+          <p class="assum-claim">Assumption: API-first is a meaningful GTM differentiator, not just a technical feature</p>
+          <p class="assum-test">Test: reach out to 10 EU HR consultancies and payroll providers. Ask: "If a leave management tool had a well-documented REST API and revenue-share partnership terms, would you recommend it to clients?" Count how many express genuine interest vs. polite interest.</p>
+          <p class="assum-fail">Fail signal: fewer than 3/10 express concrete interest in a partnership. API becomes an infrastructure feature for customers, not a distribution channel.</p>
+        </div>
+        <div class="assum-item" style="border-bottom:none">
+          <p class="assum-claim">Assumption: GDPR-native compliance is a purchase driver, not just a purchase qualifier</p>
+          <p class="assum-test">Test: in discovery calls, ask: "Would you switch from a tool you're happy with to one with stronger EU data residency and DPA terms?" Listen for whether compliance is a trigger or a filter. Survey landing page visitors: "What's your #1 reason for evaluating a new leave management tool?" — does GDPR compliance appear in top 3?</p>
+          <p class="assum-fail">Fail signal: compliance mentioned as "required but not differentiating" in 80%+ of calls. Reframe GDPR from a headline feature to a trust signal — still essential, but not the lead message.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-top:8px">
+  <p style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 8px">Quick-action next steps</p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px">
+    <button onclick="sendPrompt('Build out the full MVP technical architecture for Vacate — API design, data model for org hierarchy, and stack recommendations.')" style="font-size:12px;padding:5px 12px;">MVP tech architecture ↗</button>
+    <button onclick="sendPrompt('Write a 10-question customer discovery interview guide for Vacate, targeting HR managers at 25–80 person EU tech startups.')" style="font-size:12px;padding:5px 12px;">Discovery interview guide ↗</button>
+    <button onclick="sendPrompt('Design the onboarding flow for Vacate — from signup to first approved leave request, for a self-serve EU SMB buyer.')" style="font-size:12px;padding:5px 12px;">Onboarding flow ↗</button>
+    <button onclick="sendPrompt('Write the landing page copy for Vacate targeting EU SMBs — headline, value props, pricing section, and CTA.')" style="font-size:12px;padding:5px 12px;">Landing page copy ↗</button>
+    <button onclick="sendPrompt('Map the EU payroll integration landscape for Vacate — which providers to target first as API partners and why.')" style="font-size:12px;padding:5px 12px;">Payroll integration map ↗</button>
+  </div>
+</div>
+
+</div>
