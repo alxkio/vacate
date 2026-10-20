@@ -4,10 +4,13 @@
 
 | Term | Definition |
 |---|---|
-| Tenant | The isolated SaaS workspace and billing boundary. |
-| Legal employer | The entity whose employment policy and obligations apply. A tenant may later contain more than one. |
-| Person | A human identity that may have memberships in one or more tenants. |
-| Organisation membership | A person’s access relationship to a tenant. |
+| Customer company | A customer organisation using Vacate, with its own personnel, configuration and access boundary. This does not require a Microsoft tenant. |
+| Microsoft Entra tenant | A customer identity directory that may optionally be integrated later; not the Vacate company boundary. |
+| Application account | A manually managed sign-in identity with one company in the initial scope. Its username is the company email, unique across Vacate. Duplicate usernames are rejected. |
+| Personnel record | An employee record belonging to a company; it need not have a sign-in account. |
+| Legal employer | The entity whose employment policy and obligations apply. A customer company may later contain more than one. |
+| Person | A human being. Owners and employees may in reality belong to several companies; shared identity and multi-company membership workflows are deferred. |
+| Organisation membership | A person’s access relationship to a customer company. |
 | Employment | A person’s work relationship with a legal employer, including work schedule and policy assignment. |
 | Organisation unit | A node in a hierarchy used for reporting, visibility, or policy scope. |
 | Team membership | A person’s membership of a team, with dates and optional role. |
@@ -18,5 +21,5 @@
 
 ## Decision required
 
-For MVP, confirm whether a tenant has exactly one legal employer and whether a person may be in multiple teams. The original domain document says “one team”; its later additions say “multiple teams.”
+For MVP, confirm whether a customer company has exactly one legal employer and whether a person may be in multiple teams. The original domain document says “one team”; its later additions say “multiple teams.”
 

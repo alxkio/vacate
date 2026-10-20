@@ -1,3 +1,5 @@
+<!-- Historical reference prompt (2026-10-20). Current AGENTS.md, accepted ADRs, product charter, MVP scope and TechChoices.md take precedence. Unapproved market, stack and compliance claims below are UNVERIFIED. -->
+
 You are an expert in:
 - context engineering
 - AI-native software delivery

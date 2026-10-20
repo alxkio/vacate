@@ -1,3 +1,5 @@
+<!-- Historical reference prompt (2026-10-20). Current AGENTS.md, accepted ADRs, product charter, MVP scope and TechChoices.md take precedence. Unapproved market, stack and compliance claims below are UNVERIFIED. -->
+
 ## GLOBAL INSTRUCTIONS — READ BEFORE STARTING
 
 You are producing a founder-grade market research report. Before writing any section:
@@ -194,5 +196,3 @@ Synthesise the full report into five concrete outputs. Each must be derived from
 
 5. Critical assumptions to validate
    List the 3–5 assumptions this entire analysis rests on that have not yet been tested with real buyers. For each: name the assumption, propose the fastest/cheapest test to validate or invalidate it (customer interview guide question, landing page experiment, pilot offer, etc.), and state what a "fail" result would mean for the strategy.
-
-   

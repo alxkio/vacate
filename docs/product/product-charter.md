@@ -1,59 +1,49 @@
 # Product charter
 
-**Status:** PROPOSED  
+**Status:** Confirmed intent plus proposed pilot scope
 **Owner:** Product lead / founder  
-**Last updated:** 2026-09-03
+**Last updated:** 2026-10-20
 
-## Problem
+## Confirmed intent
 
-Employees and managers need a trustworthy, low-friction way to understand leave entitlement, request time off, approve it, and see appropriate team availability. Spreadsheet and email processes become unreliable as companies add people, teams, and approval rules.
+Source: founder instruction in the repository review, 2026-10-20.
 
-## Proposed product
+- Vacate manages employee absence.
+- The founder's company is the first intended user.
+- The intention is to sell Vacate as a subscription product as well, supporting many customer companies.
+- Accounts and personnel are managed manually initially. Optional customer directory/Entra integration may follow; customers do not need a Microsoft tenant.
+- Company email is the username and must be unique across Vacate; creating another account with the same username is rejected. Shared accounts, company switching and multi-company owner/employee membership are deferred.
+- Delivery direction: Angular web app and a .NET 10 backend API.
+- SQL Server / Azure SQL is preferred but tentative; inexpensive Azure hosting is the starting goal.
 
-Vacate is an absence-management SaaS that provides leave requests, balances, approvals, and permission-aware availability for organisations that have outgrown spreadsheets but do not want a full HRIS.
+This replaces the earlier assumption that a Greek market launch must precede company use. It does not establish the company's jurisdiction or approve a commercial launch geography.
 
-## Proposed initial wedge
+## Proposed first outcome
 
-**ASSUMPTION:** Role-scoped visibility and approval flows for organisations with more structure than a flat team, integrated with Microsoft Teams and calendars.
+An administrator configures employees, leave types, opening allocations and a working calendar. An employee requests leave, an assigned approver decides, balances remain correct, and authorised colleagues can see availability.
 
-This is a hypothesis, not a proven differentiator. It must be tested with prospective customers.
+**ASSUMPTION:** A small internal pilot can use a single company, simple teams and one approval step. Confirm against the actual company process before implementation.
 
-## Customer and market
+## Product boundaries
 
-| Decision | Current draft | Status / clarification needed |
-|---|---|---|
-| First geography | Greece | **OPEN QUESTION:** confirm Greece is the paid launch market, not merely founder preference. |
-| Next geographies | Nordics, then DE/FR/NL, then UK/Spain | **OPEN QUESTION:** choose based on legal-policy and distribution evidence; do not pre-commit all waves. |
-| Initial company size | 25–150 employees suggested | **OPEN QUESTION:** existing documents alternatively state 20–300 and 20–1,500. |
-| Economic buyer | HR/office manager or operations lead | **ASSUMPTION:** validate who controls budget in Greece. |
-| Daily users | Employees, managers, HR/admin | PROPOSED |
-| Product category | Focused absence management, not HRIS | PROPOSED |
+Keep the first release focused on absence requests, balances, approvals and availability. Defer native apps, resource booking, payroll, statutory country packs, complex organisation hierarchies and integrations until a specific need is confirmed.
 
-## MVP outcome
+Supporting many customer companies requires company data isolation in the design and verification from the start. A customer company is not a Microsoft Entra tenant. It does not require automated payments, public signup or pricing tiers for the company pilot.
 
-An organisation can configure its people, work structure, leave types, and approval policy; an employee can submit a valid request; the right approver can decide; affected users can see appropriately scoped availability; and the decision is auditable.
+Do not ship country-specific legal defaults from the reference documents. Policy configuration and historical calculations must remain explainable and attributable.
 
-## Non-goals for MVP
+## OPEN QUESTION — company workflow before build
 
-- Equipment, rooms, vehicles, holiday homes, or generic resource booking.
-- Native iOS and Android applications.
-- Payroll calculation or payroll-system integrations beyond documented event/webhook capability.
-- Full statutory entitlement calculation across multiple countries without reviewed policy packs.
-- Consultancy/coworking and cross-organisation managed-team workflows.
+1. How many employees, teams and legal employers are in the pilot, and in which jurisdiction(s)?
+2. Are full days sufficient, or are half days, hourly leave, part-time schedules or shifts necessary?
+3. Who approves whose requests, including managers' own requests and approver absence?
+4. Which leave types, allocations, holiday calendars, carryover and cancellation rules does the company currently use?
+5. Who creates accounts and personnel, and how are login access, recovery and email changes handled? Manual setup and unique company-email usernames are confirmed; directory integration and multi-company membership are deferred.
 
-## Product principles
+## OPEN QUESTION — before selling
 
-1. Explain leave calculations and decisions to employees.
-2. Collect the minimum employee data needed for the workflow.
-3. Make permissions explicit: role alone never grants broad employee-data access.
-4. Keep legal defaults versioned, sourced, and configurable.
-5. Prefer a complete core leave journey over breadth of HR features.
+- First customer segment, geography, pricing and subscription terms.
+- Commercial billing process and any later self-service onboarding. Initial account/personnel setup is manual.
+- Privacy ownership, retention, customer agreements and recovery/availability requirements.
 
-## Open questions to resolve before build
-
-1. What single customer segment in Greece will be recruited as design partners?
-2. Is Microsoft Teams integration a purchasing requirement, activation aid, or later convenience?
-3. Does the buyer need legal-entitlement calculation, or only a configurable leave policy with transparent balances?
-4. Is the product self-serve, sales-assisted, or sold through HR/payroll partners?
-5. What concrete privacy need makes role-scoped visibility a switching trigger?
-
+Evidence from the company pilot validates that company's workflow; it does not establish wider demand or willingness to pay.

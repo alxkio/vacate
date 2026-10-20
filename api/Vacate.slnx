@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Vacate.Api/Vacate.Api.csproj" />
+    <Project Path="src/Vacate.Application/Vacate.Application.csproj" />
+    <Project Path="src/Vacate.Domain/Vacate.Domain.csproj" />
+    <Project Path="src/Vacate.Infrastructure/Vacate.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Vacate.IntegrationTests/Vacate.IntegrationTests.csproj" />
+    <Project Path="tests/Vacate.UnitTests/Vacate.UnitTests.csproj" />
+  </Folder>
+</Solution>

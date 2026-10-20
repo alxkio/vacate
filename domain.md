@@ -1,3 +1,7 @@
+# Historical domain reference
+
+**Status: SUPERSEDED / UNVERIFIED.** Retained for context only. Use docs/product/product-charter.md, docs/product/mvp-scope.md and docs/domain/ for current direction. Country rules below have no approved policy-source register; do not implement them. Hierarchy, membership and cancellation descriptions conflict internally.
+
 # Vacate Domain Knowledge
 
 **Product:** Vacation tracking SaaS for EU SMBs (20–1500 employees)  
@@ -764,4 +768,4 @@ POLICY:
 - visibility can be set to individual users as long as under the same hierarchy. 
 - option for job roles and rules for roles minimum needed / 
 - teams integration with teams app and calendar / notifications etc. 
-- users can be part of multiple orgs 
+- users can be part of multiple orgs

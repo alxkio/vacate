@@ -22,6 +22,10 @@ Owner: name/role
 ## Evidence and links
 ```
 
+## Records
+
+- [ADR-0001: Company-first absence product and web/API direction](0001-company-first-web-api.md) — ACCEPTED, 2026-10-20.
+
 ## ADRs to create after clarification
 
 1. Initial beachhead market and customer segment.
@@ -29,4 +33,3 @@ Owner: name/role
 3. Legal-policy content strategy and review ownership.
 4. MVP deployment and identity-provider selection.
 5. Integration sequencing: Teams/calendar before or after core workflow validation.
-

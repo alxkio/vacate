@@ -1,0 +1,6 @@
+@Vacate.Api_HostAddress = http://localhost:5126
+
+GET {{Vacate.Api_HostAddress}}/health
+Accept: text/plain
+
+###

@@ -1,22 +1,16 @@
 # Documentation map
 
-This directory separates decisions from exploratory material.
+Start with the [product charter](product/product-charter.md), [proposed MVP](product/mvp-scope.md), [technology proposal](../TechChoices.md) and [repository review](review-2026-10-20.md).
 
 | Area | Purpose | Status |
 |---|---|---|
-| `product/` | Product decisions, customer evidence, scope, and measures | Draft |
-| `domain/` | Ubiquitous language, business scenarios, and rule boundaries | Draft |
-| `compliance/` | Data inventory, retention, and legal-policy evidence | Draft — requires counsel |
-| `adr/` | Short records of accepted, durable decisions | Empty by design |
+| product/ | Company-first intent, scope, personas, evidence and measures | Charter distinguishes confirmed intent from proposals; other material is draft |
+| domain/ | Glossary, scenarios and policy boundaries | Proposed; broader models do not expand MVP |
+| compliance/ | Data map, retention and policy-source register | Draft; decisions and source review outstanding |
+| adr/ | Durable accepted decisions | ADR-0001 records founder-confirmed direction |
+| reference/ | Conventions observed in another codebase, to inform the layout | Reference only; not a decision |
+| archive/ | Superseded technology proposal | Historical reference only |
 
-## Decision statuses
+Decision labels: ACCEPTED means implementation may rely on it; PROPOSED and ASSUMPTION require validation; OPEN QUESTION needs a decision; UNVERIFIED lacks adequate evidence; SUPERSEDED is retained history.
 
-- `PROPOSED` — useful draft; not approved.
-- `ACCEPTED` — a decision that implementation may rely on.
-- `OPEN QUESTION` — needs founder/customer/legal input.
-- `UNVERIFIED` — copied from existing material without sufficient evidence.
-
-## How to use it
-
-Start work from the product charter. Create an ADR only for a decision that is expensive to reverse, such as the initial market, tenancy model, identity provider, or database. Keep exploratory research out of ADRs.
-
+Source precedence follows AGENTS.md. Use accepted ADRs first, then accepted product direction, then reviewed policy sources. Historical domain, market research and prompts cannot override them. Record conflicts and ask the product lead rather than silently selecting a rule.
