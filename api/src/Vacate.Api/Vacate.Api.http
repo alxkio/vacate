@@ -1,6 +1,4 @@
-@Vacate.Api_HostAddress = http://localhost:5126
+@Vacate.Api_HostAddress = http://localhost:7071
 
-GET {{Vacate.Api_HostAddress}}/health
-Accept: text/plain
-
-###
+GET {{Vacate.Api_HostAddress}}/api/health
+Accept: application/json

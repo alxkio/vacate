@@ -26,6 +26,8 @@ Owner: name/role
 
 - [ADR-0001: Company-first absence product and web/API direction](0001-company-first-web-api.md) — ACCEPTED, 2026-10-20.
 
+- [ADR-0002: Azure Static Web Apps and Functions hosting](0002-azure-static-web-app-and-functions.md) — ACCEPTED, 2026-10-21.
+
 ## ADRs to create after clarification
 
 1. Initial beachhead market and customer segment.

@@ -1,0 +1,69 @@
+name: CI
+on:
+  push:
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: dotnet restore api/Vacate.slnx --locked-mode
+      - run: dotnet build api/Vacate.slnx --configuration Release --no-restore
+      - run: dotnet test api/Vacate.slnx --configuration Release --no-build --no-restore
+      - name: Publish Functions package
+        run: dotnet publish api/src/Vacate.Api --configuration Release --no-restore --output artifacts/api -p:SourceRevisionId="$GITHUB_SHA"
+      - name: Verify package and run real Functions host
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f artifacts/api/host.json
+          test -f artifacts/api/worker.config.json
+          test -f artifacts/api/.azurefunctions/function.deps.json
+          jq -e '.[] | select(.name == "Health") | .bindings[] | select(.type == "httpTrigger" and .route == "health")' artifacts/api/functions.metadata
+          if find artifacts/api -name 'local.settings.json' -o -name 'appsettings*.json' | grep -q .; then
+            echo 'Local configuration must not be published' >&2
+            exit 1
+          fi
+          npm install --global azure-functions-core-tools@4.16.0
+          (cd artifacts/api && FUNCTIONS_WORKER_RUNTIME=dotnet-isolated AzureWebJobsStorage='' func start --dotnet-isolated --no-build --port 7071 > "$RUNNER_TEMP/functions.log" 2>&1) &
+          host_pid=$!
+          trap 'kill "$host_pid" 2>/dev/null || true' EXIT
+          python3 scripts/cloud-smoke.py --api-base-url http://localhost:7071/api --revision "$GITHUB_SHA"
+      - name: Host diagnostics
+        if: failure()
+        run: cat "$RUNNER_TEMP/functions.log" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: functions-package
+          path: artifacts/api
+          include-hidden-files: true
+          if-no-files-found: error
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run build -- --configuration production
+      - run: npm test -- --watch=false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: angular-production
+          path: web/dist/vacate-web/browser
+          if-no-files-found: error

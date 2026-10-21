@@ -1,30 +1,20 @@
-using Vacate.Api.ErrorHandling;
-using Vacate.Infrastructure;
+using Azure.Monitor.OpenTelemetry.Exporter;
+using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.Azure.Functions.Worker.OpenTelemetry;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = FunctionsApplication.CreateBuilder(args);
+builder.ConfigureFunctionsWebApplication();
 
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
-builder.Services.AddProblemDetails();
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddHealthChecks();
-builder.Services.AddInfrastructure(builder.Configuration);
-
-var app = builder.Build();
-
-app.UseExceptionHandler();
-
-if (app.Environment.IsDevelopment())
+// Persistence is deliberately not registered until a database is provisioned.
+// The first deployment exposes liveness only and needs no SQL credentials.
+if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING")))
 {
-    app.MapOpenApi();
+    builder.Services.AddOpenTelemetry()
+        .UseFunctionsWorkerDefaults()
+        .UseAzureMonitorExporter();
 }
 
-app.UseAuthorization();
-
-app.MapControllers();
-app.MapHealthChecks("/health");
-
-app.Run();
-
-// Exposes the entry point to WebApplicationFactory in the integration tests.
-public partial class Program;
+await builder.Build().RunAsync();

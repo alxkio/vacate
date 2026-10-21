@@ -4,7 +4,7 @@
 
 ## Small starting architecture
 
-Angular web app -> ASP.NET Core .NET 10 REST API -> one relational database.
+Angular web app -> Azure Functions .NET 10 isolated HTTP API -> one relational database (database selection still open). Hosting follows [ADR-0002](docs/adr/0002-azure-static-web-app-and-functions.md).
 
 - Angular: standalone components, routing, reactive forms, local signals/services. Choose a supported Angular release and its compatible Node/TypeScript versions when scaffolding; pin them then. No global NgRx store unless a demonstrated need appears.
 - API: one deployable application, organised by feature: people, leave, approvals and availability. Keep business rules testable without adding separate services, a mediator or event sourcing.
@@ -26,6 +26,8 @@ Resolve company access from authenticated membership, authorise on the server, s
 Keep commercial billing separate from leave entitlement. Manual customer onboarding and subscription administration can precede a payment integration.
 
 ## Azure starting options
+
+Hosting update, 2026-10-21: [ADR-0002](docs/adr/0002-azure-static-web-app-and-functions.md) accepts Static Web Apps and Azure Functions. The candidates below are historical evaluation context; use [infra/README.md](infra/README.md) for deployment configuration.
 
 These are hosting candidates, not a deployment plan or a promise of zero cost. Official sources checked 2026-10-20; actual subscription/region availability remains UNVERIFIED.
 

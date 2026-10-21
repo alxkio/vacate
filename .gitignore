@@ -489,3 +489,7 @@ appsettings.Local.json
 .env.local
 .env.*.local
 
+.vscode
+# Azure Functions machine-specific secrets
+local.settings.json
+artifacts/

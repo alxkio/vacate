@@ -20,6 +20,14 @@ Features are lazy-loaded from `app.routes.ts`. State stays in local signals and 
 - `npm run build`: production build into `dist/`.
 - `npm test`: unit tests with [Vitest](https://vitest.dev/).
 
+## Cloud configuration
+
+Startup fetches `/config.json` with caching disabled before Angular bootstraps. Local configuration uses `apiBaseUrl: "/api"`; deployment writes the provisioned Function App's HTTPS origin plus `/api`, and the Git commit revision. This file is public and must contain no secrets. `ApiClient` uses that configured base URL. Invalid or missing settings stop startup with a reload message.
+
+`public/staticwebapp.config.json` supplies SPA deep-link fallback and prevents caching runtime settings. Azure hosts the Angular output separately from the API; Functions CORS is configured by Bicep for the frontend origin. Cloud URLs are not committed into Angular source or inferred from `VITE_*` environment variables.
+
+[Deployment instructions](../infra/README.md) cover the build artifacts and initial cloud release.
+
 ## Tests (TODO)
 
 See the [root README](../README.md#tests-todo).
