@@ -33,6 +33,12 @@ If sources conflict, do not silently select one. Record an `OPEN QUESTION` in th
 - Treat employee leave, sickness, and identity data as personal data. Minimise it.
 - Every implementation change needs an acceptance scenario and tenant-isolation test where applicable.
 
+## Issues and backlog
+
+Use [the issue workflow](docs/jira/README.md) for product stories, bugs, epics and tasks. Apply the repository [vacate-issues skill](.github/skills/vacate-issues/SKILL.md) when creating, updating or implementing an issue. Read the relevant issue before implementation; create or link one for material product work and keep its status, decisions, verification and work log current. Update [Product-Backlog.md](docs/jira/Product-Backlog.md) in the same change whenever an issue is created or its summary, type, status or dependencies change. Keep direct prerequisites in issue `depends_on` metadata and explain their required output; distinguish coordination links and check for cycles. Preserve the single retrospective story requested for existing work; add future work only when requested or necessary for the authorised task.
+
+Issue notes cannot override the source-of-truth order above. Log measured, estimated, human and assistant time distinctly; do not infer working hours from commit timestamps. This file-based workflow grants no permission to create external Jira tickets, commit, push or deploy.
+
 ## Definition of done
 
 A task is done when its output names the source documents changed, decisions made, questions still open, and how the result was verified.

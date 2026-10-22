@@ -10,6 +10,7 @@ For review: [iteration plan](product/iteration-plan.md) — draft personas, user
 | domain/ | Glossary, scenarios and policy boundaries | Proposed; broader models do not expand MVP |
 | compliance/ | Data map, retention and policy-source register | Draft; decisions and source review outstanding |
 | adr/ | Durable accepted decisions | ADR-0001 records product direction; ADR-0002 records Azure hosting |
+| jira/ | File-based issues, product backlog, decisions and work logs | One retrospective released story; fictional example excluded from the backlog |
 | reference/ | Conventions observed in another codebase, to inform the layout | Reference only; not a decision |
 | archive/ | Superseded technology proposal | Historical reference only |
 

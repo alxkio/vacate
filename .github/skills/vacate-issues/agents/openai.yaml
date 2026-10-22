@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vacate issues"
+  short_description: "Maintain Vacate issues, backlog and evidence"
+  default_prompt: "Use $vacate-issues to create or update a Vacate issue and keep its backlog, decisions and work log consistent."
