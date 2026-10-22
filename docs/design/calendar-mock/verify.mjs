@@ -15,7 +15,7 @@ let baseUrl = process.env.MOCK_URL;
 if (!baseUrl) {
   server = createServer(async (request, response) => {
     const name = new URL(request.url, 'http://localhost').pathname.slice(1) || 'index.html';
-    if (!['index.html','login.html','mock.css','mock.js','demo-session.js','login.js','favicon.svg'].includes(name)) { response.writeHead(404).end(); return; }
+    if (!['index.html','login.html','mock.css','mock.js','demo-session.js','login.js','leave-types.js','favicon.svg'].includes(name)) { response.writeHead(404).end(); return; }
     try {
       const type = name.endsWith('.html') ? 'text/html' : name.endsWith('.css') ? 'text/css' : name.endsWith('.svg') ? 'image/svg+xml' : 'text/javascript';
       response.writeHead(200, {'Content-Type': type, 'Cache-Control': 'no-store'});
@@ -78,26 +78,68 @@ const endpoint = await new Promise((resolve,reject)=>{
   await signIn('admin','admin');await waitFor('!!document.querySelector("#period")?.textContent');
   assert.equal(await evaluate('document.querySelector("#demo-role").textContent'),'Admin preview');
   await navigate(baseUrl);await waitFor('!!document.querySelector("#period")?.textContent');
+  assert.equal(await evaluate('window.VacateLeave.types.length'),29);
+  assert.equal(await evaluate('window.VacateLeave.workWeekDays'),5);
+  assert.equal(await evaluate('new Set(window.VacateLeave.types.map(type=>type.id)).size'),29);
+  assert.equal(await evaluate('document.querySelectorAll("[data-balance]").length'),3);
+  assert.match(await evaluate('document.querySelector("[data-balance=annual]").textContent'),/14 \/ 25 working days available/);
+  assert.match(await evaluate('document.querySelector("[data-balance=annual]").textContent'),/56% available/);
+  await click('[data-balance=annual] summary');
+  await waitFor('document.querySelector("[data-balance=annual] summary").getAttribute("aria-expanded") === "true"');
+  assert.match(await evaluate('document.querySelector("[data-balance=annual]").textContent'),/10 years here OR 12 total/);
+  await click('#balance-toggle');
+  assert.equal(await evaluate('document.querySelectorAll("[data-balance]").length'),29);
+  assert.equal(await evaluate('document.querySelector("[data-balance=maternity] .type-percentage")'),null);
+  assert.match(await evaluate('document.querySelector("[data-balance=parental]").textContent'),/2 \/ 4 months available/);
+  assert.match(await evaluate('document.querySelector("[data-balance=dependent-illness]").textContent'),/Eligibility to confirm/);
+  assert.equal(await evaluate('document.querySelector("[data-balance=childcare] .type-bar")'),null);
+  await click('[data-example-type=parental]');
+  assert.equal(await evaluate('document.querySelector("#leave-type").value'),'parental');
+  assert.equal(await evaluate('document.querySelector("#request-unit").value'),'months');
+  assert.match(await evaluate('document.querySelector("#request-balance").textContent'),/2 months available → 1 month/);
+  assert.equal(await evaluate('document.querySelector("#leave-type option[value=disability-supplement]").disabled'),true);
+  for(const id of await evaluate('window.VacateLeave.types.filter(type=>type.shape!=="supplement").map(type=>type.id)')){
+    await evaluate(`document.querySelector('#leave-type').value=${JSON.stringify(id)};document.querySelector('#leave-type').dispatchEvent(new Event('change'))`);
+    assert.equal(await evaluate(`document.querySelector('#request-allowance').textContent.includes(window.VacateLeave.getType(${JSON.stringify(id)}).allowance)`),true,`${id} allowance panel is stale`);
+  }
+  await evaluate('document.querySelector("#leave-type").value="school";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-unit").value="hours";document.querySelector("#request-unit").dispatchEvent(new Event("input"))');
+  assert.match(await evaluate('document.querySelector("#request-balance").textContent'),/cannot be calculated/);
+  await evaluate('document.querySelector("#leave-type").value="annual";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-amount").value="100";document.querySelector("#request-amount").dispatchEvent(new Event("input"))');
+  assert.match(await evaluate('document.querySelector("#request-balance").textContent'),/Exceeds.*86 working days/);
+  assert.equal(await evaluate('window.VacateLeave.balanceOf("annual").available'),14);
+  await evaluate('document.querySelector("#start-date").value="2026-10-29";document.querySelector("#start-date").dispatchEvent(new Event("input"));document.querySelector("#request-form").requestSubmit()');
+  assert.equal(await evaluate('document.querySelector("#end-date").validity.customError'),true,'Reversed dates must be rejected');
+  await evaluate('document.querySelector("#start-date").value="2026-10-26";document.querySelector("#start-date").dispatchEvent(new Event("input"))');
+  assert.equal(await evaluate('document.querySelector("#request-form").checkValidity()'),true,'Correcting the start date must clear the stale end-date error');
+  await evaluate('document.querySelector("#request-form").requestSubmit()');
+  assert.match(await evaluate('document.querySelector("#dialog-content").textContent'),/Annual leave · 100 working days/);
+  await click('#finish-demo');await click('#balance-toggle');
   for(const scope of ['self','team','org'])for(const view of ['year','month','week','day']){
     await click(`[data-scope="${scope}"]`);await click(`[data-view="${view}"]`);
     assert.equal(await evaluate(`document.querySelector('[data-scope="${scope}"]').getAttribute('aria-pressed')`),'true');
     assert.equal(await evaluate(`document.querySelector('[data-view="${view}"]').getAttribute('aria-pressed')`),'true');
     assert.ok(await evaluate('document.querySelector("#calendar-content").textContent.length > 20'));
     if(scope!=='self')assert.equal(await evaluate('/Vacation|Pending|Approved|sick|illness/i.test(document.querySelector("#calendar-content").textContent)'),false);
+    if(scope!=='self')assert.equal(await evaluate('window.VacateLeave.types.some(type=>document.querySelector("#calendar-content").textContent.includes(type.name))'),false,'Shared calendar disclosed a leave type');
   }
   await click('[data-scope="self"]');await click('[data-view="month"]');
   await click('[data-date="2026-10-01"]');assert.match(await evaluate('document.querySelector("#dialog").textContent'),/No leave shown/);
   await call('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});await call('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+  await waitFor('!document.querySelector("#dialog").open');
   assert.equal(await evaluate('document.querySelector("#dialog").open'),false);
   await waitFor('document.activeElement.dataset.date === "2026-10-01"');
   assert.equal(await evaluate('document.activeElement.dataset.date'),'2026-10-01');
-  await click('[data-date="2026-10-26"]');assert.match(await evaluate('document.querySelector("#dialog").textContent'),/Vacation · Approved/);await evaluate('document.querySelector("#dialog").close()');
+  await click('[data-date="2026-10-26"]');assert.match(await evaluate('document.querySelector("#dialog").textContent'),/Annual leave · Approved/);await evaluate('document.querySelector("#dialog").close()');
   await click('[data-scope="org"]');await click('[data-event="s1"]');assert.doesNotMatch(await evaluate('document.querySelector("#dialog-content").textContent'),/Vacation|Pending|Approved|sick|illness/i);await evaluate('document.querySelector("#dialog").close()');
   await click('[data-view="year"]');await click('[data-action="next"]');assert.equal(await evaluate('document.querySelector("#period").textContent'),'2027');await click('[data-action="today"]');assert.equal(await evaluate('document.querySelector("#period").textContent'),'2026');
   await click('[data-action="request"]');await evaluate('document.querySelector("#request-form").requestSubmit()');assert.match(await evaluate('document.querySelector("#dialog-content").textContent'),/No request was sent or saved/);await click('#finish-demo');
   for(const direction of ['a','b','c']){
     await load(`?direction=${direction}`);await screenshot(`${direction}-desktop.png`);
     await viewport(375,1100);await screenshot(`${direction}-mobile.png`);
+    await click('#balance-toggle');
+    await click('[data-balance=annual] summary');
+    assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true,`${direction} expanded balances overflow on mobile`);
+    await click('#balance-toggle');
     for(const view of ['year','month','week','day']){
       await click(`[data-view="${view}"]`);
       assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true,`${direction}/${view} overflows on mobile`);
@@ -105,7 +147,7 @@ const endpoint = await new Promise((resolve,reject)=>{
     await viewport(1600,1250);
   }
   assert.deepEqual(errors,[],'Unexpected browser exceptions');
-  console.log('PASS: anonymous redirect, invalid login, both demo accounts, index landing, logout, session reload; 12 scope/view combinations; shared-detail privacy; dialogs and focus; demo request; 13 mobile overflow checks; 8 screenshots.');
+  console.log('PASS: demo login/logout; 29 leave types; all 28 requestable rule panels; balance expansion, units and percentages; excess/unknown projections; shared-detail privacy; 12 scope/view combinations; 16 mobile overflow checks; 8 screenshots.');
 } finally {
   clearTimeout(deadline);socket?.close();chrome.kill('SIGTERM');
   server?.close();

@@ -43,6 +43,7 @@ def check(api, web, revision):
         ("mock.css", "text/css", b".calendar-card"),
         ("demo-session.js", "javascript", b"vacate.demo.account.v1"),
         ("login.js", "javascript", b"login-form"),
+        ("leave-types.js", "javascript", b"window.VacateLeave"),
         ("favicon.svg", "image/svg+xml", b"#12675e"),
     ):
         body, headers = get(f"{web}/{filename}")

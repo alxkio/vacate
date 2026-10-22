@@ -1,6 +1,6 @@
 # Leave types, allowances and balances
 
-**PROPOSED · Updated 2026-10-22.** Catalogue accepted in principle; expanded rules and balance design await review. No vacation-type UI or calculation changes applied.
+**APPROVED FOR MOCK UI · 2026-10-22.** Founder approved the catalogue, allowance/rule previews and expandable balances. The mocks use a **five-day, Monday–Friday workweek**. This approval covers fictional examples and request previews; statutory eligibility and entitlement calculations remain unimplemented.
 
 Basis: [INE/GSEE guide, 2022](https://www.inegsee.gr/wp-content/uploads/2022/11/Odigos-Adeion.pdf), PDF pages below. **Guide figures are historical unless an official update is identified.** Sources checked 2026-10-22; applicability/effective-date review remains open before enforcing policy. WD = working days; paid = employer-paid unless benefits are distinguished.
 
@@ -15,6 +15,8 @@ Paid, calendar-year entitlement; distinguish **current-employer service** from *
 | Third calendar year onward | Full yearly entitlement; 22 WD after 24 months | Full yearly entitlement; 26 WD after 24 months |
 | 10 completed years with current employer **or** 12 total | 25 WD | 30 WD |
 | 25 completed years of service/prior service | 26 WD | 31 WD |
+
+The six-day column is source context only. The mock displays the five-day figures and a configured annual allocation of **25 WD: 9 used, 2 pending, 14 available (56%)**; it does not infer an employee's service tier.
 
 **Logic to preserve:** calendar-year boundaries and employment anniversaries differ. The third year can begin before 24 months are completed; do not grant the second-anniversary increase early. Apply the relevant higher service tier, not cumulative additions. Recognized prior service can affect the basis for a new hire; do not reset everyone to 20/24. Count scheduled working days, excluding applicable holidays/non-working days. Proration, rounding, service evidence, partial schedules and historical rule versions require explicit policy decisions. Do not infer total service from the latest hire date.
 
@@ -53,18 +55,20 @@ Limits apply to eligible employees, not automatically to every account. Months, 
 
 ¹ [Gov.gr maternity service](https://www.gov.gr/ipiresies/ergasia-kai-asphalise/apozemioseis-kai-parokhes/eidike-adeia-prostasias-metrotetas), updated 2024-04-23. ² [Ministry guidance](https://ypergasias.gov.gr/ergasiakes-scheseis/atomikes-ergasiakes-sxeseis/adeies-ergazomenon/) confirms unpaid carer leave and clarifies sole-custody eligibility beyond the guide’s narrower description.
 
-**Post-guide additions for review:** the [Ministry](https://ypergasias.gov.gr/ergasiakes-scheseis/atomikes-ergasiakes-sxeseis/adeies-ergazomenon/) describes **20 paid days for bereaved parents** (Law 5018/2023, art. 93) and **1 paid day/year for gynecological screening** (Law 5043/2023, art. 96). Do not apply the generic two-day bereavement rule to loss of a child. Full legal effective-date/exception review remains open.
+**Post-guide additions accepted for mock display:** the [Ministry](https://ypergasias.gov.gr/ergasiakes-scheseis/atomikes-ergasiakes-sxeseis/adeies-ergazomenon/) describes **20 paid days for bereaved parents** (Law 5018/2023, art. 93) and **1 paid day/year for gynecological screening** (Law 5043/2023, art. 96). Do not apply the generic two-day bereavement rule to loss of a child. Full legal effective-date/exception review remains open.
 
 The 2025 Labour Code (PD 62/2025, Government Gazette A121, 2025-07-11) also records these at arts. 246 and 242. It is a dated baseline, not proof that no later amendments apply; see the [source register](../compliance/policy-sources.md). Disability supplements must be credited once; childcare hours and equivalent leave share the same underlying right, not two independent quotas.
 
-## Expandable balances — proposed UI
+## Expandable balances — implemented mock
 
 Use the same **My leave balances** component in A/B/C. Each type has a labelled horizontal bar and exact numbers, expanding to allowance, eligibility, pay, period/event, source and service-year explanation. [UI Architect proposal](../design/leave-balances-proposal.md).
 
-Fictional example: **Annual · 12 / 24 WD available · 50% available**. Bar: **Used 8 | Pending 4 | Available 12**. Pending reservations reduce availability once; approval moves reserved units to used without another deduction. Approved-upcoming detail must not double-count usage.
+Fictional example: **Annual · 14 / 25 WD available · 56% available**. Bar: **Used 9 | Pending 2 | Available 14**. Pending reservations reduce availability once; approval must move reserved units to used without another deduction. Approved-upcoming detail must not double-count usage. The mock previews amounts without saving requests or changing balances.
 
 Show percentages only with a confirmed positive allowance and matching units/period. Event leave shows the event allowance; reduced hours show the schedule; unknown eligibility shows **To confirm**, not zero. Never sum unrelated types/units. Shared calendars remain **Away**; balances and sensitive rules stay personal.
 
-**OPEN:** company applicability, verified service history, rounding/carryover, approved-upcoming accounting, general sickness/discretionary unpaid leave, and acceptance of the post-2022 additions. Hourly-paid annual leave and the leave register are not extra types.
+The catalogue contains 29 entries and 28 requestable choices; the disability supplement adjusts annual allocation rather than creating another request. Marriage and voting previews use the five-day figures. Dates do not calculate quantities; holidays are not configured.
 
-**Review gate:** Review these expanded allowances/rules before type fixtures or request-form changes. This is a sourced design brief, not an implemented statutory engine.
+**OPEN:** company applicability, verified service history, rounding/carryover, production approved-upcoming accounting, and general sickness/discretionary unpaid leave. Hourly-paid annual leave and the leave register are not extra types.
+
+**Review gate satisfied:** founder approved before type fixtures and request-form changes. Production policy validation remains separate. Browser acceptance and package checks are recorded in the [mock README](../design/calendar-mock/README.md).

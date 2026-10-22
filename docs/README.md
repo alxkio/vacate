@@ -20,5 +20,5 @@ Source precedence follows AGENTS.md. Use accepted ADRs first, then accepted prod
 - [First cloud deployment preparation (2026-10-21)](cloud-deploy-2026-10-21.md) — app migration, configured target, verification and remaining account setup.
 - [First dev deployment (2026-10-22)](cloud-deploy-2026-10-22.md) — published gallery/API URLs, deployed commit, verification and remaining product decisions.
 - [Calendar UI proposal (2026-10-22)](design/calendar-ui-proposal.md) — three proposed layouts, interactions and permission boundaries; [interactive local mock and previews](design/calendar-mock/README.md).
-- [Leave-type summary for review](product/leave-types-review.md) — concise INE/GSEE guide summary; implementation waits for founder review.
-- [Expandable leave balances](design/leave-balances-proposal.md) — UI Architect recommendation for per-type quantities, percentages and rules.
+- [Approved mock leave-type summary](product/leave-types-review.md) — allowances, rules and five-day workweek; production policy validation remains open.
+- [Expandable leave balances](design/leave-balances-proposal.md) — accepted UI Architect recommendation, implemented with fictional per-type quantities, percentages and rules.

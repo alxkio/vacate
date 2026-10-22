@@ -69,6 +69,7 @@ jobs:
           node --check ../docs/design/calendar-mock/dist/mock.js
           node --check ../docs/design/calendar-mock/dist/demo-session.js
           node --check ../docs/design/calendar-mock/dist/login.js
+          node --check ../docs/design/calendar-mock/dist/leave-types.js
           python3 ../scripts/package-design-preview.py --web-output dist/vacate-web/browser --revision "$GITHUB_SHA"
       - uses: actions/upload-artifact@v7
         with:
