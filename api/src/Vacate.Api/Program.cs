@@ -1,20 +1,12 @@
-using Azure.Monitor.OpenTelemetry.Exporter;
 using Microsoft.Azure.Functions.Worker.Builder;
-using Microsoft.Azure.Functions.Worker.OpenTelemetry;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpenTelemetry;
+using Microsoft.Extensions.Logging;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 builder.ConfigureFunctionsWebApplication();
+builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
-// Persistence is deliberately not registered until a database is provisioned.
-// The first deployment exposes liveness only and needs no SQL credentials.
-if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING")))
-{
-    builder.Services.AddOpenTelemetry()
-        .UseFunctionsWorkerDefaults()
-        .UseAzureMonitorExporter();
-}
-
+// Worker logs use the Functions host pipeline and its host.json filters.
+// Avoid a separate exporter that bypasses host filtering or collects success traces.
+// Persistence is not registered until database infrastructure is agreed.
 await builder.Build().RunAsync();

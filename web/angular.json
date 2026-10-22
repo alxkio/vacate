@@ -27,6 +27,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "../docs/design/calendar-mock/dist",
+                "output": "design-preview"
               }
             ],
             "styles": [

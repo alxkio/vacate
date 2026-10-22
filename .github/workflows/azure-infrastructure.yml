@@ -28,7 +28,7 @@ jobs:
   compile:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Compile all environment configurations
         shell: bash
         run: |
@@ -53,7 +53,7 @@ jobs:
       AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check deployment target
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
@@ -82,7 +82,7 @@ jobs:
               raise SystemExit('AZURE_CREDENTIALS must contain clientId, clientSecret, tenantId and the designated subscriptionId')
           with open(os.environ['GITHUB_ENV'], 'a') as output:
               output.write(f'AZURE_SUBSCRIPTION_ID={subscription}\nAZURE_RESOURCE_GROUP={resource_group}\n')
-      - uses: azure/login@v2
+      - uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Validate and preview
@@ -105,12 +105,12 @@ jobs:
           echo "function_url=$(jq -r '.properties.outputs.functionAppUrl.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
           echo "web_name=$(jq -r '.properties.outputs.staticSiteName.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
           echo "web_url=$(jq -r '.properties.outputs.staticSiteUrl.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         if: inputs.apply
         with:
           name: functions-package
           path: artifacts/api
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         if: inputs.apply
         with:
           name: angular-production
@@ -171,4 +171,4 @@ jobs:
           API_URL: ${{ steps.infrastructure.outputs.function_url }}
           WEB_URL: ${{ steps.infrastructure.outputs.web_url }}
         run: |
-          printf 'Deployed `%s` to `%s`\n\nWeb: %s\n\nAPI health: %s/api/health\n' "$GITHUB_SHA" "$DEPLOY_ENVIRONMENT" "$WEB_URL" "$API_URL" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Deployed `%s` to `%s`\n\nWeb: %s\n\nDesign gallery: %s/design-preview/index.html\n\nAPI health: %s/api/health\n' "$GITHUB_SHA" "$DEPLOY_ENVIRONMENT" "$WEB_URL" "$WEB_URL" "$API_URL" >> "$GITHUB_STEP_SUMMARY"

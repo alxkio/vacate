@@ -3,14 +3,25 @@
   "logging": {
     "logLevel": {
       "default": "Warning",
-      "Host.Results": "Information"
+      "Function": "Warning",
+      "Host.Results": "Error",
+      "Host.Aggregator": "None"
     },
     "applicationInsights": {
-      "samplingSettings": { "isEnabled": true },
-      "httpAutoCollectionOptions": { "enableHttpTriggerExtendedInfoCollection": false }
+      "samplingSettings": {
+        "isEnabled": false
+      },
+      "enableLiveMetrics": false,
+      "enableDependencyTracking": false,
+      "enablePerformanceCountersCollection": false,
+      "httpAutoCollectionOptions": {
+        "enableHttpTriggerExtendedInfoCollection": false
+      }
     }
   },
   "extensions": {
-    "http": { "routePrefix": "api" }
+    "http": {
+      "routePrefix": "api"
+    }
   }
 }

@@ -18,3 +18,4 @@ Decision labels: ACCEPTED means implementation may rely on it; PROPOSED and ASSU
 Source precedence follows AGENTS.md. Use accepted ADRs first, then accepted product direction, then reviewed policy sources. Historical domain, market research and prompts cannot override them. Record conflicts and ask the product lead rather than silently selecting a rule.
 
 - [First cloud deployment preparation (2026-10-21)](cloud-deploy-2026-10-21.md) — app migration, configured target, verification and remaining account setup.
+- [Calendar UI proposal (2026-10-22)](design/calendar-ui-proposal.md) — three proposed layouts, interactions and permission boundaries; [interactive local mock and previews](design/calendar-mock/README.md).

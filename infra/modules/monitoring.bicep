@@ -1,6 +1,7 @@
 param baseName string
 param location string
 param tags object
+param dailyCapGb string
 
 resource logs 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: '${baseName}-logs'
@@ -9,7 +10,7 @@ resource logs 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   properties: {
     sku: { name: 'PerGB2018' }
     retentionInDays: 30
-    workspaceCapping: { dailyQuotaGb: 1 }
+    workspaceCapping: { dailyQuotaGb: json(dailyCapGb) }
   }
 }
 resource insights 'Microsoft.Insights/components@2020-02-02' = {

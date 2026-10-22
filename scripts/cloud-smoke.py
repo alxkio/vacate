@@ -33,7 +33,22 @@ def check(api, web, revision):
     assert config["apiBaseUrl"] == api, "Frontend points to a different API"
     assert config["revision"] == revision, "Frontend build revision mismatch"
     assert "no-store" in headers.get("Cache-Control", ""), "Runtime configuration may be cached"
-    for path in ("/", "/leave", "/approvals", "/availability", "/people"):
+    for path in ("/", "/design-preview/index.html"):
+        body, headers = get(f"{web}{path}")
+        assert "text/html" in headers.get("Content-Type", ""), "Gallery did not serve HTML"
+        assert b"VACATE / DESIGN STUDY 01" in body, "Design gallery missing"
+        assert "no-store" in headers.get("Cache-Control", ""), "Gallery entry may be cached"
+    for filename, content_type, marker in (
+        ("mock.js", "javascript", b"const DEMO_TODAY"),
+        ("mock.css", "text/css", b".calendar-card"),
+    ):
+        body, headers = get(f"{web}/design-preview/{filename}")
+        assert content_type in headers.get("Content-Type", ""), "Gallery asset content type incorrect"
+        assert marker in body, "Gallery asset missing"
+    body, headers = get(f"{web}/design-preview/revision.json")
+    assert json.loads(body)["revision"] == revision, "Gallery build revision mismatch"
+    assert "no-store" in headers.get("Cache-Control", ""), "Gallery revision may be cached"
+    for path in ("/leave", "/approvals", "/availability", "/people"):
         body, headers = get(f"{web}{path}")
         assert "text/html" in headers.get("Content-Type", ""), "SPA route did not serve HTML"
         assert b"<app-root" in body, "Angular entry point missing"

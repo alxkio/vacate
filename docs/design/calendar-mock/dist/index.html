@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Three proposed Vacate calendar layouts. Interactive design mock with fictional data.">
+  <title>Vacate · Calendar design studio</title>
+  <link rel="stylesheet" href="mock.css">
+  <script src="mock.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to calendar</a>
+  <div class="studio">
+    <div class="studio-heading"><span class="eyebrow">VACATE / DESIGN STUDY 01</span><span>Explore a direction. All data is fictional.</span></div>
+    <div class="directions" aria-label="Design direction">
+      <button data-direction="a" aria-pressed="true"><span class="direction-letter">A</span><span><strong>Calendar workspace <small>Recommended</small></strong><span>A familiar calendar, room to plan.</span></span></button>
+      <button data-direction="b" aria-pressed="false"><span class="direction-letter">B</span><span><strong>Team planner</strong><span>People first. See time off together.</span></span></button>
+      <button data-direction="c" aria-pressed="false"><span class="direction-letter">C</span><span><strong>Personal overview</strong><span>A little perspective on the whole year.</span></span></button>
+    </div>
+  </div>
+  <div class="app" data-direction="a">
+    <header class="topbar">
+      <div class="brand"><span class="brand-symbol">v<span>•</span></span>vacate<span class="brand-dot">.</span></div>
+      <span class="company"><span class="company-mark">N</span>Northstar Studio<span class="company-label">Demo company</span></span>
+      <div class="top-actions"><button class="text-button" data-action="help">Help & feedback</button><button class="account" data-action="account" aria-label="Alex Morgan, demo account">AM</button></div>
+    </header>
+    <aside class="sidebar" aria-label="Main navigation">
+      <button class="mobile-menu" aria-expanded="false" aria-controls="navigation">☰ <span>Navigation</span></button>
+      <nav id="navigation"><span class="nav-caption">WORKSPACE</span>
+        <button class="nav-item selected" data-nav="calendar"><span aria-hidden="true">▦</span> Calendar</button>
+        <button class="nav-item" data-nav="leave"><span aria-hidden="true">☀</span> My leave</button>
+        <button class="nav-item" data-nav="approvals"><span aria-hidden="true">☑</span> Approvals <span class="nav-demo">Demo</span></button>
+        <button class="nav-item" data-nav="people"><span aria-hidden="true">♧</span> People</button>
+      </nav>
+      <div class="sidebar-note"><span class="note-icon">↗</span><strong>Make room for time off.</strong><p>A little planning.<br>A better balance.</p><span class="demo-tag">INTERACTIVE MOCK</span></div>
+      <div class="sidebar-bottom"><span class="status-dot"></span> Design proposal · v01</div>
+    </aside>
+    <main id="main" tabindex="-1">
+      <div class="page-heading"><div><div class="breadcrumb">Workspace <span>/</span> Calendar</div><h1>Your time, in view<span>.</span></h1><p id="subtitle">Plan your next break. Keep your team in the picture.</p></div><button class="primary" data-action="request"><span aria-hidden="true">＋</span> Request leave</button></div>
+      <div class="scope-line"><div class="segments scopes" aria-label="Calendar scope"><button data-scope="self" aria-pressed="true">My calendar</button><button data-scope="team" aria-pressed="false">My team</button><button data-scope="org" aria-pressed="false">Organization</button></div><span class="scope-note" id="scope-note">Only your requests and balances</span></div>
+      <div class="workspace">
+        <section class="calendar-card" aria-label="Calendar">
+          <div class="calendar-toolbar"><div class="date-navigation"><button class="icon-button" data-action="previous" aria-label="Previous period">‹</button><h2 id="period"></h2><button class="icon-button" data-action="next" aria-label="Next period">›</button><button class="today-button" data-action="today">Today</button></div><div class="segments views" aria-label="Calendar view"><button data-view="year" aria-pressed="false">Year</button><button data-view="month" aria-pressed="true">Month</button><button data-view="week" aria-pressed="false">Week</button><button data-view="day" aria-pressed="false">Day</button></div></div>
+          <div class="calendar-meta"><span id="calendar-caption">My calendar</span><span><span class="tiny-square approved"></span> Approved <span class="tiny-square pending"></span> Pending <span class="meta-availability" hidden>· Colleagues shown as Away</span></span></div>
+          <div id="calendar-content"></div>
+          <div class="calendar-footer"><span id="calendar-footnote">Select a date to see details</span><span>Demo date: 22 Oct 2026</span></div>
+        </section>
+        <aside class="insights" aria-label="Your leave overview">
+          <section class="balance-card"><div class="card-label">YOUR TIME OFF <span>↗</span></div><div class="balance-number">14<span>days available</span></div><div class="balance-track"><i></i><i></i><i></i></div><div class="balance-breakdown"><span><b>6</b> Taken</span><span><b>2</b> Pending</span><span><b>14</b> Available</span></div><p>Illustrative balance · no entitlement calculation</p></section>
+          <section class="upcoming-card"><div class="panel-title"><h2>Coming up for you</h2><span>↗</span></div><button class="upcoming-event" data-event="own-oct"><span class="date-tile"><small>OCT</small>26</span><span><strong>A little autumn pause</strong><span>26–28 Oct · Vacation</span><span class="status approved">✓ Approved</span></span></button><button class="upcoming-event" data-event="own-dec"><span class="date-tile"><small>DEC</small>21</span><span><strong>A winter reset</strong><span>21–22 Dec · Vacation</span><span class="status pending">◷ Pending</span></span></button><button class="inline-link" data-nav="leave">View my leave <span>→</span></button></section>
+          <section class="detail-card" id="date-details" aria-live="polite"><span class="eyebrow">A LITTLE CONTEXT</span><h2>Pick a day</h2><p>Select a date or an absence to see what’s planned.</p></section>
+        </aside>
+      </div>
+      <p class="prototype-note">Design exploration · Fictional people and requests · No data is saved or sent · Shared views show availability only</p>
+    </main>
+  </div>
+  <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+  <dialog id="dialog"><form method="dialog"><button class="dialog-close" aria-label="Close dialog">×</button></form><div id="dialog-content"></div></dialog>
+</body>
+</html>

@@ -13,6 +13,12 @@ param staticSiteSku string = 'Free'
 @maxValue(1000)
 param maximumInstanceCount int = 40
 
+@description('Retain warning/error diagnostics in Application Insights. False omits both monitoring resources.')
+param enableMonitoring bool = true
+@description('Daily workspace ingestion limit in GB. This is not a hard spending cap.')
+@allowed(['0.01', '0.05', '0.1', '0.25', '0.5', '1'])
+param monitoringDailyCapGb string = '0.01'
+
 var suffix = uniqueString(subscription().subscriptionId, resourceGroup().id, environmentName)
 var baseName = '${namePrefix}-${environmentName}-${suffix}'
 var tags = { application: 'vacate', environment: environmentName, managedBy: 'bicep' }
@@ -65,9 +71,9 @@ module web 'modules/static-web-app.bicep' = {
   name: 'static-web-app'
   params: { baseName: baseName, location: staticSiteLocation, sku: staticSiteSku, tags: tags }
 }
-module monitoring 'modules/monitoring.bicep' = {
+module monitoring 'modules/monitoring.bicep' = if (enableMonitoring) {
   name: 'monitoring'
-  params: { baseName: baseName, location: location, tags: tags }
+  params: { baseName: baseName, location: location, tags: tags, dailyCapGb: monitoringDailyCapGb }
 }
 resource api 'Microsoft.Web/sites@2024-04-01' = {
   name: '${baseName}-api'
@@ -89,7 +95,8 @@ resource api 'Microsoft.Web/sites@2024-04-01' = {
         supportCredentials: false
       }
       appSettings: [
-        { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: monitoring.outputs.connectionString }
+        { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: enableMonitoring ? monitoring!.outputs.connectionString : '' }
+        { name: 'Logging__LogLevel__Default', value: 'Warning' }
         { name: 'AzureWebJobsStorage__accountName', value: storage.name }
         { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
         { name: 'AzureWebJobsStorage__clientId', value: identity.properties.clientId }

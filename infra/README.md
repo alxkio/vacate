@@ -4,11 +4,29 @@ Bicep and GitHub Actions follow the layout of the local `alcalc` reference proje
 
 ## Resources and configuration
 
-`main.bicep` targets an existing resource group. It provisions Angular hosting in Static Web Apps, a Linux Flex Consumption Function App (.NET 10 isolated), private blob containers in a storage account, a user-assigned identity and storage-scoped Blob Data Owner assignment, plus Log Analytics and Application Insights. Public network endpoints remain enabled; anonymous blob access and storage shared keys are disabled. CORS allows only the generated frontend origin and does not enable credentials. CORS does not authorise API access.
+See the [dev resource inventory and cost estimate](cost-estimate.md), checked 2026-10-22, before applying the first deployment.
 
-Edit `parameters/{dev,staging,prod}.bicepparam` for region, naming prefix, Static Web Apps tier and Functions scale limit. Use separate resource groups and target/parameter files for each deployment environment. The workflow does not require GitHub Environments. Names derive from subscription, resource group and environment. Prefixes must be lowercase letters/digits, begin with a letter, and have 2–7 characters. West Europe is a configurable starting assumption; region capacity and subscription quotas are UNVERIFIED until Azure validation/deployment. Production uses Standard SWA; dev/staging use Free. This is an initial configuration, not an availability or zero-cost commitment. Log Analytics has 30-day retention and a 1 GB/day ingestion cap, which is not a spending ceiling. The Functions worker exports telemetry when Application Insights is configured; do not log employee identity, sickness information or request bodies.
+`main.bicep` targets an existing resource group. It provisions Angular hosting in Static Web Apps, a Linux Flex Consumption Function App (.NET 10 isolated), private blob containers in a storage account, a user-assigned identity and storage-scoped Blob Data Owner assignment, plus optional Log Analytics and Application Insights. Public network endpoints remain enabled; anonymous blob access and storage shared keys are disabled. CORS allows only the generated frontend origin and does not enable credentials. CORS does not authorise API access.
+
+Edit `parameters/{dev,staging,prod}.bicepparam` for region, naming prefix, Static Web Apps tier and Functions scale limit. Use separate resource groups and target/parameter files for each deployment environment. The workflow does not require GitHub Environments. Names derive from subscription, resource group and environment. Prefixes must be lowercase letters/digits, begin with a letter, and have 2–7 characters. West Europe is a configurable starting assumption; region capacity and subscription quotas are UNVERIFIED until Azure validation/deployment. Production uses Standard SWA; dev/staging use Free. This is an initial configuration, not an availability or zero-cost commitment. Monitoring is enabled by default with 30-day retention and a 0.01 GB/day (10 MB/day) ingestion cap, which is not a spending ceiling. Worker warning/error logs flow through the Functions host to Application Insights; do not log employee identity, sickness information or request bodies.
 
 SQL, application identity/login, custom domains, email, private endpoints and policy rules are not provisioned. Database selection and company isolation remain open under ADR-0001.
+
+## Minimal diagnostics and cheaper option
+
+Dev defaults to `enableMonitoring = true`, `monitoringDailyCapGb = '0.01'`. Host and worker keep warning/error logs, exceptions and failed host executions. Successful request records, invocation aggregates, automatic dependency tracking, performance counters and live metrics are disabled. The separate worker exporter is removed; no success tracing bypasses these host filters. Retained error telemetry is not sampled, but the daily cap stops further ingestion until reset and may overshoot. This removes successful-request history and related Application Insights charts. It does not suppress standard Azure platform metrics.
+
+At 10 MB/day, about 0.31 GB/month would fit under the cap in a 31-day month, before overshoot. This fits the billing account's 5 GB free monthly ingestion allowance if it remains available. If that allowance is already used, 0.31 GB at the checked West Europe rate is about EUR 0.82; neither the volume nor that cost is a hard ceiling. See [the updated estimate](cost-estimate.md).
+
+For zero Application Insights/Log Analytics ingestion from this app, set this in the selected `.bicepparam`:
+
+```bicep
+param enableMonitoring = false
+```
+
+On a fresh deployment this omits the workspace and Insights component, reducing the inventory from ten to eight resources, and explicitly clears the app's Insights connection string. Platform metrics and deployment HTTP smoke checks remain, but there is no retained searchable application log/exception history. Platform metrics alone do not replace debugging logs. A Blob/custom log sink or another hosted product would need additional code, retention/access controls and its own cost review; it is not added here.
+
+Incremental deployment does not delete existing monitoring resources or historical data when the switch is turned off. No resources have been removed by this change. The new quota and cloud log routing still need Azure validation and a deployed ingestion check; their successful compilation is not proof of provider acceptance or runtime export.
 
 ## One-time Azure and GitHub setup
 
@@ -46,6 +64,14 @@ bash scripts/setup-azure-deploy.sh dev alxkio/vacate
 
 The helper creates/reuses the group and deployment app, registers providers, grants the required group-scoped roles, and appends a one-year client secret. It saves the `AZURE_CREDENTIALS` JSON to an owner-only temporary file and prints its path. Save its contents as the repository secret, then remove that local file. The helper does not deploy resources inside the group or modify GitHub settings, and has not been run here. Re-running appends a credential; existing credentials are preserved.
 
+## Azure login troubleshooting
+
+The first hosted attempt and its outcome are recorded in [cloud validation evidence](../docs/cloud-validation-2026-10-22.md).
+
+If `azure/login` reports **No subscriptions found**, the deployment app is not seeing an accessible subscription in the selected tenant. Verify that `AZURE_CREDENTIALS.clientId` identifies the app granted **Contributor** and **Role Based Access Control Administrator** on `rg-vacate-dev`, and that its `tenantId` is the directory containing subscription `07d79495-1f4f-40fd-9fdf-84605214e5e6`. Application registration ownership and API permissions do not grant Azure resource access. Allow new role assignments time to propagate, then rerun the failed job. Persistent failures after those checks need Azure-side investigation; this message alone does not prove which setting is wrong.
+
+If login succeeds but validation reports missing **Microsoft.Authorization/roleAssignments/write**, the deployment service principal needs effective **Role Based Access Control Administrator** on the target resource group in addition to Contributor. If that role has a delegation condition, it must allow **Storage Blob Data Owner** assignments to the Function App's managed identity. The deployment identity assigns this role so Functions can access its storage without account keys.
+
 ## Deployment
 
 Run **Deploy Azure** in GitHub Actions, select the environment and leave `apply=false` to validate and preview. Run with `apply=true` to validate, show what-if, then apply incrementally to the explicitly selected subscription and group. Workflow runs for the same environment are serialised. Pull requests compile every parameter file without Azure credentials. The workflow prints resource names and URLs, not credentials. Retrying the same configuration should update the same resources; RBAC propagation can briefly delay runtime storage access.
@@ -80,6 +106,6 @@ There is no atomic rollback across Functions and Static Web Apps. If publishing 
 - Azure verification still required: inspect deployment outputs, HTTPS endpoints, exact-origin CORS, identity storage access and repeat-deployment what-if. The published health function must pass the application health check.
 - Environment isolation: deploy dev and staging to distinct groups and confirm distinct storage accounts, identities and resource IDs. Customer tenant-isolation tests are not applicable to this health-and-hosting release; no customer data paths were added. Existing app tenant isolation remains UNVERIFIED.
 
-Local verification results are recorded in [the first cloud release report](../docs/cloud-deploy-2026-10-21.md). Azure validation, resource deployment, hosted CI execution and cloud runtime checks require the configured accounts and have not been run. The published package passed local HTTP liveness/revision checks with Core Tools 4.16.0. No resources were created by this change.
+Earlier app and infrastructure verification is recorded in [the first cloud release report](../docs/cloud-deploy-2026-10-21.md) and [cloud validation report](../docs/cloud-validation-2026-10-22.md). The reduced logging configuration has been compiled and locally built/tested; Azure validation and log-ingestion checks for these new settings remain pending. The published package passed local HTTP liveness/revision checks with Core Tools 4.16.0. No resources were created by this change.
 
 Sources checked 2026-10-21: [isolated .NET worker](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide), [Functions publishing action](https://github.com/Azure/functions-action), [Static Web Apps build and publishing](https://learn.microsoft.com/en-us/azure/static-web-apps/build-configuration), [Functions infrastructure](https://learn.microsoft.com/en-us/azure/azure-functions/functions-infrastructure-as-code), [identity-based host storage](https://learn.microsoft.com/en-us/azure/azure-functions/manage-connections), [Functions runtime versions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-versions), [Azure service-principal secret login](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure-secret).
