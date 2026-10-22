@@ -15,9 +15,9 @@ param maximumInstanceCount int = 40
 
 @description('Retain warning/error diagnostics in Application Insights. False omits both monitoring resources.')
 param enableMonitoring bool = true
-@description('Daily workspace ingestion limit in GB. This is not a hard spending cap.')
-@allowed(['0.01', '0.05', '0.1', '0.25', '0.5', '1'])
-param monitoringDailyCapGb string = '0.01'
+@description('Daily workspace ingestion limit in GB; Azure requires >0.023 GB. This is not a hard spending cap.')
+@allowed(['0.025', '0.05', '0.1', '0.25', '0.5', '1'])
+param monitoringDailyCapGb string = '0.025'
 
 var suffix = uniqueString(subscription().subscriptionId, resourceGroup().id, environmentName)
 var baseName = '${namePrefix}-${environmentName}-${suffix}'

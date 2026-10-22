@@ -9,4 +9,4 @@ param maximumInstanceCount = 40
 
 // Keep only essential operational diagnostics. Set false to omit paid log ingestion.
 param enableMonitoring = true
-param monitoringDailyCapGb = '0.01'
+param monitoringDailyCapGb = '0.025'

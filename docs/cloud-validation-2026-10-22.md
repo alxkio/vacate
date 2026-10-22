@@ -1,5 +1,7 @@
 # Cloud validation — 2026-10-22
 
+Historical validation record. A later first-deployment attempt is recorded below; the initial statements describe the earlier preview, not the current resource state.
+
 ## Current outcome
 
 The latest [validation retry](https://github.com/alxkio/vacate/actions/runs/39679059590) succeeded with the original `dev`, `apply=false` inputs after the Azure IAM updates. All jobs succeeded: compilation, frontend checks, backend checks and deployment validation/preview. Azure login and resource-group deployment permissions are now verified for this run. The Azure what-if summary reports **10 resources to create** in `rg-vacate-dev`.
@@ -50,3 +52,9 @@ Acceptance scenarios: with monitoring enabled, a controlled warning/error is ret
 Verification: NuGet lockfiles refreshed, API Release build passed with zero warnings/errors, both health contract tests passed and Release publish passed. All environment parameter files and a monitoring-disabled profile compiled. Compiled ARM was inspected for conditional monitoring and an empty connection-string fallback when disabled. These checks do not verify Azure log delivery, quota acceptance or cap enforcement. No cloud configuration was changed.
 
 Source documents updated: `api/README.md`, `infra/README.md`, `infra/cost-estimate.md` and this report. No new product decision was required; production diagnostic and recovery requirements remain open. Sources checked 2026-10-22: [host log categories and failed executions](https://learn.microsoft.com/en-us/azure/azure-functions/configure-monitoring), [host.json telemetry settings](https://learn.microsoft.com/en-us/azure/azure-functions/functions-host-json), [default isolated worker log relay](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#application-insights), [daily-cap behavior](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/daily-cap).
+
+## First apply and quota correction
+
+The user authorized deploying the three-direction mock gallery on 2026-10-22 without selecting a UI direction. Commit `eb68584` passed hosted frontend/backend checks, Bicep compilation, Azure login and validation/what-if in [run 39768832302](https://github.com/alxkio/vacate/actions/runs/39768832302). The actual infrastructure apply failed because Azure requires `workspaceCapping.DailyQuotaGb` greater than 0.023 GB. What-if did not catch this provider-side restriction. Resources may have been partially created; no app publish step ran.
+
+The cap is corrected to 0.025 GB/day (25 MB), invalid 0.01 GB is removed from allowed inputs, and cost documentation is reconciled. Warning/error filters remain the same. The next workflow performs an incremental retry; it does not delete existing resources. A prior packaging attempt (`c12a33c`) failed before deployment because Angular prohibits assets outside its workspace; CI now copies the standalone gallery into the completed frontend artifact instead. The Azure root redirects to `/design-preview/index.html`; existing Angular deep links and the API health endpoint remain checked. Tenant-isolation scenarios remain outside this fixture-only gallery and must pass before real employee data is introduced.
