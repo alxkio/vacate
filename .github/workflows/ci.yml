@@ -67,6 +67,8 @@ jobs:
         run: |
           set -euo pipefail
           node --check ../docs/design/calendar-mock/dist/mock.js
+          mkdir -p dist/vacate-web/browser/design-preview
+          cp ../docs/design/calendar-mock/dist/index.html ../docs/design/calendar-mock/dist/mock.css ../docs/design/calendar-mock/dist/mock.js dist/vacate-web/browser/design-preview/
           test -f dist/vacate-web/browser/design-preview/index.html
           test -f dist/vacate-web/browser/design-preview/mock.css
           test -f dist/vacate-web/browser/design-preview/mock.js

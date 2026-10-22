@@ -16,7 +16,7 @@ Use A as the proposed main shell, B as a candidate team layout, and C as a candi
 
 All names, teams, balances and requests are fictional. Today uses 22 October 2026. Weeks start Monday as a display assumption; shaded weekends do not establish company working days. Week/day are all-day views. Colleague fixtures contain availability only; the viewer's personal summary remains their own when changing scope. The demo request previews dates without calculating entitlement, saving data or calling an API. Navigation opens illustrative dialogs.
 
-The Angular build copies this gallery to `/design-preview/`; the Azure root redirects to its `index.html` for design review. Existing Angular routes remain available. No authentication, authorization or company isolation is implemented here. Production permission rules, real balances, company calendars and supported leave units remain open; see the proposal's release scenarios. Browser-side fixture filtering is not an authorization control.
+CI packages this gallery beside the Angular build at `/design-preview/`; the Azure root redirects to its `index.html` for design review. Existing Angular routes remain available. No authentication, authorization or company isolation is implemented here. Production permission rules, real balances, company calendars and supported leave units remain open; see the proposal's release scenarios. Browser-side fixture filtering is not an authorization control.
 
 ## Verification
 
