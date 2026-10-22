@@ -1,6 +1,6 @@
 # Cloud validation — 2026-10-22
 
-Historical validation record. A later first-deployment attempt is recorded below; the initial statements describe the earlier preview, not the current resource state.
+Historical validation record. The [first dev deployment](cloud-deploy-2026-10-22.md) subsequently succeeded; the initial statements describe the earlier preview, not the current resource state.
 
 ## Current outcome
 

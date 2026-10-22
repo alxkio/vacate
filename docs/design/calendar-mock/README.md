@@ -1,6 +1,6 @@
 # Calendar mock gallery
 
-Status: PROPOSED, 2026-10-22. Local visual exploration before the first cloud deploy.
+Status: PROPOSED design, 2026-10-22. Published for review at [the Azure gallery](https://lemon-beach-02f7a7103.4.azurestaticapps.net/design-preview/index.html); direction selection remains open. See the [deployment record](../../cloud-deploy-2026-10-22.md).
 
 Open [dist/index.html](dist/index.html) directly in a browser; it needs no Angular build, server, dependencies or network. Compare A/B/C at the top, then try all three scopes and Year/Month/Week/Day, previous/next/Today, date details and the illustrative request form. Each direction starts in its representative view; changing scope or period preserves the selected date.
 
@@ -38,4 +38,4 @@ Passed on 2026-10-22 with Node 22.22.3 / Chrome 150:
 - Six desktop/mobile screenshots rendered without JavaScript exceptions and were visually inspected.
 - JavaScript syntax and `git diff --check` pass.
 
-Limits: this is not a complete keyboard, screen-reader or contrast audit. Backend tenant isolation and authorization scenarios are specified in the proposal and remain untested because the mock has no backend. No cloud deploy was performed.
+Limits: this is not a complete keyboard, screen-reader or contrast audit. Backend tenant isolation and authorization scenarios are specified in the proposal and remain untested because the mock has no backend. The separate deployment record covers cloud verification.
