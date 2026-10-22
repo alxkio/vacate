@@ -24,3 +24,4 @@ Source precedence follows AGENTS.md. Use accepted ADRs first, then accepted prod
 - [Approved mock leave-type summary](product/leave-types-review.md) — allowances, rules and five-day workweek; production policy validation remains open.
 - [Expandable leave balances](design/leave-balances-proposal.md) — accepted UI Architect recommendation, implemented with fictional per-type quantities, percentages and rules.
 - [Leave mock release](release-2026-10-22-leave-mock.md) — independent review, acceptance checks and successful Azure dev deployment.
+- [VAC-6 release](release-2026-10-23-vac-6.md) — persona/account implementation, scoped synthetic fixtures and verification/deployment evidence.

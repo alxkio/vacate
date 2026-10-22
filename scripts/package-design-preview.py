@@ -14,7 +14,7 @@ output = args.web_output
 index = output / "index.html"
 if not index.is_file() or "<app-root" not in index.read_text():
     raise SystemExit("Expected a fresh Angular build with an app-root entry point")
-files = ["index.html", "login.html", "mock.css", "mock.js", "demo-session.js", "login.js", "leave-types.js", "favicon.svg"]
+files = ["index.html", "login.html", "mock.css", "mock.js", "demo-fixtures.js", "demo-session.js", "login.js", "leave-types.js", "favicon.svg"]
 if not all((source / name).is_file() for name in files):
     raise SystemExit("Demo package is incomplete")
 index.replace(output / "app.html")

@@ -2,7 +2,7 @@
 id: VAC-6
 type: story
 summary: Model a fictional company with per-person demo logins and visibility scenarios
-status: specification
+status: qa
 created: 2026-10-23
 updated: 2026-10-23
 parent: null
@@ -11,32 +11,32 @@ depends_on: [VAC-1]
 
 # VAC-6 — Model a fictional company with per-person demo logins and visibility scenarios
 
-![Story](badges/story.svg) **📝 Specification** · Owner: Unassigned
+![Story](badges/story.svg) **🔍 QA** · Implementation: Codex
 
 ## Description
 
 As the product lead reviewing company workflows, I want a coherent fictional company with distinct people, work roles, departments/teams and a demo login for each person so that I can explore who sees what rather than viewing the same fixtures under two role labels.
 
-The founder asks for more people and per-person logins. An IT-sector company is an idea to explore, not a committed customer segment or production organization design. The current mock's user/admin accounts show the same company with a role label; this story proposes a richer synthetic scenario set.
+The founder asked for more people and per-person logins, then authorized implementing the PO proposal. Northstar Example is an IT-services scenario for exploration, not a committed customer segment or production organization design. The previous release's shared-viewer accounts are replaced with canonical fictional identities; legacy shortcuts map to Maya and Nora.
 
 ## Scope
 
-- Define a small, coherent fixture roster with stable person/account/company/group identifiers; agree headcount and group structure before implementation.
-- Include ordinary employee, HR administrator and owner candidate personas, with the concrete proposal below. A team lead helps compare people-management responsibility with the temporary admin-only approval rule. Work titles do not automatically grant permissions.
+- Use the reviewed 12-person roster below with stable person/account/company/group identifiers, two departments and four teams.
+- Include employee, non-admin team lead, HR administrator and owner personas. Work titles do not automatically grant permissions; HR and owner share explicit admin capability.
 - Provide a distinct browser-demo account for every fixture person, linked to that person's own requests and balance examples. Document public demo access in the mock's access instructions, not passwords or real identities in issue attachments.
-- Use company-email-style synthetic usernames consistent with the accepted one-company-per-account direction. Demo login remains browser-only and does not implement authentication, manual provisioning, recovery or directory integration.
+- Use lowercase firstname/firstname demo logins following the founder's 2026-10-23 instruction. Synthetic email metadata remains separate. This public-mock convention does not change the accepted production company-email username direction. Demo login is browser-only and does not implement real authentication, provisioning, recovery or directory integration.
 - Record a reviewable access matrix for own records, generic team/department/organization availability, approval inbox and organization settings; distinguish access to a page from access to sensitive request details.
 - Use simple departments/teams for scenario exploration; no hierarchy editor, multi-company membership or company switcher. A person/account initially belongs to one fictional company.
 - Retain the five-day Monday–Friday mock basis, distinct leave units and source-labelled rule previews. No real employee, family, health or service-history records are introduced.
 - Agree explicit fixtures for pending/approved requests, overlapping availability and empty scopes without claiming legal eligibility. Do not generate sensitive medical narratives.
-- **ASSUMPTION — proposed for isolation demonstrations:** a second minimal fictional company with separate accounts can exercise negative UI scope cases. This is not a request for an account to switch companies and does not establish server isolation.
+- No second fictional company or company switcher is included in this iteration. Negative company/person/group identifier cases verify presentation filtering only; actual multi-company server isolation remains a future release gate.
 - Coordinates [VAC-2 settings](VAC-2-organization-settings-mock.md), [VAC-3 admin overview](VAC-3-admin-overview-first-experience.md), [VAC-4 approvals](VAC-4-admin-approval-inbox-mock.md) and [VAC-5 shortlist](VAC-5-common-leave-types-chooser.md). Their agreed permissions/behaviors feed this matrix; no circular implementation prerequisite is intended.
 
 ## PO proposal — personas and fixture company
 
-**PROPOSAL / ASSUMPTION, 2026-10-23 — not accepted permissions.** Use **Northstar Example**, a fictional IT-services company with **12 people, two departments and four teams**. This is a compact scenario for reviewing the mock; it does not select an IT commercial market or approve a production hierarchy. Every person has one explicit demo account in this company. Use synthetic `@example.invalid` usernames; login access instructions belong in the mock README, not this issue.
+**Accepted for this synthetic implementation, 2026-10-23:** the founder instructed proceeding with VAC-6 using the PO proposal. Use **Northstar Example**, a fictional IT-services company with **12 people, two departments and four teams**. This is a compact scenario for reviewing the mock; it does not select an IT commercial market or approve a production hierarchy or permissions. Every person has one canonical demo account in this company. Use lowercase firstname/firstname for public demo access; synthetic `@example.invalid` email metadata remains fictional. Public demo access instructions belong in the mock README.
 
-| Persona / explicit demo capability | Main job to be done | Proposed landing | Proposed availability scope | Approval / settings |
+| Persona / explicit demo capability | Main job to be done | Mock landing | Mock availability scope | Approval / settings |
 |---|---|---|---|---|
 | Employee / employee | Plan personal time away and check nearby colleagues | Own leave and balances | Own records; generic availability for own team | No approval; no organization settings |
 | Team lead / non-admin lead | Check department availability and coordinate coverage | Own department overview, with My leave reachable | Own records; generic availability across own department and its teams | No approval under the confirmed temporary rule; no organization settings |
@@ -109,18 +109,22 @@ Not applicable: use synthetic fixture files; no personnel/account schema or migr
 - [Charter](../product/product-charter.md) and [proposed MVP](../product/mvp-scope.md), 2026-10-20: company-first workflow and tenant isolation, detailed pilot roles still open.
 - [Existing persona/JTBD hypotheses](../product/personas-jtbd.md), status Proposed; document has no effective-date claim. Manager approval hypotheses are not approved for this temporary admin-only mock.
 - [Current mock boundaries](../design/calendar-mock/README.md) and [release record](../release-2026-10-22-leave-mock.md), 2026-10-22: two accounts, synthetic data, browser session only, no server authorization.
-- No new attachments needed; add an approved roster/matrix as a linked product/design document during specification, without passwords or personal data.
+- [Implemented synthetic fixture definitions](../design/calendar-mock/dist/demo-fixtures.js), [public demo access and scope instructions](../design/calendar-mock/README.md) and [VAC-6 release evidence](../release-2026-10-23-vac-6.md). The roster/matrix remains in this issue; no additional personal-data attachment is needed.
 
 ## Comments
 
 - C-1 · 2026-10-23 · Product Owner agent: IT-sector framing is a scenario option, not an approved market focus. Distinct demo identities help evaluate behavior but do not establish real security or a production persona model.
 - C-2 · 2026-10-23 · Product Owner agent, responding to founder request for suggested personas: Recommended four jobs across three explicit demo capabilities, with the 12-person fixture and visibility matrix above. Department-wide lead visibility, admin detail fields and blocking self-approval are proposals for review, not confirmed rules.
+- C-3 · 2026-10-23 · Codex: Founder authorized committing the existing work, implementing VAC-6, reviewing, pushing and deploying to Azure dev. Use the proposed 12-person roster and presentation scopes for this prototype. VAC-2–VAC-5 remain separate; admin settings/approvals show planned destinations without implementing decisions or mutations.
 
 ## Decisions
 
 - D-1 · 2026-10-23 · Founder direction, confirmed for mock planning: expand fictional people, support a demo login for each, and cover department/team visibility scenarios.
 - D-2 · 2026-10-23 · Existing accepted direction retained: each account initially accesses one company; no company switching or real identity integration. See [ADR-0001](../adr/0001-company-first-web-api.md).
 - D-3 · 2026-10-23 · Founder direction, confirmed for mock: approval remains temporarily admin-only; team-lead title alone must not grant it. Detailed production authority remains open.
+- D-4 · 2026-10-23 · Implementation scope following founder instruction: use own/team employee views, own/team/department non-admin lead views and all company scopes for HR/owner admins. Initial scopes are own/department/organization respectively, using the existing calendar shell. Preserve the legacy demo shortcuts as aliases to canonical people; do not add a second company or production identity system.
+- D-5 · 2026-10-23 · Delivery boundary: approval details/self-approval simulation and settings persistence remain unresolved in VAC-2/VAC-4. VAC-6 provides identities, fixtures, generic scoped availability and planned admin-only destinations; it grants no access to colleagues' private balances or request narratives.
+- D-6 · 2026-10-23 · Founder instruction during implementation: each public demo login uses lowercase firstname as username and password. Canonical person IDs and the two legacy shortcuts remain; this is a mock-only convention, not a change to production identity policy.
 
 ## Work log
 
@@ -135,6 +139,8 @@ Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not reco
 - H-1 · 2026-10-23 · Product Owner agent: Created in Specification; roster, matrix and IT-sector framing need review. No implementation started.
 
 - 2026-10-23 · Codex: Recorded direct dependency metadata and prerequisite outputs; kept coordination links non-blocking. Status unchanged.
+- 2026-10-23 · Codex: Specification → Todo → In progress after the founder instructed proceeding with the bounded mock proposal. VAC-1 prerequisite is released; no production policy approval is inferred.
+- 2026-10-23 · Codex: In progress → QA. Persona/account implementation, package integration and independent source review are complete. Fixture/session checks pass; full browser/history/keyboard verification is running before release.
 
 ## Verification and release
 
@@ -142,9 +148,10 @@ Specification only. Acceptance scenarios are unexecuted; no added accounts/perso
 
 ## Open questions and follow-up
 
-1. Accept the proposed 12 people, two departments and four teams, or simplify the scenario further?
-2. Accept IT services as the fictional setting and the suggested work titles? This does not decide the commercial target segment.
-3. Accept HR and owner as two personas sharing explicit admin capability? Confirm the proposed inbox details and whether any balance detail is needed.
-4. Accept team-only employee availability and department-wide lead availability, with non-admin leads unable to approve?
-5. Should a second minimal fictional company be included for negative UI scope scenarios, using separate accounts and no company switcher?
-6. Should existing user/admin aliases remain as compatibility shortcuts or be replaced by per-person synthetic email logins? How are public demo credentials presented outside issues?
+The roster, IT-services scenario, shared HR/owner demo capability, scope defaults and retained aliases were selected for this prototype when the founder instructed proceeding. They remain distinct from production decisions.
+
+1. Real customer personas, production access scopes, account lifecycle and data model need company validation.
+2. VAC-4 owns approval detail, self-approval/fallback and decision simulation; VAC-6 exposes no decision actions or colleagues' private balance data.
+3. VAC-2 owns editable organization settings and persistence. VAC-3 owns the fuller admin-first dashboard layout; VAC-5 owns the common type shortlist.
+4. A second synthetic company and all real multi-company authorization tests remain future work. This one-company public mock is not evidence that server isolation is implemented.
+5. UI direction, real policy/eligibility and production organization structure remain open in the canonical product documents.

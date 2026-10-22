@@ -16,7 +16,7 @@ Paid, calendar-year entitlement; distinguish **current-employer service** from *
 | 10 completed years with current employer **or** 12 total | 25 WD | 30 WD |
 | 25 completed years of service/prior service | 26 WD | 31 WD |
 
-The six-day column is source context only. The mock displays the five-day figures and a configured annual allocation of **25 WD: 9 used, 2 pending, 14 available (56%)**; it does not infer an employee's service tier.
+The six-day column is source context only. The mock displays the five-day figures. In the VAC-6 Maya fixture, annual allocation is **25 WD: 8 used, 3 pending, 14 available (56%)**; it does not infer an employee's service tier.
 
 **Logic to preserve:** calendar-year boundaries and employment anniversaries differ. The third year can begin before 24 months are completed; do not grant the second-anniversary increase early. Apply the relevant higher service tier, not cumulative additions. Recognized prior service can affect the basis for a new hire; do not reset everyone to 20/24. Count scheduled working days, excluding applicable holidays/non-working days. Proration, rounding, service evidence, partial schedules and historical rule versions require explicit policy decisions. Do not infer total service from the latest hire date.
 
@@ -63,7 +63,7 @@ The 2025 Labour Code (PD 62/2025, Government Gazette A121, 2025-07-11) also reco
 
 Use the same **My leave balances** component in A/B/C. Each type has a labelled horizontal bar and exact numbers, expanding to allowance, eligibility, pay, period/event, source and service-year explanation. [UI Architect proposal](../design/leave-balances-proposal.md).
 
-Fictional example: **Annual · 14 / 25 WD available · 56% available**. Bar: **Used 9 | Pending 2 | Available 14**. Pending reservations reduce availability once; approval must move reserved units to used without another deduction. Approved-upcoming detail must not double-count usage. The mock previews amounts without saving requests or changing balances.
+Fictional example: **Annual · 14 / 25 WD available · 56% available**. VAC-6 Maya bar: **Used 8 | Pending 3 | Available 14**. Pending reservations reduce availability once; approval must move reserved units to used without another deduction. Approved-upcoming detail must not double-count usage. The mock previews amounts without saving requests or changing balances.
 
 Show percentages only with a confirmed positive allowance and matching units/period. Event leave shows the event allowance; reduced hours show the schedule; unknown eligibility shows **To confirm**, not zero. Never sum unrelated types/units. Shared calendars remain **Away**; balances and sensitive rules stay personal.
 

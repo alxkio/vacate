@@ -1,61 +1,75 @@
 # Calendar mock gallery
 
-Status: PROPOSED design, 2026-10-22. Published for review at [the Azure site](https://lemon-beach-02f7a7103.4.azurestaticapps.net); direction selection remains open. See the [deployment record](../../cloud-deploy-2026-10-22.md).
+The A/B/C design study uses public, fictional people and data. UI direction remains open. The previous [leave mock release](../../release-2026-10-22-leave-mock.md) is deployed at [Azure dev](https://lemon-beach-02f7a7103.4.azurestaticapps.net); the [VAC-6 release record](../../release-2026-10-23-vac-6.md) tracks the current persona/account update and deployment status.
 
-The login/index/favicon and approved leave-type/balance updates below were deployed as commit `775e54a`. Hosted CI and deployed endpoint checks passed; the founder confirmed the live version was working. See the [release record](../../release-2026-10-22-leave-mock.md).
+## Demo accounts and company
 
-The site opens a mock login, then lands on `/index.html`. Use `user / user` or `admin / admin`; sign out from the top bar or account dialog. Both accounts preview the same fictional company with a role label, not a new permission model. Compare A/B/C at the top and try all scopes and calendar granularities. No Angular build is needed for local review:
+VAC-6 models **Northstar Example**, a fictional 12-person IT-services company with two departments and four teams. Each person has one canonical public demo account. Choose a person on the login page, or enter their lowercase first name as both username and password (for example, **`maya / maya`**). These are public UI fixtures, not real accounts or secure credentials.
+
+| Department / team | Person | Job | Demo username / password | Capability |
+|---|---|---|---|---|
+| Technology / Platform | Leah | Platform lead | `leah / leah` | Non-admin lead |
+| Technology / Platform | Ravi | DevOps engineer | `ravi / ravi` | Employee |
+| Technology / Platform | Noah | Software engineer | `noah / noah` | Employee |
+| Technology / Applications | Maya | Software engineer | `maya / maya` | Employee |
+| Technology / Applications | Theo | Software engineer | `theo / theo` | Employee |
+| Technology / Applications | Iris | QA engineer | `iris / iris` | Employee |
+| Business / Product | Ella | Product lead | `ella / ella` | Non-admin lead |
+| Business / Product | Owen | Product designer | `owen / owen` | Employee |
+| Business / Product | Zoe | Product specialist | `zoe / zoe` | Employee |
+| Business / Operations | Daria | Owner | `daria / daria` | Admin |
+| Business / Operations | Nora | HR/operations | `nora / nora` | Admin |
+| Business / Operations | Sam | Operations coordinator | `sam / sam` | Employee |
+
+Legacy shortcuts remain: **`user / user` → Maya**, **`admin / admin` → Nora**. These are aliases, not extra people/accounts. Firstname-based sign-in is specific to this public mock; real account/company-email username decisions in ADR-0001 remain unchanged. The site opens the mock login then `/index.html`; sign out from the top bar or account dialog. Session storage keeps only the canonical fictional person ID (`vacate.demo.account.v2`), never the password. Old/invalid identities are not trusted; reload and browser history restoration recheck the demo session.
+
+| Capability | Initial calendar | Available scopes | Groups |
+|---|---|---|---|
+| Employee | Own month | Own, team | Own team |
+| Non-admin lead | Department month | Own, team, department | Teams in own department |
+| Admin (HR or owner) | Organization month | Own, team, department, organization | All groups in the fictional company |
+
+Each person sees their own requests, configured balances and upcoming entries. The personal area remains theirs while changing calendar scope. Maya has pending annual and per-child/month examples, Ravi has overlapping approved annual availability, Iris has study leave, Sam has no upcoming requests, and Nora has an own pending request. Shared calendars and dialogs show generic **Away**, not private type, status, title or balances. The People dialog follows the current calendar filter. Unsupported scope/group identifiers return an unavailable state. Admin-only Approvals and Settings are explicitly **Planned** placeholders; VAC-2 and VAC-4 implement those destinations later. There are no approval/self-approval actions or settings writes.
+
+No second company ships in this mock. Company/person/group mismatch tests exercise synthetic presentation boundaries; static fixture files remain publicly downloadable. These checks do not provide backend authentication, permissions or customer isolation. The older [persona hypotheses](../../product/personas-jtbd.md) remain research; a non-admin team lead cannot approve in this iteration.
+
+## Local review
+
+No Angular build is needed:
 
 ```sh
 python3 -m http.server 8000 --directory docs/design/calendar-mock/dist
 ```
 
-Open `http://localhost:8000/`. The browser needs tab storage for the mock session.
+Open `http://localhost:8000/` with tab storage enabled. Compare A/B/C and the scope/granularity controls. The fixed demo date remains **22 October 2026** for repeatable scenarios, even when reviewing on another day.
 
-| Direction | Starting view | Preview |
+| Direction | Calendar layout | Preview |
 |---|---|---|
-| A — Calendar workspace, recommended | Own month, with personal summary | [Desktop](previews/a-desktop.png) · [Mobile](previews/a-mobile.png) |
-| B — Team planner | Product team, people rows across the week | [Desktop](previews/b-desktop.png) · [Mobile](previews/b-mobile.png) |
-| C — Personal overview | Own twelve-month year | [Desktop](previews/c-desktop.png) · [Mobile](previews/c-mobile.png) |
+| A — Calendar workspace | Month by default; persona controls initial scope | [Desktop](previews/a-desktop.png) · [Mobile](previews/a-mobile.png) |
+| B — Team planner | People rows across a week; same scope permissions | [Desktop](previews/b-desktop.png) · [Mobile](previews/b-mobile.png) |
+| C — Personal overview | Twelve-month year; same scope permissions | [Desktop](previews/c-desktop.png) · [Mobile](previews/c-mobile.png) |
 
-Use A as the proposed main shell, B as a candidate team layout, and C as a candidate annual layout. Direction selection remains open. The [UI-architect proposal](../calendar-ui-proposal.md) records sources, assumptions, component boundaries and acceptance scenarios; it follows the [repository agent prompt](../../../.github/prompts/agents/ui-architect.agent.md). Visual inspiration: [absence.io vacation tracker](https://www.absence.io/en/features/vacation-tracker/), inspected 2026-10-22.
+The [UI architect proposal](../calendar-ui-proposal.md) records the original layout alternatives and inspiration. Role-aware initial scope in VAC-6 does not choose a final A/B/C direction or deliver VAC-3's full admin dashboard refinement.
 
-## Mock boundaries
+## Leave and packaging boundaries
 
-Brand choice, 2026-10-22: use the founder-selected teal **v** as an SVG favicon on login, calendar/index and Angular pages. The matching assets in `dist/favicon.svg` and `web/public/favicon.svg` are included in their respective packages. Acceptance: every page references the SVG and the frontend package contains it. This asset change has no customer-data or tenant-isolation behavior.
+The mock uses a five-day, Monday–Friday workweek; holidays are not configured. The [approved catalogue](../../product/leave-types-review.md) contains 29 entries and 28 requestable choices, with allowance/rule/source previews. Disability supplements adjust annual allocation rather than becoming a separate request. The [balance design](../leave-balances-proposal.md) keeps Used/Pending/Available quantities, units and periods distinct. For Maya, annual is **25 allocated, 8 used, 3 pending, 14 available (56%)**. Each person's ledger reconciles to their fictional request quantities; it is not a statutory calculation.
 
-All names, teams, balances and requests are fictional. Today uses 22 October 2026. **Founder decision, 2026-10-22: the mocks use a five-day, Monday–Friday workweek.** Annual, marriage and voting references use that basis; holidays are not configured. Week/day are all-day views. Colleague fixtures contain availability only; the viewer's personal balances remain their own when changing scope. The demo request previews manually entered quantities and dates without calculating working days or entitlement, saving data or calling an API. Navigation opens illustrative dialogs.
+Requests preview manually entered quantities and dates without calculating working days, saving data or calling an API. Unknown eligibility/units show no invented quota; excess projections remain explicit. No real employee, medical, family or service-history evidence is used. All fixtures are public synthetic examples.
 
-CI uses `scripts/package-design-preview.py` to make this gallery the actual root `index.html`, preserving Angular's entry as `app.html` for its existing deep links. Older `/design-preview/` links redirect to the index. The browser's mock login stores only a demo username in `sessionStorage`; passwords are not saved or sent. This is a UI demonstration, not server authentication, authorization or company isolation. Production permission rules, real balances, company calendars and supported leave units remain open. Browser-side fixture filtering and the demo role are not authorization controls.
-
-The founder approved the [leave-type summary](../../product/leave-types-review.md) and [balance proposal](../leave-balances-proposal.md) before implementation. All 29 catalogue entries appear under **Show all types**, with 28 requestable choices and type-specific allowance/rule previews. The disability supplement explains an annual-allocation adjustment; it is not separately requestable. Annual, carer, school and study fixtures demonstrate requests; every requestable type has a **Preview example** action. Shared calendars retain generic availability.
-
-Expandable bars show Used / Pending / Available with exact quantities and percentages only for configured allocations. Annual is 25 allocated, 9 used, 2 pending, 14 available (56%). Months and hours remain distinct; event-based, reduced-hours and unconfirmed rights do not receive invented annual totals. Request previews explain unknown or excess balances without changing the fixtures. No service-history eligibility or statutory policy engine is implemented.
+CI builds Angular and packages the gallery at root using `scripts/package-design-preview.py`, retaining Angular's entry as `app.html` for existing deep links. Older `/design-preview/` links redirect to the index. Packaging, routing, syntax and cloud-smoke checks include `demo-fixtures.js`, session/login scripts, the catalogue, CSS and the teal v favicon. Matching SVG favicons serve the mock and Angular pages.
 
 ## Verification
 
-Run with Node.js 22+ and a local Chrome installation:
+With Node.js 22+:
 
 ```sh
+node docs/design/calendar-mock/verify-fixtures.mjs
 node docs/design/calendar-mock/verify.mjs
 ```
 
-The script defaults to the macOS Chrome executable. Set `CHROME_BIN` for another installation. It launches a temporary HTTP server/browser profile, checks behavior through the Chrome DevTools Protocol, captures eight PNGs into `previews/`, and closes its server/browser. Set `MOCK_URL` to a live index URL and `MOCK_SCREENSHOT_DIR` to another output directory to verify the deployed site.
+The first command independently checks the expected 12-person roster, capabilities, exact memberships, denied IDs, shared projections, own request/allocation consistency, session/alias restoration and missing identity behavior using Node's VM. It runs in hosted CI without a browser.
 
-Passed on 2026-10-22 with Node 22.22.3 / Chrome 150:
+The second uses local Chrome through the Chrome DevTools Protocol, starts a temporary server/browser profile and captures eight PNGs. Set `CHROME_BIN` for another executable, `MOCK_URL` to test the live index and `MOCK_SCREENSHOT_DIR` for output elsewhere. Interactive coverage includes all accounts/allowed scopes/groups, negative direct identifiers, own/shared views, account changes, stale state, the catalogue and unit/date regressions, keyboard dialog focus and mobile overflow. See the [release record](../../release-2026-10-23-vac-6.md) for actual results; planned checks are not release evidence.
 
-- Twelve scope/view combinations render and expose the selected state.
-- All 29 catalogue entries render; all 28 requestable choices update their own rule panel. Disability supplements are not selectable requests.
-- Five-day references, disclosure state, exact balance arithmetic/percentages, per-child months, school hours, unknown projections and excess requests pass. Previews leave allocations unchanged.
-- Reversed dates are rejected; correcting either date clears the stale validation error and allows a valid preview.
-- Anonymous index access redirects to login; invalid credentials fail; both exact credential pairs land on the index with the correct demo role. Reload preserves the tab session; sign-out clears it and restores the login prompt.
-- Shared calendar content and detail dialogs contain no private request category or approval status.
-- Own and empty date details, Escape dismissal and focus return work.
-- Next year crosses into 2027; Today returns to 2026; demo request states no submission occurred.
-- Sixteen mobile overflow checks pass, including login, all four granularities in each direction and expanded balances at 375 px.
-- Eight desktop/mobile screenshots rendered without JavaScript exceptions; updated calendar previews were visually inspected.
-- JavaScript syntax, deployment-package asset checks and `git diff --check` pass. Packaging, static routing, CI syntax checks and cloud smoke checks include `leave-types.js`.
-
-Limits: this is not a complete keyboard, screen-reader or contrast audit. Backend tenant isolation and authorization scenarios are specified in the proposal and remain untested because the mock has no backend. The separate deployment record covers cloud verification.
-
-Acceptance boundary: this update passes demo navigation/session, personal balance previews and fictional-data scenarios. The two accounts have no customer/company identities; real cross-company authorization tests remain required before business endpoints or employee data are added. UI direction, production policy/eligibility, accrual, carryover and rounding remain open.
+This is targeted acceptance, not a full screen-reader/contrast audit. Server company isolation, real authentication, approvals/settings persistence, policy eligibility, accrual, carryover, rounding and holiday configuration remain future work.

@@ -34,17 +34,9 @@
     {id:'bereaved-parent',name:'Bereaved parent',group:'Life events',unit:'days',basis:'Per qualifying event',pay:'Paid',shape:'event',allowance:'20 paid days for loss of a child.',rules:'Separate from generic bereavement. Law 5018/2023 art. 93; dated Labour Code baseline art. 246.',source:official},
     {id:'screening',name:'Gynecological screening',group:'Care and health',unit:'days',basis:'Calendar year',pay:'Paid',allowance:'1 paid day per year.',rules:'Law 5043/2023 art. 96; dated Labour Code baseline art. 242. Do not enter examination results.',source:official},
   ].map(type => Object.freeze({...type,shape:type.shape || 'fixed',source:type.source || `${guide} · pp. ${type.page}`}));
-  // Fictional configured allocations, not proof of eligibility or statutory calculations.
-  const balances = Object.freeze({
-    annual:{allocation:25,used:9,pending:2,period:'2026',note:'Configured demo allocation; no employment-history calculation.'},
-    carer:{allocation:5,used:2,pending:0,period:'2026',note:'Illustrative eligible care scenario.'},
-    study:{allocation:30,used:2,pending:0,period:'2026',note:'Illustrative qualifying study scenario.'},
-    school:{allocation:4,used:1,pending:0,period:'Demo child / 2026',note:'Illustrative shared-parent allowance; not four days per parent.'},
-    parental:{allocation:4,used:1,pending:1,period:'Demo child / entitlement period',note:'Illustrative per-child allocation, not a yearly grant.'},
-  });
   const getType = id => types.find(type => type.id === id);
   function balanceOf(id) {
-    const balance = balances[id];
+    const balance = window.VacateFixtures.balancesFor(window.VacateDemo.currentUser())?.[id];
     if(!balance) return null;
     const available = balance.allocation-balance.used-balance.pending;
     return {...balance,available,percentage:balance.allocation>0?Math.round(available/balance.allocation*100):null};

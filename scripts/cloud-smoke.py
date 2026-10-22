@@ -41,7 +41,8 @@ def check(api, web, revision):
     for filename, content_type, marker in (
         ("mock.js", "javascript", b"const DEMO_TODAY"),
         ("mock.css", "text/css", b".calendar-card"),
-        ("demo-session.js", "javascript", b"vacate.demo.account.v1"),
+        ("demo-session.js", "javascript", b"vacate.demo.account.v2"),
+        ("demo-fixtures.js", "javascript", b"window.VacateFixtures"),
         ("login.js", "javascript", b"login-form"),
         ("leave-types.js", "javascript", b"window.VacateLeave"),
         ("favicon.svg", "image/svg+xml", b"#12675e"),

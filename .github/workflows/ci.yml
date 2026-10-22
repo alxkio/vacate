@@ -68,8 +68,10 @@ jobs:
           set -euo pipefail
           node --check ../docs/design/calendar-mock/dist/mock.js
           node --check ../docs/design/calendar-mock/dist/demo-session.js
+          node --check ../docs/design/calendar-mock/dist/demo-fixtures.js
           node --check ../docs/design/calendar-mock/dist/login.js
           node --check ../docs/design/calendar-mock/dist/leave-types.js
+          node ../docs/design/calendar-mock/verify-fixtures.mjs
           python3 ../scripts/package-design-preview.py --web-output dist/vacate-web/browser --revision "$GITHUB_SHA"
       - uses: actions/upload-artifact@v7
         with:

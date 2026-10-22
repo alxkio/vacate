@@ -37,4 +37,4 @@ This is a partial historical measurement. It does not measure the founder's read
 
 **OPEN QUESTION:** if a combined project-effort estimate is needed, reconcile these records with the founder's own session estimates and define a tracking method going forward.
 
-Only this report and its evidence CSV were added for the audit; application code, deployment and existing product decisions are unchanged. Verified CSV totals, event counts, duplicate exclusion, non-overlapping root windows and milestone timestamps against local logs/Git. Not committed or pushed.
+Only this report and its evidence CSV were added for the audit; application code, deployment and existing product decisions were unchanged by it. Verified CSV totals, event counts, duplicate exclusion, non-overlapping root windows and milestone timestamps against local logs/Git. Subsequently included in documentation checkpoint `70d3e82` on 2026-10-23; the historical measurements above remain the original snapshot.

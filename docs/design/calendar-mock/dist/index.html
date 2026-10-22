@@ -7,6 +7,7 @@
   <title>Vacate · Calendar design studio</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="mock.css">
+  <script src="demo-fixtures.js"></script>
   <script src="demo-session.js"></script>
   <script src="leave-types.js" defer></script>
   <script src="mock.js" defer></script>
@@ -24,15 +25,16 @@
   <div class="app" data-direction="a">
     <header class="topbar">
       <div class="brand"><span class="brand-symbol">v<span>•</span></span>vacate<span class="brand-dot">.</span></div>
-      <span class="company"><span class="company-mark">N</span>Northstar Studio<span class="company-label">Demo company</span></span>
-      <div class="top-actions"><span class="role-badge" id="demo-role"></span><button class="text-button" data-action="help">Help & feedback</button><button class="account" data-action="account" aria-label="Alex Morgan, demo account">AM</button><button class="text-button sign-out" data-action="logout">Sign out</button></div>
+      <span class="company"><span class="company-mark">N</span>Northstar Example<span class="company-label">Demo company</span></span>
+      <div class="top-actions"><span id="demo-person" class="demo-person"></span><span class="role-badge" id="demo-role"></span><button class="text-button" data-action="help">Help & feedback</button><button class="account" data-action="account" aria-label="Your demo account"></button><button class="text-button sign-out" data-action="logout">Sign out</button></div>
     </header>
     <aside class="sidebar" aria-label="Main navigation">
       <button class="mobile-menu" aria-expanded="false" aria-controls="navigation">☰ <span>Navigation</span></button>
       <nav id="navigation"><span class="nav-caption">WORKSPACE</span>
         <button class="nav-item selected" data-nav="calendar"><span aria-hidden="true">▦</span> Calendar</button>
         <button class="nav-item" data-nav="leave"><span aria-hidden="true">☀</span> My leave</button>
-        <button class="nav-item" data-nav="approvals"><span aria-hidden="true">☑</span> Approvals <span class="nav-demo">Demo</span></button>
+        <button class="nav-item" data-nav="approvals"><span aria-hidden="true">☑</span> Approvals <span class="nav-demo">Planned</span></button>
+        <button class="nav-item" data-nav="settings"><span aria-hidden="true">⚙</span> Settings <span class="nav-demo">Planned</span></button>
         <button class="nav-item" data-nav="people"><span aria-hidden="true">♧</span> People</button>
       </nav>
       <div class="sidebar-note"><span class="note-icon">↗</span><strong>Make room for time off.</strong><p>A little planning.<br>A better balance.</p><span class="demo-tag">INTERACTIVE MOCK</span></div>
@@ -40,7 +42,7 @@
     </aside>
     <main id="main" tabindex="-1">
       <div class="page-heading"><div><div class="breadcrumb">Workspace <span>/</span> Calendar</div><h1>Your time, in view<span>.</span></h1><p id="subtitle">Plan your next break. Keep your team in the picture.</p></div><button class="primary" data-action="request"><span aria-hidden="true">＋</span> Request leave</button></div>
-      <div class="scope-line"><div class="segments scopes" aria-label="Calendar scope"><button data-scope="self" aria-pressed="true">My calendar</button><button data-scope="team" aria-pressed="false">My team</button><button data-scope="org" aria-pressed="false">Organization</button></div><span class="scope-note" id="scope-note">Only your requests and balances</span></div>
+      <div class="scope-line"><div class="segments scopes" aria-label="Calendar scope"><button data-scope="self" aria-pressed="true">My calendar</button><button data-scope="team" aria-pressed="false">My team</button><button data-scope="department" aria-pressed="false">My department</button><button data-scope="org" aria-pressed="false">Organization</button></div><label id="scope-group-label" hidden>Show <select id="scope-group"></select></label><span id="scope-count" class="scope-count"></span><span class="scope-note" id="scope-note">Only your requests and balances</span></div>
       <section class="leave-balances" aria-labelledby="balances-title"><div class="balance-heading"><div><h2 id="balances-title">My leave balances</h2><p>Five-day workweek · demo allocations · separate units and periods</p></div><button class="inline-link" id="balance-toggle" aria-expanded="false" aria-controls="balance-types">Show all types</button></div><div id="balance-types" class="balance-types"></div></section>
       <div class="workspace">
         <section class="calendar-card" aria-label="Calendar">
@@ -50,11 +52,11 @@
           <div class="calendar-footer"><span id="calendar-footnote">Select a date to see details</span><span>Demo date: 22 Oct 2026</span></div>
         </section>
         <aside class="insights" aria-label="Your leave overview">
-          <section class="upcoming-card"><div class="panel-title"><h2>Coming up for you</h2><span>↗</span></div><button class="upcoming-event" data-event="own-oct"><span class="date-tile"><small>OCT</small>26</span><span><strong>A little autumn pause</strong><span>26–28 Oct · Vacation</span><span class="status approved">✓ Approved</span></span></button><button class="upcoming-event" data-event="own-dec"><span class="date-tile"><small>DEC</small>21</span><span><strong>A winter reset</strong><span>21–22 Dec · Vacation</span><span class="status pending">◷ Pending</span></span></button><button class="inline-link" data-nav="leave">View my leave <span>→</span></button></section>
+          <section class="upcoming-card" aria-label="Your upcoming requests"></section>
           <section class="detail-card" id="date-details" aria-live="polite"><span class="eyebrow">A LITTLE CONTEXT</span><h2>Pick a day</h2><p>Select a date or an absence to see what’s planned.</p></section>
         </aside>
       </div>
-      <p class="prototype-note">Design exploration · Fictional people and requests · No data is saved or sent · Shared views show availability only</p>
+      <p class="prototype-note">Design exploration · Fictional people and requests · Public fixture data · No requests are saved or sent · Shared views show availability only</p>
     </main>
   </div>
   <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>

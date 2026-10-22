@@ -7,6 +7,7 @@
   <title>Sign in · Vacate demo</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="mock.css">
+  <script src="demo-fixtures.js"></script>
   <script src="demo-session.js"></script>
   <script src="login.js" defer></script>
 </head>
@@ -20,15 +21,16 @@
       <div class="login-calendar" aria-hidden="true"><div><span>OCTOBER</span><span>2026</span></div><div class="login-week"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div><div class="login-week"><span>19</span><span>20</span><span>21</span><span class="login-today">22</span><span>23</span><span>24</span><span>25</span></div><div class="login-break">✓ A little autumn pause · 26–28 Oct</div></div>
     </section>
     <section class="login-card" aria-labelledby="login-title">
-      <span class="eyebrow">VACATE DEMO</span><h2 id="login-title">Welcome back.</h2><p>Sign in to explore the calendar.</p>
+      <span class="eyebrow">VACATE DEMO</span><h2 id="login-title">Welcome back.</h2><p>Explore 12 fictional colleagues at Northstar Example.</p>
+      <label for="demo-account">Choose a fictional person</label><select id="demo-account"><option value="">Choose a persona…</option></select><p id="persona-description" class="login-note">Select a person to fill their public demo credentials.</p>
       <form id="login-form">
         <label for="username">Username</label><input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
         <label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required>
         <p id="login-error" class="login-error" role="alert" hidden></p>
         <button class="primary" type="submit">Sign in <span aria-hidden="true">→</span></button>
       </form>
-      <div class="demo-credentials"><strong>Try either demo account</strong><p><span>User</span><code>user / user</code></p><p><span>Admin</span><code>admin / admin</code></p></div>
-      <p class="login-note">Demo sign-in only. Fictional data. No real accounts or requests.</p>
+      <div class="demo-credentials"><strong>Public demo access</strong><p>For example: <code>maya / maya</code> or <code>nora / nora</code></p><p>Every person: <code>firstname / firstname</code></p><p><span>Maya shortcut</span><code>user / user</code></p><p><span>Nora shortcut</span><code>admin / admin</code></p></div>
+      <p class="login-note">Public browser simulation. All fixture data is downloadable. No secure authentication or real requests.</p>
       <noscript><p>Enable JavaScript to use this interactive demo.</p></noscript>
     </section>
   </main>
