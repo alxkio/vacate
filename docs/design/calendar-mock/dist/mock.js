@@ -1,5 +1,7 @@
 'use strict';
-// Synthetic fixtures only. There is no API, account session or persistence.
+// Synthetic fixtures only. The tab's demo session does not authorize API access.
+const demoUser = window.VacateDemo.currentUser();
+document.querySelector('#demo-role').textContent = demoUser ? `${demoUser.role} preview` : '';
 const DEMO_TODAY = new Date(2026, 9, 22);
 const people = [
   { id: 'alex', name: 'Alex Morgan', initials: 'AM', team: 'Product' },
@@ -106,7 +108,7 @@ function render() {
 }
 let dialogTrigger;
 const dialog=$('#dialog');
-function showDialog(html,trigger) {dialogTrigger=trigger||document.activeElement;$('#dialog-content').innerHTML=html;dialog.showModal();}
+function showDialog(html,trigger) {dialogTrigger=trigger||document.activeElement;dialogTrigger?.focus();$('#dialog-content').innerHTML=html;dialog.showModal();}
 dialog.addEventListener('close',()=>{dialogTrigger?.focus();});
 function showDate(date,trigger) {
   const items=entriesOn(date);
@@ -152,6 +154,7 @@ document.addEventListener('click',event=>{
     state.date=state.view==='year'?new Date(date.getFullYear()+delta,date.getMonth(),1):state.view==='month'?new Date(date.getFullYear(),date.getMonth()+delta,1):addDays(date,delta*(state.view==='week'?7:1));render();}
   if(action==='request')requestForm(button);
   if(action==='help')showDialog('<h2>A little guide</h2><p>Compare A, B and C above, then try the scope and period controls. Select dates or leave entries for details. Today returns to the fixed demo date, 22 October 2026.</p><p>Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. All interactions use local fictional data.</p>',button);
-  if(action==='account')showDialog('<h2>Alex Morgan</h2><p>Demo account · Northstar Studio</p><p>This is a local design mock. It has no authentication or company switching. Organization visibility requires a confirmed permission model before implementation.</p>',button);
+  if(action==='account')showDialog(`<h2>Alex Morgan</h2><p>${demoUser?.role || 'User'} demo · Northstar Studio</p><p>Signed in as ${demoUser?.username || 'user'}. Both demo accounts explore the same fictional company. Production permissions remain to be agreed.</p><button class="primary" data-action="logout">Sign out</button>`,button);
+  if(action==='logout')window.VacateDemo.logout();
 });
 render();

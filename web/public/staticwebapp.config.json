@@ -1,13 +1,19 @@
 {
   "navigationFallback": {
-    "rewrite": "/index.html",
+    "rewrite": "/app.html",
     "exclude": ["/api/*", "/config.json", "/*.{js,css,json,ico,png,svg,woff,woff2}"]
   },
   "routes": [
-    { "route": "/", "redirect": "/design-preview/index.html", "statusCode": 302 },
-    { "route": "/design-preview", "redirect": "/design-preview/index.html", "statusCode": 302 },
-    { "route": "/design-preview/index.html", "headers": { "Cache-Control": "no-store" } },
-    { "route": "/design-preview/revision.json", "headers": { "Cache-Control": "no-store" } },
+    { "route": "/", "rewrite": "/index.html", "headers": { "Cache-Control": "no-store" } },
+    { "route": "/design-preview", "redirect": "/index.html", "statusCode": 302 },
+    { "route": "/design-preview/*", "redirect": "/index.html", "statusCode": 302 },
+    { "route": "/login.html", "headers": { "Cache-Control": "no-store" } },
+    { "route": "/app.html", "headers": { "Cache-Control": "no-store" } },
+    { "route": "/gallery-revision.json", "headers": { "Cache-Control": "no-store" } },
+    { "route": "/mock.js", "headers": { "Cache-Control": "no-store" } },
+    { "route": "/mock.css", "headers": { "Cache-Control": "no-store" } },
+    { "route": "/demo-session.js", "headers": { "Cache-Control": "no-store" } },
+    { "route": "/login.js", "headers": { "Cache-Control": "no-store" } },
     { "route": "/config.json", "headers": { "Cache-Control": "no-store" } },
     { "route": "/index.html", "headers": { "Cache-Control": "no-store" } }
   ],

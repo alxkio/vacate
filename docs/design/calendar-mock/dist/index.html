@@ -1,11 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-demo-page="calendar">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Three proposed Vacate calendar layouts. Interactive design mock with fictional data.">
   <title>Vacate · Calendar design studio</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="mock.css">
+  <script src="demo-session.js"></script>
   <script src="mock.js" defer></script>
 </head>
 <body>
@@ -22,7 +24,7 @@
     <header class="topbar">
       <div class="brand"><span class="brand-symbol">v<span>•</span></span>vacate<span class="brand-dot">.</span></div>
       <span class="company"><span class="company-mark">N</span>Northstar Studio<span class="company-label">Demo company</span></span>
-      <div class="top-actions"><button class="text-button" data-action="help">Help & feedback</button><button class="account" data-action="account" aria-label="Alex Morgan, demo account">AM</button></div>
+      <div class="top-actions"><span class="role-badge" id="demo-role"></span><button class="text-button" data-action="help">Help & feedback</button><button class="account" data-action="account" aria-label="Alex Morgan, demo account">AM</button><button class="text-button sign-out" data-action="logout">Sign out</button></div>
     </header>
     <aside class="sidebar" aria-label="Main navigation">
       <button class="mobile-menu" aria-expanded="false" aria-controls="navigation">☰ <span>Navigation</span></button>

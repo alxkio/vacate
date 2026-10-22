@@ -62,17 +62,14 @@ jobs:
       - run: npm ci
       - run: npm run build -- --configuration production
       - run: npm test -- --watch=false
-      - name: Verify and stamp design gallery
+      - name: Package demo login and index page
         shell: bash
         run: |
           set -euo pipefail
           node --check ../docs/design/calendar-mock/dist/mock.js
-          mkdir -p dist/vacate-web/browser/design-preview
-          cp ../docs/design/calendar-mock/dist/index.html ../docs/design/calendar-mock/dist/mock.css ../docs/design/calendar-mock/dist/mock.js dist/vacate-web/browser/design-preview/
-          test -f dist/vacate-web/browser/design-preview/index.html
-          test -f dist/vacate-web/browser/design-preview/mock.css
-          test -f dist/vacate-web/browser/design-preview/mock.js
-          jq -n --arg revision "$GITHUB_SHA" '{revision: $revision}' > dist/vacate-web/browser/design-preview/revision.json
+          node --check ../docs/design/calendar-mock/dist/demo-session.js
+          node --check ../docs/design/calendar-mock/dist/login.js
+          python3 ../scripts/package-design-preview.py --web-output dist/vacate-web/browser --revision "$GITHUB_SHA"
       - uses: actions/upload-artifact@v7
         with:
           name: angular-production

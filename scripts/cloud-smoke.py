@@ -33,7 +33,7 @@ def check(api, web, revision):
     assert config["apiBaseUrl"] == api, "Frontend points to a different API"
     assert config["revision"] == revision, "Frontend build revision mismatch"
     assert "no-store" in headers.get("Cache-Control", ""), "Runtime configuration may be cached"
-    for path in ("/", "/design-preview/index.html"):
+    for path in ("/", "/index.html", "/design-preview/index.html"):
         body, headers = get(f"{web}{path}")
         assert "text/html" in headers.get("Content-Type", ""), "Gallery did not serve HTML"
         assert b"VACATE / DESIGN STUDY 01" in body, "Design gallery missing"
@@ -41,11 +41,17 @@ def check(api, web, revision):
     for filename, content_type, marker in (
         ("mock.js", "javascript", b"const DEMO_TODAY"),
         ("mock.css", "text/css", b".calendar-card"),
+        ("demo-session.js", "javascript", b"vacate.demo.account.v1"),
+        ("login.js", "javascript", b"login-form"),
+        ("favicon.svg", "image/svg+xml", b"#12675e"),
     ):
-        body, headers = get(f"{web}/design-preview/{filename}")
+        body, headers = get(f"{web}/{filename}")
         assert content_type in headers.get("Content-Type", ""), "Gallery asset content type incorrect"
         assert marker in body, "Gallery asset missing"
-    body, headers = get(f"{web}/design-preview/revision.json")
+    body, headers = get(f"{web}/login.html")
+    assert b'id="login-form"' in body, "Mock login page missing"
+    assert "no-store" in headers.get("Cache-Control", ""), "Login entry may be cached"
+    body, headers = get(f"{web}/gallery-revision.json")
     assert json.loads(body)["revision"] == revision, "Gallery build revision mismatch"
     assert "no-store" in headers.get("Cache-Control", ""), "Gallery revision may be cached"
     for path in ("/leave", "/approvals", "/availability", "/people"):
