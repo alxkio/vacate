@@ -22,7 +22,13 @@ Package checks passed for all gallery assets, the revision marker, matching favi
 
 ## Deployment evidence
 
-Hosted CI, Azure deployment and post-deployment checks are pending at this review checkpoint. Target: subscription `07d79495-1f4f-40fd-9fdf-84605214e5e6`, resource group `rg-vacate-dev`. Infrastructure configuration is unchanged in this release.
+Commit `775e54ae447f4334ba5e47e566238c76480f309d` was pushed to `master` and deployed successfully to subscription `07d79495-1f4f-40fd-9fdf-84605214e5e6`, resource group `rg-vacate-dev`. Infrastructure configuration is unchanged in this release.
+
+- [CI run](https://github.com/alxkio/vacate/actions/runs/39840561066): frontend and backend passed.
+- [Deployment run](https://github.com/alxkio/vacate/actions/runs/39841444632): repeated frontend/backend checks, Bicep compilation, Azure validation/what-if, infrastructure apply, API/frontend publishing and deployed endpoint smoke checks passed.
+- [Live site](https://lemon-beach-02f7a7103.4.azurestaticapps.net): opens the demo login, then the root calendar. Use `user / user` or `admin / admin`.
+
+The deployed smoke step verifies API/build revision, runtime configuration, CORS, gallery/login/catalogue assets, no-store caching, revision marker and Angular deep links. The founder confirmed the deployed version was working. Automated interactive Chrome checks above were run locally; they were not repeated against the live site in this release.
 
 ## Boundaries and open questions
 

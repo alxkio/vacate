@@ -2,7 +2,7 @@
 
 Status: PROPOSED design, 2026-10-22. Published for review at [the Azure site](https://lemon-beach-02f7a7103.4.azurestaticapps.net); direction selection remains open. See the [deployment record](../../cloud-deploy-2026-10-22.md).
 
-The login/index/favicon and approved leave-type/balance updates below are verified locally and recorded for review. They have not been pushed or deployed. The Azure site still serves the preceding gallery version.
+The login/index/favicon and approved leave-type/balance updates below were deployed as commit `775e54a`. Hosted CI and deployed endpoint checks passed; the founder confirmed the live version was working. See the [release record](../../release-2026-10-22-leave-mock.md).
 
 The site opens a mock login, then lands on `/index.html`. Use `user / user` or `admin / admin`; sign out from the top bar or account dialog. Both accounts preview the same fictional company with a role label, not a new permission model. Compare A/B/C at the top and try all scopes and calendar granularities. No Angular build is needed for local review:
 

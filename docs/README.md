@@ -22,3 +22,4 @@ Source precedence follows AGENTS.md. Use accepted ADRs first, then accepted prod
 - [Calendar UI proposal (2026-10-22)](design/calendar-ui-proposal.md) — three proposed layouts, interactions and permission boundaries; [interactive local mock and previews](design/calendar-mock/README.md).
 - [Approved mock leave-type summary](product/leave-types-review.md) — allowances, rules and five-day workweek; production policy validation remains open.
 - [Expandable leave balances](design/leave-balances-proposal.md) — accepted UI Architect recommendation, implemented with fictional per-type quantities, percentages and rules.
+- [Leave mock release](release-2026-10-22-leave-mock.md) — independent review, acceptance checks and successful Azure dev deployment.
