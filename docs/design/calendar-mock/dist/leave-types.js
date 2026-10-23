@@ -5,6 +5,7 @@
   const official = 'Official guidance checked 22 Oct 2026 · policy validation pending';
   const types = [
     {id:'annual',name:'Annual leave',group:'Time off',unit:'working days',basis:'Calendar year · five-day week',pay:'Paid',allowance:'20–26 working days on the demo’s five-day week, depending on service.',rules:'Prorated in the first two calendar years. Distinguish employment anniversaries from calendar years and current-employer from total recognized service. The demo allocation is configured, not calculated from work history.',page:'8–9'},
+    {id:'sick',name:'Sick leave',group:'Care and health',unit:'working days',basis:'Absence period · conditions to confirm',pay:'Pay and benefits to confirm',shape:'variable',allowance:'No fixed allowance configured. Eligibility and pay need confirmation.',rules:'Personal illness absence. Employer salary protection and insurance benefits have separate conditions; no annual quota is assumed. No diagnoses or certificates are collected in this demo.',source:'Ministry of Labour · Civil Code 657–658 guidance · checked 23 Oct 2026 · effective dates and policy interpretation pending',sourceUrl:'https://ypergasias.gov.gr/ergasiakes-scheseis/atomikes-ergasiakes-sxeseis/anypaitio-kolyma-astheneia/'},
     {id:'military',name:'Military service',group:'Civic duties',unit:'days',basis:'Service period',pay:'Pay to confirm',shape:'variable',allowance:'Service period; no fixed annual quota.',rules:'Employment contract, previous service and return conditions need confirmation.',page:'12'},
     {id:'maternity',name:'Maternity',group:'Parenthood and family',unit:'weeks',basis:'Qualifying birth',pay:'Pay and insurance rules',shape:'event',allowance:'17 weeks: 8 before and 9 after birth.',rules:'Birth timing can change the split or extend pregnancy leave. Employer pay and insurance benefits have separate conditions.',page:'13'},
     {id:'adoption',name:'Adoption / surrogacy maternity',group:'Parenthood and family',unit:'weeks',basis:'Qualifying placement',pay:'Pay and benefit conditions',shape:'event',allowance:'9 weeks of post-birth leave.',rules:'Qualifying adoption placement concerns a child under eight; benefit and insurance conditions apply.',page:'13'},
@@ -19,7 +20,7 @@
     {id:'marriage',name:'Marriage / civil partnership',group:'Life events',unit:'working days',basis:'Per event · five-day week',pay:'Paid',shape:'event',allowance:'5 working days per qualifying event on the demo’s five-day week.',rules:'A qualifying marriage or civil partnership; separate from annual leave.',page:'24'},
     {id:'prenatal',name:'Prenatal examinations',group:'Care and health',unit:'hours',basis:'Necessary time',pay:'Paid',shape:'variable',allowance:'Necessary time; no fixed annual quota.',rules:'Examinations that must take place during work, with prior notification.',page:'24'},
     {id:'disabled-child',name:'Parent of a disabled child',group:'Parenthood and family',unit:'hours per day',basis:'Reduced-hours schedule',pay:'Proportionate pay reduction',shape:'schedule',allowance:'1 hour per day per qualifying child.',rules:'Employer has at least fifty staff; qualifying disability conditions apply. This is a schedule reduction, not a full-day allowance.',page:'25'},
-    {id:'dependent-illness',name:'Dependent illness',group:'Care and health',unit:'working days',basis:'Calendar year',pay:'Unpaid',allowance:'6 working days; 8 for two children, 14 for more than two.',rules:'Qualifying dependent and family conditions determine the applicable limit.',page:'25–26'},
+    {id:'dependent-illness',name:'Dependent illness',requestName:'Child illness (dependent illness)',requestScope:'This mock request covers children only. It uses the dependent-illness allowance, not a separate quota.',group:'Care and health',unit:'working days',basis:'Calendar year',pay:'Unpaid',allowance:'6 working days; 8 for two children, 14 for more than two.',rules:'Qualifying dependent and family conditions determine the applicable limit.',page:'25–26'},
     {id:'serious-child-illness',name:'Serious child illness',group:'Care and health',unit:'working days',basis:'Calendar year',pay:'Paid',allowance:'10 working days per year.',rules:'Specified serious conditions, age/eligibility exceptions and sequencing rules apply. Do not record a diagnosis in the demo.',page:'26'},
     {id:'child-hospitalization',name:'Child hospitalization',group:'Care and health',unit:'working days',basis:'Calendar year',pay:'Unpaid',allowance:'Necessary absence, up to 30 working days per year.',rules:'Qualifying hospital stay and sequencing requirements; the limit is not an unconditional grant.',page:'27'},
     {id:'single-parent',name:'Single-parent',group:'Parenthood and family',unit:'working days',basis:'Calendar year',pay:'Paid',allowance:'6 working days; 8 for three or more children.',rules:'Qualifying sole care/custody conditions and later official clarifications apply.',page:'27',source:official},
@@ -34,6 +35,15 @@
     {id:'bereaved-parent',name:'Bereaved parent',group:'Life events',unit:'days',basis:'Per qualifying event',pay:'Paid',shape:'event',allowance:'20 paid days for loss of a child.',rules:'Separate from generic bereavement. Law 5018/2023 art. 93; dated Labour Code baseline art. 246.',source:official},
     {id:'screening',name:'Gynecological screening',group:'Care and health',unit:'days',basis:'Calendar year',pay:'Paid',allowance:'1 paid day per year.',rules:'Law 5043/2023 art. 96; dated Labour Code baseline art. 242. Do not enter examination results.',source:official},
   ].map(type => Object.freeze({...type,shape:type.shape || 'fixed',source:type.source || `${guide} · pp. ${type.page}`}));
+  // Founder-authorized provisional defaults; membership/order remain revisable in VAC-5.
+  const shortlistIds = Object.freeze(['annual','sick','maternity','paternity','childcare','parental','school','dependent-illness','child-hospitalization','marriage','voting','study']);
+  const typeLabel = type => type.requestName || type.name;
+  function typeGroups(shownTypes) {
+    const quick = ['annual','sick'].map(id=>shownTypes.find(type=>type.id===id)).filter(Boolean);
+    const rest = shownTypes.filter(type=>!quick.includes(type));
+    const groupOrder=['Parenthood and family','Care and health','Life events','Civic duties','Study and examinations','Time off'];
+    return [...(quick.length?[{name:'Quick choices',types:quick}]:[]),...groupOrder.map(name=>({name,types:rest.filter(type=>type.group===name)})).filter(group=>group.types.length)];
+  }
   const getType = id => types.find(type => type.id === id);
   function balanceOf(id) {
     const balance = window.VacateFixtures.balancesFor(window.VacateDemo.currentUser())?.[id];
@@ -41,5 +51,5 @@
     const available = balance.allocation-balance.used-balance.pending;
     return {...balance,available,percentage:balance.allocation>0?Math.round(available/balance.allocation*100):null};
   }
-  window.VacateLeave = Object.freeze({workWeekDays:5,types:Object.freeze(types),getType,balanceOf});
+  window.VacateLeave = Object.freeze({workWeekDays:5,types:Object.freeze(types),shortlistIds,typeLabel,typeGroups,getType,balanceOf});
 })();

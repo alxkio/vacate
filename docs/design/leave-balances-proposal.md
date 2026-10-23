@@ -4,6 +4,8 @@
 
 Keep all three alternatives. Place expandable **My leave balances** above the calendar in A/B/C, including mobile. Confirmed allocations show available/total, unit, period, labelled percentage and a horizontal segmented bar; expanding reveals exact numbers and **Allowance and rules**. **Show all types** expands the catalogue.
 
+**VAC-5 provisional defaults · authorized 2026-10-23:** use the same 12-type shortlist in balances and requests for every persona. Annual/sick come first, followed by category groups. Include study/examinations provisionally; postgraduate/doctoral remains under Show all. Retain expanded uncommon balance cards when returning to the shortlist, and retain an uncommon selected request type plus its draft fields. Sick leave shows unknown allowance/pay with no percentage. The founder explicitly kept these questions open for revision; [VAC-5](../jira/VAC-5-common-leave-types-chooser.md) records the implementation comment and scope.
+
 **Fictional illustration, not an entitlement:**
 
 ```text
@@ -40,4 +42,4 @@ Acceptance checks:
 
 **OPEN QUESTIONS:** approved-future versus completed presentation, carryover, accrual, rounding and production permissions.
 
-**Verified:** browser checks cover all 29 catalogue entries, 28 requestable rule panels, balance expansion, units/percentages, unknown/excess projections, shared-calendar privacy and mobile layouts. See the [mock verification record](calendar-mock/README.md). Statutory calculations and production authorization remain pending.
+**Verified locally for VAC-5:** browser checks cover all 30 catalogue entries, 29 requestable rule panels, the shared shortlist and retained selections, balance expansion, units/percentages, unknown/excess projections, shared-calendar privacy and mobile layouts. See the [verification record](../jira/media/VAC-5/verification.md). Statutory calculations and production authorization remain pending.

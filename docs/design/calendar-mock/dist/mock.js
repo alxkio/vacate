@@ -15,9 +15,10 @@ for(const button of document.querySelectorAll('[data-scope]'))button.hidden=!sco
 for(const button of document.querySelectorAll('[data-nav=approvals],[data-nav=settings]'))button.hidden=demoUser.capability!=='admin';
 document.querySelector('#demo-role').textContent = demoUser ? `${demoUser.role} preview` : '';
 const DEMO_TODAY = new Date(2026, 9, 22);
-const {types:leaveTypes,getType,balanceOf} = window.VacateLeave;
+const {types:leaveTypes,shortlistIds,typeLabel,typeGroups,getType,balanceOf} = window.VacateLeave;
+const shortlist=shortlistIds.map(getType);
 const escapeHtml = value => String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-const typeName = id => getType(id)?.name || 'Leave';
+const typeName = id => getType(id)?typeLabel(getType(id)):'Leave';
 const formatAmount = (amount,unit) => `${amount} ${amount===1?({'working days':'working day',days:'day',months:'month',weeks:'week',hours:'hour','hours per day':'hour per day'}[unit] || unit):unit}`;
 let showAllBalances = false;
 const expandedBalances = new Set();
@@ -58,19 +59,24 @@ function renderGroupFilter() {
 }
 function allowanceMarkup(type) {
   const milestones = type.id==='annual'?`<table class="service-tiers"><caption>Annual service milestones · reference, not an automatic calculation</caption><thead><tr><th>Basis</th><th>5-day week</th></tr></thead><tbody><tr><th>First calendar year</th><td>20 prorated</td></tr><tr><th>Second year / at 12 months</th><td>21 basis</td></tr><tr><th>Third year / at 24 months</th><td>22</td></tr><tr><th>10 years here OR 12 total</th><td>25</td></tr><tr><th>25 total years</th><td>26</td></tr></tbody></table>`:'';
-  return `<p class="allowance-limit">${escapeHtml(type.allowance)}</p><p>${escapeHtml(type.rules)}</p>${milestones}<p class="allowance-source">${escapeHtml(type.source)}</p>`;
+  return `<p class="allowance-limit">${escapeHtml(type.allowance)}</p><p>${escapeHtml(type.rules)}</p>${type.requestScope?`<p class="request-scope">${escapeHtml(type.requestScope)}</p>`:''}${milestones}<p class="allowance-source">${type.sourceUrl?`<a href="${escapeHtml(type.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(type.source)} (opens a new tab)</a>`:escapeHtml(type.source)}</p>`;
 }
 function renderBalances() {
-  const shown = showAllBalances?leaveTypes:leaveTypes.filter(type=>['annual','carer','study'].includes(type.id));
-  $('#balance-types').innerHTML=shown.map(type=>{
+  const pinned=leaveTypes.filter(type=>!shortlistIds.includes(type.id)&&expandedBalances.has(type.id));
+  const shown = showAllBalances?leaveTypes:shortlist;
+  const groups=typeGroups(shown);
+  if(!showAllBalances&&pinned.length)groups.push({name:'Expanded types',types:pinned});
+  $('#balance-types').innerHTML=groups.map(group=>`<section class="balance-group" aria-label="${escapeHtml(group.name)}"><h3>${escapeHtml(group.name)}</h3><div class="balance-types">${group.types.map(type=>{
     const balance=balanceOf(type.id);
-    const stateLabel=balance?`${balance.available} / ${balance.allocation} ${type.unit} available`:({event:'Per qualifying event',schedule:'Schedule arrangement',variable:'No fixed allowance',supplement:'Annual allocation supplement'})[type.shape] || 'Eligibility to confirm';
-    const bar=balance?`<div class="type-bar" role="group" aria-label="${escapeHtml(`${type.name}: allocation ${balance.allocation}, used ${balance.used}, pending ${balance.pending}, available ${balance.available} ${type.unit}`)}"><span class="bar-used" style="width:${balance.used/balance.allocation*100}%" aria-hidden="true"></span><span class="bar-pending" style="width:${balance.pending/balance.allocation*100}%" aria-hidden="true"></span><span class="bar-available" style="width:${balance.available/balance.allocation*100}%" aria-hidden="true"></span></div>`:'';
-    return `<details class="type-balance" data-balance="${type.id}" ${expandedBalances.has(type.id)?'open':''}><summary aria-expanded="${expandedBalances.has(type.id)}"><span class="type-title">${type.name}</span><span class="type-quantity">${stateLabel}</span>${balance?`<span class="type-percentage">${balance.percentage}% available</span>`:''}<span class="type-period">${escapeHtml(balance?.period || type.basis)}</span>${bar}</summary><div class="type-balance-body">${balance?`<div class="bar-legend"><span>Used <b>${balance.used}</b></span><span>Pending <b>${balance.pending}</b></span><span>Available <b>${balance.available}</b></span></div><p>Allocation: <b>${balance.allocation} ${type.unit}</b>. ${escapeHtml(balance.note)}</p><p>Used includes approved deductions, including upcoming leave. Pending reservations are counted separately.</p>`:'<p>No available balance is assumed until the applicable event, schedule or eligibility is confirmed.</p>'}<span class="pay-label">${type.pay}</span><h3>Allowance and rules</h3>${allowanceMarkup(type)}${type.shape==='supplement'?'<p>Handled in the annual allocation; not requested as extra leave.</p>':`<button class="inline-link" data-example-type="${type.id}">Preview ${type.name.toLowerCase()} example →</button>`}</div></details>`;
-  }).join('');
+    const label=typeLabel(type);
+    const stateLabel=balance?`${balance.available} / ${balance.allocation} ${type.unit} available`:type.id==='sick'?'Allowance and eligibility to confirm':({event:'Per qualifying event',schedule:'Schedule arrangement',variable:'No fixed allowance',supplement:'Annual allocation supplement'})[type.shape] || 'Eligibility to confirm';
+    const bar=balance&&balance.allocation>0?`<div class="type-bar" role="group" aria-label="${escapeHtml(`${label}: allocation ${balance.allocation}, used ${balance.used}, pending ${balance.pending}, available ${balance.available} ${type.unit}`)}"><span class="bar-used" style="width:${balance.used/balance.allocation*100}%" aria-hidden="true"></span><span class="bar-pending" style="width:${balance.pending/balance.allocation*100}%" aria-hidden="true"></span><span class="bar-available" style="width:${balance.available/balance.allocation*100}%" aria-hidden="true"></span></div>`:'';
+    return `<details class="type-balance" data-balance="${type.id}" ${expandedBalances.has(type.id)?'open':''}><summary aria-expanded="${expandedBalances.has(type.id)}"><span class="type-title">${escapeHtml(label)}</span><span class="type-quantity">${stateLabel}</span>${balance?.percentage!==null&&balance?`<span class="type-percentage">${balance.percentage}% available</span>`:''}<span class="type-period">${escapeHtml(balance?.period || type.basis)}</span>${bar}</summary><div class="type-balance-body">${balance?`<div class="bar-legend"><span>Used <b>${balance.used}</b></span><span>Pending <b>${balance.pending}</b></span><span>Available <b>${balance.available}</b></span></div><p>Allocation: <b>${balance.allocation} ${type.unit}</b>. ${escapeHtml(balance.note)}</p><p>Used includes approved deductions, including upcoming leave. Pending reservations are counted separately.</p>`:'<p>No available balance is assumed until the applicable event, schedule or eligibility is confirmed.</p>'}<span class="pay-label">${type.pay}</span><h4>Allowance and rules</h4>${allowanceMarkup(type)}${type.shape==='supplement'?'<p>Handled in the annual allocation; not requested as extra leave.</p>':`<button class="inline-link" data-example-type="${type.id}">Preview ${escapeHtml(label.toLowerCase())} example →</button>`}</div></details>`;
+  }).join('')}</div></section>`).join('');
   document.querySelectorAll('[data-balance]').forEach(details=>details.addEventListener('toggle',()=>{details.querySelector('summary').setAttribute('aria-expanded',String(details.open));details.open?expandedBalances.add(details.dataset.balance):expandedBalances.delete(details.dataset.balance);}));
-  $('#balance-toggle').textContent=showAllBalances?'Show fewer types':`Show all ${leaveTypes.length} types`;
+  $('#balance-toggle').textContent=showAllBalances?'Show shortlisted types':`Show all ${leaveTypes.length} types`;
   $('#balance-toggle').setAttribute('aria-expanded',String(showAllBalances));
+  $('#balance-list-status').textContent=showAllBalances?`All ${leaveTypes.length} types shown.`:`${shortlist.length} shortlisted types shown.${pinned.length?` ${pinned.length} expanded types kept visible.`:''}`;
 }
 function renderUpcoming() {
   const upcoming=entries.filter(entry=>entry.person===viewerId&&entry.end>=dateKey(DEMO_TODAY)).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,3);
@@ -159,9 +165,20 @@ function showEvent(id,trigger) {
 }
 function requestForm(trigger, initialType='annual', example=false) {
   if(!ensureSession())return;
-  const groups=[...new Set(leaveTypes.map(type=>type.group))];
-  const options=groups.map(group=>`<optgroup label="${group}">${leaveTypes.filter(type=>type.group===group).map(type=>`<option value="${type.id}" ${type.id===initialType?'selected':''} ${type.shape==='supplement'?'disabled':''}>${type.name}${type.shape==='supplement'?' — annual allocation adjustment':''}</option>`).join('')}</optgroup>`).join('');
-  showDialog(`<span class="eyebrow">${example?'ILLUSTRATIVE TYPE EXAMPLE':'DEMO INTERACTION'}</span><h2>Plan your time away.</h2><p>Preview a request for ${demoUser.name} using fictional data. Nothing is submitted or saved.</p><form id="request-form"><label for="leave-type">Leave type</label><select id="leave-type">${options}</select><p id="request-allowance" class="request-allowance"></p><details id="request-rules" class="request-rules"><summary>Allowance and rules</summary><div id="request-rule-content"></div></details><div class="form-row"><div><label for="start-date">From</label><input id="start-date" type="date" value="2026-10-26" required></div><div><label for="end-date">To</label><input id="end-date" type="date" value="2026-10-28" required></div></div><div class="form-row"><div><label for="request-amount">Preview amount</label><input id="request-amount" type="number" min="1" step="1" value="3" required></div><div><label for="request-unit">Unit</label><select id="request-unit"></select></div></div><p class="form-hint">Enter an illustrative amount. Working days and other units are not calculated from these dates.</p><p id="request-balance" class="request-balance" aria-live="polite"></p><button class="primary" type="submit">Preview demo request →</button></form>`,trigger);
+  let showAllRequestTypes=false;
+  showDialog(`<span class="eyebrow">${example?'ILLUSTRATIVE TYPE EXAMPLE':'DEMO INTERACTION'}</span><h2>Plan your time away.</h2><p>Preview a request for ${demoUser.name} using fictional data. Nothing is submitted or saved.</p><form id="request-form"><label for="leave-type">Leave type</label><select id="leave-type" aria-describedby="request-type-status"></select><button class="inline-link type-toggle" id="request-type-toggle" type="button" aria-expanded="false" aria-controls="leave-type">Show all leave types</button><p id="request-type-status" class="form-hint" role="status"></p><p id="request-allowance" class="request-allowance"></p><details id="request-rules" class="request-rules"><summary>Allowance and rules</summary><div id="request-rule-content"></div></details><div class="form-row"><div><label for="start-date">From</label><input id="start-date" type="date" value="2026-10-26" required></div><div><label for="end-date">To</label><input id="end-date" type="date" value="2026-10-28" required></div></div><div class="form-row"><div><label for="request-amount">Preview amount</label><input id="request-amount" type="number" min="1" step="1" value="3" required></div><div><label for="request-unit">Unit</label><select id="request-unit"></select></div></div><p class="form-hint">Enter an illustrative amount. Working days and other units are not calculated from these dates.</p><p id="request-balance" class="request-balance" aria-live="polite"></p><button class="primary" type="submit">Preview demo request →</button></form>`,trigger);
+  function renderTypeOptions(selectedId) {
+    const shown=showAllRequestTypes?leaveTypes:shortlist;
+    const groups=typeGroups(shown);
+    const pinned=!showAllRequestTypes&&!shortlistIds.includes(selectedId)?getType(selectedId):null;
+    if(pinned)groups.push({name:'Your selected type',types:[pinned]});
+    $('#leave-type').innerHTML=groups.map(group=>`<optgroup label="${escapeHtml(group.name)}">${group.types.map(type=>`<option value="${type.id}" ${type.id===selectedId?'selected':''} ${type.shape==='supplement'?'disabled':''}>${escapeHtml(typeLabel(type))}${type.shape==='supplement'?' — annual allocation adjustment':''}</option>`).join('')}</optgroup>`).join('');
+    $('#request-type-toggle').textContent=showAllRequestTypes?'Show shortlisted types':'Show all leave types';
+    $('#request-type-toggle').setAttribute('aria-expanded',String(showAllRequestTypes));
+    $('#request-type-status').textContent=showAllRequestTypes?`All ${leaveTypes.filter(type=>type.shape!=='supplement').length} requestable types shown; annual allocation supplement is explained separately.`:`${shortlist.length} shortlisted types.${pinned?` Your selected type, ${typeLabel(pinned)}, is also kept visible.`:''}`;
+  }
+  renderTypeOptions(initialType);
+  $('#request-type-toggle').addEventListener('click',()=>{const selectedId=$('#leave-type').value;showAllRequestTypes=!showAllRequestTypes;renderTypeOptions(selectedId);});
   function projection(type) {
     const balance=balanceOf(type.id),amount=Number($('#request-amount').value),unit=$('#request-unit').value;
     const periodMatches=!balance?.period.includes('2026')||[$('#start-date').value,$('#end-date').value].every(date=>date.startsWith('2026-'));
@@ -183,7 +200,7 @@ function requestForm(trigger, initialType='annual', example=false) {
     $('#request-amount').value=type.id==='annual'?'3':'1';
     updateProjection();
   }
-  $('#leave-type').addEventListener('change',updateType);
+  $('#leave-type').addEventListener('change',()=>{const selectedId=$('#leave-type').value;if(!showAllRequestTypes)renderTypeOptions(selectedId);updateType();});
   for(const selector of ['#request-unit','#request-amount','#start-date','#end-date']) $(selector).addEventListener('input',updateProjection);
   for(const selector of ['#start-date','#end-date']) $(selector).addEventListener('input',()=>$('#end-date').setCustomValidity(''));
   updateType();
@@ -192,7 +209,7 @@ function requestForm(trigger, initialType='annual', example=false) {
     event.preventDefault();const start=$('#start-date'),end=$('#end-date');end.setCustomValidity('');
     if(end.value<start.value){end.setCustomValidity('Choose an end date on or after the start date.');end.reportValidity();return;}
     const type=getType($('#leave-type').value),amount=Number($('#request-amount').value),unit=$('#request-unit').value,result=projection(type);
-    $('#dialog-content').innerHTML=`<span class="eyebrow">DEMO ONLY</span><h2>Your preview is ready.</h2><p>${escapeHtml(type.name)} · ${escapeHtml(formatAmount(amount,unit))}</p><p>${shortDate(start.value)} – ${shortDate(end.value)} ${dateFromKey(end.value).getFullYear()}</p><p class="request-balance ${result.excess?'over-allowance':''}">${escapeHtml(result.text)}</p><p>No request was sent or saved. Eligibility, working-day calculations and approval routing are not validated by this preview.</p><button class="primary" id="finish-demo">Back to calendar</button>`;
+    $('#dialog-content').innerHTML=`<span class="eyebrow">DEMO ONLY</span><h2>Your preview is ready.</h2><p>${escapeHtml(typeLabel(type))} · ${escapeHtml(formatAmount(amount,unit))}</p><p>${shortDate(start.value)} – ${shortDate(end.value)} ${dateFromKey(end.value).getFullYear()}</p><p class="request-balance ${result.excess?'over-allowance':''}">${escapeHtml(result.text)}</p><p>No request was sent or saved. Eligibility, working-day calculations and approval routing are not validated by this preview.</p><button class="primary" id="finish-demo">Back to calendar</button>`;
     $('#finish-demo').addEventListener('click',()=>dialog.close());$('#finish-demo').focus();
   });
 }

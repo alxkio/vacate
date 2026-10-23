@@ -22,6 +22,14 @@ function environment(page='login', values={}) {
   return {context, store, redirects, fixtures:context.VacateFixtures, session:context.VacateDemo};
 }
 const plain=value=>JSON.parse(JSON.stringify(value));
+const catalogue=environment().context.VacateLeave;
+assert.equal(catalogue.types.length,30);assert.equal(new Set(catalogue.types.map(type=>type.id)).size,30);
+assert.equal(catalogue.types.filter(type=>type.shape!=='supplement').length,29);
+assert.deepEqual(plain(catalogue.shortlistIds),['annual','sick','maternity','paternity','childcare','parental','school','dependent-illness','child-hospitalization','marriage','voting','study']);
+assert.equal(catalogue.shortlistIds.includes('postgraduate'),false);
+assert.equal(catalogue.typeLabel(catalogue.getType('dependent-illness')),'Child illness (dependent illness)');
+assert.match(catalogue.getType('dependent-illness').requestScope,/children only/);
+assert.equal(catalogue.getType('sick').shape,'variable');
 const ids=values=>plain(values.map(person=>person.id)).sort();
 const {fixtures:f,session:s,store}=environment();
 assert.equal(f.people.length,12); assert.equal(new Set(f.people.map(person=>person.id)).size,12);
@@ -67,6 +75,7 @@ for(const [id,team,department,role] of expected) {
   const annual=f.balancesFor(person).annual;
   assert.deepEqual([annual.allocation,annual.used,annual.pending],expectedAnnual[id],`${id} annual fixture changed`);
   assert.equal(environment('calendar',{'vacate.demo.account.v2':id}).context.VacateLeave.balanceOf('annual').available,annual.allocation-annual.used-annual.pending,`${id} active balance binding`);
+  assert.equal(environment('calendar',{'vacate.demo.account.v2':id}).context.VacateLeave.balanceOf('sick'),null,`${id} invented sick-leave quota`);
   for(const [type,balance] of Object.entries(f.balancesFor(person))) {
     for(const key of ['allocation','used','pending'])assert.ok(Number.isFinite(balance[key])&&balance[key]>=0,`${id}/${type}/${key}`);
     assert.ok(balance.used+balance.pending<=balance.allocation,`${id}/${type} fixture exceeds allocation`);
