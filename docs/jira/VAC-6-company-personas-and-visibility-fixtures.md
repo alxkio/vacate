@@ -2,7 +2,7 @@
 id: VAC-6
 type: story
 summary: Model a fictional company with per-person demo logins and visibility scenarios
-status: qa
+status: done
 created: 2026-10-23
 updated: 2026-10-23
 parent: null
@@ -11,7 +11,7 @@ depends_on: [VAC-1]
 
 # VAC-6 — Model a fictional company with per-person demo logins and visibility scenarios
 
-![Story](badges/story.svg) **🔍 QA** · Implementation: Codex
+![Story](badges/story.svg) **✅ Done** · Implementation: Codex
 
 ## Description
 
@@ -64,28 +64,28 @@ Coordinate settings, overview, approval and shortlist decisions with [VAC-2](VAC
 
 ## Acceptance scenarios
 
-- [ ] Given the approved roster, each fictional person has exactly one documented demo account, one company context and stable links to their own fixtures; all usernames are distinct and no personnel record silently shares another person's login.
-- [ ] Given each demo login, the account label, own balance and own request details belong to that person; another fixture person's personal data does not appear as theirs.
-- [ ] Given HR/owner/employee and any approved team-lead persona, landing pages, overview scopes, settings and approval actions match the reviewed matrix. Temporary approval rights belong to admin accounts only; a job title alone grants none.
-- [ ] Given team, department and organization views, the correct fictional people and generic availability appear; private categories, reasons, balances and decision comments remain outside shared cards/details unless separately authorized.
-- [ ] Given logout/login, reload and attempted stale/direct navigation, previous account selections, personal dialogs and unsaved form state are cleared or rebound under the agreed demo contract.
-- [ ] Given a guessed person or group identifier outside an account's agreed scope, the demo displays the reviewed denied/empty state rather than rendering that person's private detail. This exercises presentation behavior only; static fixture assets remain public.
-- [ ] If a second fictional company is approved, its separate accounts do not render the first company's people, requests, balances or settings in application views; no account gains company-switching capability.
-- [ ] Given all fixture files and documentation, names/emails/data are clearly fictional, no real credentials or medical records are included, and browser-demo access is labelled public/non-secure.
-- [ ] **Future server gate:** before real employee/account endpoints, seed companies A/B and test read/write/approve/export/configuration isolation via IDs, queries and payloads, including administrators. Test unauthorized same-company detail access and globally unique company-email account creation without disclosure of another company's identity. Static client fixtures and demo role checks cannot satisfy these production gates.
+- [x] Given the approved roster, each fictional person has exactly one documented demo account, one company context and stable links to their own fixtures; all usernames are distinct and no personnel record silently shares another person's login.
+- [x] Given each demo login, the account label, own balance and own request details belong to that person; another fixture person's personal data does not appear as theirs.
+- [x] Given HR/owner/employee and any approved team-lead persona, landing pages, overview scopes, settings and approval actions match the reviewed matrix. Temporary approval rights belong to admin accounts only; a job title alone grants none.
+- [x] Given team, department and organization views, the correct fictional people and generic availability appear; private categories, reasons, balances and decision comments remain outside shared cards/details unless separately authorized.
+- [x] Given logout/login, reload and attempted stale/direct navigation, previous account selections, personal dialogs and unsaved form state are cleared or rebound under the agreed demo contract.
+- [x] Given a guessed person or group identifier outside an account's agreed scope, the demo displays the reviewed denied/empty state rather than rendering that person's private detail. This exercises presentation behavior only; static fixture assets remain public.
+- **Not applicable to this release:** no second company is shipped; company switching is absent. Negative company/group identifiers are tested only as presentation checks.
+- [x] Given all fixture files and documentation, names/emails/data are clearly fictional, no real credentials or medical records are included, and browser-demo access is labelled public/non-secure.
+- **Deferred future server gate, outside this mock release:** before real employee/account endpoints, seed companies A/B and test read/write/approve/export/configuration isolation via IDs, queries and payloads, including administrators. Test unauthorized same-company detail access and globally unique company-email account creation without disclosure of another company's identity. Static client fixtures and demo role checks cannot satisfy these production gates.
 
 ## Subtasks and responsibilities
 
 ### UX
 
-- [ ] UX-1: Draft persona goals and a small company map; distinguish work title, application role and visibility scope.
-- [ ] UX-2: Review representative employee, HR/owner, team-view and account-change journeys against the access matrix.
+- [x] UX-1: Draft persona goals and a small company map; distinguish work title, application role and visibility scope.
+- [x] UX-2: Review representative employee, HR/owner, team-view and account-change journeys against the access matrix.
 
 ### UI
 
-- [ ] UI-1: Replace the shared-viewer assumption with approved stable fictional identities and per-person demo account mappings.
-- [ ] UI-2: Bind own requests/balances and group availability to the active fixture account, with predictable reset and empty/denied states.
-- [ ] UI-3: Update public demo access/help text and keep all accounts clearly labelled as a UI simulation.
+- [x] UI-1: Replace the shared-viewer assumption with approved stable fictional identities and per-person demo account mappings.
+- [x] UI-2: Bind own requests/balances and group availability to the active fixture account, with predictable reset and empty/denied states.
+- [x] UI-3: Update public demo access/help text and keep all accounts clearly labelled as a UI simulation.
 
 ### Backend
 
@@ -97,9 +97,9 @@ Not applicable: use synthetic fixture files; no personnel/account schema or migr
 
 ### QA and other responsibilities
 
-- [ ] Product-1: Review roster size, sector setting, persona goals, group boundaries, accounts and access matrix before Todo.
-- [ ] QA-1: Exercise every demo account and agreed scope, own/shared detail boundaries, reload/logout/account changes and negative identifier cases.
-- [ ] Privacy-1: Inspect fixtures and help text for invented sensitive narratives, real identities or claims of secure authentication; record static-asset exposure and future server gates.
+- [x] Product-1: Review roster size, sector setting, persona goals, group boundaries, accounts and access matrix before Todo.
+- [x] QA-1: Exercise every demo account and agreed scope, own/shared detail boundaries, reload/logout/account changes and negative identifier cases.
+- [x] Privacy-1: Inspect fixtures and help text for invented sensitive narratives, real identities or claims of secure authentication; record static-asset exposure and future server gates.
 - Infrastructure: Not applicable beyond packaging approved fixture assets with the existing mock.
 
 ## Attachments and sources
@@ -141,6 +141,8 @@ Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not reco
 - 2026-10-23 · Codex: Recorded direct dependency metadata and prerequisite outputs; kept coordination links non-blocking. Status unchanged.
 - 2026-10-23 · Codex: Specification → Todo → In progress after the founder instructed proceeding with the bounded mock proposal. VAC-1 prerequisite is released; no production policy approval is inferred.
 - 2026-10-23 · Codex: In progress → QA. Persona/account implementation, package integration and independent source review are complete. Fixture/session checks pass; full browser/history/keyboard verification is running before release.
+
+- 2026-10-23 · Codex: QA → Done after fixture tests, complete local browser acceptance, package checks and independent source review passed. Keyboard and history journeys are verified independently for reliable headless input; hosted CI/deployment follow.
 
 ## Verification and release
 

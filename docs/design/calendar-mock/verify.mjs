@@ -32,7 +32,7 @@ const chrome = spawn(process.env.CHROME_BIN || '/Applications/Google Chrome.app/
 ], { stdio: ['ignore', 'ignore', 'pipe'] });
 let socket, nextId=0, frameSequence=0; const waiting=new Map(), errors=[];
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-const deadline=setTimeout(()=>{chrome.kill('SIGKILL');server?.close();process.exitCode=1;},300000);
+const deadline=setTimeout(()=>{for(const pending of waiting.values())pending.reject(Error('Browser suite exceeded five minutes'));waiting.clear();chrome.kill('SIGKILL');server?.close();process.exitCode=1;},300000);
 try {
 const endpoint = await new Promise((resolve,reject)=>{
   let log=''; chrome.stderr.on('data',data=>{log+=data;const match=log.match(/DevTools listening on (ws:\/\/[^\s]+)/);if(match)resolve(match[1]);});
@@ -44,15 +44,20 @@ const endpoint = await new Promise((resolve,reject)=>{
   socket=new WebSocket(targets.find(target=>target.type==='page').webSocketDebuggerUrl);
   await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject;});
   socket.onmessage=message=>{const data=JSON.parse(message.data);if(data.id){const pending=waiting.get(data.id);waiting.delete(data.id);data.error?pending.reject(data.error):pending.resolve(data.result);}if(data.method==='Page.navigatedWithinDocument'||(data.method==='Page.frameNavigated'&&!data.params.frame.parentId))frameSequence++;if(data.method==='Runtime.exceptionThrown')errors.push(data.params.exceptionDetails.text);};
-  const call=(method,params={})=>new Promise((resolve,reject)=>{const id=++nextId;waiting.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}));});
-  const evaluate=async expression=>{const result=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  const call=(method,params={})=>new Promise((resolve,reject)=>{const id=++nextId;const timer=setTimeout(()=>{waiting.delete(id);reject(Error('Browser protocol timeout: '+method));},20000);waiting.set(id,{resolve:value=>{clearTimeout(timer);resolve(value);},reject:error=>{clearTimeout(timer);reject(error);}});socket.send(JSON.stringify({id,method,params}));});
+  const evaluate=async expression=>{let result;try{result=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});}catch(error){throw Error(error.message+'; expression: '+expression.slice(0,180));}if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
   const click=selector=>evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
   const pointerClick=async selector=>{
     await call('Page.bringToFront');
-    const point=await evaluate(`{const target=document.querySelector(${JSON.stringify(selector)});target.scrollIntoView({block:'center',inline:'center'});const rect=target.getBoundingClientRect();({x:rect.x+rect.width/2,y:rect.y+rect.height/2})}`);
-    await call('Input.dispatchMouseEvent',{type:'mouseMoved',...point});
-    await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point});
-    await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point});
+    await call('Emulation.setFocusEmulationEnabled',{enabled:true});
+    await evaluate(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({behavior:'instant',block:'center',inline:'center'})`);
+    await evaluate('new Promise(resolve=>{requestAnimationFrame(()=>requestAnimationFrame(resolve));setTimeout(resolve,150)})');
+    const point=await evaluate(`(()=>{const target=document.querySelector(${JSON.stringify(selector)}),rect=target.getBoundingClientRect(),x=rect.x+rect.width/2,y=rect.y+rect.height/2,hit=document.elementFromPoint(x,y);return {x,y,hit:!!hit&&(hit===target||target.contains(hit)),target:target.outerHTML,over:hit?.outerHTML};})()`);
+    assert.ok(point.x>=0&&point.y>=0&&point.hit,'Pointer target obscured: '+JSON.stringify(point));
+    const position={x:point.x,y:point.y};
+    await call('Input.dispatchMouseEvent',{type:'mouseMoved',...position});
+    await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...position});
+    await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...position});
   };
   const waitFor=async expression=>{for(let attempt=0;attempt<300;attempt++){if(await evaluate(expression))return;await pause(100);}throw Error('Browser condition failed: '+expression);};
   const navigate=async url=>{
@@ -75,7 +80,9 @@ const endpoint = await new Promise((resolve,reject)=>{
   const load=async query=>{await navigate(baseUrl+query);await waitFor('document.readyState === "complete" && !!document.querySelector("#period")?.textContent');};
   const viewport=(width,height)=>call('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
   const screenshot=async name=>{await pause(350);const result=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile(join(output,name),Buffer.from(result.data,'base64'));};
-  await call('Runtime.enable');await call('Page.enable');await viewport(1600,1250);
+  await call('Runtime.enable');await call('Page.enable');
+  await call('Emulation.setFocusEmulationEnabled',{enabled:true});
+  await viewport(1600,1250);
   await navigate(baseUrl);
   await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');
   await screenshot('login-desktop.png');await viewport(375,1100);await screenshot('login-mobile.png');
@@ -88,6 +95,9 @@ const endpoint = await new Promise((resolve,reject)=>{
   const ready = () => waitFor('document.readyState === "complete" && !!document.querySelector("#period")?.textContent && !document.querySelector("#login-form")');
   const signOut = async()=>{await click('[data-action="logout"]');await waitFor('!!document.querySelector("#login-form")');};
   const closeDialog = async()=>{await evaluate('document.querySelector("#dialog").close()');await waitFor('!document.querySelector("#dialog").open');};
+  await evaluate('document.querySelector("#demo-account").value="maya";document.querySelector("#demo-account").dispatchEvent(new Event("change"))');
+  assert.equal(await evaluate('document.querySelector("#username").value'),'maya');
+  assert.equal(await evaluate('document.querySelector("#password").value'),'maya');
   const expected = [
     ['leah','Platform','Technology','lead'], ['ravi','Platform','Technology','employee'], ['noah','Platform','Technology','employee'],
     ['maya','Applications','Technology','employee'], ['theo','Applications','Technology','employee'], ['iris','Applications','Technology','employee'],
@@ -97,20 +107,37 @@ const endpoint = await new Promise((resolve,reject)=>{
   await signIn('user','user');await ready();
   assert.equal(await evaluate('window.VacateDemo.currentUser().id || window.VacateDemo.currentUser().personId'),'maya');
   assert.equal(await evaluate('sessionStorage.getItem("vacate.demo.account.v2")'),'maya');
+  // Exercise native keyboard behavior on a fresh document, independently of history traversal.
+  // Native keyboard behavior needs a foreground document and actual pointer activation,
+  // rather than only synthetic DOM clicks from the data-oriented checks above.
+  await pointerClick('[data-date="2026-10-01"]');
+  await waitFor('document.querySelector("#dialog").open && document.querySelector("#dialog").contains(document.activeElement)');
+  assert.match(await evaluate('document.querySelector("#dialog").textContent'),/No leave shown/);
+  assert.equal(await evaluate('document.hasFocus()'),true,'Keyboard target document is not focused');
+  await evaluate('new Promise(resolve=>{requestAnimationFrame(()=>requestAnimationFrame(resolve));setTimeout(resolve,150)})');
+  await evaluate(`window.__escapeEvidence=[];document.addEventListener('keydown',event=>window.__escapeEvidence.push({event:'keydown',key:event.key,trusted:event.isTrusted,target:event.target.className}),{once:true,capture:true});document.querySelector('#dialog').addEventListener('cancel',event=>window.__escapeEvidence.push({event:'cancel',trusted:event.isTrusted,prevented:event.defaultPrevented}),{once:true});`);
+  await call('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});await call('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+  try {await waitFor('!document.querySelector("#dialog").open');}
+  catch(error){throw Error(error.message+'; Escape diagnostic: '+JSON.stringify(await evaluate('({focused:document.hasFocus(),active:document.activeElement.outerHTML,modal:document.querySelector("#dialog").matches(":modal"),activation:{active:navigator.userActivation.isActive,ever:navigator.userActivation.hasBeenActive},events:window.__escapeEvidence})')));}
+  assert.equal(await evaluate('window.__escapeEvidence.some(event=>event.event === "keydown" && event.key === "Escape" && event.trusted)'),true,'Escape key was not delivered as trusted browser input');
+  assert.equal(await evaluate('document.querySelector("#dialog").open'),false);
+  await waitFor('document.activeElement.dataset.date === "2026-10-01"');
+  assert.equal(await evaluate('document.activeElement.dataset.date'),'2026-10-01');
+  console.log('PASS: trusted keyboard Escape and focus return');
   await signOut();
   await navigate(baseUrl);await waitFor('!!document.querySelector("#login-form")');
   await signIn('admin','admin');await ready();
   assert.equal(await evaluate('window.VacateDemo.currentUser().id || window.VacateDemo.currentUser().personId'),'nora');
   await signOut();
   for(const [id,team,department,role] of expected) {
-    await signIn(id+'@example.invalid','demo');await ready();
+    await signIn(id,id);await ready();
     assert.equal(await evaluate('window.VacateDemo.currentUser().id || window.VacateDemo.currentUser().personId'),id);
     const landing=role==='admin'?'org':role==='lead'?'department':'self';
     assert.equal(await evaluate(`document.querySelector('[data-scope="${landing}"]').getAttribute('aria-pressed')`),'true',id+' default scope');
     const scopes=role==='admin'?['self','team','department','org']:role==='lead'?['self','team','department']:['self','team'];
     for(const scope of ['self','team','department','org'])assert.equal(await evaluate(`!!document.querySelector('[data-scope="${scope}"]') && !document.querySelector('[data-scope="${scope}"]').hidden && !document.querySelector('[data-scope="${scope}"]').disabled`),scopes.includes(scope),id+'/'+scope+' scope affordance');
     await click('[data-action="account"]');
-    assert.match(await evaluate('document.querySelector("#dialog-content").textContent'),new RegExp(id+'@example\\.invalid'));
+    assert.match(await evaluate('document.querySelector("#dialog-content").textContent'),new RegExp('Signed in as '+id+'\\.'));
     await closeDialog();
     assert.equal(await evaluate('document.querySelector("#dialog").open'),false,id+' stale dialog');
     await click('[data-action="request"]');assert.equal(await evaluate('document.querySelector("#request-amount").value'),'3',id+' stale form amount');await closeDialog();
@@ -177,6 +204,7 @@ const endpoint = await new Promise((resolve,reject)=>{
     await navigate(baseUrl);await waitFor('!!document.querySelector("#login-form")');
     assert.equal(await evaluate('sessionStorage.getItem("vacate.demo.account.v2")'),null);
   }
+  console.log('PASS: twelve firstname accounts, scopes, own/shared records and resets');
   // Reloading stale or fabricated identity cannot restore a signed-in calendar.
   await evaluate('sessionStorage.setItem("vacate.demo.account.v1","admin");sessionStorage.setItem("vacate.demo.account.v2","unknown")');
   await navigate(baseUrl);await waitFor('!!document.querySelector("#login-form")');
@@ -197,7 +225,7 @@ const endpoint = await new Promise((resolve,reject)=>{
   await historyTo({delta:1},'Forward after logout');
   await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');
   assert.equal(await evaluate('window.VacateDemo.currentUser()'),null,'Forward after logout restored identity');
-  await signIn('nora@example.invalid','demo');await ready();
+  await signIn('nora','nora');await ready();
   await historyTo({name:'maya-one'},'Back after account switch');
   await waitFor('document.querySelector("#demo-person")?.textContent === "Nora"');await ready();
   assert.equal(await evaluate('window.VacateDemo.currentUser().id'),'nora','History restored prior account after switch');
@@ -205,6 +233,7 @@ const endpoint = await new Promise((resolve,reject)=>{
   assert.equal(await evaluate('document.querySelector("#dialog").open'),false,'History restored prior dialog after switch');
   assert.equal(await evaluate('document.querySelector("[data-scope=org]").getAttribute("aria-pressed")'),'true','History retained prior account scope');
   await click('[data-action="request"]');assert.equal(await evaluate('document.querySelector("#request-amount").value'),'3','History restored draft after switch');await closeDialog();
+  console.log('PASS: logout and account-switch Back/Forward navigation');
   await signOut();await signIn('user','user');await ready();
   assert.equal(await evaluate('window.VacateLeave.types.length'),29);
   assert.equal(await evaluate('window.VacateLeave.workWeekDays'),5);
@@ -251,21 +280,12 @@ const endpoint = await new Promise((resolve,reject)=>{
     if(scope!=='self')assert.equal(await evaluate('window.VacateLeave.types.some(type=>document.querySelector("#calendar-content").textContent.includes(type.name))'),false,'Shared calendar disclosed a leave type');
   }
   await click('[data-scope="self"]');await click('[data-view="month"]');
-  // Native keyboard behavior needs a foreground document and actual pointer activation,
-  // rather than only synthetic DOM clicks from the data-oriented checks above.
-  await pointerClick('[data-date="2026-10-01"]');
-  await waitFor('document.querySelector("#dialog").open && document.querySelector("#dialog").contains(document.activeElement)');
+  // Isolate native keyboard input from the browser's earlier reportValidity popup.
+  // Account/history and date-validation behavior are checked separately above.
+  await load('?scope=self&view=month');
+  await click('[data-date="2026-10-01"]');
   assert.match(await evaluate('document.querySelector("#dialog").textContent'),/No leave shown/);
-  assert.equal(await evaluate('document.hasFocus()'),true,'Keyboard target document is not focused');
-  await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
-  await evaluate(`window.__escapeEvidence=[];document.addEventListener('keydown',event=>window.__escapeEvidence.push({event:'keydown',key:event.key,trusted:event.isTrusted,target:event.target.className}),{once:true,capture:true});document.querySelector('#dialog').addEventListener('cancel',event=>window.__escapeEvidence.push({event:'cancel',trusted:event.isTrusted,prevented:event.defaultPrevented}),{once:true});`);
-  await call('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});await call('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
-  try {await waitFor('!document.querySelector("#dialog").open');}
-  catch(error){throw Error(error.message+'; Escape diagnostic: '+JSON.stringify(await evaluate('({focused:document.hasFocus(),active:document.activeElement.outerHTML,modal:document.querySelector("#dialog").matches(":modal"),activation:{active:navigator.userActivation.isActive,ever:navigator.userActivation.hasBeenActive},events:window.__escapeEvidence})')));}
-  assert.equal(await evaluate('window.__escapeEvidence.some(event=>event.event === "keydown" && event.key === "Escape" && event.trusted)'),true,'Escape key was not delivered as trusted browser input');
-  assert.equal(await evaluate('document.querySelector("#dialog").open'),false);
-  await waitFor('document.activeElement.dataset.date === "2026-10-01"');
-  assert.equal(await evaluate('document.activeElement.dataset.date'),'2026-10-01');
+  await closeDialog();
   await click('[data-date="2026-10-26"]');assert.match(await evaluate('document.querySelector("#dialog").textContent'),/Annual leave · Pending/);await evaluate('document.querySelector("#dialog").close()');
   await click('[data-scope="team"]');await click('#calendar-content [data-event]');assert.doesNotMatch(await evaluate('document.querySelector("#dialog-content").textContent'),/Vacation|Pending|Approved|sick|illness/i);await closeDialog();
   await click('[data-view="year"]');await click('[data-action="next"]');assert.equal(await evaluate('document.querySelector("#period").textContent'),'2027');await click('[data-action="today"]');assert.equal(await evaluate('document.querySelector("#period").textContent'),'2026');

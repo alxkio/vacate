@@ -10,9 +10,9 @@ The optional second company is omitted. VAC-2 settings, VAC-3 dashboard refineme
 
 ## Review and verification
 
-Independent source review found no release-blocking correctness/privacy issues and independently passed fixture/session checks. It requested a real browser-history test for stale personal state; that regression is being added before release.
+Independent source review found no release-blocking correctness/privacy issues and independently passed fixture/session checks. It requested a real browser-history test for stale personal state; the added Back/Forward regression passed. Native keyboard checks use trusted pointer/key input on a fresh document, independently of history traversal, because headless Chrome retained a hidden document after traversal during initial harness attempts. No application assertions were waived.
 
-Node fixture tests pass for the independently expected roster/capabilities, exact scope membership, denied foreign IDs, sanitized shared projections, per-person request/balance reconciliation, missing/zero balances and invalid session/logout handling. Full local browser acceptance, final independent confirmation and hosted checks remain pending at this checkpoint.
+Node fixture tests pass for the independently expected roster/capabilities, exact scope membership, denied foreign IDs, sanitized shared projections, per-person request/balance reconciliation, missing/zero balances and invalid session/logout handling. Full local Chrome acceptance passed for all 12 firstname/firstname accounts, compatibility aliases, all permitted scopes/group rosters, own records, negative identifiers, shared-detail privacy, account resets, actual Back/Forward traversal, catalogue/unit/date regressions, trusted Escape/focus return, 16 mobile overflow checks and eight screenshots. Fresh packaging, fixture script load order, Angular entry preservation, revision marker, no-store routing, syntax and whitespace checks passed. Hosted checks and deployment remain pending at this checkpoint.
 
 ## Deployment
 
