@@ -1,6 +1,6 @@
 # Calendar mock gallery
 
-The A/B/C design study uses public, fictional people and data. UI direction remains open. The previous [leave mock release](../../release-2026-10-22-leave-mock.md) is deployed at [Azure dev](https://lemon-beach-02f7a7103.4.azurestaticapps.net); the [VAC-6 release record](../../release-2026-10-23-vac-6.md) tracks the current persona/account update and deployment status.
+The A/B/C design study uses public, fictional people and data. UI direction remains open. VAC-6 revision `e87ada9` is deployed at [Azure dev](https://lemon-beach-02f7a7103.4.azurestaticapps.net), with hosted checks, cloud smoke and complete live browser acceptance passing. See the [VAC-6 release record](../../release-2026-10-23-vac-6.md) and [earlier leave mock release](../../release-2026-10-22-leave-mock.md).
 
 ## Demo accounts and company
 

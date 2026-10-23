@@ -2,7 +2,7 @@
 id: VAC-6
 type: story
 summary: Model a fictional company with per-person demo logins and visibility scenarios
-status: done
+status: released
 created: 2026-10-23
 updated: 2026-10-23
 parent: null
@@ -11,7 +11,7 @@ depends_on: [VAC-1]
 
 # VAC-6 — Model a fictional company with per-person demo logins and visibility scenarios
 
-![Story](badges/story.svg) **✅ Done** · Implementation: Codex
+![Story](badges/story.svg) **🚀 Released** · Implementation: Codex
 
 ## Description
 
@@ -131,8 +131,11 @@ Not applicable: use synthetic fixture files; no personnel/account schema or migr
 | Entry | Date | Actor / category | Activity | Duration | Basis and evidence |
 |---|---|---|---|---|---|
 | W-1 | 2026-10-23 | Product Owner agent / assistant recorded | Draft persona/fixture outcome and visibility scenarios | Unknown | No issue-specific duration captured; founder brief/source links above. VAC-1 historical time excluded. |
+| W-2 | 2026-10-23 | Codex / assistant duration unmeasured | Implement/review personas, integrate packaging and verify browser journeys | Unknown | Delivered revision `e87ada9`; local browser and source-review evidence in the release record. No active assistant duration captured for this issue. |
+| W-3 | 2026-10-23, 10:01:19–10:02:52 Athens | GitHub Actions / automation elapsed | Hosted CI workflow | 1m 33s | [Workflow timing evidence](media/VAC-6/automation-timing.json); earliest job start to latest completion, parallel jobs counted once |
+| W-4 | 2026-10-23, 10:07:56–10:13:13 Athens | GitHub Actions / automation elapsed | Repeated checks, infrastructure validation/apply and API/frontend deployment | 5m 17s | Same timing evidence; deployment workflow window, including pipeline waits |
 
-Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not recorded. No estimate recorded.
+Human actual: **Unknown**. Active assistant duration: **Unknown**. Automation elapsed: **6m 50s** across the two non-overlapping successful workflow windows; includes waits and is not development effort or billed runner time. No estimate recorded. VAC-1 historical measurements are not reused. The earlier statement that automation time was unrecorded is superseded by W-3/W-4.
 
 ## History
 
@@ -143,6 +146,8 @@ Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not reco
 - 2026-10-23 · Codex: In progress → QA. Persona/account implementation, package integration and independent source review are complete. Fixture/session checks pass; full browser/history/keyboard verification is running before release.
 
 - 2026-10-23 · Codex: QA → Done after fixture tests, complete local browser acceptance, package checks and independent source review passed. Keyboard and history journeys are verified independently for reliable headless input; hosted CI/deployment follow.
+
+- 2026-10-23 · Codex: Done → Released to Azure dev at revision `e87ada9`. Hosted builds/tests, deployment/cloud smoke and the complete live 12-person browser suite passed. VAC-2–VAC-5 remain separate specifications.
 
 ## Verification and release
 

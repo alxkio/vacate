@@ -88,12 +88,12 @@ const endpoint = await new Promise((resolve,reject)=>{
   await screenshot('login-desktop.png');await viewport(375,1100);await screenshot('login-mobile.png');
   assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true,'Login overflows on mobile');
   await viewport(1600,1250);
-  const signIn=async (username,password)=>{await evaluate(`document.querySelector('#username').value=${JSON.stringify(username)};document.querySelector('#password').value=${JSON.stringify(password)};document.querySelector('#login-form').requestSubmit()`);};
+  const signIn=async (username,password)=>{await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');await evaluate(`document.querySelector('#username').value=${JSON.stringify(username)};document.querySelector('#password').value=${JSON.stringify(password)};document.querySelector('#login-form').requestSubmit()`);};
   await signIn('user','admin');
   assert.equal(await evaluate('document.querySelector("#login-error").hidden'),false);
   assert.equal(await evaluate('window.VacateDemo.currentUser()'),null);
   const ready = () => waitFor('document.readyState === "complete" && !!document.querySelector("#period")?.textContent && !document.querySelector("#login-form")');
-  const signOut = async()=>{await click('[data-action="logout"]');await waitFor('!!document.querySelector("#login-form")');};
+  const signOut = async()=>{await click('[data-action="logout"]');await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');};
   const closeDialog = async()=>{await evaluate('document.querySelector("#dialog").close()');await waitFor('!document.querySelector("#dialog").open');};
   await evaluate('document.querySelector("#demo-account").value="maya";document.querySelector("#demo-account").dispatchEvent(new Event("change"))');
   assert.equal(await evaluate('document.querySelector("#username").value'),'maya');

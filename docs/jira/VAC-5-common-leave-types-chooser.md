@@ -86,6 +86,8 @@ Not applicable: no persisted favorites, usage history or company shortlist table
 
 - C-1 · 2026-10-23 · Product Owner agent: The current balance area already starts with three cards, while the request selector contains the wider catalogue. The exact surfaces for this refinement need review; the request chooser is the proposed primary target.
 
+- C-2 · 2026-10-23 · Codex: Founder requested type groups and common/repeated-use tags in the leave reference. The [29-row review table and unchecked candidate list](../product/leave-types-review.md#vac-5-shortlist-selection--pending-review) now support selection. Tags are proposals without usage evidence; no default shortlist has been approved or implemented.
+
 ## Decisions
 
 - D-1 · 2026-10-23 · Founder direction, confirmed for mock: provide a short default list and explicit access to the complete type catalogue.
