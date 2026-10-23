@@ -13,7 +13,7 @@ def get(url, origin=None):
         return response.read(), response.headers
 
 
-def check(api, web, revision):
+def check_api(api, web, revision):
     body, headers = get(f"{api}/health", web)
     health = json.loads(body)
     assert health["status"] == "healthy", "API liveness failed"
@@ -27,7 +27,11 @@ def check(api, web, revision):
     except urllib.error.HTTPError as error:
         assert error.code == 403, "Unexpected response for untrusted origin"
         denied_headers = error.headers
+        error.close()
     assert not denied_headers.get("Access-Control-Allow-Origin"), "Untrusted CORS origin allowed"
+
+
+def check_web(api, web, revision):
     body, headers = get(f"{web}/config.json")
     config = json.loads(body)
     assert config["apiBaseUrl"] == api, "Frontend points to a different API"
@@ -62,16 +66,26 @@ def check(api, web, revision):
         assert b"<app-root" in body, "Angular entry point missing"
 
 
+def check(api, web, revision, frontend_only=False):
+    if not frontend_only:
+        check_api(api, web, revision)
+    if web:
+        check_web(api, web, revision)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--api-base-url", required=True, help="API URL including /api")
     parser.add_argument("--web-base-url")
     parser.add_argument("--revision", default="")
+    parser.add_argument("--frontend-only", action="store_true", help="Check web delivery/configuration without calling or matching the existing API revision")
     args = parser.parse_args()
+    if args.frontend_only and not args.web_base_url:
+        parser.error("--frontend-only requires --web-base-url")
     for attempt in range(24):
         try:
-            check(args.api_base_url.rstrip("/"), args.web_base_url, args.revision)
-            print("Cloud smoke checks passed")
+            check(args.api_base_url.rstrip("/"), args.web_base_url.rstrip("/") if args.web_base_url else None, args.revision, args.frontend_only)
+            print("Frontend-only smoke checks passed (API checks skipped)" if args.frontend_only else "Cloud smoke checks passed")
             return
         except (AssertionError, ValueError, KeyError, OSError) as error:
             print(f"Attempt {attempt + 1}/24: {type(error).__name__}: {error}", flush=True)

@@ -16,6 +16,10 @@ on:
         description: Apply after validation and what-if (false previews only)
         type: boolean
         default: false
+      deploy_backend:
+        description: Build, test and publish API (enable when deploying backend changes)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -24,6 +28,8 @@ jobs:
   checks:
     if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/ci.yml
+    with:
+      skip_backend: ${{ !inputs.deploy_backend }}
 
   compile:
     runs-on: ubuntu-24.04
@@ -106,7 +112,7 @@ jobs:
           echo "web_name=$(jq -r '.properties.outputs.staticSiteName.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
           echo "web_url=$(jq -r '.properties.outputs.staticSiteUrl.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@v8
-        if: inputs.apply
+        if: inputs.apply && inputs.deploy_backend
         with:
           name: functions-package
           path: artifacts/api
@@ -125,7 +131,7 @@ jobs:
           jq -n --arg apiBaseUrl "$API_URL/api" --arg revision "$GITHUB_SHA" '{apiBaseUrl: $apiBaseUrl, revision: $revision}' > artifacts/web/config.json
           test -f artifacts/web/staticwebapp.config.json
       - name: Publish API
-        if: inputs.apply
+        if: inputs.apply && inputs.deploy_backend
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ steps.infrastructure.outputs.function_name }}
@@ -160,15 +166,27 @@ jobs:
           skip_api_build: true
           production_branch: ${{ github.ref_name }}
       - name: Verify deployed endpoints
-        if: inputs.apply
+        if: inputs.apply && inputs.deploy_backend
         env:
           API_URL: ${{ steps.infrastructure.outputs.function_url }}
           WEB_URL: ${{ steps.infrastructure.outputs.web_url }}
         run: python3 scripts/cloud-smoke.py --api-base-url "$API_URL/api" --web-base-url "$WEB_URL" --revision "$GITHUB_SHA"
+      - name: Verify deployed frontend
+        if: inputs.apply && !inputs.deploy_backend
+        env:
+          API_URL: ${{ steps.infrastructure.outputs.function_url }}
+          WEB_URL: ${{ steps.infrastructure.outputs.web_url }}
+        run: python3 scripts/cloud-smoke.py --api-base-url "$API_URL/api" --web-base-url "$WEB_URL" --revision "$GITHUB_SHA" --frontend-only
       - name: Deployment summary
         if: inputs.apply
         env:
           API_URL: ${{ steps.infrastructure.outputs.function_url }}
           WEB_URL: ${{ steps.infrastructure.outputs.web_url }}
+          DEPLOY_BACKEND: ${{ inputs.deploy_backend }}
         run: |
-          printf 'Deployed `%s` to `%s`\n\nWeb: %s\n\nDemo login: %s/login.html\n\nAPI health: %s/api/health\n' "$GITHUB_SHA" "$DEPLOY_ENVIRONMENT" "$WEB_URL" "$WEB_URL" "$API_URL" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Deployed frontend `%s` to `%s`\n\nWeb: %s\n\nDemo login: %s/login.html\n' "$GITHUB_SHA" "$DEPLOY_ENVIRONMENT" "$WEB_URL" "$WEB_URL" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$DEPLOY_BACKEND" == 'true' ]]; then
+            printf '\nBackend: deployed and checked at the same revision\n\nAPI health: %s/api/health\n' "$API_URL" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '\nBackend: build/tests/publish and API smoke skipped; existing API version retained\n' >> "$GITHUB_STEP_SUMMARY"
+          fi
