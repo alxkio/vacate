@@ -16,6 +16,7 @@
     { "route": "/demo-fixtures.js", "headers": { "Cache-Control": "no-store" } },
     { "route": "/login.js", "headers": { "Cache-Control": "no-store" } },
     { "route": "/leave-types.js", "headers": { "Cache-Control": "no-store" } },
+    { "route": "/leave-eligibility.js", "headers": { "Cache-Control": "no-store" } },
     { "route": "/config.json", "headers": { "Cache-Control": "no-store" } },
     { "route": "/index.html", "headers": { "Cache-Control": "no-store" } }
   ],

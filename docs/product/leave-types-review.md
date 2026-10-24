@@ -24,7 +24,7 @@ The six-day column is source context only. The mock displays the five-day figure
 
 Limits apply to eligible employees, not automatically to every account. Months, weeks, hours, yearly limits and event limits are different units/bases.
 
-**VAC-5 implementation defaults · 2026-10-23.** Groups match the mock catalogue. **✅ Selected** records the founder's shortlist choices; **🟡 Provisional** identifies study/examinations, included under the authorization to implement the suggestions while keeping questions open. Untagged types remain in Show all. **↻** identifies a repeatable or yearly allowance pattern, not measured popularity or eligibility. The 12-type shortlist is shared across personas, request selection, balance cards and their example actions. All catalogue entries remain available through Show all; disability supplements stay non-requestable. Sick leave adds a 30th catalogue entry with unknown allowance/pay and no entitlement calculation.
+**VAC-5 base defaults · 2026-10-23; placement/eligibility revised 2026-10-24.** Groups match the mock catalogue. **✅ Selected** records shortlist membership; **🟡 Provisional** identifies study/examinations. **↻** marks repeatable/yearly patterns, not measured popularity. The 12-type base list is filtered by current mock profile decisions; known-unavailable types are omitted from default personal choices, while Show all preserves reference rules with disabled requests. Calendar now shows only own annual in its right rail; other balances have a dedicated page. See [calendar-first design](../design/calendar-first-balances-proposal.md) and [exact provisional GR eligibility rules](leave-eligibility-review.md). Disability supplements stay non-requestable; sick allowance/pay remain unknown.
 
 | Type | Group | Allowance / main rule | VAC-5 selection / use pattern | Guide page |
 |---|---|---|---|---:|
@@ -82,7 +82,7 @@ Founder selection recorded **2026-10-23: 11 selected types plus study/examinatio
 - [x] Paternity
 - [x] Study/examinations — provisional default; excludes postgraduate/doctoral exams
 
-**Provisional display contract:** annual and sick first under Quick choices; then Parenthood and family (maternity, paternity, childcare, parental, school attendance), Care and health (child illness, child hospitalization), Life events (marriage/civil partnership), Civic duties (voting), Study and examinations (study). Use this same shortlist for requests and balances across all personas. Show all retains every other type. Returning to the short request list keeps an uncommon selected type visible and preserves dates, quantity, units and open rules. Expanded uncommon balance cards also remain visible when returning to the shortlist. A fresh form/account starts with the shared defaults.
+**Provisional base order:** annual and sick under Quick choices; then Parenthood and family (maternity, paternity, childcare, parental, school attendance), Care and health (child illness, child hospitalization), Life events (marriage/civil partnership), Civic duties (voting), Study and examinations (study). Requests and the dedicated balances page use the person's allowed/unknown subset of this list; Calendar contains only the annual summary. Show all retains every type's reference rules, with unavailable requests disabled. Returning to the short request list keeps an allowed uncommon selection and preserves draft dates/quantity/units/open rules. A fresh account starts with its own profile-filtered defaults, not another person's eligibility.
 
 The child-illness choice uses the existing dependent-illness type with a child-only shortlist label/scope; its source description remains intact. Do not create a second independent allowance for the shortcut. Postgraduate/doctoral exams and the other unselected catalogue entries remain available through Show all.
 
@@ -98,7 +98,7 @@ The child-illness choice uses the existing dependent-illness type with a child-o
 
 ## Expandable balances — implemented mock
 
-Use the same **My leave balances** component in A/B/C. Each type has a labelled horizontal bar and exact numbers, expanding to allowance, eligibility, pay, period/event, source and service-year explanation. [UI Architect proposal](../design/leave-balances-proposal.md).
+Use **My leave balances** on its dedicated page in A/B/C, with only own annual at Calendar's top right. Confirmed eligible allocations have labelled bars/numbers; unknown or unavailable eligibility shows no personal amount/percentage. Expanded source/rule information remains inspectable. [Updated UI design](../design/calendar-first-balances-proposal.md) and [balance principles](../design/leave-balances-proposal.md).
 
 Fictional example: **Annual · 14 / 25 WD available · 56% available**. VAC-6 Maya bar: **Used 8 | Pending 3 | Available 14**. Pending reservations reduce availability once; approval must move reserved units to used without another deduction. Approved-upcoming detail must not double-count usage. The mock previews amounts without saving requests or changing balances.
 

@@ -49,6 +49,7 @@ def check_web(api, web, revision):
         ("demo-fixtures.js", "javascript", b"window.VacateFixtures"),
         ("login.js", "javascript", b"login-form"),
         ("leave-types.js", "javascript", b"window.VacateLeave"),
+        ("leave-eligibility.js", "javascript", b"window.VacateEligibility"),
         ("favicon.svg", "image/svg+xml", b"#12675e"),
     ):
         body, headers = get(f"{web}/{filename}")

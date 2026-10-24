@@ -1,7 +1,7 @@
 'use strict';
 // Public, fictional browser fixtures. Presentation checks are not server authorization.
 (() => {
-  const company = Object.freeze({id:'northstar',name:'Northstar Example',sector:'Fictional IT services'});
+  const company = Object.freeze({id:'northstar',name:'Northstar Example',sector:'Fictional IT services',countryCode:'GR'});
   const departments = [{id:'technology',companyId:company.id,name:'Technology'},{id:'business',companyId:company.id,name:'Business'}];
   const teams = [{id:'platform',departmentId:'technology',name:'Platform'},{id:'applications',departmentId:'technology',name:'Applications'},{id:'product',departmentId:'business',name:'Product'},{id:'operations',departmentId:'business',name:'Operations'}].map(team=>({...team,companyId:company.id}));
   const roster = [
@@ -12,6 +12,14 @@
   ];
   const people = roster.map(([id,name,title,teamId,capability])=>Object.freeze({id,personId:id,companyId:company.id,name,title,teamId,departmentId:teams.find(team=>team.id===teamId).departmentId,team:teams.find(team=>team.id===teamId).name,capability,role:capability==='admin'?'Admin':capability==='lead'?'Team lead':'Employee',initials:name.slice(0,2).toUpperCase(),username:id,email:`${id}@example.invalid`}));
   const person = id => people.find(item=>item.id===id);
+  // Explicit public fictional profile values; never inferred from names or job titles.
+  const profileRows=[
+    ['leah','woman','married',true,false],['ravi','man','married',true,false],['noah','man','married',false,false],
+    ['maya','woman','married',true,false],['theo','man','divorced',true,false],['iris','woman','single',false,false],
+    ['ella','unspecified','unspecified',null,null],['owen','man','single',false,false],['zoe','woman','single',false,false],
+    ['daria','woman','married',true,false],['nora','woman','divorced',true,true],['sam','man','single',false,false],
+  ];
+  const eligibilityProfiles=Object.fromEntries(profileRows.map(([id,gender,maritalStatus,hasDependentChildren,soleCare])=>[id,Object.freeze({gender,maritalStatus,hasDependentChildren,soleCare})]));
   // Require canonical identity fields. A foreign company or mismatched group fails closed.
   const validPerson = candidate => candidate && people.find(item=>item.id===candidate.id&&item.companyId===candidate.companyId&&item.teamId===candidate.teamId&&item.departmentId===candidate.departmentId&&item.capability===candidate.capability);
   const allowedScopes = candidate => {const current=validPerson(candidate);return current?current.capability==='admin'?['self','team','department','org']:current.capability==='lead'?['self','team','department']:['self','team']:[];};
@@ -47,6 +55,7 @@
   entries.forEach(Object.freeze);Object.values(allocations).forEach(values=>{Object.values(values).forEach(Object.freeze);Object.freeze(values);});
   const ownEntries = candidate => {const current=validPerson(candidate);return current?entries.filter(entry=>entry.person===current.id&&entry.companyId===current.companyId):[];};
   const balancesFor = candidate => {const current=validPerson(candidate);return current?allocations[current.id]:null;};
+  const eligibilityProfileFor = candidate => {const current=validPerson(candidate);return current?eligibilityProfiles[current.id]:null;};
   const availabilityFor = (candidate,scope,groupId) => {const ids=peopleFor(candidate,scope,groupId).map(item=>item.id);return entries.filter(entry=>entry.companyId===candidate?.companyId&&ids.includes(entry.person)).map(({id,person,companyId,start,end})=>({id,person,companyId,start,end}));};
-  window.VacateFixtures=Object.freeze({company,departments:Object.freeze(departments.map(Object.freeze)),teams:Object.freeze(teams.map(Object.freeze)),people:Object.freeze(people),entries:Object.freeze(entries),person,allowedScopes,allowedTeams,allowedDepartments,peopleFor,balancesFor,ownEntries,availabilityFor});
+  window.VacateFixtures=Object.freeze({company,departments:Object.freeze(departments.map(Object.freeze)),teams:Object.freeze(teams.map(Object.freeze)),people:Object.freeze(people),entries:Object.freeze(entries),person,allowedScopes,allowedTeams,allowedDepartments,peopleFor,balancesFor,eligibilityProfileFor,ownEntries,availabilityFor});
 })();

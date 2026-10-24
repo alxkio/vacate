@@ -15,7 +15,7 @@ let baseUrl = process.env.MOCK_URL;
 if (!baseUrl) {
   server = createServer(async (request, response) => {
     const name = new URL(request.url, 'http://localhost').pathname.slice(1) || 'index.html';
-    if (!['index.html','login.html','mock.css','mock.js','demo-session.js','login.js','leave-types.js','demo-fixtures.js','favicon.svg'].includes(name)) { response.writeHead(404).end(); return; }
+    if (!['index.html','login.html','mock.css','mock.js','demo-session.js','login.js','leave-types.js','leave-eligibility.js','demo-fixtures.js','favicon.svg'].includes(name)) { response.writeHead(404).end(); return; }
     try {
       const type = name.endsWith('.html') ? 'text/html' : name.endsWith('.css') ? 'text/css' : name.endsWith('.svg') ? 'image/svg+xml' : 'text/javascript';
       response.writeHead(200, {'Content-Type': type, 'Cache-Control': 'no-store'});
@@ -28,6 +28,7 @@ if (!baseUrl) {
 const chrome = spawn(process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
   '--headless', '--disable-gpu', '--disable-background-networking', '--no-first-run',
   '--no-default-browser-check', '--disable-component-update', '--remote-debugging-port=0',
+  '--window-size=1600,1250',
   `--user-data-dir=${profile}`, 'about:blank',
 ], { stdio: ['ignore', 'ignore', 'pipe'] });
 let socket, nextId=0, frameSequence=0; const waiting=new Map(), errors=[];
@@ -43,21 +44,43 @@ const endpoint = await new Promise((resolve,reject)=>{
   const targets=await (await fetch(`http://127.0.0.1:${port}/json`)).json();
   socket=new WebSocket(targets.find(target=>target.type==='page').webSocketDebuggerUrl);
   await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject;});
-  socket.onmessage=message=>{const data=JSON.parse(message.data);if(data.id){const pending=waiting.get(data.id);waiting.delete(data.id);data.error?pending.reject(data.error):pending.resolve(data.result);}if(data.method==='Page.navigatedWithinDocument'||(data.method==='Page.frameNavigated'&&!data.params.frame.parentId))frameSequence++;if(data.method==='Runtime.exceptionThrown')errors.push(data.params.exceptionDetails.text);};
+  socket.onmessage=message=>{const data=JSON.parse(message.data);if(data.id){const pending=waiting.get(data.id);waiting.delete(data.id);data.error?pending.reject(data.error):pending.resolve(data.result);}if(data.method==='Page.navigatedWithinDocument'||(data.method==='Page.frameNavigated'&&!data.params.frame.parentId))frameSequence++;if(data.method==='Runtime.exceptionThrown')errors.push(data.params.exceptionDetails.exception?.description || data.params.exceptionDetails.text);};
   const call=(method,params={})=>new Promise((resolve,reject)=>{const id=++nextId;const timer=setTimeout(()=>{waiting.delete(id);reject(Error('Browser protocol timeout: '+method));},20000);waiting.set(id,{resolve:value=>{clearTimeout(timer);resolve(value);},reject:error=>{clearTimeout(timer);reject(error);}});socket.send(JSON.stringify({id,method,params}));});
   const evaluate=async expression=>{let result;try{result=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});}catch(error){throw Error(error.message+'; expression: '+expression.slice(0,180));}if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
   const click=selector=>evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
   const pointerClick=async selector=>{
-    await call('Page.bringToFront');
-    await call('Emulation.setFocusEmulationEnabled',{enabled:true});
-    await evaluate(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({behavior:'instant',block:'center',inline:'center'})`);
-    await evaluate('new Promise(resolve=>{requestAnimationFrame(()=>requestAnimationFrame(resolve));setTimeout(resolve,150)})');
-    const point=await evaluate(`(()=>{const target=document.querySelector(${JSON.stringify(selector)}),rect=target.getBoundingClientRect(),x=rect.x+rect.width/2,y=rect.y+rect.height/2,hit=document.elementFromPoint(x,y);return {x,y,hit:!!hit&&(hit===target||target.contains(hit)),target:target.outerHTML,over:hit?.outerHTML};})()`);
-    assert.ok(point.x>=0&&point.y>=0&&point.hit,'Pointer target obscured: '+JSON.stringify(point));
-    const position={x:point.x,y:point.y};
-    await call('Input.dispatchMouseEvent',{type:'mouseMoved',...position});
-    await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...position});
-    await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...position});
+    await evaluate(`(()=>{const target=document.querySelector(${JSON.stringify(selector)});window.__pointerEvidence={selector:${JSON.stringify(selector)},attempts:[],events:[]};window.__pointerCapture=event=>window.__pointerEvidence.events.push({type:event.type,trusted:event.isTrusted,expected:event.target===target||target.contains(event.target),target:event.target.outerHTML,focused:document.hasFocus(),active:document.activeElement?.outerHTML});for(const type of ['mousedown','mouseup','click'])document.addEventListener(type,window.__pointerCapture,true);})()`);
+    try {
+      for(let attempt=0;attempt<2;attempt++) {
+        await call('Page.bringToFront');
+        await call('Emulation.setFocusEmulationEnabled',{enabled:true});
+        await call('Runtime.evaluate',{expression:`window.focus();${attempt?'document.querySelector('+JSON.stringify(selector)+').focus({preventScroll:true});':''}`,userGesture:true});
+        await evaluate(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({behavior:'instant',block:'center',inline:'center'})`);
+        await evaluate('new Promise(resolve=>{requestAnimationFrame(()=>requestAnimationFrame(resolve));setTimeout(resolve,150)})');
+        const point=await evaluate(`(()=>{const target=document.querySelector(${JSON.stringify(selector)}),rect=target.getBoundingClientRect(),x=rect.x+rect.width/2,y=rect.y+rect.height/2,hit=document.elementFromPoint(x,y);const result={x,y,hit:!!hit&&(hit===target||target.contains(hit)),target:target.outerHTML,over:hit?.outerHTML,focused:document.hasFocus(),active:document.activeElement?.outerHTML};window.__pointerEvidence.attempts.push(result);return result;})()`);
+        assert.ok(point.x>=0&&point.y>=0&&point.hit,'Pointer target obscured: '+JSON.stringify(point));
+        const position={x:point.x,y:point.y};
+        await call('Input.dispatchMouseEvent',{type:'mouseMoved',...position});
+        await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...position});
+        await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...position});
+        // An Input ACK does not prove Chrome dispatched the trusted click to the document.
+        let delivered=[];
+        for(let poll=0;poll<40;poll++) {
+          delivered=await evaluate('window.__pointerEvidence.events.filter(event=>event.type === "click" && event.trusted)');
+          if(delivered.length)break;
+          await pause(50);
+        }
+        if(delivered.length) {
+          assert.ok(delivered.some(event=>event.expected),'Trusted pointer click reached the wrong target: '+JSON.stringify(await evaluate('window.__pointerEvidence')));
+          return;
+        }
+        // Retry only an explicitly undelivered click, never a delivered application failure.
+        if(attempt===1)throw Error('Trusted pointer click was not delivered: '+JSON.stringify({runtimeErrors:errors,...await evaluate('window.__pointerEvidence')}));
+        console.warn('NOTE: trusted pointer click was undelivered; retrying once after foreground focus: '+JSON.stringify(await evaluate('window.__pointerEvidence')));
+      }
+    } finally {
+      await evaluate('for(const type of ["mousedown","mouseup","click"])document.removeEventListener(type,window.__pointerCapture,true);delete window.__pointerCapture');
+    }
   };
   const waitFor=async expression=>{for(let attempt=0;attempt<300;attempt++){if(await evaluate(expression))return;await pause(100);}throw Error('Browser condition failed: '+expression);};
   const navigate=async url=>{
@@ -95,7 +118,19 @@ const endpoint = await new Promise((resolve,reject)=>{
   const ready = () => waitFor('document.readyState === "complete" && !!document.querySelector("#period")?.textContent && !document.querySelector("#login-form")');
   const signOut = async()=>{await click('[data-action="logout"]');await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');};
   const closeDialog = async()=>{await evaluate('document.querySelector("#dialog").close()');await waitFor('!document.querySelector("#dialog").open');};
-  const expectedShortlist=['annual','sick','maternity','paternity','childcare','parental','school','dependent-illness','child-hospitalization','marriage','voting','study'];
+  const baseShortlist=['annual','sick','maternity','paternity','childcare','parental','school','dependent-illness','child-hospitalization','marriage','voting','study'];
+  // Independent expected outcomes; do not calculate expected visibility through the implementation facade.
+  const blockedShortlist={
+    maya:['marriage','paternity'],leah:['marriage','paternity'],daria:['marriage','paternity'],
+    ravi:['maternity','marriage'],nora:['paternity'],
+    noah:['maternity','childcare','parental','school','dependent-illness','child-hospitalization','marriage'],
+    theo:['maternity'],iris:['paternity','childcare','parental','school','dependent-illness','child-hospitalization'],
+    zoe:['paternity','childcare','parental','school','dependent-illness','child-hospitalization'],
+    owen:['maternity','childcare','parental','school','dependent-illness','child-hospitalization'],
+    sam:['maternity','childcare','parental','school','dependent-illness','child-hospitalization'],ella:[],
+  };
+  const expectedVisible=id=>baseShortlist.filter(type=>!blockedShortlist[id].includes(type));
+  const expectedShortlist=expectedVisible('maya');
   const requestTypes=()=>evaluate('Array.from(document.querySelector("#leave-type").options).map(option=>option.value)');
   const balanceTypes=()=>evaluate('Array.from(document.querySelectorAll("[data-balance]")).map(item=>item.dataset.balance)');
   await evaluate('document.querySelector("#demo-account").value="maya";document.querySelector("#demo-account").dispatchEvent(new Event("change"))');
@@ -114,7 +149,8 @@ const endpoint = await new Promise((resolve,reject)=>{
   // Native keyboard behavior needs a foreground document and actual pointer activation,
   // rather than only synthetic DOM clicks from the data-oriented checks above.
   await pointerClick('[data-date="2026-10-01"]');
-  await waitFor('document.querySelector("#dialog").open && document.querySelector("#dialog").contains(document.activeElement)');
+  try {await waitFor('document.querySelector("#dialog").open && document.querySelector("#dialog").contains(document.activeElement)');}
+  catch(error){throw Error(error.message+'; first-date diagnostic: '+JSON.stringify({runtimeErrors:errors,...await evaluate('({dialogOpen:document.querySelector("#dialog").open,dialogText:document.querySelector("#dialog-content").textContent,focused:document.hasFocus(),active:document.activeElement?.outerHTML,pointer:window.__pointerEvidence})')}));}
   assert.match(await evaluate('document.querySelector("#dialog").textContent'),/No leave shown/);
   assert.equal(await evaluate('document.hasFocus()'),true,'Keyboard target document is not focused');
   await evaluate('new Promise(resolve=>{requestAnimationFrame(()=>requestAnimationFrame(resolve));setTimeout(resolve,150)})');
@@ -127,11 +163,18 @@ const endpoint = await new Promise((resolve,reject)=>{
   await waitFor('document.activeElement.dataset.date === "2026-10-01"');
   assert.equal(await evaluate('document.activeElement.dataset.date'),'2026-10-01');
   console.log('PASS: trusted keyboard Escape and focus return');
+  await evaluate('window.__requestClickEvidence=[];document.addEventListener("click",event=>window.__requestClickEvidence.push({trusted:event.isTrusted,target:event.target.outerHTML,action:event.target.closest("button")?.dataset.action}),{once:true,capture:true})');
   await pointerClick('[data-action="request"]');
+  try {await waitFor('!!document.querySelector("#request-form #leave-type")');}
+  catch(error){throw Error(error.message+'; request-open diagnostic: '+JSON.stringify({runtimeErrors:errors,...await evaluate('({dialogOpen:document.querySelector("#dialog").open,dialogText:document.querySelector("#dialog-content").textContent,active:document.activeElement?.outerHTML,currentUser:window.VacateDemo.currentUser()?.id,annualDecision:window.VacateEligibility.decisionFor("annual"),hasFocus:document.hasFocus(),clickEvents:window.__requestClickEvidence})')}));}
   assert.deepEqual(await requestTypes(),expectedShortlist,'Initial chooser defaults');
+  assert.equal(await evaluate('!!document.querySelector("#leave-type option[value=marriage]")'),false,'Married Maya must not see marriage in default chooser');
+  assert.equal(await evaluate('!!document.querySelector(".eligibility-unavailable")'),false,'Default chooser does not present unavailable type names');
   await pointerClick('#request-type-toggle');
   assert.equal(await evaluate('document.querySelector("#request-type-toggle").getAttribute("aria-expanded")'),'true');
   assert.equal(await evaluate('document.activeElement.id'),'request-type-toggle');
+  assert.equal(await evaluate('document.querySelector("#leave-type option[value=marriage]").disabled'),true,'Show all keeps marriage reference disabled for Maya');
+  assert.match(await evaluate('document.querySelector(".eligibility-unavailable").textContent'),/Marriage/,'Show all explains unavailable reference types accessibly');
   await evaluate('document.querySelector("#leave-type").value="carer";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-amount").value="2";document.querySelector("#start-date").value="2026-10-27";document.querySelector("#end-date").value="2026-10-29";document.querySelector("#request-rules").open=true');
   await call('Page.bringToFront');
   await evaluate('document.querySelector("#request-type-toggle").focus();new Promise(resolve=>{requestAnimationFrame(()=>requestAnimationFrame(resolve));setTimeout(resolve,150)})');
@@ -177,13 +220,30 @@ const endpoint = await new Promise((resolve,reject)=>{
     await closeDialog();
     assert.equal(await evaluate('document.querySelector("#dialog").open'),false,id+' stale dialog');
     await click('[data-action="request"]');assert.equal(await evaluate('document.querySelector("#request-amount").value'),'3',id+' stale form amount');
-    assert.deepEqual(await requestTypes(),expectedShortlist,id+' shared request defaults / stale selection');
-    assert.deepEqual(await balanceTypes(),expectedShortlist,id+' shared balance defaults');
+    assert.deepEqual(await requestTypes(),expectedVisible(id),id+' profile-filtered request defaults / stale selection');
+    assert.match(await evaluate('document.querySelector("#request-type-status").textContent'),new RegExp(`^${expectedVisible(id).length} shortlisted types`),id+' visible shortlist count');
+    assert.equal(await evaluate('Array.from(document.querySelector("#leave-type").options).every(option=>option.disabled === (window.VacateEligibility.decisionFor(option.value).status === "not-eligible" || window.VacateLeave.getType(option.value).shape === "supplement"))'),true,id+' picker must consume account-scoped eligibility');
+    if(id==='noah')assert.equal(await evaluate('document.querySelector("#leave-type option[value=maternity]")'),null,'Noah maternity profile restriction hides default option');
+    if(id==='nora')assert.equal(await evaluate('document.querySelector("#leave-type option[value=maternity]").disabled'),false,'Nora maternity profile eligibility');
+    if(id==='theo'){await click('#request-type-toggle');assert.equal(await evaluate('document.querySelector("#leave-type option[value=single-parent]").disabled'),true,'Theo shared-care profile is not single-parent eligible');await click('#request-type-toggle');}
+    await click('#request-type-toggle');
+    assert.equal((await requestTypes()).length,30,id+' Show all preserves complete reference catalogue');
+    for(const blocked of blockedShortlist[id])assert.equal(await evaluate(`document.querySelector('#leave-type option[value="${blocked}"]').disabled`),true,id+'/'+blocked+' remains disabled in reference catalogue');
+    await click('#request-type-toggle');
     await closeDialog();
+    assert.deepEqual(await balanceTypes(),[],id+' calendar must not render all balances');
+    assert.equal(await evaluate('document.querySelector("#balances-page").hidden'),true);
+    await click('[data-nav=balances]');
+    assert.deepEqual(await balanceTypes(),expectedVisible(id),id+' profile-filtered balance defaults');
+    assert.match(await evaluate('document.querySelector("#balance-list-status").textContent'),new RegExp(`^${expectedVisible(id).length} shortlisted types`),id+' visible balance shortlist count');
+    assert.equal(await evaluate('Array.from(document.querySelectorAll("[data-balance]")).every(card=>window.VacateEligibility.decisionFor(card.dataset.balance).status === "eligible" || !card.querySelector(".type-bar,.type-percentage"))'),true,id+' unconfirmed or unavailable type must not show a numeric personal balance');
+    assert.equal(await evaluate('document.querySelector("#calendar-page").hidden'),true);
+    assert.equal(await evaluate('document.querySelector("[data-nav=balances]").getAttribute("aria-current")'),'page');
+    await click('[data-nav=calendar]');
     const expectedUpcoming=await evaluate(`window.VacateFixtures.ownEntries(window.VacateFixtures.person(${JSON.stringify(id)})).filter(entry=>entry.end>='2026-10-22').sort((a,b)=>a.start.localeCompare(b.start)).slice(0,3).map(entry=>entry.id)`);
     assert.deepEqual(await evaluate('Array.from(document.querySelectorAll(".upcoming-card [data-event]")).map(button=>button.dataset.event)'),expectedUpcoming,id+' own upcoming entries');
     const expectedBalance=await evaluate(`window.VacateFixtures.balancesFor(window.VacateFixtures.person(${JSON.stringify(id)})).annual`);
-    assert.match(await evaluate('document.querySelector("[data-balance=annual]").textContent'),new RegExp(`${expectedBalance.allocation-expectedBalance.used-expectedBalance.pending} / ${expectedBalance.allocation} working days available`),id+' own balance');
+    assert.match(await evaluate('document.querySelector("#annual-overview").textContent'),new RegExp(`${expectedBalance.allocation-expectedBalance.used-expectedBalance.pending} / ${expectedBalance.allocation} working days available`),id+' own annual balance');
     await click('[data-nav="leave"]');
     const ownTitles=await evaluate(`window.VacateFixtures.ownEntries(window.VacateFixtures.person(${JSON.stringify(id)})).map(entry=>entry.title)`);
     const personalDialog=await evaluate('document.querySelector("#dialog-content").textContent');
@@ -274,9 +334,36 @@ const endpoint = await new Promise((resolve,reject)=>{
   await click('[data-action="request"]');assert.equal(await evaluate('document.querySelector("#request-amount").value'),'3','History restored draft after switch');await closeDialog();
   console.log('PASS: logout and account-switch Back/Forward navigation');
   await signOut();await signIn('user','user');await ready();
+  await load('?direction=b&scope=team&view=week&date=2026-11-05');
+  const retainedPeriod=await evaluate('document.querySelector("#period").textContent');
+  await click('[data-nav=balances]');
+  assert.equal(await evaluate('new URLSearchParams(location.search).get("page")'),'balances');
+  assert.equal(await evaluate('document.querySelector("#calendar-page").hidden'),true);
+  assert.equal(await evaluate('document.activeElement.id'),'main','Page navigation focuses main');
+  await historyTo({delta:-1},'Back from balances');
+  await waitFor('!document.querySelector("#calendar-page").hidden');
+  assert.equal(await evaluate('document.querySelector("#period").textContent'),retainedPeriod,'Back retains calendar period');
+  assert.equal(await evaluate('window.VacateMock.state.scope'),'team');
+  assert.equal(await evaluate('window.VacateMock.state.direction'),'b');
+  await historyTo({delta:1},'Forward to balances');
+  await waitFor('!document.querySelector("#balances-page").hidden');
+  await navigate(await evaluate('location.href'));await ready();
+  assert.equal(await evaluate('document.querySelector("#balances-page").hidden'),false,'Refresh must keep balances page');
+  assert.equal(await evaluate('document.querySelector("#period").textContent'),retainedPeriod,'Refresh retains calendar period');
+  await click('[data-nav=calendar]');
+  assert.equal(await evaluate('document.querySelector("#period").textContent'),retainedPeriod,'Calendar return retains period');
+  await load('?scope=self&view=month');
   assert.equal(await evaluate('window.VacateLeave.types.length'),30);
   assert.equal(await evaluate('window.VacateLeave.workWeekDays'),5);
   assert.equal(await evaluate('new Set(window.VacateLeave.types.map(type=>type.id)).size'),30);
+  assert.deepEqual(await balanceTypes(),[],'Calendar contains annual overview only');
+  const zeroAnnual=await evaluate(`(()=>{const original=window.VacateFixtures;try{window.VacateFixtures={...original,balancesFor:candidate=>{const balances=original.balancesFor(candidate);return balances?{...balances,annual:{...balances.annual,allocation:0,used:0,pending:0}}:null;}};document.querySelector('[data-scope=self]').click();const annual=document.querySelector('#annual-overview');return {text:annual.textContent,bar:!!annual.querySelector('.type-bar'),percentage:!!annual.querySelector('.annual-percentage'),html:annual.innerHTML};}finally{window.VacateFixtures=original;document.querySelector('[data-scope=self]').click();}})()`);
+  assert.match(zeroAnnual.text,/0 \/ 0 working days available/,'Known zero allocation must stay distinct from unknown');
+  assert.equal(zeroAnnual.bar,false,'Zero allocation must not render divided-by-zero bar widths');
+  assert.equal(zeroAnnual.percentage,false,'Zero allocation has no meaningful availability percentage');
+  assert.doesNotMatch(zeroAnnual.html,/NaN|Infinity|null%/,'Annual zero allocation must not expose invalid numbers');
+  assert.match(await evaluate('document.querySelector("#annual-overview").textContent'),/14 \/ 25 working days available/,'Restore original annual fixture after zero-allocation regression');
+  await click('[data-page-link=balances]');
   assert.deepEqual(await balanceTypes(),expectedShortlist);
   assert.match(await evaluate('document.querySelector("[data-balance=annual]").textContent'),/14 \/ 25 working days available/);
   assert.match(await evaluate('document.querySelector("[data-balance=annual]").textContent'),/56% available/);
@@ -331,6 +418,18 @@ const endpoint = await new Promise((resolve,reject)=>{
   await evaluate('document.querySelector("#request-form").requestSubmit()');
   assert.match(await evaluate('document.querySelector("#dialog-content").textContent'),/Annual leave · 100 working days/);
   await click('#finish-demo');await click('#balance-toggle');
+  await click('[data-nav=calendar]');
+  await click('[data-action=request]');await click('#request-type-toggle');
+  const deniedType='marriage';
+  assert.equal(await evaluate('window.VacateEligibility.decisionFor("marriage").status'),'not-eligible','Maya married-profile restriction');
+  await evaluate(`document.querySelector('#leave-type').value=${JSON.stringify(deniedType)};document.querySelector('#leave-type').dispatchEvent(new Event('change'));document.querySelector('#request-form button[type=submit]').disabled=false;document.querySelector('#request-form').requestSubmit()`);
+  assert.equal(await evaluate('!!document.querySelector("#request-form")'),true,'Forged denied selection must not produce a preview');
+  assert.match(await evaluate('document.querySelector("#request-eligibility").textContent'),/Not eligible/);
+  await evaluate('document.querySelector("#leave-type").value="disability-supplement";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-form button[type=submit]").disabled=false;document.querySelector("#request-form").requestSubmit()');
+  assert.equal(await evaluate('!!document.querySelector("#request-form")'),true,'Forged supplement must not become a second quota');
+  await evaluate('document.querySelector("#leave-type").value="sick";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-form").requestSubmit()');
+  assert.match(await evaluate('document.querySelector("#dialog-content").textContent'),/Eligibility to confirm/,'Unknown eligibility remains explicit in preview');
+  await click('#finish-demo');
   for(const scope of ['self','team'])for(const view of ['year','month','week','day']){
     await click(`[data-scope="${scope}"]`);await click(`[data-view="${view}"]`);
     assert.equal(await evaluate(`document.querySelector('[data-scope="${scope}"]').getAttribute('aria-pressed')`),'true');
@@ -351,9 +450,15 @@ const endpoint = await new Promise((resolve,reject)=>{
   await click('[data-view="year"]');await click('[data-action="next"]');assert.equal(await evaluate('document.querySelector("#period").textContent'),'2027');await click('[data-action="today"]');assert.equal(await evaluate('document.querySelector("#period").textContent'),'2026');
   await click('[data-action="request"]');await evaluate('document.querySelector("#request-form").requestSubmit()');assert.match(await evaluate('document.querySelector("#dialog-content").textContent'),/No request was sent or saved/);await click('#finish-demo');
   for(const direction of ['a','b','c']){
-    await load(`?direction=${direction}`);await screenshot(`${direction}-desktop.png`);
+    await load(`?direction=${direction}`);
+    const desktopLayout=await evaluate('(()=>{const calendar=document.querySelector(".calendar-card").getBoundingClientRect(),annual=document.querySelector("#annual-overview").getBoundingClientRect();return {calendarTop:calendar.top,annualTop:annual.top,calendarRight:calendar.right,annualLeft:annual.left};})()');
+    assert.ok(desktopLayout.annualLeft>desktopLayout.calendarRight,`${direction} annual balance must be top right`);
+    assert.ok(Math.abs(desktopLayout.calendarTop-desktopLayout.annualTop)<2,`${direction} annual balance must align with calendar top`);
+    await screenshot(`${direction}-desktop.png`);
     await viewport(375,1100);await screenshot(`${direction}-mobile.png`);
-    await click('#balance-toggle');
+    const layout=await evaluate('(()=>{const calendar=document.querySelector(".calendar-card").getBoundingClientRect(),annual=document.querySelector("#annual-overview").getBoundingClientRect();return {calendarTop:calendar.top,annualTop:annual.top,calendarBottom:calendar.bottom,annualLeft:annual.left,calendarLeft:calendar.left};})()');
+    assert.ok(layout.calendarBottom<=layout.annualTop+1,`${direction} mobile calendar must precede annual balance`);
+    await click('[data-nav=balances]');await click('#balance-toggle');
     await click('[data-action="request"]');
     await click('#request-type-toggle');
     await evaluate('document.querySelector("#leave-type").value="postgraduate";document.querySelector("#leave-type").dispatchEvent(new Event("change"))');
@@ -365,14 +470,24 @@ const endpoint = await new Promise((resolve,reject)=>{
     await click('[data-balance=annual] summary');
     assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true,`${direction} expanded balances overflow on mobile`);
     await click('#balance-toggle');
+    await screenshot(`${direction}-balances-mobile.png`);
+    await click('[data-nav=calendar]');
     for(const view of ['year','month','week','day']){
       await click(`[data-view="${view}"]`);
       assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true,`${direction}/${view} overflows on mobile`);
     }
     await viewport(1600,1250);
   }
+  await load('?scope=self&view=month');
+  await click('[data-action=request]');
+  const stalePreview=await evaluate('document.querySelector("#request-amount").value="41";sessionStorage.setItem("vacate.demo.account.v2","nora");document.querySelector("#request-form").requestSubmit();!!document.querySelector("#finish-demo")');
+  assert.equal(stalePreview,false,'Programmatic submit after account change must not complete stale request');
+  await waitFor('document.readyState === "complete" && document.querySelector("#demo-person")?.textContent === "Nora"');
+  await ready();
+  assert.equal(await evaluate('document.querySelector("#dialog").open'),false,'Account-change submit must discard previous private draft');
+  assert.equal(await evaluate('window.VacateMock.state.scope'),'org','Account-change submit restores the new persona default');
   assert.deepEqual(errors,[],'Unexpected browser exceptions');
-  console.log('PASS: all 12 accounts and aliases; independent team/department/org rosters and denied IDs; own records and shared privacy; account resets and Back/Forward; 12 shared shortlist defaults, grouped ordering, native keyboard toggles, preserved drafts and pinned uncommon choices/examples; all 30 types / 29 requestable rule panels; sick unknown quota and child-only scope; balance units/percentages and projections; all scope/views; mobile balances/requests and 8 screenshots.');
+  console.log('PASS: all 12 accounts and aliases; independent team/department/org rosters and denied IDs; own records and shared privacy; account resets and Back/Forward; shared 12-type country shortlist with independently expected visible profile subsets, grouped ordering, native keyboard toggles, preserved drafts and pinned uncommon choices/examples; all 30 reference types / 29 catalogue request types with unavailable actions guarded; sick unknown quota and child-only scope; balance units/percentages and projections; all scope/views; calendar-first annual rail, dedicated balances route, mobile balances/requests and 11 screenshots.');
 } finally {
   clearTimeout(deadline);socket?.close();chrome.kill('SIGTERM');
   server?.close();

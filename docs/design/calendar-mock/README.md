@@ -1,8 +1,8 @@
 # Calendar mock gallery
 
-The A/B/C design study uses public, fictional people and data. UI direction remains open. VAC-6 revision `e87ada9` is deployed at [Azure dev](https://lemon-beach-02f7a7103.4.azurestaticapps.net), with hosted checks, cloud smoke and complete live browser acceptance passing. See the [VAC-6 release record](../../release-2026-10-23-vac-6.md) and [earlier leave mock release](../../release-2026-10-22-leave-mock.md).
+The A/B/C design study uses public, fictional people and data. UI direction remains open. [Azure dev](https://lemon-beach-02f7a7103.4.azurestaticapps.net) is the existing deployment target. The [VAC-6 release record](../../release-2026-10-23-vac-6.md) and [earlier leave mock release](../../release-2026-10-22-leave-mock.md) are historical evidence; the founder subsequently reported the VAC-5/VAC-7 deployment. This working copy adds VAC-8/VAC-9 and is not yet a new cloud release.
 
-The local [VAC-5 implementation](../../jira/VAC-5-common-leave-types-chooser.md) adds provisional shortlist defaults; it is ready for review and has not been deployed. [Local verification and screenshots](../../jira/media/VAC-5/verification.md) distinguish this working copy from the VAC-6 cloud release.
+Current work: [VAC-8 calendar-first layout](../../jira/VAC-8-calendar-first-and-balances-page.md) and [VAC-9 eligibility boundary](../../jira/VAC-9-eligibility-contract-and-mock-decisions.md). Prior [VAC-5 verification](../../jira/media/VAC-5/verification.md) remains the historical shortlist baseline.
 
 ## Demo accounts and company
 
@@ -55,13 +55,17 @@ The [UI architect proposal](../calendar-ui-proposal.md) records the original lay
 
 ## Leave and packaging boundaries
 
+**Calendar-first revision:** Calendar is the main content, with only own annual balance at the top of the desktop right rail. At mobile widths the calendar precedes annual. **My balances** is a separate page in the same shell, reachable from navigation or the annual card, and directly at `index.html?page=balances`. Page navigation, refresh and Back/Forward retain calendar context and recheck the demo session. A/B/C alternatives remain.
+
+**Eligibility revision:** [Authorized mock profile rules and the 30-type review list](../../product/leave-eligibility-review.md) use explicit fictional gender, marital, child and sole-care values in one shared GR configuration. No upcoming event is required to show/apply for a type. Known-unavailable types are hidden from default personal choices; Show all retains reference rules with disabled request actions. Unknown stays To confirm, without personal balance/projection numbers. `leave-eligibility.js` centralizes checks and returns the [backend-shaped decision contract](../../contracts/leave-eligibility.md); page components consume results. Other country packs, company overrides, birth registration, documents and real backend enforcement are later work. The mock shortcuts are not verified statutory defaults.
+
 The mock uses a five-day, Monday–Friday workweek; holidays are not configured. The [catalogue and provisional defaults](../../product/leave-types-review.md) contain 30 entries and 29 requestable choices, with allowance/rule/source previews. This includes the new sick-leave preview with unknown allowance/pay; its statutory policy questions remain open. Disability supplements adjust annual allocation rather than becoming a separate request. The [balance design](../leave-balances-proposal.md) keeps Used/Pending/Available quantities, units and periods distinct. For Maya, annual is **25 allocated, 8 used, 3 pending, 14 available (56%)**. Each person's ledger reconciles to their fictional request quantities; it is not a statutory calculation.
 
-Requests and balances start with the same **12-type shortlist** for all personas: annual and sick first, then category groups. Study/examinations is provisionally included; postgraduate/doctoral exams remain under Show all. Dependent illness uses a child-only request label/scope with the original type ID and allowance. Show all exposes the full catalogue; returning to the shortlist keeps an uncommon selected request type visible and preserves dates, amount, unit and open rules. An uncommon expanded balance also remains visible on collapse. No account-specific favorites or inferred eligibility are used. The founder authorized these defaults while keeping the questions open for revision.
+Requests and the dedicated balances page use the same **12-type base shortlist**, filtered by the person's current mock eligibility: annual and sick first, then category groups. Known-unavailable types are excluded from defaults; unknown types remain. Study/examinations is provisionally included; postgraduate/doctoral exams remain under Show all. Dependent illness uses a child-only request label/scope with the original type ID and allowance. Show all exposes the full reference catalogue; returning to the shortlist preserves an allowed uncommon selection, dates, amount, unit and open rules. Expanded uncommon balance details remain inspectable. No account-specific favorites or inference from names is used. The earlier shortlist product questions remain revisable.
 
 Requests preview manually entered quantities and dates without calculating working days, saving data or calling an API. Unknown eligibility/units show no invented quota; excess projections remain explicit. No real employee, medical, family or service-history evidence is used. All fixtures are public synthetic examples.
 
-CI builds Angular and packages the gallery at root using `scripts/package-design-preview.py`, retaining Angular's entry as `app.html` for existing deep links. Older `/design-preview/` links redirect to the index. Packaging, routing, syntax and cloud-smoke checks include `demo-fixtures.js`, session/login scripts, the catalogue, CSS and the teal v favicon. Matching SVG favicons serve the mock and Angular pages.
+CI builds Angular and packages the gallery at root using `scripts/package-design-preview.py`, retaining Angular's entry as `app.html` for existing deep links. Older `/design-preview/` links redirect to the index. Packaging, routing, syntax and cloud-smoke checks include `demo-fixtures.js`, `leave-eligibility.js`, session/login scripts, the catalogue, CSS and the teal v favicon. Matching SVG favicons serve the mock and Angular pages.
 
 ## Verification
 
@@ -69,11 +73,12 @@ With Node.js 22+:
 
 ```sh
 node docs/design/calendar-mock/verify-fixtures.mjs
+node docs/design/calendar-mock/verify-eligibility-contract.mjs
 node docs/design/calendar-mock/verify.mjs
 ```
 
-The first command independently checks the expected 12-person roster, capabilities, exact memberships, denied IDs, shared projections, own request/allocation consistency, session/alias restoration and missing identity behavior using Node's VM. It runs in hosted CI without a browser.
+The fixture command independently checks the expected 12-person roster, capabilities, exact memberships, denied IDs, shared projections, own request/allocation consistency, profile gates/missing facts/unsupported country and session behavior using Node's VM. The contract command uses AJV from the existing locked Angular tooling (`npm ci` in `web` first) to validate all 12 responses/360 decisions and reject unsupported status/medical fields. Both run in hosted frontend CI without a browser.
 
-The second uses local Chrome through the Chrome DevTools Protocol, starts a temporary server/browser profile and captures eight PNGs. Set `CHROME_BIN` for another executable, `MOCK_URL` to test a matching deployed revision and `MOCK_SCREENSHOT_DIR` for output elsewhere. Interactive coverage includes all accounts/allowed scopes/groups, negative direct identifiers, own/shared views, account changes, stale state, the catalogue and unit/date regressions, keyboard dialog focus and mobile overflow. VAC-5 adds native keyboard expansion/collapse, shared shortlist defaults, retained uncommon selections/examples and draft fields, sick unknown-balance behavior and child-only scope. See the [local VAC-5 verification](../../jira/media/VAC-5/verification.md) and the earlier [VAC-6 release record](../../release-2026-10-23-vac-6.md) for their separate results; planned checks are not release evidence.
+The browser command uses local Chrome through the Chrome DevTools Protocol and a temporary server/profile. Set `CHROME_BIN` for another executable, `MOCK_URL` to test a matching deployed revision and `MOCK_SCREENSHOT_DIR` for output elsewhere. It covers existing account/scope/privacy/catalogue/unit/date/keyboard history journeys plus calendar/annual alignment, mobile ordering, separate balances navigation/refresh/history, profile-dependent choices and denied/unknown/forged requests. Historical VAC-5/VAC-6 evidence applies to those revisions; new checks do not imply a cloud release.
 
 This is targeted acceptance, not a full screen-reader/contrast audit. Server company isolation, real authentication, approvals/settings persistence, policy eligibility, accrual, carryover, rounding and holiday configuration remain future work.
