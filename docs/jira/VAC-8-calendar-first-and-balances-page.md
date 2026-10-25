@@ -2,7 +2,7 @@
 id: VAC-8
 type: story
 summary: Put the calendar first with an annual side card and a separate balances page
-status: qa
+status: released
 created: 2026-10-24
 updated: 2026-10-25
 parent: null
@@ -11,7 +11,7 @@ depends_on: [VAC-5]
 
 # VAC-8 — Put the calendar first with an annual side card and a separate balances page
 
-![Story](badges/story.svg) **🔍 QA** · Owner: Codex and Frontend Engineer
+![Story](badges/story.svg) **🚀 Released** · Owner: Codex and Frontend Engineer
 
 ## Description
 
@@ -27,7 +27,7 @@ Requires [VAC-5](VAC-5-common-leave-types-chooser.md)'s available balance/type c
 - Dedicated My balances destination with the existing shortlist, Show all, rule sources, separate units and example actions.
 - Shareable query routes, active navigation, titles, focus, refresh and Back/Forward; retain calendar period/scope/context when moving between pages.
 - Keep private annual/balances bound to the current account when viewing team/department/organisation availability.
-- UI consumes supplied eligibility states; no gender/marital-status policy in layout code. No real API, persistence, approval actions or deployment.
+- UI consumes supplied eligibility states; no gender/marital-status policy in layout code. No real API, persistence or approval actions. The founder subsequently authorized frontend-only dev deployment (C-3).
 
 ## Acceptance scenarios
 
@@ -64,6 +64,7 @@ Requires [VAC-5](VAC-5-common-leave-types-chooser.md)'s available balance/type c
 | Entry | Date | Actor / category | Activity | Duration | Basis and evidence |
 |---|---|---|---|---|---|
 | W-1 | 2026-10-24 | Codex, UI Architect and Frontend Engineer / assistant recorded | Design and implement calendar-first layout, personal balances navigation and regression coverage | Unknown | Founder feedback, delegated design doc and code changes. Parallel agent time unmeasured and not summed. |
+| W-2 | 2026-10-25 | Codex / assistant recorded | Commit, push, monitor CI/frontend-only Azure dev release and run full live browser acceptance | Unknown | [Release evidence](../release-2026-10-25-calendar-eligibility.md). Shared release verification recorded here once; no measured duration. |
 
 Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not recorded.
 
@@ -72,9 +73,11 @@ Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not reco
 - H-1 · 2026-10-24 · Codex: Created In progress for the authorized layout revision; existing prerequisite outputs inspected.
 - H-2 · 2026-10-24 · Codex: In progress → QA after independent source review, complete local browser acceptance and visual inspection. Ready for user review; no commit/deployment performed.
 
+- H-3 · 2026-10-25 · Codex: QA → Released for Azure dev application revision `0ca66c9`, after hosted CI, frontend-only deployment, exact revision check, complete live browser acceptance and visual review passed. [Release evidence](../release-2026-10-25-calendar-eligibility.md).
+
 ## Verification and release
 
-[Local acceptance and screenshots](media/VAC-8/verification.md) record passing A/B/C desktop/mobile layout, routes/refresh/history/focus, all 12 identities, annual zero allocation, shared privacy and existing request/unit/date regressions. Syntax, schema/fixture, package and nine smoke-helper checks pass. No commit, push or cloud deployment included; hosted build/release evidence remains separate.
+[Local acceptance and screenshots](media/VAC-8/verification.md) record passing A/B/C desktop/mobile layout, routes/refresh/history/focus, all 12 identities, annual zero allocation, shared privacy and existing request/unit/date regressions. Syntax, schema/fixture, package and nine smoke-helper checks pass. That local record precedes deployment. [Hosted release evidence](../release-2026-10-25-calendar-eligibility.md) now records the exact Azure dev revision, successful CI/deployment and complete live browser acceptance; API publishing was skipped.
 
 ## Open questions
 

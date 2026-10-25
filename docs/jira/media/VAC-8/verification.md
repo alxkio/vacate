@@ -37,3 +37,5 @@ Visual review covered the calendar-first A/B layouts, mobile calendar ordering a
 ![My balances mobile](balances-mobile.png)
 
 **Limits/open review:** the profile shortcuts are founder-authorized mock behavior, not a verified Greece statutory rule pack. Adoption/special-maternity exceptions and remaining legal interpretation remain in the [review matrix](../../../product/leave-eligibility-review.md). No birth registry, upload, company overrides, real backend eligibility endpoint, production tenant isolation, full assistive-technology audit, hosted build or deployment is claimed. The public assets contain fictional profile data only. Future backend gates remain in the [contract](../../../contracts/leave-eligibility.md).
+
+**2026-10-25 release follow-up:** [Azure dev release evidence](../../../release-2026-10-25-calendar-eligibility.md) records successful CI, frontend-only deployment of `0ca66c9`, exact live revision and the complete live browser suite. The limits above describe this local record; production policy/server gates remain open.

@@ -2,7 +2,7 @@
 id: VAC-9
 type: story
 summary: Model backend-owned leave eligibility with private mock decisions and a review matrix
-status: qa
+status: released
 created: 2026-10-24
 updated: 2026-10-25
 parent: null
@@ -11,7 +11,7 @@ depends_on: [VAC-5, VAC-6]
 
 # VAC-9 — Model backend-owned leave eligibility with private mock decisions and a review matrix
 
-![Story](badges/story.svg) **🔍 QA** · Owner: Codex
+![Story](badges/story.svg) **🚀 Released** · Owner: Codex
 
 ## Description
 
@@ -72,6 +72,7 @@ Requires [VAC-5](VAC-5-common-leave-types-chooser.md)'s existing catalogue and r
 | Entry | Date | Actor / category | Activity | Duration | Basis and evidence |
 |---|---|---|---|---|---|
 | W-1 | 2026-10-24 | Codex and policy review agent / assistant recorded | Draft policy matrix, response schema, scoped synthetic decisions and fixture/package checks | Unknown | Founder request; contract/research/code sources above. Parallel duration unmeasured; UI layout time belongs to VAC-8. |
+| W-2 | 2026-10-25 | Codex / assistant recorded | Record eligibility acceptance in the shared frontend-only dev release | Unknown | [Release evidence](../release-2026-10-25-calendar-eligibility.md). Shared release work belongs to VAC-8 W-2; not added as duplicate time. |
 
 Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not recorded.
 
@@ -80,9 +81,11 @@ Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not reco
 - H-1 · 2026-10-24 · Codex: Created In progress; accepted catalogue/persona outputs inspected, policy conflict recorded and clarification requested.
 - H-2 · 2026-10-24 · Codex: In progress → QA after founder clarification was applied, independent policy/source review, schema/fixture checks, request/privacy/browser acceptance and packaging regressions passed. No production backend rule or release claimed.
 
+- H-3 · 2026-10-25 · Codex: QA → Released for Azure dev application revision `0ca66c9`, after hosted CI, frontend-only deployment, exact revision check, complete live browser acceptance and visual review passed. [Release evidence](../release-2026-10-25-calendar-eligibility.md).
+
 ## Verification and release
 
-[Shared local acceptance](media/VAC-8/verification.md) records all 12 profiles, 360 schema-validated decisions, missing facts/unsupported country, identity binding, independently expected default choices, disabled/forged/stale-session requests, personal/shared privacy, exact asset packaging and nine smoke-helper regressions. CI now runs the schema validator using existing locked Angular AJV tooling. No new dependency, commit, push, real endpoint or cloud release claimed. Country-law interpretation, later company overrides and real server tenant-isolation/submit validation remain open.
+[Shared local acceptance](media/VAC-8/verification.md) records all 12 profiles, 360 schema-validated decisions, missing facts/unsupported country, identity binding, independently expected default choices, disabled/forged/stale-session requests, personal/shared privacy, exact asset packaging and nine smoke-helper regressions. CI now runs the schema validator using existing locked Angular AJV tooling. No new dependency or real endpoint is introduced. [Hosted release evidence](../release-2026-10-25-calendar-eligibility.md) records the exact Azure dev revision, successful CI/frontend-only deployment and complete live browser acceptance. Country-law interpretation, later company overrides and real server tenant-isolation/submit validation remain open.
 
 ## Open questions
 
