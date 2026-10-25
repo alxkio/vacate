@@ -1,0 +1,93 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/api/*",
+      "/config.json",
+      "/*.{js,css,json,ico,png,svg,woff,woff2}"
+    ]
+  },
+  "routes": [
+    {
+      "route": "/",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/design-preview",
+      "redirect": "/index.html",
+      "statusCode": 302
+    },
+    {
+      "route": "/design-preview/*",
+      "redirect": "/index.html",
+      "statusCode": 302
+    },
+    {
+      "route": "/login.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      },
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/app.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      },
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/gallery-revision.json",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/config.json",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/leave",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/approvals",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/availability",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/people",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    }
+  ],
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  }
+}

@@ -109,7 +109,7 @@ Not applicable: use synthetic fixture files; no personnel/account schema or migr
 - [Charter](../product/product-charter.md) and [proposed MVP](../product/mvp-scope.md), 2026-10-20: company-first workflow and tenant isolation, detailed pilot roles still open.
 - [Existing persona/JTBD hypotheses](../product/personas-jtbd.md), status Proposed; document has no effective-date claim. Manager approval hypotheses are not approved for this temporary admin-only mock.
 - [Current mock boundaries](../design/calendar-mock/README.md) and [release record](../release-2026-10-22-leave-mock.md), 2026-10-22: two accounts, synthetic data, browser session only, no server authorization.
-- [Implemented synthetic fixture definitions](../design/calendar-mock/dist/demo-fixtures.js), [public demo access and scope instructions](../design/calendar-mock/README.md) and [VAC-6 release evidence](../release-2026-10-23-vac-6.md). The roster/matrix remains in this issue; no additional personal-data attachment is needed.
+- [Implemented synthetic fixture definitions](../../frontend/src/app/demo/data/fixtures.js), [public demo access and scope instructions](../design/calendar-mock/README.md) and [VAC-6 release evidence](../release-2026-10-23-vac-6.md). The roster/matrix remains in this issue; no additional personal-data attachment is needed.
 
 ## Comments
 

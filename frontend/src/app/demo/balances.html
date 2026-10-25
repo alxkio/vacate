@@ -1,0 +1,104 @@
+<section id="balances-page" class="leave-balances" aria-labelledby="balances-title">
+  <div class="balance-heading">
+    <div>
+      <h2 id="balances-title">My leave balances</h2>
+      <p>Your own balances · five-day workweek · demo allocations · separate units and periods</p>
+    </div>
+    <button
+      class="inline-link"
+      id="balance-toggle"
+      [attr.aria-expanded]="showAll"
+      aria-controls="balance-types"
+      (click)="showAll = !showAll"
+    >
+      {{
+        showAll ? 'Show shortlisted types' : 'Show all ' + data.catalogue.types.length + ' types'
+      }}
+    </button>
+  </div>
+  <p id="balance-list-status" class="sr-only" role="status">{{ status }}</p>
+  <div id="balance-types" class="balance-groups">
+    @for (group of groups; track group.name) {
+      <section class="balance-group" [attr.aria-label]="group.name">
+        <h3>{{ group.name }}</h3>
+        <div class="balance-types">
+          @for (type of group.types; track type.id) {
+            @let decision = data.decision(type.id); @let balance = data.balance(type.id);
+            <details
+              class="type-balance"
+              [attr.data-balance]="type.id"
+              [attr.data-eligibility]="decision.status"
+              [open]="expanded.has(type.id)"
+              #details
+              (toggle)="toggle(type.id, details)"
+            >
+              <summary [attr.aria-expanded]="details.open">
+                <span class="type-title">{{ data.label(type) }}</span
+                ><span class="type-quantity">{{ quantity(type) }}</span>
+                @if (balance && balance.percentage !== null) {
+                  <span class="type-percentage">{{ balance.percentage }}% available</span>
+                }
+                <span class="type-period">{{ balance?.period || type.basis }}</span>
+                @if (balance) {
+                  <vacate-balance-bar
+                    [balance]="balance"
+                    [label]="data.label(type)"
+                    [unit]="type.unit"
+                  />
+                }
+              </summary>
+              <div class="type-balance-body">
+                <p class="eligibility-message">
+                  {{ eligibilityLabel(decision) }}: {{ decision.reason }}
+                </p>
+                @if (balance) {
+                  <div class="bar-legend">
+                    <span
+                      >Used <b>{{ balance.used }}</b></span
+                    ><span
+                      >Pending <b>{{ balance.pending }}</b></span
+                    ><span
+                      >Available <b>{{ balance.available }}</b></span
+                    >
+                  </div>
+                  <p>
+                    Allocation: <b>{{ balance.allocation }} {{ type.unit }}</b
+                    >. {{ balance.note }}
+                  </p>
+                  <p>
+                    Used includes approved deductions, including upcoming leave. Pending
+                    reservations are counted separately.
+                  </p>
+                } @else {
+                  <p>
+                    No available balance is assumed until the applicable event, schedule or
+                    eligibility is confirmed.
+                  </p>
+                }
+                <span class="pay-label">{{ type.pay }}</span>
+                <h4>Allowance and rules</h4>
+                <vacate-allowance [type]="type" />
+                @if (type.shape === 'supplement') {
+                  <p>Handled in the annual allocation; not requested as extra leave.</p>
+                } @else {
+                  <button
+                    class="inline-link"
+                    [attr.data-example-type]="type.id"
+                    [disabled]="decision.status === 'not-eligible'"
+                    [attr.aria-describedby]="'eligibility-' + type.id"
+                    (click)="preview(type, $event)"
+                  >
+                    Preview {{ data.label(type).toLowerCase() }} example →
+                  </button>
+                  <p [id]="'eligibility-' + type.id" class="example-eligibility">
+                    {{ decision.reason }}
+                  </p>
+                }
+              </div>
+            </details>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</section>

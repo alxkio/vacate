@@ -27,6 +27,8 @@ class DeploymentSmokeTests(unittest.TestCase):
         self.config_api = API
         self.api_unavailable = False
         self.cors_allowed = True
+        self.legacy_gallery = False
+        self.bundle_missing = False
 
     def get(self, url, origin=None):
         self.requests.append((url, origin))
@@ -44,12 +46,15 @@ class DeploymentSmokeTests(unittest.TestCase):
             return json.dumps({"revision": self.config_revision, "apiBaseUrl": self.config_api}).encode(), headers
         if path == "gallery-revision.json":
             return json.dumps({"revision": self.gallery_revision}).encode(), headers
-        if path in ("", "index.html", "design-preview/index.html"):
-            path = "index.html"
-        if path in ("leave", "approvals", "availability", "people"):
-            return b"<app-root></app-root>", headers
-        headers["Content-Type"] = "text/javascript" if path.endswith(".js") else "text/css" if path.endswith(".css") else "image/svg+xml" if path.endswith(".svg") else "text/html"
-        return (ROOT / "docs/design/calendar-mock/dist" / path).read_bytes(), headers
+        if path in ("", "index.html", "login.html", "design-preview/index.html", "leave", "approvals", "availability", "people"):
+            if self.legacy_gallery:
+                return b'<app-root></app-root><script src="mock.js"></script>', headers
+            return b'<app-root></app-root><script src="main-TEST.js" type="module"></script><link rel="stylesheet" href="styles-TEST.css">', headers
+        if path == "favicon.svg":
+            return (ROOT / "frontend/public/favicon.svg").read_bytes(), {"Content-Type": "image/svg+xml"}
+        if path in ("main-TEST.js", "styles-TEST.css"):
+            return (b"" if self.bundle_missing else b"angular-bundle"), {"Content-Type": "text/javascript" if path.endswith(".js") else "text/css"}
+        raise AssertionError("Unexpected Angular asset: " + path)
 
     def check(self, frontend_only=False, web=WEB):
         with patch.object(SMOKE, "get", side_effect=self.get):
@@ -99,6 +104,16 @@ class DeploymentSmokeTests(unittest.TestCase):
         self.api_revision = REVISION
         self.check(web=None)
         self.assertEqual(self.requests, [(API + "/health", None)])
+
+    def test_frontend_only_rejects_legacy_gallery_entry(self):
+        self.legacy_gallery = True
+        with self.assertRaisesRegex(AssertionError, "Legacy gallery replaced Angular"):
+            self.check(frontend_only=True)
+
+    def test_frontend_only_rejects_empty_angular_bundle(self):
+        self.bundle_missing = True
+        with self.assertRaisesRegex(AssertionError, "Angular asset is empty"):
+            self.check(frontend_only=True)
 
     def test_frontend_only_cli_requires_web_url(self):
         with patch("sys.argv", ["cloud-smoke.py", "--api-base-url", API, "--frontend-only"]), contextlib.redirect_stderr(io.StringIO()):

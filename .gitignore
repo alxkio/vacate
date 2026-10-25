@@ -493,3 +493,9 @@ appsettings.Local.json
 # Azure Functions machine-specific secrets
 local.settings.json
 artifacts/
+
+# Angular workspace editor configuration moved from web/ to frontend/.
+!frontend/.vscode/
+!frontend/.vscode/extensions.json
+!frontend/.vscode/launch.json
+!frontend/.vscode/tasks.json

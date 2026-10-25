@@ -345,7 +345,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: dotnet test api/Vacate.Tests --collect:"XPlat Code Coverage"
-      - run: npm test --prefix web
+      - run: npm test --prefix frontend
       - uses: codecov/codecov-action@v3
 
   integration-tests:

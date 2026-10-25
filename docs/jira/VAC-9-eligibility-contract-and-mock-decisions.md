@@ -54,7 +54,7 @@ Requires [VAC-5](VAC-5-common-leave-types-chooser.md)'s existing catalogue and r
 
 - Founder feedback, 2026-10-24: eligibility examples and backend-first business logic with schema/mock values now; revise remaining questions later.
 - [Eligibility review](../product/leave-eligibility-review.md), [proposed backend contract](../contracts/leave-eligibility.md), [JSON schema](../contracts/leave-eligibility.schema.json), [policy-source register](../compliance/policy-sources.md).
-- [Synthetic decision fixtures](../design/calendar-mock/dist/leave-eligibility.js); all person/scenario data is public fiction.
+- [Synthetic decision fixtures](../../frontend/src/app/demo/data/eligibility.js); all person/scenario data is public fiction.
 
 ## Comments and decisions
 

@@ -25,3 +25,5 @@ Source precedence follows AGENTS.md. Use accepted ADRs first, then accepted prod
 - [Expandable leave balances](design/leave-balances-proposal.md) — accepted UI Architect recommendation, implemented with fictional per-type quantities, percentages and rules.
 - [Leave mock release](release-2026-10-22-leave-mock.md) — independent review, acceptance checks and successful Azure dev deployment.
 - [VAC-6 release](release-2026-10-23-vac-6.md) — persona/account implementation, scoped synthetic fixtures and verification/deployment evidence.
+
+- [Angular frontend conversion](jira/VAC-10-consolidate-angular-frontend.md) — one active frontend workspace, component conversion and linked acceptance/release evidence.

@@ -1,0 +1,156 @@
+@if (submitted && type) {
+  <span class="eyebrow">DEMO ONLY</span>
+  <h2>Your preview is ready.</h2>
+  <p>{{ data.label(type) }} · {{ formatAmount(+amount, unit) }}</p>
+  <p>{{ shortDate(start) }} – {{ shortDate(end) }} {{ dateFromKey(end).getFullYear() }}</p>
+  <p class="eligibility-message">{{ eligibilityLabel(decision) }}: {{ decision.reason }}</p>
+  <p class="request-balance" [class.over-allowance]="projection.excess">{{ projection.text }}</p>
+  <p>
+    No request was sent or saved. Eligibility is an illustrative account-scoped mock decision, not
+    an entitlement determination. Working-day calculations and approval routing are not validated by
+    this preview.
+  </p>
+  <button class="primary" id="finish-demo" (click)="finished.emit()">Back to {{ page }}</button>
+} @else {
+  <span class="eyebrow">{{ example ? 'ILLUSTRATIVE TYPE EXAMPLE' : 'DEMO INTERACTION' }}</span>
+  <h2>Plan your time away.</h2>
+  <p>
+    Preview a request for {{ data.currentUser()?.name }} using fictional data. Nothing is submitted
+    or saved.
+  </p>
+  <form id="request-form" #form (submit)="submit($event, form, endInput)">
+    <label for="leave-type">Leave type</label
+    ><select
+      id="leave-type"
+      name="type"
+      #typeSelect
+      [value]="typeId"
+      (change)="setType(typeSelect.value)"
+      aria-describedby="request-type-status request-eligibility"
+    >
+      @for (group of groups; track group.name) {
+        <optgroup [label]="group.name">
+          @for (choice of group.types; track choice.id) {
+            <option
+              [value]="choice.id"
+              [selected]="choice.id === typeId"
+              [disabled]="
+                choice.shape === 'supplement' || data.decision(choice.id).status === 'not-eligible'
+              "
+            >
+              {{ data.label(choice) }}{{ optionSuffix(choice.id) }}
+            </option>
+          }
+        </optgroup>
+      }
+    </select>
+    <button
+      class="inline-link type-toggle"
+      id="request-type-toggle"
+      type="button"
+      [attr.aria-expanded]="showAll"
+      aria-controls="leave-type"
+      (click)="toggleTypes(form)"
+    >
+      {{ showAll ? 'Show shortlisted types' : 'Show all leave types' }}
+    </button>
+    <p id="request-type-status" class="form-hint" role="status">{{ typeStatus }}</p>
+    @if (unavailable.length) {
+      <details class="request-rules eligibility-unavailable">
+        <summary>Unavailable types for this account ({{ unavailable.length }})</summary>
+        <ul class="dialog-list">
+          @for (choice of unavailable; track choice.id) {
+            <li>
+              {{ data.label(choice) }}<small>{{ data.decision(choice.id).reason }}</small>
+            </li>
+          }
+        </ul>
+      </details>
+    }
+    <p id="request-eligibility" class="eligibility-message" role="status">
+      {{ message || eligibilityLabel(decision) + ': ' + decision.reason }}
+    </p>
+    <p id="request-allowance" class="request-allowance">{{ type?.allowance }} · {{ type?.pay }}</p>
+    <details
+      id="request-rules"
+      class="request-rules"
+      [open]="rulesOpen"
+      #rules
+      (toggle)="rulesOpen = rules.open"
+    >
+      <summary>Allowance and rules</summary>
+      <div id="request-rule-content">
+        @if (type) {
+          <vacate-allowance [type]="type" />
+        }
+      </div>
+    </details>
+    <div class="form-row">
+      <div>
+        <label for="start-date">From</label
+        ><input
+          id="start-date"
+          name="start"
+          type="date"
+          [value]="start"
+          (input)="input(form, endInput)"
+          required
+        />
+      </div>
+      <div>
+        <label for="end-date">To</label
+        ><input
+          id="end-date"
+          name="end"
+          #endInput
+          type="date"
+          [value]="end"
+          (input)="input(form, endInput)"
+          required
+        />
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label for="request-amount">Preview amount</label
+        ><input
+          id="request-amount"
+          name="amount"
+          type="number"
+          min="1"
+          step="1"
+          [value]="amount"
+          (input)="capture(form)"
+          required
+        />
+      </div>
+      <div>
+        <label for="request-unit">Unit</label
+        ><select id="request-unit" name="unit" #unitSelect [value]="unit" (input)="capture(form)">
+          @for (choice of units; track choice) {
+            <option [value]="choice" [selected]="choice === unit">{{ choice }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <p class="form-hint">
+      Enter an illustrative amount. Working days and other units are not calculated from these
+      dates.
+    </p>
+    <p
+      id="request-balance"
+      class="request-balance"
+      [class.over-allowance]="projection.excess"
+      aria-live="polite"
+    >
+      {{ projection.text }}
+    </p>
+    <button
+      class="primary"
+      type="submit"
+      [disabled]="!type || type.shape === 'supplement' || decision.status === 'not-eligible'"
+    >
+      Preview demo request →
+    </button>
+  </form>
+}

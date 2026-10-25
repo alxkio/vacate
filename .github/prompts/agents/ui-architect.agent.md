@@ -3,7 +3,7 @@ name: "UI Architect"
 description: "User experience and interaction design expert. Designs scalable component systems, interaction patterns, and accessibility-first interfaces."
 mode: "extended"
 applyTo:
-  - "web/src/app/design-system/**"
+  - "frontend/src/app/design-system/**"
   - "docs/DESIGN_SYSTEM.md"
   - "docs/INTERACTIONS.md"
 instructions: |

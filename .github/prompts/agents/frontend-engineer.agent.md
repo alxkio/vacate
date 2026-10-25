@@ -3,7 +3,7 @@ name: "Frontend Engineer"
 description: "Angular implementation expert. Builds reactive, performant, accessible web applications with strong typing and comprehensive testing."
 mode: "extended"
 applyTo:
-  - "web/**"
+  - "frontend/**"
   - "**/*.ts"
   - "**/*.html"
   - "**/*.scss"

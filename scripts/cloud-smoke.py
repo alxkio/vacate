@@ -2,6 +2,7 @@
 """Verify the public deployment contract without credentials or employee data."""
 import argparse
 import json
+import re
 import time
 import urllib.error
 import urllib.request
@@ -37,34 +38,26 @@ def check_web(api, web, revision):
     assert config["apiBaseUrl"] == api, "Frontend points to a different API"
     assert config["revision"] == revision, "Frontend build revision mismatch"
     assert "no-store" in headers.get("Cache-Control", ""), "Runtime configuration may be cached"
-    for path in ("/", "/index.html", "/design-preview/index.html"):
+    asset_paths = set()
+    for path in ("/", "/index.html", "/login.html", "/design-preview/index.html", "/leave", "/approvals", "/availability", "/people"):
         body, headers = get(f"{web}{path}")
-        assert "text/html" in headers.get("Content-Type", ""), "Gallery did not serve HTML"
-        assert b"VACATE / DESIGN STUDY 01" in body, "Design gallery missing"
-        assert "no-store" in headers.get("Cache-Control", ""), "Gallery entry may be cached"
-    for filename, content_type, marker in (
-        ("mock.js", "javascript", b"const DEMO_TODAY"),
-        ("mock.css", "text/css", b".calendar-card"),
-        ("demo-session.js", "javascript", b"vacate.demo.account.v2"),
-        ("demo-fixtures.js", "javascript", b"window.VacateFixtures"),
-        ("login.js", "javascript", b"login-form"),
-        ("leave-types.js", "javascript", b"window.VacateLeave"),
-        ("leave-eligibility.js", "javascript", b"window.VacateEligibility"),
-        ("favicon.svg", "image/svg+xml", b"#12675e"),
-    ):
-        body, headers = get(f"{web}/{filename}")
-        assert content_type in headers.get("Content-Type", ""), "Gallery asset content type incorrect"
-        assert marker in body, "Gallery asset missing"
-    body, headers = get(f"{web}/login.html")
-    assert b'id="login-form"' in body, "Mock login page missing"
-    assert "no-store" in headers.get("Cache-Control", ""), "Login entry may be cached"
+        assert "text/html" in headers.get("Content-Type", ""), "Angular route did not serve HTML"
+        assert b"<app-root" in body, "Angular entry point missing"
+        assert b"mock.js" not in body, "Legacy gallery replaced Angular"
+        assert "no-store" in headers.get("Cache-Control", ""), "Angular entry may be cached"
+        asset_paths.update(re.findall(rb'(?:src|href)="([^"?#]+\.(?:js|css))"', body))
+    assert any(path.endswith(b".js") for path in asset_paths), "Angular JavaScript bundle missing"
+    for path in asset_paths:
+        name = path.decode()
+        assert not name.startswith(("http:", "https:", "//")), "Unexpected external Angular asset"
+        asset, headers = get(f"{web}/{name.lstrip('/')}")
+        assert asset, "Angular asset is empty"
+        assert ("javascript" if name.endswith(".js") else "text/css") in headers.get("Content-Type", ""), "Angular asset content type incorrect"
+    body, headers = get(f"{web}/favicon.svg")
+    assert "image/svg+xml" in headers.get("Content-Type", "") and b"#12675e" in body, "Favicon missing"
     body, headers = get(f"{web}/gallery-revision.json")
     assert json.loads(body)["revision"] == revision, "Gallery build revision mismatch"
     assert "no-store" in headers.get("Cache-Control", ""), "Gallery revision may be cached"
-    for path in ("/leave", "/approvals", "/availability", "/people"):
-        body, headers = get(f"{web}{path}")
-        assert "text/html" in headers.get("Content-Type", ""), "SPA route did not serve HTML"
-        assert b"<app-root" in body, "Angular entry point missing"
 
 
 def check(api, web, revision, frontend_only=False):

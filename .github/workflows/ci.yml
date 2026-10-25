@@ -57,33 +57,35 @@ jobs:
     runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: web
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build -- --configuration production
       - run: npm test -- --watch=false
-      - name: Package demo login and index page
+      - name: Verify frontend fixtures and prepare Angular output
         shell: bash
         run: |
           set -euo pipefail
-          node --check ../docs/design/calendar-mock/dist/mock.js
-          node --check ../docs/design/calendar-mock/dist/demo-session.js
-          node --check ../docs/design/calendar-mock/dist/demo-fixtures.js
-          node --check ../docs/design/calendar-mock/dist/login.js
-          node --check ../docs/design/calendar-mock/dist/leave-types.js
-          node --check ../docs/design/calendar-mock/dist/leave-eligibility.js
-          node ../docs/design/calendar-mock/verify-fixtures.mjs
-          node ../docs/design/calendar-mock/verify-eligibility-contract.mjs
+          for file in src/app/demo/data/*.js; do node --check "$file"; done
+          node verify-fixtures.mjs
+          node verify-eligibility-contract.mjs
           python3 ../scripts/test_cloud_smoke.py
-          python3 ../scripts/package-design-preview.py --web-output dist/vacate-web/browser --revision "$GITHUB_SHA"
+          python3 ../scripts/prepare-frontend.py --frontend-output dist/vacate-web/browser --revision "$GITHUB_SHA"
+      - name: Browser acceptance against built Angular
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CHROME_BIN="$(command -v google-chrome || command -v chromium)"
+          export MOCK_SCREENSHOT_DIR="$RUNNER_TEMP/vacate-browser-previews"
+          node verify.mjs
       - uses: actions/upload-artifact@v7
         with:
           name: angular-production
-          path: web/dist/vacate-web/browser
+          path: frontend/dist/vacate-web/browser
           if-no-files-found: error

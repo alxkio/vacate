@@ -37,13 +37,9 @@ No second company ships in this mock. Company/person/group mismatch tests exerci
 
 ## Local review
 
-No Angular build is needed:
+The interactive mock has been converted to Angular in [`frontend/src/app/demo/`](../../../frontend/src/app/demo). Use [`frontend/README.md`](../../../frontend/README.md) for build, preview and acceptance commands. `docs/design/calendar-mock` retains design documentation and historical preview images, not a parallel frontend implementation.
 
-```sh
-python3 -m http.server 8000 --directory docs/design/calendar-mock/dist
-```
-
-Open `http://localhost:8000/` with tab storage enabled. Compare A/B/C and the scope/granularity controls. The fixed demo date remains **22 October 2026** for repeatable scenarios, even when reviewing on another day.
+The fixed demo date remains **22 October 2026** for repeatable scenarios. Compare A/B/C and the scope/granularity controls; no UI direction is selected by this conversion.
 
 | Direction | Calendar layout | Preview |
 |---|---|---|
@@ -65,20 +61,10 @@ Requests and the dedicated balances page use the same **12-type base shortlist**
 
 Requests preview manually entered quantities and dates without calculating working days, saving data or calling an API. Unknown eligibility/units show no invented quota; excess projections remain explicit. No real employee, medical, family or service-history evidence is used. All fixtures are public synthetic examples.
 
-CI builds Angular and packages the gallery at root using `scripts/package-design-preview.py`, retaining Angular's entry as `app.html` for existing deep links. Older `/design-preview/` links redirect to the index. Packaging, routing, syntax and cloud-smoke checks include `demo-fixtures.js`, `leave-eligibility.js`, session/login scripts, the catalogue, CSS and the teal v favicon. Matching SVG favicons serve the mock and Angular pages.
+CI builds the Angular frontend and publishes its index unchanged. `scripts/prepare-frontend.py` validates the output and writes a revision marker; it does not copy a static gallery or preserve a separate Angular app.html. Azure rewrites supported entry/deep links to the same Angular index, with no-store entry/configuration rules and the teal v favicon.
 
 ## Verification
 
-With Node.js 22+:
-
-```sh
-node docs/design/calendar-mock/verify-fixtures.mjs
-node docs/design/calendar-mock/verify-eligibility-contract.mjs
-node docs/design/calendar-mock/verify.mjs
-```
-
-The fixture command independently checks the expected 12-person roster, capabilities, exact memberships, denied IDs, shared projections, own request/allocation consistency, profile gates/missing facts/unsupported country and session behavior using Node's VM. The contract command uses AJV from the existing locked Angular tooling (`npm ci` in `web` first) to validate all 12 responses/360 decisions and reject unsupported status/medical fields. Both run in hosted frontend CI without a browser.
-
-The browser command uses local Chrome through the Chrome DevTools Protocol and a temporary server/profile. Set `CHROME_BIN` for another executable, `MOCK_URL` to test a matching deployed revision and `MOCK_SCREENSHOT_DIR` for output elsewhere. It covers existing account/scope/privacy/catalogue/unit/date/keyboard history journeys plus calendar/annual alignment, mobile ordering, separate balances navigation/refresh/history, profile-dependent choices and denied/unknown/forged requests. Historical VAC-5/VAC-6 evidence applies to those revisions; the VAC-8/VAC-9 release record links the new hosted and live acceptance results.
+See [frontend acceptance instructions](../../../frontend/README.md#acceptance). Fixture/schema checks run against the same imported domain factories used by Angular; full browser acceptance runs against the built Angular application and can target the deployed revision. Historical VAC-5/VAC-6/VAC-8/VAC-9 evidence applies to those revisions; VAC-10 records conversion verification separately.
 
 This is targeted acceptance, not a full screen-reader/contrast audit. Server company isolation, real authentication, approvals/settings persistence, policy eligibility, accrual, carryover, rounding and holiday configuration remain future work.
