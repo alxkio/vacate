@@ -81,8 +81,6 @@ public static class Endpoint
         return value.StartsWith("Bearer ", StringComparison.Ordinal) ? value[7..] : "";
     }
 
-    public static string[] Path(string? path) => (path ?? "").Split('/', StringSplitOptions.RemoveEmptyEntries);
-
     public static Guid Id(string value) => Guid.TryParse(value, out var id) ? id : throw new RequestException(404, "Resource unavailable.");
 
     public static void Allow(JsonObject body, params string[] fields)
@@ -112,6 +110,4 @@ public static class Endpoint
             Field<DateOnly?>(body, "employmentEndDate"), Field<decimal?>(body, "priorService"), Field<Guid?>(body, "workScheduleId"),
             Field<Guid?>(body, "holidayCalendarId"), Field<Guid?>(body, "leavePolicyId"), Field<decimal?>(body, "customAllocation"));
     }
-
-    public static RequestException MethodUnavailable() => new(405, "Method unavailable.");
 }

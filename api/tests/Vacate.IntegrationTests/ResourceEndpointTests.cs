@@ -1,6 +1,8 @@
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -63,20 +65,84 @@ public sealed class ResourceEndpointTests
         request.Body = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(body ?? new
         {
         })));
-        var route = path.Split('/');
-        var result = route[0] switch
+        var matches = HttpFunctions()
+            .Select(function => (function.Target, function.Method, function.Route, function.Methods, Match: MatchRoute(function.Route, path)))
+            .Where(function => function.Match.Success && function.Methods.Contains(method, StringComparer.OrdinalIgnoreCase))
+            .ToArray();
+        Assert.That(matches, Has.Length.EqualTo(1), $"{method} {path} should match exactly one HTTP function.");
+        var match = matches[0];
+        var arguments = match.Method.GetParameters().Select(parameter =>
         {
-            "auth" => await provider.GetRequiredService<SessionFunctions>().Run(request, string.Join('/', route.Skip(2))),
-            "users" => await provider.GetRequiredService<UserFunctions>().Run(request, string.Join('/', route.Skip(1))),
-            "organizations" => await provider.GetRequiredService<OrganizationFunctions>().Run(request, string.Join('/', route.Skip(1))),
-            _ => throw new InvalidOperationException("Unknown route")
-        };
+            if (parameter.ParameterType == typeof(HttpRequest))
+            {
+                return (object)request;
+            }
+
+            var value = match.Match.Groups[parameter.Name!].Value;
+            return Uri.UnescapeDataString(value);
+        }).ToArray();
+        var result = await (Task<IActionResult>)match.Method.Invoke(match.Target, arguments)!;
         return result switch
         {
             ObjectResult obj => (obj.StatusCode ?? 200, obj.Value is JsonNode node ? node.DeepClone() : JsonSerializer.SerializeToNode(obj.Value)),
             StatusCodeResult status => (status.StatusCode, null),
             _ => throw new InvalidOperationException("Unexpected result")
         };
+    }
+
+    private IEnumerable<(object Target, MethodInfo Method, string Route, string[] Methods)> HttpFunctions()
+    {
+        foreach (var target in new object[]
+        {
+            provider.GetRequiredService<SessionFunctions>(),
+            provider.GetRequiredService<UserFunctions>(),
+            provider.GetRequiredService<OrganizationFunctions>()
+        })
+        {
+            foreach (var method in target.GetType().GetMethods())
+            {
+                var trigger = method.GetParameters()
+                    .SelectMany(parameter => parameter.GetCustomAttributes())
+                    .SingleOrDefault(attribute => attribute.GetType().Name == "HttpTriggerAttribute");
+                if (trigger is null)
+                {
+                    continue;
+                }
+
+                var triggerType = trigger.GetType();
+                var route = (string?)triggerType.GetProperty("Route")?.GetValue(trigger)
+                    ?? throw new InvalidOperationException($"{method.Name} has no HTTP route.");
+                var methods = ((IEnumerable<string>?)triggerType.GetProperty("Methods")?.GetValue(trigger))?.ToArray()
+                    ?? throw new InvalidOperationException($"{method.Name} has no HTTP method.");
+                yield return (target, method, route, methods);
+            }
+        }
+    }
+
+    private static Match MatchRoute(string route, string path)
+    {
+        var segments = route.Split('/');
+        var pattern = "^" + string.Join("/", segments.Select(segment =>
+            segment.StartsWith('{') && segment.EndsWith('}')
+                ? $"(?<{segment[1..^1]}>[^/]+)"
+                : Regex.Escape(segment))) + "$";
+        return Regex.Match(path, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    }
+
+    [Test]
+    public void resource_functions_declare_one_method_per_explicit_route()
+    {
+        var functions = HttpFunctions().ToArray();
+        var routeMethods = functions.SelectMany(function =>
+            function.Methods.Select(method => $"{method.ToUpperInvariant()} {function.Route}")).ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(functions, Has.Length.EqualTo(37));
+            Assert.That(functions.All(function => function.Methods.Length == 1), Is.True);
+            Assert.That(functions.Any(function => function.Route.Contains('*')), Is.False);
+            Assert.That(routeMethods, Has.Length.EqualTo(routeMethods.Distinct(StringComparer.OrdinalIgnoreCase).Count()));
+        });
     }
 
     private async Task<string> Login(string id)

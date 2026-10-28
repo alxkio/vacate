@@ -19,6 +19,10 @@ The publish directory itself is the package root: retain `host.json`, `worker.co
 
 Health contract tests check the result and binding. Domain tests cover invariants and dependency direction; resource integration tests cover authorization, tenant isolation, GUID addressing and lifecycle behavior. CI also starts the published Functions host and drives the built Angular app through HTTP. Resource Functions have anonymous trigger bindings with explicit session authorization in application services. Production identity/provider integration remains open.
 
+The complete route and method inventory is documented in [OpenAPI](../docs/contracts/openapi.yaml), with one Azure Function trigger per operation. The specification is documentation-only; the Functions host does not expose Swagger UI.
+
+For interactive examples, import the [Postman collection](../docs/contracts/vacate-api.postman_collection.json). Set `DevelopmentAuthentication__Enabled=true` and `SeedData__Enabled=true` for local runs, then send **Sign in** before authenticated requests. Collection variables include local defaults and capture IDs from create responses; review soft-delete targets before sending cleanup requests.
+
 ## Structure
 
 - `Vacate.Domain`: typed entities, value objects and invariants. Every entity has numeric `Id` plus immutable `Guid`; no storage/HTTP dependency.

@@ -1,0 +1,1858 @@
+{
+  "info": {
+    "name": "Vacate API",
+    "description": "Postman requests for all documented Vacate API operations. Import this collection and run the local API with DevelopmentAuthentication__Enabled=true and SeedData__Enabled=true. Sign in first. Requests use fictional development accounts and seeded sample GUIDs only. Run create requests before examples that use their captured IDs; sign out and soft-delete requests are ordered last. Inspect cleanup URLs before sending. Do not use the development credentials or fixture data in production. See docs/contracts/openapi.yaml.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:7071/api",
+      "type": "string",
+      "description": "Functions API base URL; keep /api suffix."
+    },
+    {
+      "key": "demoUsername",
+      "value": "daria",
+      "type": "string",
+      "description": "Fictional local seed account alias; development authentication only."
+    },
+    {
+      "key": "demoPassword",
+      "value": "daria",
+      "type": "string",
+      "description": "Fictional local seed credential; never use in production."
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "Set automatically by Sign in; opaque local session token."
+    },
+    {
+      "key": "userId",
+      "value": "20000000-0000-4000-8000-000000000010",
+      "type": "string",
+      "description": "Seeded Daria account GUID for safe read/profile examples."
+    },
+    {
+      "key": "newUserId",
+      "value": "",
+      "type": "string",
+      "description": "Captured from Create user; used for the example membership and cleanup."
+    },
+    {
+      "key": "memberUserId",
+      "value": "20000000-0000-4000-8000-000000000004",
+      "type": "string",
+      "description": "Seeded Maya account GUID for membership read example."
+    },
+    {
+      "key": "organizationId",
+      "value": "20000000-0000-4000-8000-000000000100",
+      "type": "string",
+      "description": "Seeded Northstar organization GUID."
+    },
+    {
+      "key": "createdOrganizationId",
+      "value": "",
+      "type": "string",
+      "description": "Captured from Create organization; used for its update/cleanup examples."
+    },
+    {
+      "key": "departmentId",
+      "value": "20000000-0000-4000-8000-000000000300",
+      "type": "string",
+      "description": "Seeded Technology department GUID."
+    },
+    {
+      "key": "newDepartmentId",
+      "value": "",
+      "type": "string",
+      "description": "Captured from Create department; used for cleanup examples."
+    },
+    {
+      "key": "teamId",
+      "value": "20000000-0000-4000-8000-000000000400",
+      "type": "string",
+      "description": "Seeded Platform team GUID."
+    },
+    {
+      "key": "newTeamId",
+      "value": "",
+      "type": "string",
+      "description": "Captured from Create team; used for cleanup examples."
+    },
+    {
+      "key": "systemRoleId",
+      "value": "20000000-0000-4000-8000-000000000102",
+      "type": "string",
+      "description": "Seeded employee system-role GUID."
+    },
+    {
+      "key": "jobRoleId",
+      "value": "20000000-0000-4000-8000-000000000201",
+      "type": "string",
+      "description": "Seeded DevOps engineer job-role GUID."
+    },
+    {
+      "key": "workScheduleId",
+      "value": "20000000-0000-4000-8000-000000000500",
+      "type": "string",
+      "description": "Seeded organization work schedule GUID."
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Check API liveness",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/health",
+            "description": "Check API liveness.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});",
+                  "pm.test('Health response is healthy', function () {",
+                  "  pm.expect(pm.response.json().status).to.eql('healthy');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Sign in with an enabled development account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/sessions",
+            "description": "Sign in with an enabled development account.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{demoUsername}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});",
+                  "pm.test('Session token and expiry are returned', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.accessToken).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.expiresAt).to.be.a('string').and.not.empty;",
+                  "  pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get the current session profile",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/auth/sessions/current",
+            "description": "Get the current session profile.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List users visible to the current account",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/users",
+            "description": "List users visible to the current account.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create an unassigned account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users",
+            "description": "Create an unassigned account.\n\nExpected success status: 201. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"postman-{{$guid}}@example.invalid\",\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Example\",\n  \"companyId\": \"{{organizationId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});",
+                  "pm.test('Created resource provides Location and GUID', function () {",
+                  "  pm.expect(pm.response.headers.get('Location')).to.be.a('string').and.not.empty;",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.guid).to.match(/^[0-9a-f-]{36}$/i);",
+                  "  pm.collectionVariables.set('newUserId', json.guid);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get an own profile or an authorized colleague projection",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Get an own profile or an authorized colleague projection.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update the current account's profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Update the current account's profile.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Daria\",\n  \"lastName\": \"Example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update an account username or status (administrator only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{userId}}/account",
+            "description": "Update an account username or status (administrator only).\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Record an account deletion request without deleting the account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{newUserId}}/deletion-request",
+            "description": "Record an account deletion request without deleting the account.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "List organizations visible to the current account",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations",
+            "description": "List organizations visible to the current account.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create an organization",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations",
+            "description": "Create an organization.\n\nExpected success status: 201. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Example Organization\",\n  \"workWeekDays\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});",
+                  "pm.test('Created resource provides Location and GUID', function () {",
+                  "  pm.expect(pm.response.headers.get('Location')).to.be.a('string').and.not.empty;",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.guid).to.match(/^[0-9a-f-]{36}$/i);",
+                  "  pm.collectionVariables.set('createdOrganizationId', json.guid);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get an organization",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}",
+            "description": "Get an organization.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update an organization's name or workweek",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{createdOrganizationId}}",
+            "description": "Update an organization's name or workweek.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Example Organization\",\n  \"workWeekDays\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Record an organization deletion request without deleting it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{createdOrganizationId}}/deletion-request",
+            "description": "Record an organization deletion request without deleting it.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List the authorized organization directory",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/directory",
+            "description": "List the authorized organization directory.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List organization role references",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/roles",
+            "description": "List organization role references.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get the current member's organization summary",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/summary",
+            "description": "Get the current member's organization summary.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Memberships",
+      "item": [
+        {
+          "name": "List organization memberships",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/memberships",
+            "description": "List organization memberships.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get a membership",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/memberships/{{memberUserId}}",
+            "description": "Get a membership.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a membership for an authorized invitee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/memberships/{{newUserId}}",
+            "description": "Create a membership for an authorized invitee.\n\nExpected success status: 201. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"systemRoleId\": \"{{systemRoleId}}\",\n  \"jobRoleId\": \"{{jobRoleId}}\",\n  \"departmentId\": \"{{departmentId}}\",\n  \"teamId\": \"{{teamId}}\",\n  \"hireDate\": \"2026-01-15\",\n  \"priorService\": 0,\n  \"workScheduleId\": \"{{workScheduleId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update a membership",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/memberships/{{newUserId}}",
+            "description": "Update a membership.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"systemRoleId\": \"{{systemRoleId}}\",\n  \"jobRoleId\": \"{{jobRoleId}}\",\n  \"departmentId\": \"{{departmentId}}\",\n  \"teamId\": \"{{teamId}}\",\n  \"hireDate\": \"2026-01-15\",\n  \"priorService\": 0,\n  \"workScheduleId\": \"{{workScheduleId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Record a membership deletion request without deleting it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/memberships/{{memberUserId}}/deletion-request",
+            "description": "Record a membership deletion request without deleting it.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Teams",
+      "item": [
+        {
+          "name": "List organization teams",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/teams",
+            "description": "List organization teams.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a team",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/teams",
+            "description": "Create a team.\n\nExpected success status: 201. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Example Team\",\n  \"departmentId\": \"{{departmentId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});",
+                  "pm.test('Created resource provides Location and GUID', function () {",
+                  "  pm.expect(pm.response.headers.get('Location')).to.be.a('string').and.not.empty;",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.guid).to.match(/^[0-9a-f-]{36}$/i);",
+                  "  pm.collectionVariables.set('newTeamId', json.guid);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get a team",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/teams/{{teamId}}",
+            "description": "Get a team.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update a team",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/teams/{{teamId}}",
+            "description": "Update a team.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Platform\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Record a team deletion request without deleting it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/teams/{{newTeamId}}/deletion-request",
+            "description": "Record a team deletion request without deleting it.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Departments",
+      "item": [
+        {
+          "name": "List organization departments",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/departments",
+            "description": "List organization departments.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a department",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/departments",
+            "description": "Create a department.\n\nExpected success status: 201. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Example Department\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});",
+                  "pm.test('Created resource provides Location and GUID', function () {",
+                  "  pm.expect(pm.response.headers.get('Location')).to.be.a('string').and.not.empty;",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.guid).to.match(/^[0-9a-f-]{36}$/i);",
+                  "  pm.collectionVariables.set('newDepartmentId', json.guid);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get a department",
+          "request": {
+            "method": "GET",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/departments/{{departmentId}}",
+            "description": "Get a department.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update a department",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/departments/{{departmentId}}",
+            "description": "Update a department.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Technology\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Record a department deletion request without deleting it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/departments/{{newDepartmentId}}/deletion-request",
+            "description": "Record a department deletion request without deleting it.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cleanup / soft-delete (run after creates)",
+      "item": [
+        {
+          "name": "Soft-delete an empty organization",
+          "request": {
+            "method": "DELETE",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{createdOrganizationId}}",
+            "description": "Soft-delete an empty organization.\n\nExpected success status: 204. Review generated IDs and permissions before sending.\n\nDestructive: this can soft-delete the selected resource. Collection variables target a newly created example where possible; inspect the URL before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});",
+                  "pm.test('No content response', function () {",
+                  "  pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Soft-delete an unreferenced department",
+          "request": {
+            "method": "DELETE",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/departments/{{newDepartmentId}}",
+            "description": "Soft-delete an unreferenced department.\n\nExpected success status: 204. Review generated IDs and permissions before sending.\n\nDestructive: this can soft-delete the selected resource. Collection variables target a newly created example where possible; inspect the URL before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});",
+                  "pm.test('No content response', function () {",
+                  "  pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Soft-delete a membership",
+          "request": {
+            "method": "DELETE",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/memberships/{{newUserId}}",
+            "description": "Soft-delete a membership.\n\nExpected success status: 204. Review generated IDs and permissions before sending.\n\nDestructive: this can soft-delete the selected resource. Collection variables target a newly created example where possible; inspect the URL before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});",
+                  "pm.test('No content response', function () {",
+                  "  pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Soft-delete an unreferenced team",
+          "request": {
+            "method": "DELETE",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/teams/{{newTeamId}}",
+            "description": "Soft-delete an unreferenced team.\n\nExpected success status: 204. Review generated IDs and permissions before sending.\n\nDestructive: this can soft-delete the selected resource. Collection variables target a newly created example where possible; inspect the URL before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});",
+                  "pm.test('No content response', function () {",
+                  "  pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Soft-delete an account",
+          "request": {
+            "method": "DELETE",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/users/{{newUserId}}",
+            "description": "Soft-delete an account.\n\nExpected success status: 204. Review generated IDs and permissions before sending.\n\nDestructive: this can soft-delete the selected resource. Collection variables target a newly created example where possible; inspect the URL before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});",
+                  "pm.test('No content response', function () {",
+                  "  pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sign out (run last)",
+      "item": [
+        {
+          "name": "Revoke the current session",
+          "request": {
+            "method": "DELETE",
+            "header": [
+
+            ],
+            "url": "{{baseUrl}}/auth/sessions/current",
+            "description": "Revoke the current session.\n\nExpected success status: 204. Review generated IDs and permissions before sending.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});",
+                  "pm.test('No content response', function () {",
+                  "  pm.expect(pm.response.text()).to.eql('');",
+                  "});",
+                  "pm.test('Session is cleared locally', function () {",
+                  "  pm.collectionVariables.unset('accessToken');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

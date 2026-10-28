@@ -11,57 +11,52 @@ namespace Vacate.Api.Functions;
 
 public sealed class UserFunctions(UserService users, AuthenticationService authentication)
 {
-    [Function("Users")]
-    public Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", "patch", "delete", Route = "users/{*path}")] HttpRequest request, string? path) => Execute(request, body =>
-    {
-        var actor = authentication.RequireActor(Token(request));
-        var parts = Path(path);
-        var method = request.Method;
-        if (parts.Length == 0)
+    [Function("ListUsers")]
+    public Task<IActionResult> List([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "users")] HttpRequest request) =>
+        WithActor(request, (_, actor) => Ok(users.List(actor)));
+
+    [Function("CreateUser")]
+    public Task<IActionResult> Create([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "users")] HttpRequest request) =>
+        WithActor(request, (body, actor) =>
         {
-            if (method == "GET")
-            {
-                return Ok(users.List(actor));
-            }
+            Allow(body, [.. ProfileFields, "username", "companyId"]);
+            var created = users.Create(actor, new(Required<string>(body, "username"), Required<string>(body, "firstName"), Field<string?>(body, "middleName").Or(null), Required<string>(body, "lastName"),
+                Field<string>(body, "gender").Or("unspecified"), Field<bool?>(body, "married").Or(false), Field<int?>(body, "dependentChildren").Or(0), Field<bool?>(body, "soleCare").Or(false), Field<Guid?>(body, "companyId").Or(null)));
+            return Created($"users/{created.Guid}", created);
+        });
 
-            if (method == "POST")
-            {
-                Allow(body, [.. ProfileFields, "username", "companyId"]);
-                var created = users.Create(actor, new(Required<string>(body, "username"), Required<string>(body, "firstName"), Field<string?>(body, "middleName").Or(null), Required<string>(body, "lastName"),
-                    Field<string>(body, "gender").Or("unspecified"), Field<bool?>(body, "married").Or(false), Field<int?>(body, "dependentChildren").Or(0), Field<bool?>(body, "soleCare").Or(false), Field<Guid?>(body, "companyId").Or(null)));
-                return Created($"users/{created.Guid}", created);
-            }
-            throw MethodUnavailable();
-        }
-        var id = Id(parts[0]);
-        if (parts.Length == 1)
+    [Function("GetUser")]
+    public Task<IActionResult> Get([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "users/{userId}")] HttpRequest request, string userId) =>
+        WithActor(request, (_, actor) => Ok(users.Get(actor, Id(userId))));
+
+    [Function("UpdateUser")]
+    public Task<IActionResult> Update([HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "users/{userId}")] HttpRequest request, string userId) =>
+        WithActor(request, (body, actor) => Ok(users.Update(actor, ReadUserUpdate(Id(userId), body))));
+
+    [Function("DeleteUser")]
+    public Task<IActionResult> Delete([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "users/{userId}")] HttpRequest request, string userId) =>
+        WithActor(request, (_, actor) =>
         {
-            if (method == "GET")
-            {
-                return Ok(users.Get(actor, id));
-            }
+            users.Delete(actor, new DeleteUser(Id(userId)));
+            return new NoContentResult();
+        });
 
-            if (method == "PATCH")
-            {
-                return Ok(users.Update(actor, ReadUserUpdate(id, body)));
-            }
-
-            if (method == "DELETE")
-            {
-                users.Delete(actor, new DeleteUser(id));
-                return new NoContentResult();
-            }
-        }
-        if (parts.Length == 2 && parts[1] == "account" && method == "PATCH")
+    [Function("UpdateUserAccount")]
+    public Task<IActionResult> UpdateAccount([HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "users/{userId}/account")] HttpRequest request, string userId) =>
+        WithActor(request, (body, actor) =>
         {
             Allow(body, "username", "status");
-            return Ok(users.UpdateAccount(actor, new UpdateUserAccount(id, Field<string>(body, "username"), Field<string>(body, "status"))));
-        }
-        if (parts.Length == 2 && parts[1] == "deletion-request" && method == "POST")
+            return Ok(users.UpdateAccount(actor, new UpdateUserAccount(Id(userId), Field<string>(body, "username"), Field<string>(body, "status"))));
+        });
+
+    [Function("RequestUserDeletion")]
+    public Task<IActionResult> RequestDeletion([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "users/{userId}/deletion-request")] HttpRequest request, string userId) =>
+        WithActor(request, (body, actor) =>
         {
             Allow(body);
-            return Ok(users.RequestDeletion(actor, new RequestUserDeletion(id)));
-        }
-        throw MethodUnavailable();
-    });
+            return Ok(users.RequestDeletion(actor, new RequestUserDeletion(Id(userId))));
+        });
+
+    private Task<IActionResult> WithActor(HttpRequest request, Func<System.Text.Json.Nodes.JsonObject, int, IActionResult> operation) =>
+        Execute(request, body => operation(body, authentication.RequireActor(Token(request))));
 }

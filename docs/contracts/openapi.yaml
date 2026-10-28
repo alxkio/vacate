@@ -1,0 +1,1159 @@
+openapi: 3.0.3
+info:
+  title: Vacate API
+  version: 1.0.0
+  description: >-
+    OpenAPI description of the .NET 9 Azure Functions isolated-worker API.
+    Local development credentials and fictional seed data are not production authentication.
+servers:
+  - url: /api
+    description: Azure Functions route prefix
+tags:
+  - name: Health
+  - name: Sessions
+  - name: Users
+  - name: Organizations
+  - name: Memberships
+  - name: Teams
+  - name: Departments
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags: [Health]
+      summary: Check API liveness
+      security: []
+      responses:
+        '200':
+          description: The API host is alive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /auth/sessions:
+    post:
+      operationId: createSession
+      tags: [Sessions]
+      summary: Sign in with an enabled development account
+      description: Development credentials are fictional and must not be used for production authentication.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCredentials'
+      responses:
+        '200':
+          description: Session created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /auth/sessions/current:
+    get:
+      operationId: getCurrentSession
+      tags: [Sessions]
+      summary: Get the current session profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteCurrentSession
+      tags: [Sessions]
+      summary: Revoke the current session
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /users:
+    get:
+      operationId: listUsers
+      tags: [Users]
+      summary: List users visible to the current account
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: createUser
+      tags: [Users]
+      summary: Create an unassigned account
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          $ref: '#/components/responses/Created'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      operationId: getUser
+      tags: [Users]
+      summary: Get an own profile or an authorized colleague projection
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: updateUser
+      tags: [Users]
+      summary: Update the current account's profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfilePatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+    delete:
+      operationId: deleteUser
+      tags: [Users]
+      summary: Soft-delete an account
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /users/{userId}/account:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    patch:
+      operationId: updateUserAccount
+      tags: [Users]
+      summary: Update an account username or status (administrator only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountPatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /users/{userId}/deletion-request:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      operationId: requestUserDeletion
+      tags: [Users]
+      summary: Record an account deletion request without deleting the account
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/EmptyObject'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations:
+    get:
+      operationId: listOrganizations
+      tags: [Organizations]
+      summary: List organizations visible to the current account
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: createOrganization
+      tags: [Organizations]
+      summary: Create an organization
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationWrite'
+      responses:
+        '201':
+          $ref: '#/components/responses/Created'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: getOrganization
+      tags: [Organizations]
+      summary: Get an organization
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: updateOrganization
+      tags: [Organizations]
+      summary: Update an organization's name or workweek
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationWrite'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+    delete:
+      operationId: deleteOrganization
+      tags: [Organizations]
+      summary: Soft-delete an empty organization
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/summary:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: getOrganizationSummary
+      tags: [Organizations]
+      summary: Get the current member's organization summary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /organizations/{organizationId}/directory:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: getOrganizationDirectory
+      tags: [Organizations]
+      summary: List the authorized organization directory
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /organizations/{organizationId}/roles:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: getOrganizationRoles
+      tags: [Organizations]
+      summary: List organization role references
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /organizations/{organizationId}/deletion-request:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    post:
+      operationId: requestOrganizationDeletion
+      tags: [Organizations]
+      summary: Record an organization deletion request without deleting it
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/EmptyObject'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/memberships:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: listMemberships
+      tags: [Memberships]
+      summary: List organization memberships
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /organizations/{organizationId}/memberships/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/UserId'
+    get:
+      operationId: getMembership
+      tags: [Memberships]
+      summary: Get a membership
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: createMembership
+      tags: [Memberships]
+      summary: Create a membership for an authorized invitee
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembershipWrite'
+      responses:
+        '201':
+          $ref: '#/components/responses/Created'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+    patch:
+      operationId: updateMembership
+      tags: [Memberships]
+      summary: Update a membership
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembershipWrite'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+    delete:
+      operationId: deleteMembership
+      tags: [Memberships]
+      summary: Soft-delete a membership
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/memberships/{userId}/deletion-request:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/UserId'
+    post:
+      operationId: requestMembershipDeletion
+      tags: [Memberships]
+      summary: Record a membership deletion request without deleting it
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/EmptyObject'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/teams:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: listTeams
+      tags: [Teams]
+      summary: List organization teams
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: createTeam
+      tags: [Teams]
+      summary: Create a team
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamCreate'
+      responses:
+        '201':
+          $ref: '#/components/responses/Created'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/teams/{teamId}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TeamId'
+    get:
+      operationId: getTeam
+      tags: [Teams]
+      summary: Get a team
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: updateTeam
+      tags: [Teams]
+      summary: Update a team
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamPatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+    delete:
+      operationId: deleteTeam
+      tags: [Teams]
+      summary: Soft-delete an unreferenced team
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/teams/{teamId}/deletion-request:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TeamId'
+    post:
+      operationId: requestTeamDeletion
+      tags: [Teams]
+      summary: Record a team deletion request without deleting it
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/EmptyObject'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/departments:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: listDepartments
+      tags: [Departments]
+      summary: List organization departments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: createDepartment
+      tags: [Departments]
+      summary: Create a department
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentCreate'
+      responses:
+        '201':
+          $ref: '#/components/responses/Created'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/departments/{departmentId}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/DepartmentId'
+    get:
+      operationId: getDepartment
+      tags: [Departments]
+      summary: Get a department
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      operationId: updateDepartment
+      tags: [Departments]
+      summary: Update a department
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentPatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+    delete:
+      operationId: deleteDepartment
+      tags: [Departments]
+      summary: Soft-delete an unreferenced department
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/departments/{departmentId}/deletion-request:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/DepartmentId'
+    post:
+      operationId: requestDepartmentDeletion
+      tags: [Departments]
+      summary: Record a department deletion request without deleting it
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/EmptyObject'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Opaque API session token returned by POST /auth/sessions.
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: Public user GUID. Numeric storage IDs are not accepted.
+      schema:
+        type: string
+        format: uuid
+    OrganizationId:
+      name: organizationId
+      in: path
+      required: true
+      description: Public organization GUID. Numeric storage IDs are not accepted.
+      schema:
+        type: string
+        format: uuid
+    TeamId:
+      name: teamId
+      in: path
+      required: true
+      description: Public team GUID.
+      schema:
+        type: string
+        format: uuid
+    DepartmentId:
+      name: departmentId
+      in: path
+      required: true
+      description: Public department GUID.
+      schema:
+        type: string
+        format: uuid
+  requestBodies:
+    EmptyObject:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+  responses:
+    JsonData:
+      description: Successful JSON response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JsonData'
+    Created:
+      description: Resource created. The response includes a Location header.
+      headers:
+        Location:
+          description: Relative URI of the created resource.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JsonData'
+    NoContent:
+      description: Operation succeeded without a response body.
+    BadRequest:
+      description: Invalid JSON, unsupported fields, or domain validation failure.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing, invalid, expired or revoked session.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: The current account is not authorized for this operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource is unavailable, deleted, or outside the caller's authorized scope.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: The operation conflicts with current resource or lifecycle state.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PayloadTooLarge:
+      description: Request body exceeds 32 KiB.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnsupportedMediaType:
+      description: A JSON request must use application/json.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    JsonData:
+      description: API resource projection; shape depends on the operation.
+      oneOf:
+        - type: object
+          additionalProperties: true
+        - type: array
+          items:
+            type: object
+            additionalProperties: true
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    Health:
+      type: object
+      required: [status, version]
+      properties:
+        status:
+          type: string
+          enum: [healthy]
+        version:
+          type: string
+    SessionCredentials:
+      type: object
+      required: [username, password]
+      additionalProperties: false
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+    Session:
+      type: object
+      required: [accessToken, expiresAt]
+      properties:
+        accessToken:
+          type: string
+          description: Opaque bearer token; retain privately and do not log.
+        expiresAt:
+          type: string
+          format: date-time
+    UserCreate:
+      type: object
+      required: [username, firstName, lastName]
+      additionalProperties: false
+      properties:
+        username:
+          type: string
+        firstName:
+          type: string
+        middleName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+        gender:
+          type: string
+        married:
+          type: boolean
+        dependentChildren:
+          type: integer
+          minimum: 0
+        soleCare:
+          type: boolean
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+    ProfilePatch:
+      type: object
+      additionalProperties: false
+      properties:
+        firstName:
+          type: string
+        middleName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+        gender:
+          type: string
+        married:
+          type: boolean
+          nullable: true
+        dependentChildren:
+          type: integer
+          minimum: 0
+          nullable: true
+        soleCare:
+          type: boolean
+          nullable: true
+    AccountPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        username:
+          type: string
+        status:
+          type: string
+          enum: [active, disabled]
+    OrganizationWrite:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        workWeekDays:
+          type: integer
+          minimum: 1
+          maximum: 7
+    MembershipWrite:
+      type: object
+      additionalProperties: false
+      properties:
+        systemRoleId:
+          type: string
+          format: uuid
+        jobRoleId:
+          type: string
+          format: uuid
+        departmentId:
+          type: string
+          format: uuid
+          nullable: true
+        teamId:
+          type: string
+          format: uuid
+          nullable: true
+        managerUserId:
+          type: string
+          format: uuid
+          nullable: true
+        hireDate:
+          type: string
+          format: date
+          nullable: true
+        employmentEndDate:
+          type: string
+          format: date
+          nullable: true
+        priorService:
+          type: number
+          minimum: 0
+          nullable: true
+        workScheduleId:
+          type: string
+          format: uuid
+          nullable: true
+        holidayCalendarId:
+          type: string
+          format: uuid
+          nullable: true
+        leavePolicyId:
+          type: string
+          format: uuid
+          nullable: true
+        customAllocation:
+          type: number
+          minimum: 0
+          nullable: true
+    TeamCreate:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        departmentId:
+          type: string
+          format: uuid
+          nullable: true
+    TeamPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        departmentId:
+          type: string
+          format: uuid
+          nullable: true
+    DepartmentCreate:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+    DepartmentPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
