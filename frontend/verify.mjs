@@ -207,7 +207,14 @@ try {
   const keyboardClick = async (selector) => {
     await call('Page.bringToFront');
     await evaluate(
-      `document.querySelector(${JSON.stringify(selector)}).focus();window.__keyboardClick=false;document.querySelector(${JSON.stringify(selector)}).addEventListener('click',event=>window.__keyboardClick=event.isTrusted,{once:true});new Promise(resolve=>{requestAnimationFrame(()=>requestAnimationFrame(resolve));setTimeout(resolve,200)})`,
+      'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))',
+    );
+    // Dialog close handlers can restore focus on the next frame. Select and focus
+    // the current rendered button only after those handlers have completed.
+    await evaluate(`document.querySelector(${JSON.stringify(selector)}).focus()`);
+    await waitFor(`document.activeElement === document.querySelector(${JSON.stringify(selector)})`);
+    await evaluate(
+      `window.__keyboardClick=false;document.querySelector(${JSON.stringify(selector)}).addEventListener('click',event=>window.__keyboardClick=event.isTrusted,{once:true})`,
     );
     await call('Input.dispatchKeyEvent', {
       type: 'keyDown',
