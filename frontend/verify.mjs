@@ -841,8 +841,10 @@ try {
         /cannot be calculated/,
         'Hours must not inherit the working-day balance',
       );
-      await closeDialog();
-      await waitFor('document.activeElement.matches("[data-action=request]")');
+      await keyboardClick('#dialog .dialog-close');
+      await waitFor(
+        '!document.querySelector("#dialog").open && document.activeElement.matches("[data-action=request]")',
+      );
       console.log(
         'PASS: native keyboard shortlist expansion/collapse, pinned uncommon selection and draft preservation',
       );
