@@ -10,11 +10,16 @@ import {
   Eligibility,
   Fixtures,
   LeaveType,
+  DisplayPreferences,
   OwnProfiles,
   OrganizationStore,
+  Person,
 } from '../models/workspace.models';
 
 export const REFERENCE_TODAY = new Date(2026, 9, 22);
+const displayPreferencesKey = (person: Person) =>
+  `vacate.display-preferences.v1.${encodeURIComponent(person.companyId)}.${encodeURIComponent(person.id)}`;
+const defaultDisplayPreferences: DisplayPreferences = { layout: 'calendar', colorScheme: 'a' };
 export const dateKey = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 export const dateFromKey = (key: string) => {
@@ -128,6 +133,43 @@ export class WorkspaceDataService {
 
   currentUser() {
     return this.environment.VacateSession.currentUser();
+  }
+
+  displayPreferences(person: Person | null = this.currentUser()): DisplayPreferences {
+    if (!person) return { ...defaultDisplayPreferences };
+    const stored = localStorage.getItem(displayPreferencesKey(person));
+    if (!stored) return { ...defaultDisplayPreferences };
+    const [layout, colorScheme] = stored.split('|');
+    return {
+      layout: layout === 'planner' ? 'planner' : 'calendar',
+      colorScheme: colorScheme === 'c' ? 'c' : 'a',
+    };
+  }
+
+  saveDisplayPreferences(
+    account: Pick<Person, 'id' | 'companyId'>,
+    preferences: DisplayPreferences,
+  ): { ok: boolean; error?: string } {
+    const current = this.currentUser();
+    if (!current || current.id !== account.id || current.companyId !== account.companyId)
+      return { ok: false, error: 'Your account changed. Reopen settings before saving.' };
+    if (
+      !['calendar', 'planner'].includes(preferences.layout) ||
+      !['a', 'c'].includes(preferences.colorScheme)
+    )
+      return { ok: false, error: 'Choose a supported calendar layout and color scheme.' };
+    try {
+      localStorage.setItem(
+        displayPreferencesKey(current),
+        `${preferences.layout}|${preferences.colorScheme}`,
+      );
+    } catch {
+      return {
+        ok: false,
+        error: 'This browser could not save your display preferences. Check browser storage permissions and try again.',
+      };
+    }
+    return { ok: true };
   }
 
   decision(id: string) {

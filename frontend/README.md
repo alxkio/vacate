@@ -67,11 +67,13 @@ See the [root README](../README.md#tests-todo).
 
 Open **Settings** in the sidebar or **Profile & membership** from the profile-initials dropdown (`/index.html?page=settings`). Names, gender, married, dependent children and sole care are editable; membership, sign-in email and account status are read-only. Save/cancel and validation use the profile API; edits survive browser reload/sign-out and reset on API restart. Only fictional accounts are seeded. Existing lead visibility remains separate from employee/admin system-role labels. Family edits refresh own fictional eligibility without changing allocations or assuming divorce. Admins edit membership configuration under Organization. Invitation delivery/acceptance remains open.
 
+The separate display-preferences card saves the calendar workspace/planner layout and green/warm-brown color scheme in browser local storage, keyed by fictional company and account. Preferences do not use the profile API. The calendar workspace and green scheme are the defaults.
+
 On older macOS hosts where embedded Sass cannot run, `NG_BUILD_SASS_EMBEDDED=0` selects Angular's JavaScript Sass compiler. [VAC-12](../docs/jira/VAC-12-profile-and-membership-settings.md) records verification and the remaining server/security gates.
 
 ## Organization administration
 
-Company admins can open **Organization** from the sidebar or use `/index.html?page=organization`. Rename the organization, choose five/six working days, browse departments/teams and rename them. These pages and application services reject employees, non-admin leads, foreign companies and stale administrator forms. Existing team/calendar availability scopes remain separate from administration.
+Company admins can open **Organization** from the sidebar or use `/index.html?page=organization`. Rename the organization, choose five/six working days, browse departments/teams and rename them. These pages and application services reject employees, non-admin leads, foreign companies and stale administrator forms. In the fictional calendar fixture, every demo account can now select organization-wide generic availability; this does not change admin authorization or implement production visibility rules.
 
 Structure is optional: the read model supports empty departments/teams, organization members without teams and teams without a department. The shipped Northstar fixture is one department/team example, not a hierarchy requirement. Standalone/cross-company organizations and arbitrary groups remain deferred. Create/delete operations are API-only.
 

@@ -90,11 +90,7 @@ for (const [id, team, department, role] of expected) {
   );
   assert.deepEqual(
     plain(f.allowedScopes(person)),
-    role === 'admin'
-      ? ['self', 'team', 'department', 'org']
-      : role === 'lead'
-        ? ['self', 'team', 'department']
-        : ['self', 'team'],
+    ['self', 'team', 'department', 'org'],
   );
   assert.deepEqual(ids(f.peopleFor(person, 'self')), [id]);
   const teamIds = expected
@@ -110,10 +106,7 @@ for (const [id, team, department, role] of expected) {
     ids(f.peopleFor(person, 'department', person.departmentId)),
     role === 'employee' ? [] : departmentIds,
   );
-  assert.deepEqual(
-    ids(f.peopleFor(person, 'org')),
-    role === 'admin' ? expected.map((row) => row[0]).sort() : [],
-  );
+  assert.deepEqual(ids(f.peopleFor(person, 'org')), expected.map((row) => row[0]).sort());
   assert.deepEqual(ids(f.peopleFor(person, 'team', 'foreign-team')), []);
   assert.deepEqual(ids(f.peopleFor(person, 'department', 'foreign-department')), []);
   assert.deepEqual(ids(f.peopleFor(person, 'company', 'foreign-company')), []);

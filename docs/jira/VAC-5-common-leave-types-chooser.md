@@ -4,7 +4,7 @@ type: story
 summary: Show common leave types first with an explicit show-all action
 status: qa
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-28
 parent: null
 depends_on: [VAC-1]
 ---
@@ -103,6 +103,7 @@ Not applicable: no persisted favorites, usage history or company shortlist table
 
 - C-5 · 2026-10-23 · Codex — pre-commit review: The independent `vac5_review` agent reported no blocking findings. Its one test-coverage suggestion was addressed with explicit end-date and school-hours preservation checks. Local QA and packaging/configuration checks are recorded in the [verification record](media/VAC-5/verification.md#pre-commit-review-and-qa--2026-10-23). A separate QA deployment is not needed before commit; hosted CI and an Azure dev smoke/browser check follow when commit/push/deploy are requested. The length of the 12-card balance area is a UX follow-up under the existing open questions, which remain open.
 - C-6 · 2026-10-24 · Founder feedback implemented in [VAC-8](VAC-8-calendar-first-and-balances-page.md) and [VAC-9](VAC-9-eligibility-contract-and-mock-decisions.md): calendar first with annual-only rail; other balances move to a dedicated page. The 12-type base catalogue shortlist remains, with known-unavailable profile choices omitted from personal defaults and retained as disabled reference choices through Show all. Current-country mock gates and remaining legal questions are recorded separately. This revises the provisional page coverage/profile behavior without silently closing the historical questions below.
+- C-7 · 2026-10-28 · Founder direction, implemented under [VAC-19](VAC-19-calendar-display-preferences-and-balances.md): keep the request chooser's shared shortlist and order; My balances may present the same eligible catalogue entries in a separate parent-aware order. This resolves the prior surface/order question only; shortlist membership and leave-policy questions remain open.
 
 ## Decisions
 
@@ -113,6 +114,7 @@ Not applicable: no persisted favorites, usage history or company shortlist table
 - D-5 · 2026-10-23 · Founder requested sick leave, expanding D-2's presentation-only scope to include specification of this new type. Inclusion is selected; policy/allowance approval is still pending and no figures are inferred.
 - D-6 · 2026-10-23 · Founder authorized the recommendations as provisional implementation defaults, superseding the implementation hold in D-3/C-3. Implement the [12-type order and shared behavior](../product/leave-types-review.md#vac-5-shortlist-selection--pending-review) while preserving every open question for revision.
 - D-7 · 2026-10-23 · Limited sick-leave implementation: checked official research is documented, but no statutory rule/allowance is approved. Provide an unknown-balance preview with illustrative working-day input; no entitlement/payroll calculation, diagnosis or proof collection. This narrows the earlier requirement for a complete rule specification before any preview.
+- D-8 · 2026-10-28 · Founder: the request chooser retains annual/sick-first ordering. My balances instead promotes annual and, for parents, school attendance, childcare and parental; sick, maternity, paternity, voting and military appear lower. Display order does not change eligibility, shortlist membership or entitlements.
 
 ## Work log
 

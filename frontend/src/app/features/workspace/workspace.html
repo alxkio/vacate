@@ -10,35 +10,10 @@
           : 'calendar'
   }}</a
 >
-<div class="studio" (click)="handleClick($event)">
-  <div class="studio-heading">
-    <span class="eyebrow">VACATE / DESIGN STUDY 01</span
-    ><span>Explore a direction. All data is fictional.</span>
-  </div>
-  <div class="directions" aria-label="Design direction">
-    <button data-direction="a" [attr.aria-pressed]="state.direction === 'a'">
-      <span class="direction-letter">A</span
-      ><span
-        ><strong>Calendar workspace <small>Recommended</small></strong
-        ><span>A familiar calendar, room to plan.</span></span
-      >
-    </button>
-    <button data-direction="b" [attr.aria-pressed]="state.direction === 'b'">
-      <span class="direction-letter">B</span
-      ><span><strong>Team planner</strong><span>People first. See time off together.</span></span>
-    </button>
-    <button data-direction="c" [attr.aria-pressed]="state.direction === 'c'">
-      <span class="direction-letter">C</span
-      ><span
-        ><strong>Personal overview</strong
-        ><span>A little perspective on the whole year.</span></span
-      >
-    </button>
-  </div>
-</div>
 <div
   class="app"
-  [attr.data-direction]="state.direction"
+  [attr.data-layout]="state.layout"
+  [attr.data-color-scheme]="state.colorScheme"
   [attr.data-page]="state.page"
   (click)="handleClick($event)"
 >
@@ -261,7 +236,7 @@
             <span id="calendar-footnote">{{
               state.view === 'year'
                 ? 'Select a month to explore dates'
-                : state.direction === 'b'
+                : state.layout === 'planner'
                   ? 'Select an absence to see availability'
                   : 'Select a date to see details'
             }}</span
@@ -361,7 +336,11 @@
       />
     }
     @if (state.page === 'settings') {
-      <vacate-settings (saved)="changeDetector.markForCheck()" (staleSession)="ensureSession()" />
+      <vacate-settings
+        (saved)="changeDetector.markForCheck()"
+        (displayPreferencesSaved)="applyDisplayPreferences($event)"
+        (staleSession)="ensureSession()"
+      />
     }
     @if (state.page === 'balances') {
       <vacate-balances

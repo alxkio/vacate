@@ -27,7 +27,7 @@ import {
   shortDate,
   weekStart,
 } from '../../core/state/workspace-data.service';
-import { CalendarState, Entry } from '../../core/models/workspace.models';
+import { CalendarState, DisplayPreferences, Entry } from '../../core/models/workspace.models';
 
 interface DialogContent {
   kind: 'info' | 'request';
@@ -51,6 +51,7 @@ export class Workspace implements OnInit, OnDestroy {
   readonly route = inject(ActivatedRoute);
   readonly changeDetector = inject(ChangeDetectorRef);
   readonly user = this.data.currentUser()!;
+  readonly displayPreferences = this.data.displayPreferences(this.user);
   readonly entries = this.data.fixtures.ownEntries(this.user);
   readonly scopes = this.data.fixtures.allowedScopes(this.user);
   readonly defaultScope =
@@ -61,7 +62,8 @@ export class Workspace implements OnInit, OnDestroy {
         : 'self';
   state: CalendarState = {
     page: 'calendar',
-    direction: 'a',
+    layout: this.displayPreferences.layout,
+    colorScheme: this.displayPreferences.colorScheme,
     scope: this.defaultScope,
     groupId: null,
     denied: false,
@@ -106,8 +108,6 @@ export class Workspace implements OnInit, OnDestroy {
     this.subscription = this.route.queryParamMap.subscribe((params) => {
       if (!this.ensureSession()) return;
       const previousPage = this.state.page;
-      const direction = params.get('direction') || 'a';
-      this.state.direction = ['a', 'b', 'c'].includes(direction) ? direction : 'a';
       this.state.page = ['organization', 'organization-settings'].includes(params.get('page') || '')
         ? 'organization'
         : params.get('page') === 'settings'
@@ -133,11 +133,9 @@ export class Workspace implements OnInit, OnDestroy {
       this.state.view =
         view && ['year', 'month', 'week', 'day'].includes(view)
           ? view
-          : this.state.direction === 'b'
+          : this.state.layout === 'planner'
             ? 'week'
-            : this.state.direction === 'c'
-              ? 'year'
-              : 'month';
+            : 'month';
       const value = params.get('date') || '',
         date = dateFromKey(value);
       this.state.date =
@@ -230,11 +228,9 @@ export class Workspace implements OnInit, OnDestroy {
         ? 'Your profile and your place in the company.'
         : this.state.page === 'balances'
           ? 'Your own allowances, eligibility and rules. Each leave type keeps its own unit and period.'
-          : this.state.direction === 'b'
+          : this.state.layout === 'planner'
             ? 'A shared view of time away. A little easier to plan together.'
-            : this.state.direction === 'c'
-              ? 'See the year ahead. Make space for your next break.'
-              : 'Plan your next break. Keep your team in the picture.';
+            : 'Plan your next break. Keep your team in the picture.';
   }
   get upcoming() {
     return this.entries
@@ -267,14 +263,13 @@ export class Workspace implements OnInit, OnDestroy {
   refresh() {
     this.state = { ...this.state };
     this.selectedDate = null;
-    document.title = `Vacate · ${this.state.page === 'organization' ? 'OrganizationSettings' : this.state.page === 'settings' ? 'ProfileSettings' : this.state.page === 'balances' ? 'My balances' : 'Calendar design studio'}`;
+    document.title = `Vacate · ${this.state.page === 'organization' ? 'OrganizationSettings' : this.state.page === 'settings' ? 'ProfileSettings' : this.state.page === 'balances' ? 'My balances' : 'Calendar'}`;
     this.changeDetector.markForCheck();
   }
 
   private query(page: string) {
     return {
       page,
-      direction: this.state.direction,
       scope: this.state.scope,
       view: this.state.view,
       date: dateKey(this.state.date),
@@ -315,6 +310,15 @@ export class Workspace implements OnInit, OnDestroy {
     this.state.view = 'month';
     this.refresh();
     document.querySelector<HTMLButtonElement>('.views [data-view=month]')?.focus();
+  }
+
+  applyDisplayPreferences(preferences: DisplayPreferences) {
+    if (!this.ensureSession()) return;
+    this.state.layout = preferences.layout;
+    this.state.colorScheme = preferences.colorScheme;
+    if (preferences.layout === 'planner' && !['month', 'week'].includes(this.state.view))
+      this.state.view = 'week';
+    this.refresh();
   }
 
   open(content: DialogContent, trigger?: HTMLElement) {
@@ -445,17 +449,7 @@ export class Workspace implements OnInit, OnDestroy {
   handleClick(event: Event) {
     const button = (event.target as Element).closest<HTMLButtonElement>('button');
     if (!button || button.disabled || !this.ensureSession()) return;
-    const { direction, scope, view, nav, action } = button.dataset;
-    if (direction) {
-      Object.assign(this.state, {
-        direction,
-        scope: this.defaultScope,
-        groupId: null,
-        denied: false,
-        view: direction === 'b' ? 'week' : direction === 'c' ? 'year' : 'month',
-      });
-      this.refresh();
-    }
+    const { scope, view, nav, action } = button.dataset;
     if (scope) {
       Object.assign(this.state, { scope, groupId: null, denied: !this.scopes.includes(scope) });
       this.refresh();
@@ -523,7 +517,7 @@ export class Workspace implements OnInit, OnDestroy {
           kind: 'info',
           title: 'A little guide',
           paragraphs: [
-            'Compare A, B and C above, then try the scope and period controls. Select dates or leave entries for details. Today returns to the fixed demo date, 22 October 2026.',
+            'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the fixed demo date, 22 October 2026.',
             'Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. All interactions use local fictional data.',
           ],
         },

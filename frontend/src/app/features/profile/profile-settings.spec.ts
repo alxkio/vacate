@@ -6,12 +6,16 @@ import { ProfileSettings } from './profile-settings';
 describe('Own profile settings', async () => {
   beforeEach(() => {
     sessionStorage.clear();
+    localStorage.clear();
     TestBed.configureTestingModule({
       imports: [ProfileSettings],
       providers: [fixtureWorkspaceProvider],
     });
   });
-  afterEach(() => sessionStorage.clear());
+  afterEach(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+  });
   function setup(id = 'maya') {
     const data = TestBed.inject(WorkspaceDataService);
     data.environment.VacateSession.login(id, id);
@@ -60,5 +64,19 @@ describe('Own profile settings', async () => {
     expect(data.profiles.read()?.firstName).toBe('Nora');
     data.environment.VacateSession.login('maya', 'maya');
     expect(data.profiles.read()?.firstName).toBe('Maya');
+  });
+
+  it('saves the chosen layout and color scheme for the current browser account', () => {
+    const { data, fixture, page } = setup();
+    page.displayPreferences = { layout: 'planner', colorScheme: 'c' };
+    page.saveDisplayPreferences();
+    fixture.detectChanges();
+
+    expect(data.displayPreferences()).toEqual({ layout: 'planner', colorScheme: 'c' });
+    expect(fixture.nativeElement.querySelector('#display-preferences-status').textContent).toContain(
+      'saved in this browser',
+    );
+    expect(fixture.nativeElement.querySelector('#display-layout').value).toBe('planner');
+    expect(fixture.nativeElement.querySelector('#display-color-scheme').value).toBe('c');
   });
 });

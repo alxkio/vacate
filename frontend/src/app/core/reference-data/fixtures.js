@@ -22,7 +22,7 @@ export function createFixtures() {
   const eligibilityProfiles=Object.fromEntries(profileRows.map(([id,gender,maritalStatus,hasDependentChildren,soleCare])=>[id,Object.freeze({gender,maritalStatus,hasDependentChildren,soleCare})]));
   // Require canonical identity fields. A foreign company or mismatched group fails closed.
   const validPerson = candidate => candidate && people.find(item=>item.id===candidate.id&&item.companyId===candidate.companyId&&item.teamId===candidate.teamId&&item.departmentId===candidate.departmentId&&item.capability===candidate.capability);
-  const allowedScopes = candidate => {const current=validPerson(candidate);return current?current.capability==='admin'?['self','team','department','org']:current.capability==='lead'?['self','team','department']:['self','team']:[];};
+  const allowedScopes = candidate => {const current=validPerson(candidate);return current?['self','team','department','org']:[];};
   const allowedTeams = candidate => {const current=validPerson(candidate);return current?teams.filter(team=>team.companyId===current.companyId&&(current.capability==='admin'||(current.capability==='lead'?team.departmentId===current.departmentId:team.id===current.teamId))):[];};
   const allowedDepartments = candidate => {const current=validPerson(candidate);return current?departments.filter(department=>department.companyId===current.companyId&&(current.capability==='admin'||(current.capability==='lead'&&department.id===current.departmentId))):[];};
   function peopleFor(candidate,scope,groupId) {

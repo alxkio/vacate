@@ -34,7 +34,23 @@ export class Balances {
     );
   }
   get groups() {
-    const groups = this.data.catalogue.typeGroups(this.shown);
+    const parent = (this.data.profiles.read()?.dependentChildren || 0) > 0;
+    const promotedIds = ['annual', ...(parent ? ['school', 'childcare', 'parental'] : [])];
+    const deferredIds = ['sick', 'maternity', 'paternity', 'voting', 'military'];
+    const byId = new Map(this.shown.map((type) => [type.id, type]));
+    const promoted = promotedIds
+      .map((id) => byId.get(id))
+      .filter((type): type is LeaveType => type !== undefined);
+    const deferred = deferredIds
+      .map((id) => byId.get(id))
+      .filter((type): type is LeaveType => type !== undefined);
+    const separated = new Set([...promoted, ...deferred]);
+    const regular = this.shown.filter((type) => !separated.has(type));
+    const groups = [
+      ...(promoted.length ? [{ name: 'At a glance', types: promoted }] : []),
+      ...this.data.catalogue.typeGroups(regular),
+      ...(deferred.length ? [{ name: 'Other leave types', types: deferred }] : []),
+    ];
     if (!this.showAll && this.pinned.length)
       groups.push({ name: 'Expanded types', types: this.pinned });
     return groups;

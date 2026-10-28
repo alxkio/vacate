@@ -118,9 +118,16 @@ export interface WorkspaceEnvironment {
   VacateLeave: Catalogue;
   VacateEligibility: Eligibility;
 }
+export type CalendarLayout = 'calendar' | 'planner';
+export type ColorScheme = 'a' | 'c';
+export interface DisplayPreferences {
+  layout: CalendarLayout;
+  colorScheme: ColorScheme;
+}
 export interface CalendarState {
   page: 'calendar' | 'balances' | 'settings' | 'organization';
-  direction: string;
+  layout: CalendarLayout;
+  colorScheme: ColorScheme;
   scope: string;
   groupId: string | null;
   denied: boolean;

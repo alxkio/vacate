@@ -14,6 +14,9 @@
   padding: 26px;
   min-width: 0;
 }
+.display-preferences-card {
+  grid-column: 2;
+}
 .settings-card-heading {
   display: flex;
   align-items: center;
@@ -203,10 +206,16 @@ fieldset .settings-intro {
   .settings-layout {
     grid-template-columns: 1fr;
   }
+  .display-preferences-card {
+    grid-column: 1;
+  }
 }
 @media (max-width: 600px) {
   .settings-card {
     padding: 18px;
+  }
+  .display-preferences-card {
+    grid-column: 1;
   }
   .settings-fields {
     grid-template-columns: 1fr;

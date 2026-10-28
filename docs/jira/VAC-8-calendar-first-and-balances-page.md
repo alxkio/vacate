@@ -4,7 +4,7 @@ type: story
 summary: Put the calendar first with an annual side card and a separate balances page
 status: released
 created: 2026-10-24
-updated: 2026-10-25
+updated: 2026-10-28
 parent: null
 depends_on: [VAC-5]
 ---
@@ -58,6 +58,8 @@ Requires [VAC-5](VAC-5-common-leave-types-chooser.md)'s available balance/type c
 - D-1 · 2026-10-24 · Founder direction: calendar first and annual-only side card; separate My balances page. Use query routes in the current shared mock shell rather than a new deployment resource.
 
 - C-3 · 2026-10-25 · Founder authorized commit and Azure dev deployment; preserve frontend-only publishing and verify the hosted revision before marking Released.
+- C-4 · 2026-10-28 · Founder direction, implemented under [VAC-19](VAC-19-calendar-display-preferences-and-balances.md): A is the only workspace; B's planner and C's palette are separate browser-local preferences. Every demo role can select generic organization availability. This later mock change does not alter the historical release evidence or production authorization.
+- D-2 · 2026-10-28 · Founder: remove the A/B/C comparison and C year layout; keep A as the only workspace, B as a user-selectable planner layout and C's warm palette as an optional color scheme.
 
 ## Work log
 
@@ -81,5 +83,5 @@ Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not reco
 
 ## Open questions
 
-- Final A/B/C direction remains open. VAC-5 shortlist membership/order remains revisable.
+- The prior A/B/C direction question is resolved by the 2026-10-28 founder decision and implemented in [VAC-19](VAC-19-calendar-display-preferences-and-balances.md). VAC-5 shortlist membership remains revisable.
 - Eligibility policy proposals are recorded separately in VAC-9 and do not block the independent layout change.

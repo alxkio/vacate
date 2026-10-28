@@ -7,6 +7,7 @@ describe('Angular demo data boundary', () => {
   let data: WorkspaceDataService;
   beforeEach(() => {
     sessionStorage.clear();
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [
         {
@@ -26,7 +27,10 @@ describe('Angular demo data boundary', () => {
     });
     data = TestBed.inject(WorkspaceDataService);
   });
-  afterEach(() => sessionStorage.clear());
+  afterEach(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+  });
 
   it('keeps the approved shortlist order after filtering Ravi’s unavailable types', () => {
     data.environment.VacateSession.login('ravi', 'ravi');
@@ -70,5 +74,34 @@ describe('Angular demo data boundary', () => {
     };
     expect(data.eligibility.getResponse()).toBeNull();
     expect(data.balance('annual')).toBeNull();
+  });
+
+  it('stores display preferences by company and demo account and rejects stale-account writes', () => {
+    data.environment.VacateSession.login('maya', 'maya');
+    const maya = data.currentUser()!;
+    const mayaPreferences = { layout: 'planner' as const, colorScheme: 'c' as const };
+    expect(data.displayPreferences()).toEqual({ layout: 'calendar', colorScheme: 'a' });
+    expect(data.saveDisplayPreferences(maya, mayaPreferences)).toEqual({ ok: true });
+    expect(data.displayPreferences()).toEqual(mayaPreferences);
+    expect(
+      data.displayPreferences({ ...maya, companyId: 'foreign-company' }),
+    ).toEqual({ layout: 'calendar', colorScheme: 'a' });
+
+    data.environment.VacateSession.logout();
+    data.environment.VacateSession.login('nora', 'nora');
+    const nora = data.currentUser()!;
+    expect(data.displayPreferences()).toEqual({ layout: 'calendar', colorScheme: 'a' });
+    expect(data.saveDisplayPreferences(maya, mayaPreferences)).toEqual({
+      ok: false,
+      error: 'Your account changed. Reopen settings before saving.',
+    });
+
+    data.environment.VacateSession.logout();
+    data.environment.VacateSession.login('maya', 'maya');
+    expect(data.displayPreferences()).toEqual(mayaPreferences);
+    data.environment.VacateSession.logout();
+    data.environment.VacateSession.login('nora', 'nora');
+    expect(data.displayPreferences()).toEqual({ layout: 'calendar', colorScheme: 'a' });
+    expect(nora.id).not.toBe(maya.id);
   });
 });

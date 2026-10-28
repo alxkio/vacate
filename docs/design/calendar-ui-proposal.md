@@ -1,6 +1,6 @@
 # Calendar UI proposal
 
-Status: PROPOSED — visual exploration; product-lead selection pending.  
+Status: ACCEPTED FOR THE FICTIONAL MOCK · founder direction 2026-10-28. Historical exploration follows.
 Date: 2026-10-22  
 Role: UI Architect, following the [repository UI-architect prompt](../../.github/prompts/agents/ui-architect.agent.md).
 
@@ -12,9 +12,9 @@ Product boundaries come from [accepted ADR-0001](../adr/0001-company-first-web-a
 
 ## Recommendation
 
-Choose **A — Calendar workspace** as the default. It gives the calendar the most room and makes the three scopes easy to discover. Treat **B — Team planner** as a potential team-view layout and **C — Personal overview** as a potential year-view layout rather than committing to three separate applications. The gallery presents them as alternatives so the founder can compare the main workspaces before accepting a direction.
+Use **A — Calendar workspace** as the only workspace and default. Keep **B — Team planner** as a personal layout preference, and keep **C's warm brown palette** as a separate color preference. C's twelve-month layout and the A/B/C comparison gallery are not part of the current application.
 
-All directions share the same shell and calendar state: selected scope, date and granularity. In the comparison gallery, each direction opens its representative scope/view; scope and granularity controls then preserve the selected date. A future in-app layout switch should preserve state where supported. No backend behavior, entitlement rule or production navigation change is approved by this proposal.
+Store the layout and palette in browser local storage, keyed by fictional company and person, independent of API-backed profile data. Keep calendar granularity (year/month/week/day) independent of the layout preference. Switching layout preserves the selected scope and date; planner mode presents its people-row matrix for month/week, while year/day remain their existing calendar views. Production authorization, leave entitlements and backend behavior are unchanged.
 
 | Direction | Main layout | Best suited to | Tradeoff |
 |---|---|---|---|
@@ -27,13 +27,13 @@ All directions share the same shell and calendar state: selected scope, date and
 Use a quiet, light canvas, white content surfaces, dark readable text, subtle borders and one restrained brand accent. Status badges contain text as well as color. A compact logo and company name anchor the shell; the company name is a label, not a company switcher. Initial accounts belong to one company under ADR-0001.
 
 - **Top bar:** Vacate, current company label, contextual help and account control. Any control included in the mock must have a clear demo response or be visibly unavailable. Do not imply notifications are already implemented.
-- **Left navigation:** Calendar, My leave, Approvals and People, with the last two permission-aware in production. Map Calendar to the existing availability route and My leave to the existing leave route if this direction is accepted. Settings is not required to judge the calendar.
+- **Left navigation:** Calendar, My leave, Approvals and People, with the last two permission-aware in production. Calendar remains the selected workspace; Settings also contains the user's local layout and palette preferences.
 - **Page header:** “Calendar”, a short scope description and a clearly primary “Request leave” action.
 - **First toolbar:** scope selector **My calendar / Team / Organization**. Team scope includes a team selector when more than one permitted team is available. The current company is always the outer data boundary.
 - **Second toolbar:** previous period, “Today”, next period, readable date heading, then **Year / Month / Week / Day**. Scope and granularity are different choices; neither should be buried inside the other.
 - **Calendar container:** dominant content surface, persistent weekday/date labels, visible legend and a useful empty state. The right panel is secondary and can collapse before the calendar becomes cramped.
 
-**ASSUMPTION:** Monday starts the mock's week for visual consistency. This is presentation data, not an approved company working calendar or jurisdictional default. An agreed display preference should replace it in implementation.
+**ASSUMPTION:** Monday starts the mock's week for visual consistency. This is presentation data, not an approved company working calendar or jurisdictional default. The default calendar layout is A; the optional planner layout does not change the workweek.
 
 ## Scope and granularity
 
@@ -48,12 +48,12 @@ Use a quiet, light canvas, white content surfaces, dark readable text, subtle bo
 
 **ASSUMPTION:** Personal entries can display their own request type and proposed status text such as “Approved” or “Pending”. Team and organization entries show **“Away”** and permitted identity only. A colleague's illness category, notes, balance, approver commentary or private reason must never appear in a tooltip, accessible label or hidden markup.
 
-The mock may demonstrate all scopes using fixtures. Production must only offer scopes and teams granted by the server. Hiding a control is not an authorization boundary. If access changes while a page is open, remove stale entries and show a neutral access message.
+Every fictional account may select organization scope in this mock. The shared projection remains generic identity/date availability and exposes no leave category, status, reason, balance or family/health facts. Production must only offer scopes and teams granted by the server. Hiding a control is not an authorization boundary. Admin-selected visibility rules remain future server/API work.
 
 ## Interactions and states
 
 1. Changing scope keeps the selected date and granularity. Switching back to My calendar must not leave colleague entries in the details panel.
-2. Choosing Year/Month/Week/Day changes the date heading and content together. Previous/next advances by the selected period. “Today” returns to the current date; the gallery uses a fixed demo date for repeatable review.
+2. Choosing Year/Month/Week/Day changes the date heading and content together. Previous/next advances by the selected period. “Today” returns to the current date; the mock uses a fixed date for repeatable review.
 3. Selecting a date opens its entries with a readable date heading. A day with no entries states “No leave shown for this date”; it must not infer that everyone is working.
 4. Selecting an own entry opens its date range and status. Selecting a colleague's permitted entry opens only availability details.
 5. “Request leave” opens a clearly labelled illustrative form. The prototype does not calculate entitlement, reserve days, submit to an approver or persist personal information. Any completion message must say it is a demo.
@@ -94,7 +94,7 @@ Scope values should be domain identifiers such as `self`, `team` with a permitte
 ### Mock review
 
 - **Shell:** At a desktop viewport, a reviewer can identify top navigation, left navigation, page title, scope and calendar period without opening a menu.
-- **Alternatives:** Selecting each gallery direction produces its distinct primary layout and leaves the selected direction visibly indicated. The gallery clearly identifies fictional data and demo-only behavior.
+- **Workspace and preferences:** A is the only workspace. Settings offer the optional B planner layout and C warm palette, saved separately per fictional company/person in browser local storage.
 - **Calendar controls:** Every available scope and Year/Month/Week/Day control changes the visible content and labels consistently. Previous, next and today work at the selected granularity, including crossing a year boundary.
 - **Details:** Selecting a date reveals the correct fixture entries. Personal details show the person's own statuses; team/org details use generic availability and contain no private leave reasons.
 - **Empty state:** A date with no fixture events displays an explicit empty state rather than a broken panel or a fabricated schedule claim.
@@ -114,13 +114,11 @@ These server/isolation scenarios cannot be proven by a standalone fixture mock. 
 
 ## Decisions and open questions
 
-**Confirmed brief:** navigation shell; personal/team/organization calendar exploration; year/month/week/day controls. **Proposed design decision:** A as the default, with B/C available for comparison. The founder has not yet selected a direction.
+**Confirmed brief:** navigation shell; personal/team/organization calendar exploration; year/month/week/day controls. **Founder decision, 2026-10-28:** A is the only workspace; B is an optional planner layout; C contributes an optional warm palette; preferences are browser-local per demo account. Every fictional account can choose organization scope, with generic availability only.
 
 **ASSUMPTIONS:** fictional people and balances; all-day display; Monday-first presentation; generic colleague availability; side panel can collapse. These are reversible mock choices, not approved company rules.
 
-**OPEN QUESTION — layout selection:** Choose A, B, C, or A with B as the team layout and C as its year layout.
-
-**OPEN QUESTION — permissions:** Which roles may see a team, all company teams, employee identity or aggregate counts? What should a team mean for the pilot? Implement only a confirmed authorization model.
+**Production boundary:** company-wide visibility, identity and permission rules remain open for the authenticated server/API. This mock does not establish a production authorization model.
 
 **OPEN QUESTION — calendar semantics:** Full day/half day/hour support, working calendar, first weekday, display locale and timezone remain to be agreed. An all-day date must not silently shift when viewed in another timezone.
 

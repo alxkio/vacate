@@ -198,4 +198,60 @@
       </p>
     }
   </section>
+  <form
+    class="settings-card display-preferences-card"
+    id="display-preferences-form"
+    (ngSubmit)="saveDisplayPreferences()"
+    #displayForm="ngForm"
+  >
+    <div class="settings-card-heading">
+      <div>
+        <span class="eyebrow">YOUR VIEW</span>
+        <h2 id="display-preferences-heading">Display preferences</h2>
+      </div>
+      <span class="settings-tag">This browser</span>
+    </div>
+    <p class="settings-intro">
+      Saved separately for each demo account in this browser. These choices do not change your
+      profile or leave data.
+    </p>
+    <div class="settings-fields">
+      <label
+        >Calendar layout
+        <select id="display-layout" name="layout" [(ngModel)]="displayPreferences.layout">
+          <option value="calendar">Calendar workspace</option>
+          <option value="planner">Team planner</option>
+        </select>
+      </label>
+      <label
+        >Color scheme
+        <select
+          id="display-color-scheme"
+          name="colorScheme"
+          [(ngModel)]="displayPreferences.colorScheme"
+        >
+          <option value="a">A · Green</option>
+          <option value="c">C · Warm brown</option>
+        </select>
+      </label>
+    </div>
+    @if (displayPreferencesError) {
+      <p class="settings-error" role="alert" id="display-preferences-error">
+        {{ displayPreferencesError }}
+      </p>
+    }
+    <p
+      class="settings-success"
+      role="status"
+      aria-live="polite"
+      id="display-preferences-status"
+    >
+      {{ displayPreferencesMessage }}
+    </p>
+    <div class="settings-footer">
+      <button type="submit" class="primary" [disabled]="displayForm.invalid">
+        Save display preferences
+      </button>
+    </div>
+  </form>
 </div>

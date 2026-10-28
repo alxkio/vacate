@@ -54,7 +54,22 @@ notes for what do do next, thoughts, plans etc.
 2. org settings page / thinking about team page. 
 3. improve my balances page 
 
-next 
+
+## UI FEEDBACK
+
+I want to remove the 3 choices and keep one.
+
+colour wise, i prefer A. I want though the calendar of B to be a setting for the users to choose. I want the option the users to see
+the whole organizations calendar. (for now, later we ll add settings and visibility rules chosen by the admin).
+
+In the balances view, I want the sick leave to be further down in the page. If people are parents, apart from the annual I want them to see the parental like school, child care, parental, that can be more often. Maternity, paternity, voting, army to be further down.
+
+From C, maybe we can keep the colour scheme as a setting also. with default being the one from A.
+
+Converted to the accepted mock scope in [VAC-19](jira/VAC-19-calendar-display-preferences-and-balances.md); the prior A/B/C screenshots remain historical references.
+
+
+## next
     ASVS - OWASP -> Agents/tests? 
     WCAG
 

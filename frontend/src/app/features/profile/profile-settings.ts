@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, inject, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
-import { OwnProfileFields } from '../../core/models/workspace.models';
+import { DisplayPreferences, OwnProfileFields } from '../../core/models/workspace.models';
 
 @Component({
   selector: 'vacate-settings',
@@ -13,12 +13,18 @@ export class ProfileSettings {
   readonly data = inject(WorkspaceDataService);
   readonly detector = inject(ChangeDetectorRef);
   readonly saved = output<void>();
+  readonly displayPreferencesSaved = output<DisplayPreferences>();
   readonly staleSession = output<void>();
-  readonly accountId = this.data.currentUser()?.id || '';
+  readonly account = this.data.currentUser();
+  readonly accountId = this.account?.id || '';
+  readonly companyId = this.account?.companyId || '';
   profile = this.data.profiles.read();
   draft = this.fields();
+  displayPreferences = this.data.displayPreferences(this.account);
   message = '';
   error = '';
+  displayPreferencesMessage = '';
+  displayPreferencesError = '';
   busy = false;
   get person() {
     return this.data.currentUser();
@@ -76,5 +82,31 @@ export class ProfileSettings {
       this.message = 'Profile saved by the demo API.';
       this.saved.emit();
     }
+  }
+
+  saveDisplayPreferences() {
+    this.displayPreferencesMessage = '';
+    this.displayPreferencesError = '';
+    const current = this.data.currentUser();
+    if (
+      !this.accountId ||
+      !this.companyId ||
+      current?.id !== this.accountId ||
+      current.companyId !== this.companyId
+    ) {
+      this.displayPreferencesError = 'Your account changed. Reopen settings before saving.';
+      this.staleSession.emit();
+      return;
+    }
+    const result = this.data.saveDisplayPreferences(
+      { id: this.accountId, companyId: this.companyId },
+      this.displayPreferences,
+    );
+    if (!result.ok) {
+      this.displayPreferencesError = result.error || 'Display preferences could not be saved.';
+      return;
+    }
+    this.displayPreferencesMessage = 'Display preferences saved in this browser for your account.';
+    this.displayPreferencesSaved.emit({ ...this.displayPreferences });
   }
 }

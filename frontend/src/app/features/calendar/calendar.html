@@ -94,7 +94,7 @@
   </div>
 } @else if (state.view === 'day') {
   <ng-container [ngTemplateOutlet]="agenda" [ngTemplateOutletContext]="{ mobile: false }" />
-} @else if (state.direction === 'b') {
+} @else if (state.layout === 'planner') {
   <p class="planner-description">
     {{
       state.scope === 'self'

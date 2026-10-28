@@ -10,7 +10,7 @@ Design date: 2026-10-24. Scope: the current static mock, with fictional accounts
 - [ADR-0001](../adr/0001-company-first-web-api.md) and [ADR-0002](../adr/0002-azure-static-web-app-and-functions.md): Angular/API direction and Azure hosting remain unchanged.
 - [VAC-5](../jira/VAC-5-common-leave-types-chooser.md): preserve the current shortlist, Show all and uncommon-selection behaviour.
 
-The A/B/C design comparison stays available. All three directions share the same information hierarchy; their calendar presentation and accent tokens remain distinct.
+**Founder direction, 2026-10-28, tracked in [VAC-19](../jira/VAC-19-calendar-display-preferences-and-balances.md):** A is the single default calendar workspace. B's people-row planner is an optional per-account layout; C's warm palette is an optional per-account color scheme. The C year-view and A/B/C comparison gallery are removed. Preferences are saved in this browser by fictional company/person and do not use the profile API.
 
 ## Calendar page
 
@@ -23,7 +23,7 @@ Desktop content uses a wide calendar column and a narrower personal rail, aligne
 | Calendar controls, current period and calendar | My annual leave |
 | Selected calendar view: year, month, week or day | Selected-date context and upcoming personal requests |
 
-Remove the all-type balance section above the calendar. Annual is the only balance type on this page, including in Team planner direction B. Do not hide the personal rail in direction B.
+Remove the all-type balance section above the calendar. Annual is the only balance type on this page, including in the optional Team planner layout. Do not hide the personal rail in that layout.
 
 The annual summary shows:
 
@@ -45,7 +45,7 @@ Scope selectors are absent on this page: these are always the current person's b
 
 ## Navigation and state
 
-Use shareable same-document routes such as `index.html?page=calendar` and `index.html?page=balances`; no new server rewrite requirement is needed. Preserve the design direction and calendar scope/view/group context when changing pages. Retain the selected period through page navigation where supported by the mock state.
+Use shareable same-document routes such as `index.html?page=calendar` and `index.html?page=balances`; no new server rewrite requirement is needed. Preserve calendar scope/view/group context when changing pages. The account-scoped display preferences remain local settings rather than URL parameters. Retain the selected period through page navigation where supported by the mock state.
 
 - Direct load and refresh restore the requested page after the mock session check.
 - Browser Back/Forward updates the displayed page, active navigation, title and heading coherently.
@@ -73,21 +73,21 @@ Reason copy should be short and actionable, such as **Eligibility has not been c
 
 ## Acceptance and verification
 
-1. For A/B/C at desktop widths, calendar and annual card start in the same content row; the calendar has the wider column and annual is the first right-hand card.
+1. For the calendar workspace and optional planner layout at desktop widths, calendar and annual card start in the same content row; the calendar has the wider column and annual is the first right-hand card.
 2. At mobile widths, visible calendar content precedes the annual card and no horizontal page overflow occurs. Existing detailed-calendar-to-agenda behaviour remains available.
 3. The calendar page contains no other balance type cards; My balances exposes the existing shortlist and Show all without losing expanded uncommon selections.
 4. My balances works from navigation, annual link, direct query URL, refresh and browser Back/Forward; active navigation and focus are correct.
 5. Scope changes preserve own annual figures. Account changes and denied/cross-company fixture queries never expose another person's balances or private request reasons.
 6. Keyboard users can open navigation, reach both pages, operate balance details and Show all, and open/close request previews with focus restored.
 7. Eligible, unavailable and unconfirmed fixtures render distinctly, including an accessible unavailable reason; denied types cannot start or finish an otherwise active preview.
-8. Existing year/month/week/day, own/team/department/organisation permissions and generic shared availability continue to pass regression checks.
+8. Every fictional role can select organization scope; year/month/week/day controls remain independent of layout. Shared identity/date availability remains generic. Production authorization and tenant isolation remain server/API requirements, not claims of this fixture mock.
 
 This document specifies expected behaviour; executed verification and release evidence belong in the linked issue records. No production entitlement, backend enforcement or accessibility conformance claim follows from the static mock.
 
 ## Open questions and risks
 
 - **OPEN QUESTION:** review legal exceptions, policy applicability and evidence requirements before real policy enforcement. The clarified current-profile product gates are approved for this mock; source references remain separate from those product rules.
-- **OPEN QUESTION:** keep the VAC-5 shortlist membership/order and page coverage revisable, as previously requested.
+- **Confirmed display order, 2026-10-28:** annual first; when the signed-in profile has dependent children, promote school attendance, childcare and parental balances. Sick, maternity, paternity, voting and military appear lower on My balances. The request chooser order is unchanged.
 - **ASSUMPTION:** use one personal annual card for every persona, while preserving each persona's current default calendar scope.
-- **Risk:** the extra rail reduces calendar width in direction B; use a single-column layout before its planner becomes unreadable and retain its bounded internal scroll/agenda fallback.
+- **Risk:** the optional planner's extra rail reduces calendar width; use a single-column layout before its planner becomes unreadable and retain its bounded internal scroll/agenda fallback.
 - **Risk:** eligibility and balance data are personal. The public mock may use synthetic values only; the future API must derive company/person identity from an authenticated context and enforce these decisions server-side.

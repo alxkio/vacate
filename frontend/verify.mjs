@@ -299,6 +299,17 @@ try {
       'document.readyState === "complete" && !!document.querySelector("#period")?.textContent',
     );
   };
+  const saveDisplayPreferences = async (layout, colorScheme) => {
+    await click('[data-nav=settings]');
+    await waitFor('!!document.querySelector("#display-preferences-form")');
+    await evaluate(
+      `(()=>{const layout=document.querySelector("#display-layout"),scheme=document.querySelector("#display-color-scheme");layout.value=${JSON.stringify(layout)};layout.dispatchEvent(new Event("change",{bubbles:true}));scheme.value=${JSON.stringify(colorScheme)};scheme.dispatchEvent(new Event("change",{bubbles:true}));})()`,
+    );
+    await click('#display-preferences-form button[type="submit"]');
+    await waitFor('document.querySelector("#display-preferences-status").textContent.includes("saved in this browser")');
+    await click('[data-nav=calendar]');
+    await waitFor('!document.querySelector("#calendar-page").hidden');
+  };
   const viewport = (width, height) =>
     call('Emulation.setDeviceMetricsOverride', {
       width,
@@ -660,7 +671,7 @@ try {
       await signOut();
       await signIn('user', 'user');
       await ready();
-      await load('?direction=a&scope=self&view=month');
+      await load('?scope=self&view=month');
       // Exercise native keyboard behavior on a fresh document, independently of history traversal.
       // Native keyboard activation creates trusted browser input in a fresh document,
       // independently of the synthetic DOM clicks used for the data-oriented checks below.
@@ -732,7 +743,7 @@ try {
       await waitFor('document.activeElement.dataset.date === "2026-10-01"');
       assert.equal(await evaluate('document.activeElement.dataset.date'), '2026-10-01');
       console.log('PASS: trusted keyboard Escape and focus return');
-      await load('?direction=a&scope=self&view=month&native=request');
+      await load('?scope=self&view=month&native=request');
       await evaluate(
         'window.__requestClickEvidence=[];document.addEventListener("click",event=>window.__requestClickEvidence.push({trusted:event.isTrusted,target:event.target.outerHTML,action:event.target.closest("button")?.dataset.action}),{once:true,capture:true})',
       );
@@ -908,12 +919,7 @@ try {
           'true',
           id + ' default scope',
         );
-        const scopes =
-          role === 'admin'
-            ? ['self', 'team', 'department', 'org']
-            : role === 'lead'
-              ? ['self', 'team', 'department']
-              : ['self', 'team'];
+        const scopes = ['self', 'team', 'department', 'org'];
         for (const scope of ['self', 'team', 'department', 'org'])
           assert.equal(
             await evaluate(
@@ -1075,7 +1081,7 @@ try {
           );
         await closeDialog();
         for (const scope of scopes.filter((value) => value !== 'self')) {
-          await load('?direction=b&scope=' + scope + '&view=week');
+          await load('?scope=' + scope + '&view=week');
           const members =
             scope === 'team'
               ? expected.filter((row) => row[1] === team)
@@ -1084,7 +1090,7 @@ try {
                 : expected;
           assert.deepEqual(
             await evaluate(
-              'Array.from(document.querySelectorAll(".planner-table tbody tr[data-person]")).map(row=>row.dataset.person).sort()',
+              'window.VacateMock.visiblePeople().map(person=>person.id).sort()',
             ),
             members.map((row) => row[0]).sort(),
             id + '/' + scope + ' member roster',
@@ -1119,7 +1125,7 @@ try {
                 .sort();
               assert.deepEqual(
                 await evaluate(
-                  'Array.from(document.querySelectorAll(".planner-table tbody tr[data-person]")).map(row=>row.dataset.person).sort()',
+                  'window.VacateMock.visiblePeople().map(person=>person.id).sort()',
                 ),
                 groupMembers,
                 id + '/' + group + ' selected roster',
@@ -1339,7 +1345,7 @@ try {
       await signOut();
       await signIn('user', 'user');
       await ready();
-      await load('?direction=b&scope=team&view=week&date=2026-11-05');
+      await load('?scope=team&view=week&date=2026-11-05');
       const retainedPeriod = await evaluate('document.querySelector("#period").textContent');
       await click('[data-nav=balances]');
       assert.equal(await evaluate('new URLSearchParams(location.search).get("page")'), 'balances');
@@ -1357,7 +1363,7 @@ try {
         'Back retains calendar period',
       );
       assert.equal(await evaluate('window.VacateMock.state.scope'), 'team');
-      assert.equal(await evaluate('window.VacateMock.state.direction'), 'b');
+      assert.equal(await evaluate('window.VacateMock.state.layout'), 'calendar');
       await historyTo({ delta: 1 }, 'Forward to balances');
       await waitFor('!document.querySelector("#balances-page").hidden');
       await navigate(await evaluate('location.href'));
@@ -1688,28 +1694,50 @@ try {
         /No request was sent or saved/,
       );
       await click('#finish-demo');
-      for (const direction of ['a', 'b', 'c']) {
-        await load(`?direction=${direction}`);
+      const currentAccount = await evaluate(
+        'window.VacateSession.currentUser().id || window.VacateSession.currentUser().personId',
+      );
+      assert.equal(await evaluate('!!document.querySelector(".directions")'), false);
+      for (const preference of [
+        { layout: 'calendar', colorScheme: 'a', name: 'calendar' },
+        { layout: 'planner', colorScheme: 'c', name: 'planner' },
+      ]) {
+        await load('?scope=self&view=month');
+        await saveDisplayPreferences(preference.layout, preference.colorScheme);
+        assert.equal(
+          await evaluate('document.querySelector(".app").dataset.layout'),
+          preference.layout,
+        );
+        assert.equal(
+          await evaluate('document.querySelector(".app").dataset.colorScheme'),
+          preference.colorScheme,
+        );
+        assert.equal(
+          await evaluate(
+            'getComputedStyle(document.querySelector(".app")).getPropertyValue("--accent").trim()',
+          ),
+          preference.colorScheme === 'c' ? '#7e5b3c' : '#12675e',
+        );
         const desktopLayout = await evaluate(
           '(()=>{const calendar=document.querySelector(".calendar-card").getBoundingClientRect(),annual=document.querySelector("#annual-overview").getBoundingClientRect();return {calendarTop:calendar.top,annualTop:annual.top,calendarRight:calendar.right,annualLeft:annual.left};})()',
         );
         assert.ok(
           desktopLayout.annualLeft > desktopLayout.calendarRight,
-          `${direction} annual balance must be top right`,
+          `${preference.name} annual balance must be top right`,
         );
         assert.ok(
           Math.abs(desktopLayout.calendarTop - desktopLayout.annualTop) < 2,
-          `${direction} annual balance must align with calendar top`,
+          `${preference.name} annual balance must align with calendar top`,
         );
-        await screenshot(`${direction}-desktop.png`);
+        await screenshot(`${preference.name}-desktop.png`);
         await viewport(375, 1100);
-        await screenshot(`${direction}-mobile.png`);
+        await screenshot(`${preference.name}-mobile.png`);
         const layout = await evaluate(
           '(()=>{const calendar=document.querySelector(".calendar-card").getBoundingClientRect(),annual=document.querySelector("#annual-overview").getBoundingClientRect();return {calendarTop:calendar.top,annualTop:annual.top,calendarBottom:calendar.bottom,annualLeft:annual.left,calendarLeft:calendar.left};})()',
         );
         assert.ok(
           layout.calendarBottom <= layout.annualTop + 1,
-          `${direction} mobile calendar must precede annual balance`,
+          `${preference.name} mobile calendar must precede annual balance`,
         );
         await click('[data-nav=balances]');
         await click('#balance-toggle');
@@ -1725,33 +1753,46 @@ try {
             'document.querySelector("#dialog").scrollWidth <= document.querySelector("#dialog").clientWidth',
           ),
           true,
-          `${direction} pinned request overflows on mobile`,
+          `${preference.name} pinned request overflows on mobile`,
         );
         assert.equal(
           await evaluate('document.documentElement.scrollWidth <= innerWidth'),
           true,
-          `${direction} request overflows page on mobile`,
+          `${preference.name} request overflows page on mobile`,
         );
         await closeDialog();
         await click('[data-balance=annual] summary');
         assert.equal(
           await evaluate('document.documentElement.scrollWidth <= innerWidth'),
           true,
-          `${direction} expanded balances overflow on mobile`,
+          `${preference.name} expanded balances overflow on mobile`,
         );
         await click('#balance-toggle');
-        await screenshot(`${direction}-balances-mobile.png`);
+        await screenshot(`${preference.name}-balances-mobile.png`);
         await click('[data-nav=calendar]');
         for (const view of ['year', 'month', 'week', 'day']) {
           await click(`[data-view="${view}"]`);
           assert.equal(
             await evaluate('document.documentElement.scrollWidth <= innerWidth'),
             true,
-            `${direction}/${view} overflows on mobile`,
+            `${preference.name}/${view} overflows on mobile`,
           );
         }
         await viewport(1600, 1250);
       }
+      const otherAccount = currentAccount === 'nora' ? 'maya' : 'nora';
+      await signOut();
+      await signIn(otherAccount, otherAccount);
+      await ready();
+      assert.equal(await evaluate('document.querySelector(".app").dataset.layout'), 'calendar');
+      assert.equal(await evaluate('document.querySelector(".app").dataset.colorScheme'), 'a');
+      await signOut();
+      await signIn(currentAccount, currentAccount);
+      await ready();
+      assert.equal(await evaluate('document.querySelector(".app").dataset.layout'), 'planner');
+      assert.equal(await evaluate('document.querySelector(".app").dataset.colorScheme'), 'c');
+      await saveDisplayPreferences('calendar', 'a');
+      console.log('PASS: per-account display preferences, planner layout, and alternate palette');
       await load('?scope=self&view=month');
       await click('[data-action=request]');
       await evaluate(

@@ -41,4 +41,11 @@ app-root, vacate-workspace, vacate-calendar, vacate-balances, vacate-login, vaca
 
 router-outlet { display: none; }
 
+.app[data-layout=planner] .workspace{grid-template-columns:minmax(0,1fr) 242px}
+.app[data-layout=planner] .insights{display:flex}
+.app[data-color-scheme=c]{--canvas:#f7f5f0;--accent:#7e5b3c;--pale:#f0e9df;--blue:#7e5b3c}
+@media(max-width:1250px) and (min-width:1081px){.app[data-layout=planner] .workspace{grid-template-columns:minmax(0,1fr) 218px}}
+@media(max-width:1080px){.app[data-layout=planner] .workspace{grid-template-columns:minmax(0,1fr)}.app[data-layout=planner] .insights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start}.annual-available{flex-wrap:wrap}.annual-available>span{max-width:none}}
+@media(max-width:720px){.app[data-layout=planner] .insights{display:flex;flex-direction:column}}
+
 .account-menu{position:relative}.account-dropdown{position:absolute;right:0;top:48px;z-index:30;min-width:230px;padding:10px;background:#fff;border:1px solid var(--line);box-shadow:0 12px 32px #183d3226;border-radius:12px}.account-dropdown strong{display:block;font-size:12px;padding:10px;color:var(--muted);overflow-wrap:anywhere}.account-dropdown button{display:block;width:100%;text-align:left;padding:12px;border-radius:6px;background:#fff;font-size:13px}.account-dropdown button:hover{background:var(--pale)}
