@@ -1,10 +1,10 @@
 # Vacate API
 
-The .NET 9 API uses the Azure Functions isolated worker with ASP.NET Core HTTP types. The always-available public endpoint is `GET /api/health`, returning liveness and an assembly build version. It does not check database availability. Persistence projects remain in the solution; the host does not register a database connection until that infrastructure and the application authentication design are agreed.
+The .NET 10 API uses the Azure Functions isolated worker with ASP.NET Core HTTP types. The always-available public endpoint is `GET /api/health`, returning liveness and an assembly build version. It does not check database availability. Persistence projects remain in the solution; the host does not register a database connection until that infrastructure and the application authentication design are agreed.
 
 ## Development
 
-Install .NET from the root `global.json` and Azure Functions Core Tools 4.16.0 (the version used by CI). Core Tools 4.0.4483 is too old for this `Azure.Functions.Sdk` project: it cannot infer the project language or load its isolated-worker configuration, even when `FUNCTIONS_WORKER_RUNTIME=dotnet-isolated` is set. Do not downgrade the project SDK or target framework to work around that tooling incompatibility.
+Install the .NET 10 SDK specified by the root `global.json` and Azure Functions Core Tools 4.16.0 (the version used by CI). Core Tools 4.0.4483 is too old for this `Azure.Functions.Sdk` project: it cannot infer the project language or load its isolated-worker configuration, even when `FUNCTIONS_WORKER_RUNTIME=dotnet-isolated` is set. Do not downgrade the project SDK or target framework to work around that tooling incompatibility.
 
 From `api/src/Vacate.Api`, run `cp local.settings.example.json local.settings.json` to create the ignored local settings file, then run `FUNCTIONS_WORKER_RUNTIME=dotnet-isolated AzureWebJobsStorage='' dotnet run -- --port 7071`. Pass the worker runtime explicitly to the SDK/Core Tools launch; CI uses the same environment. The SDK invokes Core Tools from the correct build output directory; invoking `func start` directly from the project directory can skip required extension loading. The example also sets `FUNCTIONS_WORKER_RUNTIME=dotnet-isolated`; `AzureWebJobsStorage` is intentionally blank for this HTTP-only local host. Angular's development proxy forwards `/api` to that port. Timer/queue/storage bindings will require local or Azure storage configuration.
 

@@ -22,6 +22,16 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
+      - name: Verify API target matches Functions runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          api_framework=$(sed -n 's/.*<TargetFramework>net\([^<]*\)<\/TargetFramework>.*/\1/p' api/Directory.Build.props)
+          functions_runtime=$(sed -n "s/.*runtime: { name: 'dotnet-isolated', version: '\([^']*\)' }.*/\1/p" infra/main.bicep)
+          if [[ -z "$api_framework" || "$api_framework" != "$functions_runtime" ]]; then
+            echo "API target net${api_framework:-<missing>} does not match Functions runtime ${functions_runtime:-<missing>}" >&2
+            exit 1
+          fi
       - run: dotnet restore api/Vacate.slnx --locked-mode
       - run: dotnet build api/Vacate.slnx --configuration Release --no-restore
       - run: dotnet test api/Vacate.slnx --configuration Release --no-build --no-restore

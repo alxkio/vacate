@@ -3,7 +3,7 @@ info:
   title: Vacate API
   version: 1.0.0
   description: >-
-    OpenAPI description of the .NET 9 Azure Functions isolated-worker API.
+    OpenAPI description of the .NET 10 Azure Functions isolated-worker API.
     Local development credentials and fictional seed data are not production authentication.
 servers:
   - url: /api
