@@ -72,6 +72,12 @@ C-1 · 2026-10-28 · Codex: Replaced programmatic dialog closure immediately bef
 
 C-2 · 2026-10-28 · Codex: Focused native browser acceptance passed. A complete local browser run also passed all native keyboard assertions and subsequent account/scope checks, then reached its five-minute suite deadline later while evaluating a separate request-type toggle. Full CI verification remains pending.
 
+C-3 · 2026-10-28 · Codex: User authorized deployment to Azure dev. Fetched master `f75decd` and retained its native dialog-close fix. Added the independently validated focus-helper correction: wait for rendered frames before selecting/focusing the target and verify focus before dispatch. The alternative local issue draft was consolidated into this existing VAC-15 record; its original remains outside the checkout in the setup backup. Earlier local full acceptance with the focus-helper correction passed all twelve accounts, privacy/isolation, catalogue, profile and organization journeys.
+
+C-4 · 2026-10-28 · Codex: Git HTTPS reads work, but `gh run list` and a direct API request receive a network-proxy 403 for `api.github.com`. Saved that exact domain in the environment network draft; deployment dispatch and hosted verification remain blocked until applied. No credential values requested or extracted.
+
+C-5 · 2026-10-28 · Codex: Combined master native-close and focus-helper fixes passed the complete local browser suite, including all twelve account/scope, privacy/foreign-ID, history, profile/organization, keyboard and responsive checks. Real HTTP API checks passed. A local rebuild while the host ran triggered duplicate function loading; restarting the host after the build cleared it before the successful acceptance run. Build finished with zero warnings/errors. Hosted deployment remains blocked by API network policy, not by these local checks.
+
 ## Decisions
 
 D-1 · 2026-10-28 · Codex: Exercise the dialog's native keyboard close path rather than closing the dialog through DOM scripting immediately before another trusted keyboard check.
