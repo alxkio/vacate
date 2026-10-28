@@ -12,6 +12,13 @@ export class ApiClient {
   private readonly http = inject(HttpClient);
   private readonly config = inject(RUNTIME_CONFIG);
 
+  request<T>(method: string, path: string, token: string, body?: unknown) {
+    return this.http.request<T>(method, `${this.config.apiBaseUrl}/${path}`, {
+      body,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  }
+
   health() {
     return this.http.get<HealthResponse>(`${this.config.apiBaseUrl}/health`);
   }

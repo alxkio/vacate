@@ -1,0 +1,475 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Vacate user with company membership \u2014 DRAFT 0.5 (2026-10-27)",
+  "description": "Private full-record schema, not an OIDC token or a write payload. Account fields are flat; company data is under a single membership. Defaults are annotations: backend must normalize create inputs before validation. Missing fields on PATCH do not reset existing values. Self-editing is limited to firstName, middleName, lastName, gender, married, dependentChildren and soleCare. Membership configuration requires target-company admin authority; derived balances remain server-owned. Authorization is enforced by server update contracts, not this schema. Public API routes and relationship references use GUIDs. Domain/storage entities have numeric Id and separate Guid; API projections resolve numeric foreign keys to public GUID references.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "guid",
+    "username",
+    "firstName",
+    "middleName",
+    "lastName",
+    "gender",
+    "status",
+    "married",
+    "dependentChildren",
+    "soleCare",
+    "membership",
+    "createdAt",
+    "updatedAt",
+    "deleteRequestedAt",
+    "deletedAt"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Confirmed internal positive numeric user ID, separate from public GUID."
+    },
+    "guid": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Stable public account identifier; not an authorization grant."
+    },
+    "username": {
+      "type": "string",
+      "format": "email",
+      "description": "Company-email username, unique across Vacate; uniqueness is enforced by the backend/database."
+    },
+    "firstName": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "middleName": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "lastName": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "gender": {
+      "enum": [
+        "woman",
+        "man",
+        "unspecified"
+      ],
+      "description": "Existing fictional mock values retained provisionally; not a complete production taxonomy or proof of entitlement."
+    },
+    "status": {
+      "enum": [
+        "active",
+        "disabled"
+      ],
+      "description": "Account access status; minimal lifecycle proposal."
+    },
+    "married": {
+      "type": "boolean",
+      "default": false,
+      "description": "Unknown or omitted input is normalized to false on creation, per founder direction. Replaces maritalStatus enum."
+    },
+    "dependentChildren": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Dependent-child count; unknown or omitted input is normalized to zero on creation, per founder direction."
+    },
+    "soleCare": {
+      "type": "boolean",
+      "default": false,
+      "description": "Unknown or omitted input is normalized to false on creation. Cannot be true when married is true."
+    },
+    "membership": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/membership"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Null before assignment through a target-company administrator invitation. One assigned membership at most for MVP. Invitation lifecycle/acceptance timing is not defined here."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deleteRequestedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "deletedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "married": {
+            "const": true
+          }
+        },
+        "required": [
+          "married"
+        ]
+      },
+      "then": {
+        "properties": {
+          "soleCare": {
+            "const": false
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "membership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "guid",
+        "companyId",
+        "systemRoleId",
+        "jobRoleId",
+        "departmentId",
+        "teamId",
+        "managerUserId",
+        "hireDate",
+        "employmentEndDate",
+        "priorService",
+        "workScheduleId",
+        "holidayCalendarId",
+        "leavePolicyId",
+        "balance",
+        "createdAt",
+        "updatedAt",
+        "deleteRequestedAt",
+        "deletedAt"
+      ],
+      "properties": {
+        "companyId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "systemRoleId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "jobRoleId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "departmentId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "teamId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "managerUserId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "description": "Public GUID reference; resolved to numeric ManagerUserId in the domain/storage model."
+        },
+        "hireDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "employmentEndDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "priorService": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Years employed before current employer, registered by employer at hiring. ASSUMPTION: fractional years allowed; precision/recognition basis remains open. Null until supplied; do not add current-employer tenure here."
+        },
+        "workScheduleId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "holidayCalendarId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "leavePolicyId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "balance": {
+          "$ref": "#/$defs/balance"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deleteRequestedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "deletedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "readOnly": true
+        },
+        "guid": {
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true
+        }
+      },
+      "description": "One current company membership for mock/MVP; the current company-shaped MVP maps organization to company, while generic/cross-company organizations remain deferred. System-role reference resolves to employee/admin. Job role is a separate company-scoped reference. Only target-company admins may add/update configurable membership attributes. Derived balance values are server/ledger-owned, including for admins. Assignment follows an authorized company administrator invitation; invitation/team/role references must be validated server-side. No self-assignment."
+    },
+    "balance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "leaveTypeId",
+        "periodStart",
+        "periodEnd",
+        "unit",
+        "asOf",
+        "policyVersion",
+        "policyMinimum",
+        "customAllocation",
+        "allocation",
+        "used",
+        "pending",
+        "available"
+      ],
+      "properties": {
+        "leaveTypeId": {
+          "const": "annual"
+        },
+        "periodStart": {
+          "type": "string",
+          "format": "date"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date"
+        },
+        "unit": {
+          "const": "days"
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date"
+        },
+        "policyVersion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "policyMinimum": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "customAllocation": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "allocation": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "used": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pending": {
+          "type": "number",
+          "minimum": 0
+        },
+        "available": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Derived allocation minus used minus pending. May be negative after corrections; cannot authorize new excess requests."
+        }
+      },
+      "description": "PROPOSAL: annual period allowance and derived ledger snapshot, not an independently writable remaining-days column. Numbers in the example are synthetic, not statutory defaults. Backend must enforce cross-field equations and policy minimum.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "policyMinimum": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "policyMinimum"
+            ]
+          },
+          "then": {
+            "properties": {
+              "allocation": {
+                "type": "null"
+              },
+              "available": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "directoryPerson": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "username",
+        "firstName",
+        "middleName",
+        "lastName",
+        "gender",
+        "email",
+        "jobTitle",
+        "systemRole"
+      ],
+      "properties": {
+        "username": {
+          "type": "string",
+          "format": "email",
+          "description": "Company-email username, unique across Vacate; uniqueness is enforced by the backend/database."
+        },
+        "firstName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "middleName": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "gender": {
+          "enum": [
+            "woman",
+            "man",
+            "unspecified"
+          ],
+          "description": "Existing fictional mock values retained provisionally; not a complete production taxonomy or proof of entitlement."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Derived from the company-email username in the current model; not a second independently editable email."
+        },
+        "jobTitle": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Display title resolved from the viewed user's jobRoleId in the authorized company; single title for MVP."
+        },
+        "systemRole": {
+          "enum": [
+            "employee",
+            "admin",
+            null
+          ],
+          "description": "Display role resolved from the viewed user's membership in the authorized company; not an authorization grant."
+        }
+      },
+      "description": "Founder-confirmed colleague profile allowlist, 2026-10-26. Same authorized company scope only. Never include family facts, full membership, status, employment/service details or balances. Backend must select this projection before serialization; UI hiding is insufficient."
+    }
+  }
+}

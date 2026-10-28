@@ -7,7 +7,7 @@
 Angular web app -> Azure Functions .NET 10 isolated HTTP API -> one relational database (database selection still open). Hosting follows [ADR-0002](docs/adr/0002-azure-static-web-app-and-functions.md).
 
 - Angular: standalone components, routing, reactive forms, local signals/services. Choose a supported Angular release and its compatible Node/TypeScript versions when scaffolding; pin them then. No global NgRx store unless a demonstrated need appears.
-- API: one deployable application, organised by feature: people, leave, approvals and availability. Keep business rules testable without adding separate services, a mediator or event sourcing.
+- API: one deployable application, organised by feature: people, leave, approvals and availability. Use the domain/application/infrastructure/API boundaries and in-process user, membership and organization services in [ADR-0003](docs/adr/0003-domain-and-application-services.md). No separate deployable services, mediator framework or event sourcing is introduced.
 - Database: SQL Server family preferred; evaluate Azure SQL Database with EF Core 10 and its SQL Server provider. Database selection is still open.
 - Ordinary relational transactions for requests, reservations, balance movements and audit records. Handle concurrency and repeated submissions/decisions explicitly.
 - REST and OpenAPI only. Start with one API contract, without a speculative multi-version compatibility promise.

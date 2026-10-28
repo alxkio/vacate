@@ -1,0 +1,381 @@
+@if (record; as org) {
+  <section id="organization-page" class="organization-page">
+    <nav class="org-breadcrumb" aria-label="Organization location">
+      <button
+        type="button"
+        (click)="home()"
+        [attr.aria-current]="!department && !team ? 'page' : null"
+      >
+        {{ org.name }}
+      </button>
+      @if (department; as dept) {
+        <span aria-hidden="true">/</span
+        ><button
+          type="button"
+          (click)="openDepartment(dept.id)"
+          [attr.aria-current]="!team ? 'page' : null"
+        >
+          {{ dept.name }}
+        </button>
+      }
+      @if (team; as selected) {
+        <span aria-hidden="true">/</span><span aria-current="page">{{ selected.name }}</span>
+      }
+    </nav>
+    <div class="org-notice">
+      Fictional demo · Changes are stored by the demo API and reset when the API restarts.
+    </div>
+    @if (department || team) {
+      <section class="org-card" aria-labelledby="org-view-heading">
+        <div class="org-section-heading">
+          <div>
+            <span class="eyebrow">{{ team ? 'TEAM' : 'DEPARTMENT' }}</span>
+            <h2 id="org-view-heading" #viewHeading tabindex="-1">
+              {{ team?.name || department?.name }}
+            </h2>
+          </div>
+          <span class="org-tag">Admin only</span>
+        </div>
+        <form id="org-rename-form" (ngSubmit)="rename()" #renameForm="ngForm">
+          <label
+            >{{ team ? 'Team name' : 'Department name'
+            }}<input id="org-node-name" name="nodeName" required [(ngModel)]="nodeName"
+          /></label>
+          <div class="org-actions">
+            <button type="submit" class="primary" [disabled]="renameForm.invalid || busy">
+              Save name</button
+            ><button type="button" class="org-secondary" [disabled]="busy" (click)="reset()">
+              Cancel changes
+            </button>
+          </div>
+        </form>
+        @if (team; as selected) {
+          <h3>
+            Members <span>{{ selected.members.length }}</span>
+          </h3>
+          <ul class="org-members">
+            @for (member of selected.members; track member.id) {
+              <li>
+                <span class="org-avatar" aria-hidden="true">{{ member.name.slice(0, 1) }}</span>
+                <div>
+                  <strong>{{ member.name }}</strong>
+                  <p>{{ member.jobTitle }}</p>
+                </div>
+                <span class="org-member-role">{{ member.systemRole }}</span>
+              </li>
+            } @empty {
+              <li>No members in this team.</li>
+            }
+          </ul>
+        } @else if (department; as dept) {
+          <h3>
+            Teams <span>{{ teamsFor(dept.id).length }}</span>
+          </h3>
+          <div class="org-team-grid">
+            @for (item of teamsFor(dept.id); track item.id) {
+              <button
+                type="button"
+                class="org-team"
+                [attr.data-org-team]="item.id"
+                (click)="openTeam(dept.id, item.id)"
+              >
+                <strong>{{ item.name }}</strong
+                ><span>{{ item.members.length }} members <span aria-hidden="true">→</span></span>
+              </button>
+            } @empty {
+              <p class="org-empty">No teams assigned to this department.</p>
+            }
+          </div>
+        }
+      </section>
+    } @else {
+      <div class="org-layout">
+        <form id="organization-form" class="org-card" (ngSubmit)="save()" #companyForm="ngForm">
+          <div class="org-section-heading">
+            <div>
+              <span class="eyebrow">COMPANY WORKSPACE</span>
+              <h2 id="org-view-heading" #viewHeading tabindex="-1">Organization settings</h2>
+            </div>
+            <span class="org-tag">Admin only</span>
+          </div>
+          <p class="org-intro">A few essentials for the way your organization works.</p>
+          <label
+            >Organization name<input
+              id="organization-name"
+              name="name"
+              required
+              [(ngModel)]="draft.name"
+          /></label>
+          <fieldset>
+            <legend>Working days per week</legend>
+            <div class="org-week-options">
+              <label
+                ><input
+                  type="radio"
+                  id="organization-week-5"
+                  name="workWeekDays"
+                  [value]="5"
+                  [(ngModel)]="draft.workWeekDays"
+                /><span><strong>5 days</strong><small>Five-day working week</small></span></label
+              >
+              <label
+                ><input
+                  type="radio"
+                  id="organization-week-6"
+                  name="workWeekDays"
+                  [value]="6"
+                  [(ngModel)]="draft.workWeekDays"
+                /><span><strong>6 days</strong><small>Six-day working week</small></span></label
+              >
+            </div>
+          </fieldset>
+          <p class="org-policy-note">
+            This changes the organization’s demo setting. Leave allowances and calculations still
+            use the five-day reference examples.
+          </p>
+          <div class="org-actions">
+            <button type="submit" class="primary" [disabled]="companyForm.invalid || busy">
+              Save organization</button
+            ><button type="button" class="org-secondary" [disabled]="busy" (click)="reset()">
+              Cancel changes
+            </button>
+          </div>
+        </form>
+        <section class="org-card" aria-labelledby="structure-summary">
+          <span class="eyebrow">AT A GLANCE</span>
+          <h2 id="structure-summary">Your structure</h2>
+          <dl class="org-summary">
+            <div>
+              <dt>Departments</dt>
+              <dd>{{ org.departments.length }}</dd>
+            </div>
+            <div>
+              <dt>Teams</dt>
+              <dd>{{ teamCount }}</dd>
+            </div>
+            <div>
+              <dt>Members</dt>
+              <dd>{{ memberCount }}</dd>
+            </div>
+          </dl>
+          <p class="org-intro">
+            Use only the structure you need. Departments and teams are optional; members can belong
+            directly to the organization.
+          </p>
+        </section>
+      </div>
+      <section class="org-structure" aria-labelledby="org-structure-heading">
+        <div class="org-section-heading">
+          <div>
+            <span class="eyebrow">ORGANIZATION</span>
+            <h2 id="org-structure-heading">Departments &amp; teams</h2>
+          </div>
+        </div>
+        @if (!org.departments.length && !org.teams.length) {
+          <p class="org-empty">
+            No departments or teams. Members belong directly to this organization.
+          </p>
+        }
+        <div class="org-departments">
+          @for (dept of org.departments; track dept.id) {
+            <section class="org-card org-department">
+              <button
+                type="button"
+                class="org-department-link"
+                [attr.data-org-department]="dept.id"
+                (click)="openDepartment(dept.id)"
+              >
+                <strong>{{ dept.name }}</strong
+                ><span>{{ teamsFor(dept.id).length }} teams <span aria-hidden="true">→</span></span>
+              </button>
+              <div class="org-team-grid">
+                @for (item of teamsFor(dept.id); track item.id) {
+                  <button
+                    type="button"
+                    class="org-team"
+                    [attr.data-org-team]="item.id"
+                    (click)="openTeam(dept.id, item.id)"
+                  >
+                    <strong>{{ item.name }}</strong
+                    ><span
+                      >{{ item.members.length }} members <span aria-hidden="true">→</span></span
+                    >
+                  </button>
+                }
+              </div>
+            </section>
+          }
+        </div>
+        @if (directTeams.length) {
+          <h3>Teams in the organization</h3>
+          <div class="org-team-grid org-direct-teams">
+            @for (item of directTeams; track item.id) {
+              <button
+                type="button"
+                class="org-team"
+                [attr.data-org-team]="item.id"
+                (click)="openTeam(null, item.id)"
+              >
+                <strong>{{ item.name }}</strong
+                ><span>{{ item.members.length }} members <span aria-hidden="true">→</span></span>
+              </button>
+            }
+          </div>
+        }
+        @if (directMembers.length) {
+          <section class="org-card org-direct-members">
+            <h3>Organization members</h3>
+            <ul class="org-members">
+              @for (member of directMembers; track member.id) {
+                <li>
+                  <span class="org-avatar" aria-hidden="true">{{ member.name.slice(0, 1) }}</span>
+                  <div>
+                    <strong>{{ member.name }}</strong>
+                    <p>{{ member.jobTitle }}</p>
+                  </div>
+                  <span class="org-member-role">{{ member.systemRole }}</span>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      </section>
+    }
+    <section class="org-card org-membership-admin" aria-labelledby="membership-admin-heading">
+      <h2 id="membership-admin-heading">Manage memberships</h2>
+      <p class="org-intro">
+        Manage roles, employment details and provisional allocation for your members.
+      </p>
+      <div class="org-team-grid org-membership-roster">
+        @for (member of members; track member.userGuid) {
+          <button
+            type="button"
+            class="org-team"
+            [disabled]="busy"
+            [attr.data-edit-membership]="member.person.id"
+            (click)="editMember(member)"
+          >
+            {{ member.person.name }} · Edit membership
+          </button>
+        }
+      </div>
+      @if (selectedMember; as member) {
+        <form id="membership-form" (ngSubmit)="saveMember()" #membershipForm="ngForm">
+          <h3 id="membership-editor-heading" tabindex="-1">{{ member.person.name }}</h3>
+          <label
+            >System role<select name="systemRoleId" [(ngModel)]="memberDraft.systemRoleId">
+              @for (role of roles.systemRoles; track role.id) {
+                <option [value]="role.guid">{{ role.name }}</option>
+              }
+            </select></label
+          >
+          <label
+            >Job role<select name="jobRoleId" [(ngModel)]="memberDraft.jobRoleId">
+              @for (role of roles.jobRoles; track role.id) {
+                <option [value]="role.guid">{{ role.name }}</option>
+              }
+            </select></label
+          >
+          <label
+            >Department<select
+              name="departmentId"
+              [(ngModel)]="memberDraft.departmentId"
+              (ngModelChange)="memberDraft.teamId = null"
+            >
+              <option [ngValue]="null">Not assigned</option>
+              @for (department of org.departments; track department.id) {
+                <option [ngValue]="apiId(department.id)">{{ department.name }}</option>
+              }
+            </select></label
+          >
+          <label
+            >Team<select name="teamId" [(ngModel)]="memberDraft.teamId">
+              <option [ngValue]="null">Not assigned</option>
+              @for (team of org.teams; track team.id) {
+                @if (
+                  !memberDraft.departmentId ||
+                  apiId(team.departmentId || '') === memberDraft.departmentId
+                ) {
+                  <option [ngValue]="apiId(team.id)">{{ team.name }}</option>
+                }
+              }
+            </select></label
+          >
+          <label
+            >Manager<select name="managerUserId" [(ngModel)]="memberDraft.managerUserId">
+              <option [ngValue]="null">Not assigned</option>
+              @for (candidate of members; track candidate.userGuid) {
+                @if (candidate.userGuid !== member.userGuid) {
+                  <option [ngValue]="candidate.userGuid">{{ candidate.person.name }}</option>
+                }
+              }
+            </select></label
+          >
+          <label
+            >Work schedule<select name="workScheduleId" [(ngModel)]="memberDraft.workScheduleId">
+              <option [ngValue]="null">Not assigned</option>
+              @for (schedule of roles.workSchedules; track schedule.id) {
+                <option [ngValue]="schedule.guid">{{ schedule.name }}</option>
+              }
+            </select></label
+          >
+          <p class="org-policy-note">
+            Holiday calendar and experience policy: not configured in this demo.
+          </p>
+          <label
+            >Hire date<input type="date" name="hireDate" [(ngModel)]="memberDraft.hireDate"
+          /></label>
+          <label
+            >Employment end date<input
+              type="date"
+              name="employmentEndDate"
+              [(ngModel)]="memberDraft.employmentEndDate"
+          /></label>
+          <label
+            >Prior service (years)<input
+              type="number"
+              min="0"
+              step="any"
+              name="priorService"
+              [(ngModel)]="memberDraft.priorService"
+          /></label>
+          <label
+            >Custom annual allocation (days)<input
+              type="number"
+              min="0"
+              step="any"
+              name="customAllocation"
+              [(ngModel)]="memberDraft.customAllocation"
+          /></label>
+          <p class="org-policy-note">
+            No experience policy is configured. This provisional allocation does not change the
+            reference leave ledger.
+          </p>
+          <div class="org-actions">
+            <button type="submit" class="primary" [disabled]="busy || membershipForm.invalid">
+              Save membership</button
+            ><button
+              type="button"
+              class="org-secondary"
+              [disabled]="busy"
+              (click)="selectedMember = null"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      }
+    </section>
+    @if (error) {
+      <p class="org-error" role="alert" id="organization-error">{{ error }}</p>
+    }
+    <p class="org-success" role="status" id="organization-status">{{ message }}</p>
+  </section>
+} @else {
+  <section id="organization-denied" class="org-card">
+    <h2>Admin access only</h2>
+    <p class="org-intro">
+      Organization settings and structure are available only to an administrator of this company.
+    </p>
+  </section>
+}

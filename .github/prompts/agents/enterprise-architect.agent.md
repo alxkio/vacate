@@ -228,7 +228,7 @@ Use RabbitMQ self-hosted on Azure VM.
 
 | Layer | Technology | Why | Constraints |
 |-------|-----------|-----|-------------|
-| **API** | .NET 8 + ASP.NET Core | Type-safe, performance, mature ecosystem | C# only |
+| **API** | .NET 10 + ASP.NET Core | Type-safe, performance, mature ecosystem | C# only |
 | **Database** | Azure SQL | EU-hosted, GDPR ready, integrated with Azure | Managed, no self-host |
 | **Cache** | Redis | Fast, distributed, pub/sub | Stateful, requires backup |
 | **Messaging** | RabbitMQ | Cost-efficient, proven | Self-hosted ops burden |

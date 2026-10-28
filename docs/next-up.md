@@ -45,3 +45,18 @@ notes for what do do next, thoughts, plans etc.
 
 
     - end to end tests (maybe the last thing of mcp?)
+
+
+##### 2026-10-25
+
+
+1. User profile page, and user object definition 
+2. org settings page / thinking about team page. 
+3. improve my balances page 
+
+next 
+    ASVS - OWASP -> Agents/tests? 
+    WCAG
+
+    Unify ui into 2? and create UX 
+    

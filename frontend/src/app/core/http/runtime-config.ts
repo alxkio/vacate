@@ -16,7 +16,14 @@ export function parseRuntimeConfig(value: unknown): RuntimeConfig {
   // Local development uses the Angular proxy. Cloud configuration uses HTTPS.
   if (apiBaseUrl !== '/api') {
     const url = new URL(apiBaseUrl);
-    if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/api') {
+    if (
+      url.protocol !== 'https:' ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      url.pathname !== '/api'
+    ) {
       throw new Error('Invalid API URL');
     }
   }

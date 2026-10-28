@@ -1,0 +1,220 @@
+:host {
+  display: block;
+}
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.settings-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 26px;
+  min-width: 0;
+}
+.settings-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+h2 {
+  font-size: 21px;
+  margin: 7px 0 0;
+  letter-spacing: -0.5px;
+}
+.settings-tag {
+  font-size: 11px;
+  background: var(--pale);
+  padding: 6px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  color: var(--accent);
+}
+.settings-intro,
+.settings-hint {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.settings-demo {
+  background: #f2f6f4;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 18px 0;
+}
+.settings-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 16px;
+}
+.settings-fields label {
+  font-size: 12px;
+  font-weight: 650;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.settings-fields input,
+.settings-fields select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #c9d5d0;
+  border-radius: 7px;
+  padding: 11px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+.settings-fields input[readonly] {
+  background: #f5f7f6;
+  color: var(--muted);
+}
+.settings-fields .wide {
+  grid-column: 1/-1;
+}
+.optional,
+small {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.settings-fields .check {
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 0;
+}
+.check input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+}
+fieldset {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 24px 0 0;
+  padding: 20px 0 0;
+  min-width: 0;
+}
+legend {
+  font-size: 14px;
+  font-weight: 700;
+  padding: 0 8px 0 0;
+}
+fieldset .settings-intro {
+  margin-bottom: 16px;
+}
+.settings-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+.secondary {
+  padding: 11px 16px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.settings-error {
+  background: #fff0ed;
+  color: #a03125;
+  padding: 12px;
+  border-radius: 7px;
+  margin-top: 16px;
+  font-size: 13px;
+}
+.settings-success {
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 14px;
+  line-height: 1.7;
+}
+.membership-company {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.membership-symbol {
+  background: var(--pale);
+  color: var(--accent);
+  padding: 13px;
+  border-radius: 9px;
+  font-weight: 700;
+}
+.membership-company strong {
+  font-size: 14px;
+}
+.membership-company p {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.membership-details {
+  margin: 8px 0 22px;
+}
+.membership-details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf1ef;
+  font-size: 12px;
+}
+.membership-details dt {
+  color: var(--muted);
+}
+.membership-details dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.membership-balance {
+  background: var(--pale);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+.membership-balance h3 {
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+.membership-balance p {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.membership-balance strong {
+  font-size: 25px;
+  color: var(--accent);
+}
+@media (max-width: 1050px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .settings-card {
+    padding: 18px;
+  }
+  .settings-fields {
+    grid-template-columns: 1fr;
+  }
+  .settings-card-heading {
+    align-items: flex-start;
+  }
+  .settings-footer button {
+    width: 100%;
+  }
+}

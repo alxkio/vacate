@@ -2,7 +2,7 @@
 id: VAC-10
 type: task
 summary: Consolidate the deployed mock into Angular under frontend
-status: qa
+status: released
 created: 2026-10-25
 updated: 2026-10-25
 parent: null
@@ -11,7 +11,7 @@ depends_on: [VAC-8, VAC-9]
 
 # VAC-10 — Consolidate the deployed mock into Angular under frontend
 
-![Task](badges/task.svg) **🔍 QA** · Owner: Codex
+![Task](badges/task.svg) **🚀 Released** · Owner: Codex
 
 ## Description and scope
 
@@ -27,8 +27,8 @@ The founder intended `frontend/` to contain the frontend application and explici
 - [x] Angular sources, workspace, lockfile, current tooling and instructions use `frontend/`; legacy generated files are preserved outside the working tree and excluded from new artifacts.
 - [x] Angular components render login, shell/calendar, balances, rule details, dialogs and request preview with existing keyboard, focus, mobile and history behavior.
 - [x] All 12 accounts retain independent own records, scoped generic shared availability, denied identifiers and stale-session guards. This remains a public synthetic mock; server tenant isolation is not implemented.
-- [ ] Angular build output is deployed directly. CI and cloud smoke validate Angular routes/config/revision/assets without copying the old gallery over index.html.
-- [ ] Existing fixture/schema and browser acceptance are migrated to exercise the new sources and application. Hosted build/tests must pass before release is claimed.
+- [x] Angular build output is deployed directly. CI and cloud smoke validate Angular routes/config/revision/assets without copying the old gallery over index.html.
+- [x] Existing fixture/schema and browser acceptance are migrated to exercise the new sources and application. Hosted build/tests must pass before release is claimed.
 
 ## Responsibilities
 
@@ -45,11 +45,16 @@ Founder confirmation and explicit Angular-conversion answer, 2026-10-25; [ADR-00
 
 - C-2 · 2026-10-25 · Codex: Strict Angular/AOT, fixture/schema, smoke/package and functional browser checks pass. QA fixed stale child-calendar state and shortlist ordering; trusted keyboard acceptance passed separately in a fresh Chrome process. [Local evidence and screenshots](media/VAC-10/verification.md). Hosted production checks remain pending.
 
+- C-3 · 2026-10-25 · Codex: Hosted production build/unit/default browser checks passed, frontend-only Azure dev deployment succeeded, exact live revision matched and the full hosted browser suite/visual review passed. [Release evidence](../release-2026-10-25-vac-10-angular.md).
+
+- C-4 · 2026-10-25 · Founder follow-up: keep the backend in its existing `api/` directory and keep repository context current. The proposed backend-folder rename was withdrawn before any backend files or paths were changed; root README records the agreed application roots.
+
 ## Work log
 
 | Entry | Date | Actor / category | Activity | Duration | Basis and evidence |
 |---|---|---|---|---|---|
 | W-1 | 2026-10-25 | Codex / assistant recorded | Consolidate source location and convert the interactive mock to Angular | Unknown | Founder request and source changes; active time not measured. |
+| W-2 | 2026-10-25 | Codex / assistant recorded | Monitor CI, deploy Angular frontend to dev and verify live revision/browser journeys | Unknown | [Release evidence](../release-2026-10-25-vac-10-angular.md); no measured duration inferred. |
 
 Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not recorded.
 
@@ -59,9 +64,11 @@ Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not reco
 
 - H-2 · 2026-10-25 · Codex: In progress → QA after source conversion, strict compilation, fixture/schema, package/smoke and local functional/native keyboard verification. Await hosted production build and release evidence.
 
+- H-3 · 2026-10-25 · Codex: QA → Released for Azure dev revision `7f7bfff` after hosted production checks, deployment and complete live acceptance passed. Backend publishing skipped.
+
 ## Verification and release
 
-[Local acceptance and screenshots](media/VAC-10/verification.md) record the converted Angular application and parity checks. Ready for hosted production build/unit/browser acceptance; no new cloud release claimed.
+[Local acceptance and screenshots](media/VAC-10/verification.md) record the converted Angular application and parity checks. [Hosted release evidence](../release-2026-10-25-vac-10-angular.md) records successful CI, frontend-only Azure dev deployment of `7f7bfff`, exact revision and full live browser/visual acceptance.
 
 ## Open questions
 

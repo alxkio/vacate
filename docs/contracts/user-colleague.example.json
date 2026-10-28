@@ -1,0 +1,10 @@
+{
+  "username": "maya@example.invalid",
+  "email": "maya@example.invalid",
+  "firstName": "Maya",
+  "middleName": null,
+  "lastName": "Example",
+  "gender": "woman",
+  "jobTitle": "Software engineer",
+  "systemRole": "employee"
+}

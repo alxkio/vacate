@@ -85,3 +85,7 @@ This table translates the existing catalogue's descriptions into **proposed futu
 5. Which event-registration windows, shared-care exceptions, required evidence and retention periods should the later backend enforce? Upcoming-event registration is explicitly not required by the present mock; no document collection is added here.
 
 **Verification:** 30 factor rows match the existing catalogue names; no allowance figures, statutory defaults, backend enforcement or real personal data added. This review does not close VAC-5's existing policy questions.
+
+## Editable own-profile mock — 2026-10-26
+
+Founder instruction, 2026-10-26, implemented in [VAC-12](../jira/VAC-12-profile-and-membership-settings.md): users can edit their own names, gender, married flag, child count and sole-care flag from Settings. The [user contract](../contracts/user.md) records false/zero defaults and married/sole-care exclusion. Saves refresh own mock gender, child-context and marriage decisions. The old marital state is retained only when the married fact is unchanged; changing it invalidates that context rather than inferring divorce/widowhood. A single-parent outcome requiring confirmed divorce stays To confirm when that context is missing. Original unsaved legacy fixtures keep the prior reviewed scenarios. Changes are fictional, in-memory and reset on reload/sign-out, and cannot modify membership or allocations. These edits add no statutory interpretation or production entitlement rule.

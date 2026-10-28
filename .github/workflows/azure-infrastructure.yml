@@ -17,9 +17,9 @@ on:
         type: boolean
         default: false
       deploy_backend:
-        description: Build, test and publish API (enable when deploying backend changes)
+        description: Build, test and publish API (required for API-backed feature changes)
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read

@@ -4,11 +4,19 @@ describe('Application startup configuration', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('loads uncached deployment settings before startup', async () => {
-    const fetchConfig = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      apiBaseUrl: 'https://vacate.azurewebsites.net/api', revision: 'release',
-    })));
+    const fetchConfig = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          apiBaseUrl: 'https://vacate.azurewebsites.net/api',
+          revision: 'release',
+        }),
+      ),
+    );
     vi.stubGlobal('fetch', fetchConfig);
-    expect(await loadRuntimeConfig()).toEqual({ apiBaseUrl: 'https://vacate.azurewebsites.net/api', revision: 'release' });
+    expect(await loadRuntimeConfig()).toEqual({
+      apiBaseUrl: 'https://vacate.azurewebsites.net/api',
+      revision: 'release',
+    });
     expect(fetchConfig).toHaveBeenCalledWith('/config.json', { cache: 'no-store' });
   });
 

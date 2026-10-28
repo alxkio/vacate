@@ -1,0 +1,18 @@
+{
+  "id": 4,
+  "guid": "81b1ba1d-c555-4d0e-9e6c-94caa02299cd",
+  "username": "maya@example.invalid",
+  "firstName": "Maya",
+  "middleName": null,
+  "lastName": "Example",
+  "gender": "woman",
+  "married": true,
+  "dependentChildren": 2,
+  "soleCare": false,
+  "status": "active",
+  "membership": null,
+  "createdAt": "2026-10-22T00:00:00Z",
+  "updatedAt": "2026-10-22T00:00:00Z",
+  "deleteRequestedAt": null,
+  "deletedAt": null
+}

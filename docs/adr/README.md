@@ -28,6 +28,8 @@ Owner: name/role
 
 - [ADR-0002: Azure Static Web Apps and Functions hosting](0002-azure-static-web-app-and-functions.md) — ACCEPTED, 2026-10-21.
 
+- [ADR-0003: Domain model and application services](0003-domain-and-application-services.md) — ACCEPTED, 2026-10-27.
+
 ## ADRs to create after clarification
 
 1. Initial beachhead market and customer segment.
@@ -35,3 +37,4 @@ Owner: name/role
 3. Legal-policy content strategy and review ownership.
 4. MVP deployment and identity-provider selection.
 5. Integration sequencing: Teams/calendar before or after core workflow validation.
+

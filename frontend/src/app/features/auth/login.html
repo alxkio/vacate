@@ -1,0 +1,81 @@
+<main class="login-layout">
+  <section class="login-intro" aria-label="Welcome to Vacate">
+    <div class="brand">
+      <span class="brand-symbol">v<span>•</span></span
+      >vacate<span class="brand-dot">.</span>
+    </div>
+    <span class="eyebrow">A LITTLE PLANNING. A BETTER BALANCE.</span>
+    <h1>Make room<br />for time off<span>.</span></h1>
+    <p>Your plans. Your people. One clear calendar.</p>
+    <div class="login-calendar" aria-hidden="true">
+      <div><span>OCTOBER</span><span>2026</span></div>
+      <div class="login-week">
+        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span
+        ><span>S</span>
+      </div>
+      <div class="login-week">
+        <span>19</span><span>20</span><span>21</span><span class="login-today">22</span
+        ><span>23</span><span>24</span><span>25</span>
+      </div>
+      <div class="login-break">✓ A little autumn pause · 26–28 Oct</div>
+    </div>
+  </section>
+  <section class="login-card" aria-labelledby="login-title">
+    <span class="eyebrow">VACATE DEMO</span>
+    <h2 id="login-title">Welcome back.</h2>
+    <p>Explore 12 fictional colleagues at Northstar Example.</p>
+    <label for="demo-account">Choose a fictional person</label
+    ><select
+      id="demo-account"
+      #account
+      (change)="choose(account.value, username, password, description)"
+    >
+      <option value="">Choose a persona…</option>
+      @for (person of data.fixtures.people; track person.id) {
+        <option [value]="person.id">
+          {{ person.name }} · {{ person.title }} · {{ person.role }}
+        </option>
+      }
+    </select>
+    <p id="persona-description" #description class="login-note">
+      Select a person to fill their public demo credentials.
+    </p>
+    <form id="login-form" (submit)="submit($event, username, password)">
+      <label for="username">Username</label
+      ><input
+        id="username"
+        #username
+        name="username"
+        autocomplete="username"
+        autocapitalize="none"
+        spellcheck="false"
+        required
+      />
+      <label for="password">Password</label
+      ><input
+        id="password"
+        #password
+        name="password"
+        type="password"
+        autocomplete="current-password"
+        required
+      />
+      <p id="login-error" class="login-error" role="alert" [hidden]="!error">{{ error }}</p>
+      <button class="primary" type="submit" [disabled]="busy">
+        Sign in <span aria-hidden="true">→</span>
+      </button>
+    </form>
+    <div class="demo-credentials">
+      <strong>Public demo access</strong>
+      <p>For example: <code>maya / maya</code> or <code>nora / nora</code></p>
+      <p>Every person: <code>firstname / firstname</code></p>
+      <p><span>Maya shortcut</span><code>user / user</code></p>
+      <p><span>Nora shortcut</span><code>admin / admin</code></p>
+    </div>
+    <p class="login-note">
+      Public browser simulation. All fixture data is downloadable. No secure authentication or real
+      requests.
+    </p>
+    <noscript><p>Enable JavaScript to use this interactive demo.</p></noscript>
+  </section>
+</main>

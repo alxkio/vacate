@@ -2,3 +2,28 @@
 
 GET {{Vacate.Api_HostAddress}}/api/health
 Accept: application/json
+
+### Explicitly enabled fictional API only. Copy accessToken from this response.
+POST {{Vacate.Api_HostAddress}}/api/auth/sessions
+Content-Type: application/json
+
+{"username":"nora","password":"nora"}
+
+### Replace the placeholder with your short-lived local demo token.
+@demoToken = replace-with-local-demo-accessToken
+GET {{Vacate.Api_HostAddress}}/api/auth/sessions/current
+Authorization: Bearer {{demoToken}}
+
+### Administrator membership configuration (Maya)
+PATCH {{Vacate.Api_HostAddress}}/api/organizations/20000000-0000-4000-8000-000000000100/memberships/20000000-0000-4000-8000-000000000004
+Authorization: Bearer {{demoToken}}
+Content-Type: application/json
+
+{"priorService":3.5,"hireDate":"2024-01-01","customAllocation":27}
+
+### Organization update
+PATCH {{Vacate.Api_HostAddress}}/api/organizations/20000000-0000-4000-8000-000000000100
+Authorization: Bearer {{demoToken}}
+Content-Type: application/json
+
+{"name":"Northstar Example","workWeekDays":5}

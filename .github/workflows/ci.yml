@@ -27,20 +27,20 @@ jobs:
       - run: dotnet test api/Vacate.slnx --configuration Release --no-build --no-restore
       - name: Publish Functions package
         run: dotnet publish api/src/Vacate.Api --configuration Release --no-restore --output artifacts/api -p:SourceRevisionId="$GITHUB_SHA"
-      - name: Verify package and run real Functions host
+      - name: Verify package and run Functions host from source
         shell: bash
         run: |
           set -euo pipefail
           test -f artifacts/api/host.json
           test -f artifacts/api/worker.config.json
           test -f artifacts/api/.azurefunctions/function.deps.json
-          jq -e '.[] | select(.name == "Health") | .bindings[] | select(.type == "httpTrigger" and .route == "health")' artifacts/api/functions.metadata
-          if find artifacts/api -name 'local.settings.json' -o -name 'appsettings*.json' | grep -q .; then
+          jq -e '.description.language == "dotnet-isolated" and .description.workerIndexing == "true"' artifacts/api/worker.config.json
+          if find artifacts/api -name 'local.settings*.json' -o -name 'appsettings*.json' | grep -q .; then
             echo 'Local configuration must not be published' >&2
             exit 1
           fi
           npm install --global azure-functions-core-tools@4.16.0
-          (cd artifacts/api && FUNCTIONS_WORKER_RUNTIME=dotnet-isolated AzureWebJobsStorage='' func start --dotnet-isolated --no-build --port 7071 > "$RUNNER_TEMP/functions.log" 2>&1) &
+          (cd api/src/Vacate.Api && FUNCTIONS_WORKER_RUNTIME=dotnet-isolated AzureWebJobsStorage='' dotnet run --configuration Release --no-build -- --port 7071 > "$RUNNER_TEMP/functions.log" 2>&1) &
           host_pid=$!
           trap 'kill "$host_pid" 2>/dev/null || true' EXIT
           python3 scripts/cloud-smoke.py --api-base-url http://localhost:7071/api --revision "$GITHUB_SHA"
@@ -66,26 +66,61 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      - name: Check TypeScript project output configuration
+        run: |
+          node node_modules/typescript/bin/tsc --project tsconfig.app.json
+          node node_modules/typescript/bin/tsc --project tsconfig.spec.json
       - run: npm run build -- --configuration production
       - run: npm test -- --watch=false
       - name: Verify frontend fixtures and prepare Angular output
         shell: bash
         run: |
           set -euo pipefail
-          for file in src/app/demo/data/*.js; do node --check "$file"; done
+          for file in src/app/core/reference-data/*.js testing/fixtures/*.js; do node --check "$file"; done
           node verify-fixtures.mjs
           node verify-eligibility-contract.mjs
+          node verify-api-contract.mjs
+          node verify-profiles.mjs
+          node verify-organization.mjs
           python3 ../scripts/test_cloud_smoke.py
           python3 ../scripts/prepare-frontend.py --frontend-output dist/vacate-web/browser --revision "$GITHUB_SHA"
-      - name: Browser acceptance against built Angular
-        shell: bash
-        run: |
-          set -euo pipefail
-          export CHROME_BIN="$(command -v google-chrome || command -v chromium)"
-          export MOCK_SCREENSHOT_DIR="$RUNNER_TEMP/vacate-browser-previews"
-          node verify.mjs
       - uses: actions/upload-artifact@v7
         with:
           name: angular-production
           path: frontend/dist/vacate-web/browser
           if-no-files-found: error
+
+  api-web:
+    if: ${{ !inputs.skip_backend }}
+    needs: [backend, frontend]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v8
+        with:
+          name: angular-production
+          path: frontend/dist/vacate-web/browser
+      - run: dotnet restore api/src/Vacate.Api/Vacate.Api.csproj --locked-mode
+      - name: Verify real API and Angular together
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global azure-functions-core-tools@4.16.0
+          (cd api/src/Vacate.Api && DevelopmentAuthentication__Enabled=true SeedData__Enabled=true FUNCTIONS_WORKER_RUNTIME=dotnet-isolated AzureWebJobsStorage='' dotnet run --configuration Release --no-restore -- --port 7071 > "$RUNNER_TEMP/functions-paired.log" 2>&1) &
+          host_pid=$!
+          trap 'kill "$host_pid" 2>/dev/null || true' EXIT
+          python3 scripts/verify-api.py
+          npm ci --prefix frontend
+          API_CONTRACT_URL=http://127.0.0.1:7071/api node frontend/verify-api-contract.mjs
+          export CHROME_BIN="$(command -v google-chrome || command -v chromium)"
+          export MOCK_SCREENSHOT_DIR="$RUNNER_TEMP/vacate-api-browser-previews"
+          node frontend/verify.mjs
+      - name: Paired host diagnostics
+        if: failure()
+        run: cat "$RUNNER_TEMP/functions-paired.log" 2>/dev/null || true

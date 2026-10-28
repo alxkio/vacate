@@ -2,7 +2,9 @@
 
 The A/B/C design study uses public, fictional people and data. UI direction remains open. [Azure dev](https://lemon-beach-02f7a7103.4.azurestaticapps.net) is the existing deployment target. The [VAC-6 release record](../../release-2026-10-23-vac-6.md) and [earlier leave mock release](../../release-2026-10-22-leave-mock.md) are historical evidence; the founder subsequently reported the VAC-5/VAC-7 deployment. [VAC-8/VAC-9 release evidence](../../release-2026-10-25-calendar-eligibility.md) records application revision `0ca66c9`, successful frontend-only dev deployment and full live browser acceptance on 2026-10-25. The existing API version is retained.
 
-Current work: [VAC-8 calendar-first layout](../../jira/VAC-8-calendar-first-and-balances-page.md) and [VAC-9 eligibility boundary](../../jira/VAC-9-eligibility-contract-and-mock-decisions.md). Prior [VAC-5 verification](../../jira/media/VAC-5/verification.md) remains the historical shortlist baseline.
+The [VAC-10 Angular conversion release](../../release-2026-10-25-vac-10-angular.md) now serves this prototype from the single frontend workspace.
+
+Prior implementation: [VAC-8 calendar-first layout](../../jira/VAC-8-calendar-first-and-balances-page.md) and [VAC-9 eligibility boundary](../../jira/VAC-9-eligibility-contract-and-mock-decisions.md). Prior [VAC-5 verification](../../jira/media/VAC-5/verification.md) remains the historical shortlist baseline.
 
 ## Demo accounts and company
 
@@ -37,7 +39,7 @@ No second company ships in this mock. Company/person/group mismatch tests exerci
 
 ## Local review
 
-The interactive mock has been converted to Angular in [`frontend/src/app/demo/`](../../../frontend/src/app/demo). Use [`frontend/README.md`](../../../frontend/README.md) for build, preview and acceptance commands. `docs/design/calendar-mock` retains design documentation and historical preview images, not a parallel frontend implementation.
+The interactive mock has been converted to Angular in [`frontend/src/app/features/`](../../../frontend/src/app/features). Use [`frontend/README.md`](../../../frontend/README.md) for build, preview and acceptance commands. `docs/design/calendar-mock` retains design documentation and historical preview images, not a parallel frontend implementation.
 
 The fixed demo date remains **22 October 2026** for repeatable scenarios. Compare A/B/C and the scope/granularity controls; no UI direction is selected by this conversion.
 
@@ -68,3 +70,11 @@ CI builds the Angular frontend and publishes its index unchanged. `scripts/prepa
 See [frontend acceptance instructions](../../../frontend/README.md#acceptance). Fixture/schema checks run against the same imported domain factories used by Angular; full browser acceptance runs against the built Angular application and can target the deployed revision. Historical VAC-5/VAC-6/VAC-8/VAC-9 evidence applies to those revisions; VAC-10 records conversion verification separately.
 
 This is targeted acceptance, not a full screen-reader/contrast audit. Server company isolation, real authentication, approvals/settings persistence, policy eligibility, accrual, carryover, rounding and holiday configuration remain future work.
+
+### Own profile and membership settings (VAC-12)
+
+The Angular mock now opens Settings from the sidebar or the profile-initials dropdown. Profile edits use the confirmed self-field allowlist, family defaults and married/sole-care exclusion; company membership remains read-only. Edits survive in-app navigation but reset on reload/sign-out, and refresh own provisional eligibility without changing ledgers or assuming divorce. Unknown employment/service/policy fields stay explicit. See the [user contract](../../contracts/user.md#current-mock-settings-implementation), [implementation issue](../../jira/VAC-12-profile-and-membership-settings.md) and [frontend acceptance instructions](../../../frontend/README.md#acceptance). No profile API or invitation flow is implemented.
+
+### Admin organization pages (VAC-2)
+
+Company admins can browse Organization, department and team views and rename each; the organization also has a five-/six-working-day setting. Edits are in-memory and reset on reload/sign-out. Internal structure is optional: departments/teams may be absent, teams may have no department, and members may belong directly to the organization. Existing calendar scopes are unchanged; organization administration is admin-only. The existing five-day leave catalogue/ledgers remain reference examples rather than being silently recalculated. Standalone-team/cross-company organizations are future direction, not implemented permission exceptions. See [organization contract](../../contracts/organization.md), [VAC-2](../../jira/VAC-2-organization-settings-mock.md) and [frontend verification](../../../frontend/README.md#acceptance).

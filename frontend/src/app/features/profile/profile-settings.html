@@ -1,0 +1,201 @@
+<div class="settings-layout" id="settings-page">
+  <form class="settings-card" id="profile-form" (ngSubmit)="submit()" #form="ngForm">
+    <div class="settings-card-heading">
+      <div>
+        <span class="eyebrow">YOUR ACCOUNT</span>
+        <h2>Personal profile</h2>
+      </div>
+      <span class="settings-tag">Only you</span>
+    </div>
+    <p class="settings-intro">
+      Keep your details up to date. Your family information stays out of colleagues’ profiles.
+    </p>
+    <p class="settings-demo">
+      Fictional demo · Edits are stored by the demo API and reset when the API restarts.
+    </p>
+    <div class="settings-fields">
+      <label
+        >First name<input
+          id="profile-first-name"
+          name="firstName"
+          autocomplete="given-name"
+          required
+          [(ngModel)]="draft.firstName"
+      /></label>
+      <label
+        >Middle name (optional)<input
+          id="profile-middle-name"
+          name="middleName"
+          autocomplete="additional-name"
+          [(ngModel)]="draft.middleName"
+      /></label>
+      <label
+        >Last name<input
+          id="profile-last-name"
+          name="lastName"
+          autocomplete="family-name"
+          required
+          [(ngModel)]="draft.lastName"
+      /></label>
+      <label
+        >Gender<select id="profile-gender" name="gender" [(ngModel)]="draft.gender">
+          <option value="unspecified">Unspecified</option>
+          <option value="woman">Woman</option>
+          <option value="man">Man</option>
+        </select></label
+      >
+      <label class="wide"
+        >Username / email<input
+          id="profile-username"
+          [value]="profile?.username || ''"
+          readonly
+          aria-describedby="username-help"
+        /><small id="username-help">Your sign-in email cannot be changed here.</small></label
+      >
+      <label class="wide"
+        >Account status<input id="profile-status-readonly" [value]="profile?.status || ''" readonly
+      /></label>
+    </div>
+    <fieldset>
+      <legend>Family information</legend>
+      <p class="settings-intro">
+        Used for your own leave previews. Colleagues cannot see these details.
+      </p>
+      <div class="settings-fields">
+        <label class="wide"
+          >Dependent children<input
+            id="profile-children"
+            name="dependentChildren"
+            type="number"
+            min="0"
+            step="1"
+            required
+            [(ngModel)]="draft.dependentChildren"
+        /></label>
+        <label class="check"
+          ><input
+            id="profile-married"
+            name="married"
+            type="checkbox"
+            aria-describedby="family-help"
+            [(ngModel)]="draft.married"
+          />
+          Married</label
+        >
+        <label class="check"
+          ><input
+            id="profile-sole-care"
+            name="soleCare"
+            type="checkbox"
+            aria-describedby="family-help"
+            [(ngModel)]="draft.soleCare"
+          />
+          Sole care</label
+        >
+      </div>
+      <p id="family-help" class="settings-hint">Married and sole care cannot both be selected.</p>
+    </fieldset>
+    @if (error) {
+      <p class="settings-error" role="alert" id="profile-error">{{ error }}</p>
+    }
+    <p class="settings-success" role="status" aria-live="polite" id="profile-status">
+      {{ message }}
+    </p>
+    <div class="settings-footer">
+      <button type="submit" class="primary" [disabled]="form.invalid || busy">Save profile</button
+      ><button type="button" class="secondary" [disabled]="busy" (click)="reset()">
+        Cancel changes
+      </button>
+    </div>
+  </form>
+  <section class="settings-card membership-card" aria-labelledby="membership-heading">
+    <div class="settings-card-heading">
+      <div>
+        <span class="eyebrow">YOUR WORKSPACE</span>
+        <h2 id="membership-heading">Membership</h2>
+      </div>
+      <span class="settings-tag">Read only</span>
+    </div>
+    @if (profile?.membership; as membership) {
+      <div class="membership-company">
+        <span class="membership-symbol" aria-hidden="true">N</span>
+        <div>
+          <strong>{{ data.companyName }}</strong>
+          <p>Fictional company membership</p>
+        </div>
+      </div>
+      <dl class="membership-details">
+        <div>
+          <dt>System role</dt>
+          <dd>{{ systemRole }}</dd>
+        </div>
+        <div>
+          <dt>Job title</dt>
+          <dd>{{ person?.title }}</dd>
+        </div>
+        <div>
+          <dt>Department</dt>
+          <dd>{{ department || 'Not assigned' }}</dd>
+        </div>
+        <div>
+          <dt>Team</dt>
+          <dd>
+            {{ data.groupName('team', person?.teamId || '') || person?.team || 'Not assigned' }}
+          </dd>
+        </div>
+        <div>
+          <dt>Manager</dt>
+          <dd>Not assigned</dd>
+        </div>
+        <div>
+          <dt>Hire date</dt>
+          <dd>{{ membership.hireDate || 'Not recorded' }}</dd>
+        </div>
+        <div>
+          <dt>Employment end date</dt>
+          <dd>{{ membership.employmentEndDate || 'Not recorded' }}</dd>
+        </div>
+        <div>
+          <dt>Prior service</dt>
+          <dd>
+            {{
+              membership.priorService === null ? 'Not recorded' : membership.priorService + ' years'
+            }}
+          </dd>
+        </div>
+        <div>
+          <dt>Work schedule</dt>
+          <dd>{{ data.companyWorkWeekDays }} days per week · demo</dd>
+        </div>
+        <div>
+          <dt>Holiday calendar</dt>
+          <dd>Not configured</dd>
+        </div>
+        <div>
+          <dt>Experience policy</dt>
+          <dd>Not configured</dd>
+        </div>
+      </dl>
+      <div class="membership-balance">
+        <h3>Annual allocation · 2026</h3>
+        <p>
+          <strong>{{ membership.balance.customAllocation }}</strong> configured working days
+        </p>
+        <p>Policy minimum: to confirm</p>
+        <p class="settings-hint">
+          This existing fictional allocation is not an experience-policy calculation. Your leave
+          ledger is shown in My balances.
+        </p>
+      </div>
+      <p class="settings-hint">
+        Your company admin manages membership, roles, employment details and allocation. Membership
+        is assigned through an admin invitation.
+      </p>
+    } @else {
+      <p class="settings-intro">
+        No company membership assigned yet. A company admin needs to invite you before you can
+        access its workspace.
+      </p>
+    }
+  </section>
+</div>

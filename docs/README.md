@@ -27,3 +27,4 @@ Source precedence follows AGENTS.md. Use accepted ADRs first, then accepted prod
 - [VAC-6 release](release-2026-10-23-vac-6.md) — persona/account implementation, scoped synthetic fixtures and verification/deployment evidence.
 
 - [Angular frontend conversion](jira/VAC-10-consolidate-angular-frontend.md) — one active frontend workspace, component conversion and linked acceptance/release evidence.
+- [VAC-10 Angular release](release-2026-10-25-vac-10-angular.md) — frontend folder consolidation, direct Angular publishing, production CI and complete live acceptance.

@@ -31,7 +31,10 @@ If sources conflict, do not silently select one. Record an `OPEN QUESTION` in th
 - Cite the source and effective date for market, product, pricing, and legal claims.
 - Absence of evidence is a finding, not an invitation to infer certainty.
 - Treat employee leave, sickness, and identity data as personal data. Minimise it.
+- Follow [ADR-0003](docs/adr/0003-domain-and-application-services.md): typed domain invariants, application use-case services, repository ports and Infrastructure adapters, thin HTTP endpoints, and frontend feature/resource services. Keep development fixtures out of domain/endpoint logic; do not create parallel demo application folders.
+- Keep code human-readable: one statement per line, one blank line between method/function declarations, consistent spaces and braces, and short comments explaining non-obvious intent. Format changed code before verification.
 - Every implementation change needs an acceptance scenario and tenant-isolation test where applicable.
+- For product changes, update API contracts/server behavior and frontend calls/views together where applicable. Verify both sides, including errors, authorization, tenant isolation and lifecycle timestamps; explicitly explain a side that is unaffected. New account, membership and organization/structure records use server-owned UTC createdAt/updatedAt and nullable deleteRequestedAt/deletedAt. Never treat soft deletion as GDPR erasure.
 
 ## Issues and backlog
 

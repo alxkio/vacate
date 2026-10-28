@@ -13,6 +13,7 @@
 ## Open questions
 
 - Which data categories are mandatory for the Greek MVP?
-- Will HR upload employee records, SCIM-sync them, or invite them manually?
+- Will HR upload employee records, SCIM-sync them, or invite them manually? --> Manual invitation (email). A user that accepts it becomes member of the organization. 
+
 - Does any workflow require special-category personal data? The default answer should be no.
 

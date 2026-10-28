@@ -4,7 +4,7 @@ type: task
 summary: Temporarily skip backend work in UI deployments
 status: qa
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-27
 parent: null
 depends_on: [VAC-1]
 ---
@@ -95,3 +95,7 @@ Workflow acceptance boxes remain pending where they require actual GitHub execut
 
 - Revisit the temporary backend-off deployment default when backend implementation resumes. Enable `deploy_backend=true` for API changes and first deployments of new environments.
 - Hosted validation of skipped backend jobs, artifact selection and frontend-only release remains pending. No new Azure environment is requested.
+
+## Resumption of backend work · 2026-10-27
+
+C-4 · 2026-10-27 · Codex: Founder requested API-backed CRUD and paired frontend/API verification in [VAC-13](VAC-13-api-backed-settings.md). This ends the temporary backend-off default in D-2: deploy_backend now defaults true. Explicit UI-only mode remains available, but skips the paired API/web acceptance and is unsuitable for API-backed contract changes. This historical issue stays QA; no hosted release is claimed. Work/time for this adjustment belongs to VAC-13.

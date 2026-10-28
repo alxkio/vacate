@@ -40,3 +40,5 @@ button:disabled{cursor:not-allowed;opacity:.55}.nav-item[aria-current=page]{font
 app-root, vacate-workspace, vacate-calendar, vacate-balances, vacate-login, vacate-request, vacate-allowance, vacate-balance-bar { display: contents; }
 
 router-outlet { display: none; }
+
+.account-menu{position:relative}.account-dropdown{position:absolute;right:0;top:48px;z-index:30;min-width:230px;padding:10px;background:#fff;border:1px solid var(--line);box-shadow:0 12px 32px #183d3226;border-radius:12px}.account-dropdown strong{display:block;font-size:12px;padding:10px;color:var(--muted);overflow-wrap:anywhere}.account-dropdown button{display:block;width:100%;text-align:left;padding:12px;border-radius:6px;background:#fff;font-size:13px}.account-dropdown button:hover{background:var(--pale)}

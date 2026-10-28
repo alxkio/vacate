@@ -30,3 +30,5 @@ QA caught and fixed the mutable state handoff to the child calendar (group chang
 ## Release boundary
 
 Hosted production build/unit/browser acceptance and deployment are pending. This local record does not establish server tenant isolation, production legal-policy correctness, real authentication, persistence or submission/approval behavior. The existing VAC-8/VAC-9 policy and design questions remain open.
+
+**Release follow-up:** [Hosted release evidence](../../../release-2026-10-25-vac-10-angular.md) records successful production build/unit/default browser checks, Azure dev frontend-only deployment of `7f7bfff`, matching live revision and complete hosted browser/visual acceptance. This closes the local production-build limitation above; production policy/server gates remain open.
