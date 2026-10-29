@@ -4,7 +4,7 @@ type: story
 summary: Consolidate calendar preferences and balance ordering
 status: in-progress
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-10-29
 parent: null
 depends_on: []
 ---
@@ -83,6 +83,7 @@ Not applicable: display preferences are browser-local and no leave policy, balan
 ## Comments
 
 - C-1 · 2026-10-28 · Founder direction, paraphrased: retain A as the only default; make B's planner and C's warm color palette personal settings; let all demo users view generic organization availability; emphasize relevant parental balances and move sick/event types lower.
+- C-2 · 2026-10-29 · A profile settings test failed because the component-test `WorkspaceDataService` double lacked the newly added display-preferences methods. Updated the fixture provider to implement the same account-scoped browser-storage contract as the application service.
 
 ## Decisions
 
@@ -97,6 +98,7 @@ Not applicable: display preferences are browser-local and no leave policy, balan
 |---|---|---|---|---|---|
 | W-1 | 2026-10-28 | Codex / assistant recorded | Implement calendar preferences, organization fixture visibility, balance ordering, documentation and regression checks | Unknown | Work time was not measured. |
 | W-2 | 2026-10-28 | Codex / assistant recorded | Run static checks and diagnose frontend build/test blocker | Unknown | App and spec TypeScript checks, fixture verification, browser-script syntax check and `git diff --check` passed. Angular build and unit test runner could not initialize on this macOS 12 host; see verification below. Time was not measured. |
+| W-3 | 2026-10-29 | Codex / assistant recorded | Fix the profile-settings component-test provider after a reported failing test | Unknown | Added the missing display-preferences read/write methods to the fixture provider. Spec TypeScript check passed; focused Angular test could not initialize on this host. Time was not measured. |
 
 Human actual: Unknown. Assistant recorded: Unknown. Automation elapsed: not recorded. No estimates or overlapping totals.
 
@@ -106,9 +108,11 @@ Human actual: Unknown. Assistant recorded: Unknown. Automation elapsed: not reco
 
 ## Verification and release
 
-Static verification passed: app and spec TypeScript checks, `verify-fixtures.mjs`, `node --check verify.mjs` and `git diff --check`. The fixture verifier covered all-role organization scope and sanitized shared projections, among its other synthetic fixture checks.
+Static verification passed before this follow-up: app and spec TypeScript checks, `verify-fixtures.mjs`, `node --check verify.mjs` and `git diff --check`. Following the test-provider fix, `tsc -p tsconfig.spec.json --noEmit` passed.
 
-`npm run build` and `npm test -- --watch=false` were attempted with Node 22.22.3, but Angular reported `VM initialization failed: Current Mac OS X version 12.0 is lower than minimum supported version 14.0`. Both commands remained running after the initialization failure and were stopped. The Angular build and unit tests therefore did not complete, and browser acceptance was not run. Rerun those checks on macOS 14 or newer before moving this issue to QA. This mock-only change does not authorize or include a backend/API deployment.
+The fixture verifier covered all-role organization scope and sanitized shared projections, among its other synthetic fixture checks. The reported failure was traced to the test double not providing `displayPreferences()` / `saveDisplayPreferences()`; both methods are now present in the fixture provider.
+
+`npm run build`, `npm test -- --watch=false` and the focused profile settings Angular test were attempted with Node 22.22.3, but Angular reported `VM initialization failed: Current Mac OS X version 12.0 is lower than minimum supported version 14.0`. The commands remained running after initialization failed and were stopped. The Angular build and unit tests therefore did not complete, and browser acceptance was not run. Rerun those checks on macOS 14 or newer before moving this issue to QA. This mock-only change does not authorize or include a backend/API deployment.
 
 ## Open questions and follow-up
 
