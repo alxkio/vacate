@@ -66,16 +66,29 @@ describe('Own profile settings', async () => {
     expect(data.profiles.read()?.firstName).toBe('Maya');
   });
 
-  it('saves the chosen layout and color scheme for the current browser account', () => {
+  it('saves and confirms the chosen layout and color scheme through the settings form', async () => {
     const { data, fixture, page } = setup();
-    page.displayPreferences = { layout: 'planner', colorScheme: 'c' };
-    page.saveDisplayPreferences();
+    const layout = fixture.nativeElement.querySelector('#display-layout') as HTMLSelectElement;
+    const colorScheme = fixture.nativeElement.querySelector(
+      '#display-color-scheme',
+    ) as HTMLSelectElement;
+    layout.value = 'planner';
+    layout.dispatchEvent(new Event('change', { bubbles: true }));
+    colorScheme.value = 'c';
+    colorScheme.dispatchEvent(new Event('change', { bubbles: true }));
+    fixture.detectChanges();
+
+    expect(page.displayPreferences).toEqual({ layout: 'planner', colorScheme: 'c' });
+    (
+      fixture.nativeElement.querySelector('#display-preferences-form button') as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(data.displayPreferences()).toEqual({ layout: 'planner', colorScheme: 'c' });
-    expect(fixture.nativeElement.querySelector('#display-preferences-status').textContent).toContain(
-      'saved in this browser',
-    );
+    expect(
+      fixture.nativeElement.querySelector('#display-preferences-status').textContent,
+    ).toContain('saved in this browser');
     expect(fixture.nativeElement.querySelector('#display-layout').value).toBe('planner');
     expect(fixture.nativeElement.querySelector('#display-color-scheme').value).toBe('c');
   });
