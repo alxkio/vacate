@@ -2,7 +2,7 @@
 id: VAC-19
 type: story
 summary: Consolidate calendar preferences and balance ordering
-status: in-progress
+status: qa
 created: 2026-10-28
 updated: 2026-10-29
 parent: null
@@ -11,7 +11,7 @@ depends_on: []
 
 # VAC-19 — Consolidate calendar preferences and balance ordering
 
-![Story](badges/story.svg) **🔨 In progress** · Owner: Codex
+![Story](badges/story.svg) **🔍 QA** · Owner: Codex
 
 ## Description
 
@@ -85,6 +85,9 @@ Not applicable: display preferences are browser-local and no leave policy, balan
 - C-1 · 2026-10-28 · Founder direction, paraphrased: retain A as the only default; make B's planner and C's warm color palette personal settings; let all demo users view generic organization availability; emphasize relevant parental balances and move sick/event types lower.
 - C-2 · 2026-10-29 · A profile settings test failed because the component-test `WorkspaceDataService` double lacked the newly added display-preferences methods. Updated the fixture provider to implement the same account-scoped browser-storage contract as the application service.
 - C-3 · 2026-10-29 · CI then failed the display-preferences status assertion because the test called the component method directly instead of exercising Angular's form/event path. The regression test now changes the selects and submits the actual form. See the [CI failure](https://github.com/alxkio/vacate/actions/runs/40837491504/job/123325606212#step:7:103).
+- C-4 · 2026-10-29 · Follow-up CI showed select `ngModel` updates had not settled before the test assertion and the balance component fixture provider lacked catalogue/eligibility APIs. The profile test now waits for fixture stability; the provider now initializes and exposes the catalogue and eligibility surfaces consumed by the balance component.
+- C-5 · 2026-10-29 · The next CI run still failed before confirming those changes: profile preferences remained at defaults immediately after select events, and balance templates accessed missing `catalogue` data. Added `fixture.whenStable()` before the profile assertion and completed the test provider's catalogue/eligibility/balance surface. Full local Angular execution remains blocked by the macOS 12 runtime limit.
+- C-6 · 2026-10-29 · Full local browser acceptance found stale balance ordering and organization roster assertions. The acceptance now independently expects parent-aware balance ordering and full organization directory visibility. It also exposed employees being offered department scope without an allowed department group; restored the documented role-based scope list while retaining organization scope for every demo role.
 
 ## Decisions
 
@@ -101,12 +104,16 @@ Not applicable: display preferences are browser-local and no leave policy, balan
 | W-2 | 2026-10-28 | Codex / assistant recorded | Run static checks and diagnose frontend build/test blocker | Unknown | App and spec TypeScript checks, fixture verification, browser-script syntax check and `git diff --check` passed. Angular build and unit test runner could not initialize on this macOS 12 host; see verification below. Time was not measured. |
 | W-3 | 2026-10-29 | Codex / assistant recorded | Fix the profile-settings component-test provider after a reported failing test | Unknown | Added the missing display-preferences read/write methods to the fixture provider. Spec TypeScript check passed; focused Angular test could not initialize on this host. Time was not measured. |
 | W-4 | 2026-10-29 | Codex / assistant recorded | Replace direct method invocation with form-driven preference interaction in the regression test | Unknown | CI failure showed the status assertion observed no rendered message after direct method invocation. The updated test dispatches select changes and clicks the real form submit button. Spec type-check and formatting checks passed; local Angular execution remains blocked by macOS 12. Time was not measured. |
+| W-5 | 2026-10-29 | Codex / assistant recorded | Address follow-up CI failures in preference form interaction and balance test setup | Unknown | Await Angular fixture stability after select events; initialize catalogue/eligibility and expose balance-service methods from the fixture provider. App/spec type-checks, fixture verification and formatting checks passed; Angular unit tests remain unverified locally due macOS 12 runtime limitation. Time was not measured. |
+| W-6 | 2026-10-29 | Codex / assistant recorded | Run full frontend validation and align browser acceptance with the requested UI and role scopes | Unknown | Production build, all 28 unit tests, app/spec type checks, fixtures/contracts and cloud smoke checks passed locally using the documented Sass fallback and Core Tools 4.16.0. Browser acceptance revealed stale order/directory expectations and an invalid employee department-scope affordance; corrected these and reran validation. Time was not measured. |
+| W-7 | 2026-10-29 | Codex / assistant recorded | Complete the frontend browser acceptance and final worktree checks | Unknown | Full browser acceptance passed across all twelve accounts, preferences, role scopes, organization and department rosters, balances, request flows, responsive layouts and navigation. `git diff --check` passed. Time was not measured. |
 
 Human actual: Unknown. Assistant recorded: Unknown. Automation elapsed: not recorded. No estimates or overlapping totals.
 
 ## History
 
 - H-1 · 2026-10-28 · Codex: Created In progress from the founder's UI direction; existing calendar, profile and fixture behavior inspected.
+- H-2 · 2026-10-29 · Codex: Moved to QA after the complete frontend build, unit, static, contract and browser acceptance checks passed.
 
 ## Verification and release
 
@@ -114,9 +121,9 @@ Static verification passed before this follow-up: app and spec TypeScript checks
 
 The fixture verifier covered all-role organization scope and sanitized shared projections, among its other synthetic fixture checks. The reported failure was traced to the test double not providing `displayPreferences()` / `saveDisplayPreferences()`; both methods are now present in the fixture provider.
 
-The [CI run](https://github.com/alxkio/vacate/actions/runs/40837491504/job/123325606212#step:7:103) passed the production build and failed the profile settings test because the test invoked `saveDisplayPreferences()` directly, leaving its rendered status text blank. The regression now drives select change events and submits the form as a user would.
+An earlier [CI run](https://github.com/alxkio/vacate/actions/runs/40837491504/job/123325606212#step:7:103) passed the production build and failed the profile settings status assertion because the test invoked `saveDisplayPreferences()` directly. The test was changed to exercise the form. Subsequent CI output reported that its `ngModel` values were still the defaults at assertion time and both balance tests crashed because the component-test provider did not expose a catalogue. The test now waits for Angular fixture stability after dispatching select changes, and the fixture provider creates and exposes catalogue/eligibility APIs plus balance lookups.
 
-`npm run build`, `npm test -- --watch=false` and the focused profile settings Angular test were attempted with Node 22.22.3, but Angular reported `VM initialization failed: Current Mac OS X version 12.0 is lower than minimum supported version 14.0`. Direct Vitest execution also cannot compile the component's external template without Angular's builder integration. The Angular build and unit tests therefore did not complete locally, and browser acceptance was not run. Rerun the focused test and full suite on a supported CI runner before moving this issue to QA. This mock-only change does not authorize or include a backend/API deployment.
+The profile and balance unit tests passed within the complete suite (28 tests) after the fixture provider and timing fixes. Production build passed using `NG_BUILD_SASS_EMBEDDED=0`, the documented fallback for this older macOS host. TypeScript app/spec checks, fixture, eligibility/API/profile/organization contracts and cloud smoke tests passed. The full browser acceptance passed across all twelve accounts and the listed calendar, balance, organization, preference, responsive and navigation journeys. `git diff --check` passed. The final browser run used the local seeded API, which was stopped after verification. This mock-only change does not authorize or include a backend/API deployment.
 
 ## Open questions and follow-up
 

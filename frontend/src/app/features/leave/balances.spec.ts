@@ -42,12 +42,12 @@ describe('Leave balance ordering', () => {
     expect(ids.indexOf('sick')).toBeGreaterThan(ids.indexOf('annual'));
     expect(ids.slice(-5)).toEqual(['sick', 'maternity', 'paternity', 'voting', 'military']);
     expect(new Set(ids).size).toBe(data.catalogue.types.length);
-    expect(data.visibleShortlist().slice(0, 4).map((type) => type.id)).toEqual([
-      'annual',
-      'sick',
-      'maternity',
-      'paternity',
-    ]);
+    expect(
+      data
+        .visibleShortlist()
+        .slice(0, 4)
+        .map((type) => type.id),
+    ).toEqual(['annual', 'sick', 'maternity', 'childcare']);
   });
 
   it('does not promote parent-specific balances for a non-parent account', () => {

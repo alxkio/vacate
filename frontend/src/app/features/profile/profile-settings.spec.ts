@@ -68,6 +68,8 @@ describe('Own profile settings', async () => {
 
   it('saves and confirms the chosen layout and color scheme through the settings form', async () => {
     const { data, fixture, page } = setup();
+    await fixture.whenStable();
+    fixture.detectChanges();
     const layout = fixture.nativeElement.querySelector('#display-layout') as HTMLSelectElement;
     const colorScheme = fixture.nativeElement.querySelector(
       '#display-color-scheme',
@@ -76,6 +78,7 @@ describe('Own profile settings', async () => {
     layout.dispatchEvent(new Event('change', { bubbles: true }));
     colorScheme.value = 'c';
     colorScheme.dispatchEvent(new Event('change', { bubbles: true }));
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(page.displayPreferences).toEqual({ layout: 'planner', colorScheme: 'c' });

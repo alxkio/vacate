@@ -21,7 +21,7 @@ All real Vacate issues, including completed releases. [Workflow, types and statu
 | VAC-15 | ![Bug](badges/bug.svg) | Stabilize trusted keyboard browser acceptance after closing a dialog | 🔍 QA | None | [VAC-15](VAC-15-stabilize-keyboard-browser-acceptance.md) |
 | VAC-16 | ![Task](badges/task.svg) | Expose each API path and HTTP method as a separate Azure Function | 🔍 QA | None | [VAC-16](VAC-16-explicit-functions-routes-and-openapi.md) |
 | VAC-17 | ![Bug](badges/bug.svg) | Resolve the Azure Functions runtime mismatch blocking deployed API health | 🔍 QA | None | [VAC-17](VAC-17-resolve-azure-functions-runtime-mismatch.md) |
-| VAC-19 | ![Story](badges/story.svg) | Consolidate calendar preferences and balance ordering | 🔨 In progress | None | [VAC-19](VAC-19-calendar-display-preferences-and-balances.md) |
+| VAC-19 | ![Story](badges/story.svg) | Consolidate calendar preferences and balance ordering | 🔍 QA | None | [VAC-19](VAC-19-calendar-display-preferences-and-balances.md) |
 
 Dependencies list **direct implementation prerequisites**, matching each issue's `depends_on` metadata. Coordination links do not block implementation, and inherited prerequisites are not repeated. VAC-6 supplies the shared personas/account fixtures for VAC-2–VAC-4. VAC-5 uses founder-authorized provisional defaults while its questions remain open for revision; VAC-2 implements the bounded admin settings iteration; VAC-3/VAC-4 retain separate specification decisions.
 

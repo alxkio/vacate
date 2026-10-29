@@ -306,7 +306,9 @@ try {
       `(()=>{const layout=document.querySelector("#display-layout"),scheme=document.querySelector("#display-color-scheme");layout.value=${JSON.stringify(layout)};layout.dispatchEvent(new Event("change",{bubbles:true}));scheme.value=${JSON.stringify(colorScheme)};scheme.dispatchEvent(new Event("change",{bubbles:true}));})()`,
     );
     await click('#display-preferences-form button[type="submit"]');
-    await waitFor('document.querySelector("#display-preferences-status").textContent.includes("saved in this browser")');
+    await waitFor(
+      'document.querySelector("#display-preferences-status").textContent.includes("saved in this browser")',
+    );
     await click('[data-nav=calendar]');
     await waitFor('!document.querySelector("#calendar-page").hidden');
   };
@@ -429,7 +431,32 @@ try {
   };
   const expectedVisible = (id) =>
     baseShortlist.filter((type) => !blockedShortlist[id].includes(type));
+  const parentAccounts = new Set(['leah', 'ravi', 'maya', 'theo', 'daria', 'nora']);
+  const balanceGroupOrder = [
+    ['maternity', 'paternity', 'childcare', 'parental', 'school'],
+    ['dependent-illness', 'child-hospitalization'],
+    ['marriage'],
+    ['voting'],
+    ['study'],
+  ];
+  const expectedBalanceTypes = (id) => {
+    const visible = expectedVisible(id);
+    const promoted = [
+      'annual',
+      ...(parentAccounts.has(id) ? ['school', 'childcare', 'parental'] : []),
+    ].filter((type) => visible.includes(type));
+    const deferred = ['sick', 'maternity', 'paternity', 'voting', 'military'].filter((type) =>
+      visible.includes(type),
+    );
+    const separated = new Set([...promoted, ...deferred]);
+    const regular = visible.filter((type) => !separated.has(type));
+    const grouped = balanceGroupOrder.flatMap((group) =>
+      group.filter((type) => regular.includes(type)),
+    );
+    return [...promoted, ...grouped, ...deferred];
+  };
   const expectedShortlist = expectedVisible('maya');
+  const mayaBalanceTypes = expectedBalanceTypes('maya');
   const requestTypes = () =>
     evaluate('Array.from(document.querySelector("#leave-type").options).map(option=>option.value)');
   const balanceTypes = () =>
@@ -919,7 +946,8 @@ try {
           'true',
           id + ' default scope',
         );
-        const scopes = ['self', 'team', 'department', 'org'];
+        const scopes =
+          role === 'employee' ? ['self', 'team', 'org'] : ['self', 'team', 'department', 'org'];
         for (const scope of ['self', 'team', 'department', 'org'])
           assert.equal(
             await evaluate(
@@ -1015,7 +1043,7 @@ try {
         await click('[data-nav=balances]');
         assert.deepEqual(
           await balanceTypes(),
-          expectedVisible(id),
+          expectedBalanceTypes(id),
           id + ' profile-filtered balance defaults',
         );
         assert.match(
@@ -1089,9 +1117,7 @@ try {
                 ? expected.filter((row) => row[2] === department)
                 : expected;
           assert.deepEqual(
-            await evaluate(
-              'window.VacateMock.visiblePeople().map(person=>person.id).sort()',
-            ),
+            await evaluate('window.VacateMock.visiblePeople().map(person=>person.id).sort()'),
             members.map((row) => row[0]).sort(),
             id + '/' + scope + ' member roster',
           );
@@ -1124,9 +1150,7 @@ try {
                 .map((row) => row[0])
                 .sort();
               assert.deepEqual(
-                await evaluate(
-                  'window.VacateMock.visiblePeople().map(person=>person.id).sort()',
-                ),
+                await evaluate('window.VacateMock.visiblePeople().map(person=>person.id).sort()'),
                 groupMembers,
                 id + '/' + group + ' selected roster',
               );
@@ -1191,15 +1215,7 @@ try {
         const directoryScope = scopes.at(-1);
         await load('?scope=' + directoryScope);
         await click('[data-nav="people"]');
-        const expectedDirectory = (
-          role === 'admin'
-            ? expected
-            : role === 'lead'
-              ? expected.filter((row) => row[2] === department)
-              : expected.filter((row) => row[1] === team)
-        )
-          .map((row) => row[0])
-          .sort();
+        const expectedDirectory = expected.map((row) => row[0]).sort();
         assert.deepEqual(
           await evaluate(
             'Array.from(document.querySelectorAll("#dialog-content [data-person]")).map(item=>item.dataset.person).sort()',
@@ -1418,7 +1434,7 @@ try {
         'Restore original annual fixture after zero-allocation regression',
       );
       await click('[data-page-link=balances]');
-      assert.deepEqual(await balanceTypes(), expectedShortlist);
+      assert.deepEqual(await balanceTypes(), mayaBalanceTypes);
       assert.match(
         await evaluate('document.querySelector("[data-balance=annual]").textContent'),
         /14 \/ 25 working days available/,
@@ -1444,7 +1460,7 @@ try {
       await click('#balance-toggle');
       assert.deepEqual(
         await balanceTypes(),
-        [...expectedShortlist, 'carer'],
+        [...mayaBalanceTypes, 'carer'],
         'Expanded uncommon balance stays visible',
       );
       assert.equal(await evaluate('document.querySelector("[data-balance=carer]").open'), true);
@@ -1457,7 +1473,7 @@ try {
       );
       assert.deepEqual(
         await balanceTypes(),
-        [...expectedShortlist, 'carer'],
+        [...mayaBalanceTypes, 'carer'],
         'Page navigation retains the balance catalogue state',
       );
       await click('#balance-toggle');

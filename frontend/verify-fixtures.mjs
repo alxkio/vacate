@@ -90,7 +90,7 @@ for (const [id, team, department, role] of expected) {
   );
   assert.deepEqual(
     plain(f.allowedScopes(person)),
-    ['self', 'team', 'department', 'org'],
+    role === 'employee' ? ['self', 'team', 'org'] : ['self', 'team', 'department', 'org'],
   );
   assert.deepEqual(ids(f.peopleFor(person, 'self')), [id]);
   const teamIds = expected

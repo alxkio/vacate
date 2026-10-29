@@ -4,7 +4,15 @@ import { createFixtures } from '../src/app/core/reference-data/fixtures.js';
 import { createSession } from './fixtures/session.js';
 import { createProfiles } from './fixtures/profiles.js';
 import { createOrganization } from './fixtures/organization.js';
-import type { DisplayPreferences, Person } from '../src/app/core/models/workspace.models';
+import type {
+  DisplayPreferences,
+  Fixtures,
+  LeaveType,
+  Person,
+  WorkspaceEnvironment,
+} from '../src/app/core/models/workspace.models';
+import { createCatalogue } from '../src/app/core/reference-data/catalogue.js';
+import { createEligibility } from '../src/app/core/reference-data/eligibility.js';
 
 const defaultDisplayPreferences: DisplayPreferences = { layout: 'calendar', colorScheme: 'a' };
 
@@ -14,11 +22,13 @@ const displayPreferencesKey = (person: Person) =>
 export const fixtureWorkspaceProvider = {
   provide: WorkspaceDataService,
   useFactory: () => {
-    const fixtures = createFixtures();
+    const fixtures = createFixtures() as unknown as Fixtures;
     const environment = {
       VacateFixtures: fixtures,
       VacateSession: createSession(fixtures, sessionStorage),
-    };
+    } as WorkspaceEnvironment;
+    environment.VacateLeave = createCatalogue(environment);
+    environment.VacateEligibility = createEligibility(environment);
     const profiles = createProfiles(environment),
       organization = createOrganization(environment);
     const session = environment.VacateSession;
@@ -40,8 +50,27 @@ export const fixtureWorkspaceProvider = {
       profiles,
       organization,
       fixtures,
+      get catalogue() {
+        return environment.VacateLeave;
+      },
+      get eligibility() {
+        return environment.VacateEligibility;
+      },
       api: { members: [], roles: { systemRoles: [], jobRoles: [] } },
       currentUser: () => environment.VacateSession.currentUser(),
+      decision: (id: string) => environment.VacateEligibility.decisionFor(id),
+      balance: (id: string) =>
+        environment.VacateEligibility.decisionFor(id).status === 'eligible'
+          ? environment.VacateLeave.balanceOf(id)
+          : null,
+      label: (type: LeaveType) => environment.VacateLeave.typeLabel(type),
+      visibleShortlist: () =>
+        environment.VacateLeave.shortlistIds
+          .map((id: string) => environment.VacateLeave.getType(id)!)
+          .filter(
+            (type: { id: string }) =>
+              environment.VacateEligibility.decisionFor(type.id).status !== 'not-eligible',
+          ),
       displayPreferences: (person = environment.VacateSession.currentUser()) => {
         if (!person) return { ...defaultDisplayPreferences };
 

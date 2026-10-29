@@ -386,10 +386,8 @@ FodyWeavers.xsd
 
 # VS Code files for those working on multiple tools
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+/frontend/.vscode/
+
 *.code-workspace
 
 # Local History for Visual Studio Code
@@ -489,13 +487,6 @@ appsettings.Local.json
 .env.local
 .env.*.local
 
-.vscode
 # Azure Functions machine-specific secrets
 local.settings.json
 artifacts/
-
-# Angular workspace editor configuration moved from web/ to frontend/.
-!frontend/.vscode/
-!frontend/.vscode/extensions.json
-!frontend/.vscode/launch.json
-!frontend/.vscode/tasks.json
