@@ -27,7 +27,12 @@ public sealed class OrganizationService(IOrganizationRepository organizations, I
         var org = access.RequireMember(actorId, guid);
         var m = memberships.Current(actorId)!;
         return new OrganizationSummary(org.Id, org.Guid, org.Name, org.WorkWeekDays,
-            org.Departments.SingleOrDefault(n => !n.IsDeleted && n.Id == m.Configuration.DepartmentId)?.Name, org.Teams.SingleOrDefault(n => !n.IsDeleted && n.Id == m.Configuration.TeamId)?.Name);
+            org.Departments.SingleOrDefault(n => !n.IsDeleted && n.Id == m.Configuration.DepartmentId)?.Name, org.Teams.SingleOrDefault(n => !n.IsDeleted && n.Id == m.Configuration.TeamId)?.Name,
+            m.Configuration.TeamId is { } teamId
+                ? memberships.ForOrganization(org.Id).Where(member => member.Configuration.TeamId == teamId)
+                    .Select(member => users.Find(member.UserId)).Where(user => user is { IsDeleted: false })
+                    .Select(user => mapper.Directory(user!)).ToArray()
+                : []);
     });
 
     public IReadOnlyList<DirectoryUserRecord> Directory(int actorId, Guid guid) => unitOfWork.Execute(() =>

@@ -1,15 +1,4 @@
-<a class="skip" href="#main"
-  >Skip to
-  {{
-    state.page === 'organization'
-      ? 'organization'
-      : state.page === 'settings'
-        ? 'settings'
-        : state.page === 'balances'
-          ? 'balances'
-          : 'calendar'
-  }}</a
->
+<a class="skip" href="#main">Skip to {{ pageTitle }}</a>
 <div
   class="app"
   [attr.data-layout]="state.layout"
@@ -22,10 +11,6 @@
       <span class="brand-symbol">v<span>•</span></span
       >vacate<span class="brand-dot">.</span>
     </div>
-    <span class="company"
-      ><span class="company-mark">N</span>{{ data.companyName
-      }}<span class="company-label">Demo company</span></span
-    >
     <div class="top-actions">
       <span id="demo-person" class="demo-person">{{ profileName }}</span
       ><span class="role-badge" id="demo-role">{{ user.role }} preview</span
@@ -43,13 +28,12 @@
         @if (accountOpen) {
           <div class="account-dropdown" id="account-dropdown" aria-label="Account options">
             <strong>{{ profileName }}</strong>
-            <button data-nav="settings">Profile &amp; membership</button>
+            <button data-nav="settings">Profile settings</button>
             <button data-action="account-details">Demo account details</button>
             <button data-action="logout">Sign out</button>
           </div>
         }
       </div>
-      <button class="text-button sign-out" data-action="logout">Sign out</button>
     </div>
   </header>
   <aside class="sidebar" aria-label="Main navigation">
@@ -66,36 +50,25 @@
       >
         <span aria-hidden="true">▦</span> Calendar
       </button>
-      <button
-        class="nav-item"
-        data-nav="balances"
-        [class.selected]="state.page === 'balances'"
-        [attr.aria-current]="state.page === 'balances' ? 'page' : null"
-      >
-        <span aria-hidden="true">▤</span> My balances
-      </button>
-      <button class="nav-item" data-nav="leave"><span aria-hidden="true">☀</span> My leave</button>
-      <button class="nav-item" data-nav="approvals" [hidden]="user.capability !== 'admin'">
-        <span aria-hidden="true">☑</span> Approvals <span class="nav-demo">Planned</span>
-      </button>
-      <button
-        class="nav-item"
-        data-nav="settings"
-        [class.selected]="state.page === 'settings'"
-        [attr.aria-current]="state.page === 'settings' ? 'page' : null"
-      >
-        <span aria-hidden="true">⚙</span> Settings
-      </button>
-      <button
-        class="nav-item"
-        data-nav="organization-settings"
-        [class.selected]="state.page === 'organization'"
-        [attr.aria-current]="state.page === 'organization' ? 'page' : null"
-        [hidden]="user.capability !== 'admin'"
-      >
-        <span aria-hidden="true">⚙</span> Organization
-      </button>
-      <button class="nav-item" data-nav="people"><span aria-hidden="true">♧</span> People</button>
+      @for (item of navigation; track item.id) {
+        @if (!item.admin || user.capability === 'admin') {
+          <button
+            class="nav-item"
+            [attr.data-nav]="item.id"
+            [class.selected]="
+              state.page === item.id || (item.id === 'leave' && state.page === 'balances')
+            "
+            [attr.aria-current]="
+              state.page === item.id || (item.id === 'leave' && state.page === 'balances')
+                ? 'page'
+                : null
+            "
+          >
+            <span aria-hidden="true">{{ item.icon }}</span
+            >{{ item.name }}
+          </button>
+        }
+      }
     </nav>
     <div class="sidebar-note">
       <span class="note-icon">↗</span><strong>Make room for time off.</strong>
@@ -109,33 +82,15 @@
       <div>
         <div class="breadcrumb">
           Workspace <span>/</span>
-          {{
-            state.page === 'organization'
-              ? 'Organization'
-              : state.page === 'settings'
-                ? 'Settings'
-                : state.page === 'balances'
-                  ? 'My balances'
-                  : 'Calendar'
-          }}
+          {{ pageTitle }}
         </div>
-        <h1>
-          {{
-            state.page === 'organization'
-              ? 'Your organization, connected'
-              : state.page === 'settings'
-                ? 'A little about you'
-                : state.page === 'balances'
-                  ? 'Your leave, in balance'
-                  : 'Your time, in view'
-          }}<span>.</span>
-        </h1>
+        <h1>{{ pageTitle }}<span>.</span></h1>
         <p id="subtitle">{{ subtitle }}</p>
       </div>
       <button
         class="primary"
         data-action="request"
-        [hidden]="state.page === 'settings' || state.page === 'organization'"
+        [hidden]="!['calendar', 'leave', 'balances'].includes(state.page)"
       >
         <span aria-hidden="true">＋</span> Request leave
       </button>
@@ -152,7 +107,7 @@
           ><button
             data-scope="team"
             [attr.aria-pressed]="state.scope === 'team'"
-            [hidden]="!scopes.includes('team')"
+            [hidden]="!scopes.includes('team') || !user.teamId"
           >
             My team</button
           ><button
@@ -328,19 +283,59 @@
         </aside>
       </div>
     </div>
-    @if (state.page === 'organization') {
-      <vacate-organization
-        [companyId]="state.denied ? 'unavailable' : user.companyId"
-        (changed)="changeDetector.markForCheck()"
-        (staleSession)="ensureSession()"
-      />
-    }
     @if (state.page === 'settings') {
-      <vacate-settings
+      <vacate-unified-settings
+        [companyId]="state.denied ? 'unavailable' : user.companyId"
+        [selected]="settingsSection"
+        (sectionChanged)="selectSettingsSection($event)"
         (saved)="changeDetector.markForCheck()"
         (displayPreferencesSaved)="applyDisplayPreferences($event)"
         (staleSession)="ensureSession()"
       />
+    }
+    @if (state.page === 'people') {
+      <vacate-people />
+    }
+    @if (state.page === 'admin-balances') {
+      @if (!state.denied) {
+        <vacate-admin-balances />
+      } @else {
+        <p role="alert">Organization unavailable.</p>
+      }
+    }
+    @if (state.page === 'approvals') {
+      <section class="navigation-card">
+        <h2>Approval Requests</h2>
+        @if (user.capability === 'admin' && !state.denied) {
+          <p role="status">Approval inbox unavailable.</p>
+          <p>
+            Request submission and approver assignments are not configured. Fictional pending leave
+            is not an assigned approval request.
+          </p>
+        } @else {
+          <p>You do not have access to approval requests.</p>
+        }
+      </section>
+    }
+    @if (state.page === 'leave') {
+      <section class="navigation-card">
+        <h2>My requests</h2>
+        <p>Your fictional request history. Requests are not saved or sent.</p>
+        <button class="inline-link" data-nav="balances">View my balances →</button>
+        <ul class="dialog-list">
+          @for (entry of entries; track entry.id) {
+            <li>
+              <strong>{{ entry.title }}</strong
+              ><small
+                >{{ shortDate(entry.start) }} – {{ shortDate(entry.end) }} ·
+                {{ data.typeName(entry.type) }} · {{ entry.status }}</small
+              >
+            </li>
+          } @empty {
+            <li>No requests.</li>
+          }
+        </ul>
+      </section>
     }
     @if (state.page === 'balances') {
       <vacate-balances
@@ -357,15 +352,7 @@
   </main>
 </div>
 <div id="announcement" class="sr-only" role="status" aria-live="polite">
-  {{
-    state.page === 'organization'
-      ? 'Organization administration'
-      : state.page === 'settings'
-        ? 'Your profile and membership settings'
-        : state.page === 'balances'
-          ? 'Your own leave balances'
-          : scopeName + ', ' + state.view + ' view, ' + period
-  }}
+  {{ state.page === 'calendar' ? scopeName + ', ' + state.view + ' view, ' + period : pageTitle }}
 </div>
 <dialog id="dialog" #dialog (close)="closed()" (click)="handleClick($event)">
   <form method="dialog"><button class="dialog-close" aria-label="Close dialog">×</button></form>

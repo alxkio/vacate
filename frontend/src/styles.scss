@@ -49,3 +49,84 @@ router-outlet { display: none; }
 @media(max-width:720px){.app[data-layout=planner] .insights{display:flex;flex-direction:column}}
 
 .account-menu{position:relative}.account-dropdown{position:absolute;right:0;top:48px;z-index:30;min-width:230px;padding:10px;background:#fff;border:1px solid var(--line);box-shadow:0 12px 32px #183d3226;border-radius:12px}.account-dropdown strong{display:block;font-size:12px;padding:10px;color:var(--muted);overflow-wrap:anywhere}.account-dropdown button{display:block;width:100%;text-align:left;padding:12px;border-radius:6px;background:#fff;font-size:13px}.account-dropdown button:hover{background:var(--pale)}
+
+.unified-settings {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.settings-navigation {
+  display: grid;
+  gap: 8px;
+}
+.settings-content {
+  min-width: 0;
+}
+.navigation-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+}
+.navigation-card p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.overview-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 20px 0;
+}
+.overview-filters label {
+  display: grid;
+  gap: 8px;
+}
+.overview-filters input,
+.overview-filters select {
+  max-width: 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+}
+.overview-table {
+  overflow-x: auto;
+}
+.overview-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.overview-table th,
+.overview-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.overview-table caption {
+  text-align: left;
+  padding: 12px 0;
+}
+.high-balance {
+  background: #fff4da;
+}
+@media (max-width: 800px) {
+  .unified-settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-navigation {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .settings-navigation .nav-item {
+    padding: 10px;
+  }
+}
+
+.employee-email {
+  display: block;
+  font-weight: 400;
+  margin-top: 5px;
+  color: var(--muted);
+}

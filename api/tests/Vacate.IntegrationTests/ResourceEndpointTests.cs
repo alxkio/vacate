@@ -269,6 +269,39 @@ public sealed class ResourceEndpointTests
     }
 
     [Test]
+    public async Task own_team_summary_includes_actor_follows_reassignment_and_omits_private_fields()
+    {
+        var employee = await Login("maya");
+        var admin = await Login("nora");
+        var path = $"organizations/{Company}/summary";
+        var members = (await Call("GET", path, employee)).Json!["teamMembers"]!.AsArray();
+        Assert.That(members.Select(member => member!["username"]!.ToString()),
+            Is.EquivalentTo(new[] { "maya@example.invalid", "theo@example.invalid", "iris@example.invalid" }));
+        foreach (var member in members)
+        {
+            Assert.That(member!.AsObject().Select(field => field.Key), Is.EquivalentTo(new[]
+            {
+                "username", "email", "firstName", "middleName", "lastName", "gender", "jobTitle", "systemRole"
+            }));
+        }
+
+        Assert.That((await Call("PATCH", $"organizations/{Company}/memberships/{GuidFor(4)}", admin,
+            new { teamId = GuidFor(400) })).Status, Is.EqualTo(200));
+        var reassigned = (await Call("GET", path, employee)).Json!["teamMembers"]!.AsArray();
+        Assert.That(reassigned.Select(member => member!["username"]!.ToString()),
+            Is.EquivalentTo(new[] { "maya@example.invalid", "leah@example.invalid", "ravi@example.invalid", "noah@example.invalid" }));
+        Assert.That((await Call("PATCH", $"organizations/{Company}/memberships/{GuidFor(4)}", admin,
+            new { teamId = (string?)null })).Status, Is.EqualTo(200));
+        Assert.That((await Call("GET", path, employee)).Json!["teamMembers"]!.AsArray(), Is.Empty);
+        Assert.That((await Call("GET", path)).Status, Is.EqualTo(401));
+        var foreign = (await Call("POST", "organizations", admin, new { name = "Other company" })).Json!["guid"]!.ToString();
+        Assert.That((await Call("GET", $"organizations/{foreign}/summary", employee)).Status, Is.EqualTo(404));
+        Assert.That((await Call("GET", $"organizations/{foreign}/memberships", await Login("daria"))).Status, Is.EqualTo(404));
+        Assert.That((await Call("GET", $"organizations/{Company}/memberships", employee)).Status, Is.EqualTo(404));
+        Assert.That((await Call("GET", $"organizations/{Company}/memberships", await Login("leah"))).Status, Is.EqualTo(404));
+    }
+
+    [Test]
     public async Task memberships_validate_references_dates_balances_and_admin_scope()
     {
         var token = await Login("nora");

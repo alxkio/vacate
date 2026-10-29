@@ -71,8 +71,66 @@ export class WorkspaceDataService {
     this.organization = this.api.organization;
     this.environment.VacateFixtures = {
       ...fixtures,
+      allowedScopes: (person) =>
+        this.isCurrentActor(person)
+          ? [...new Set([...fixtures.allowedScopes(person), 'self', 'team', 'org'])]
+          : fixtures.allowedScopes(person),
+      allowedTeams: (person) => {
+        const teams = fixtures.allowedTeams(person);
+        if (
+          !this.isCurrentActor(person) ||
+          !person.teamId ||
+          teams.some((team) => team.id === person.teamId)
+        )
+          return teams;
+        return [
+          ...teams,
+          {
+            id: person.teamId,
+            companyId: person.companyId,
+            name: this.groupName('team', person.teamId) || person.team,
+          },
+        ];
+      },
+      ownEntries: (person) => fixtures.ownEntries(this.referencePerson(person)),
+      balancesFor: (person) => fixtures.balancesFor(person ? this.referencePerson(person) : null),
+      peopleFor: (person, scope, group) => {
+        if (this.isCurrentActor(person) && scope === 'self')
+          return group && group !== person.id ? [] : [person];
+        if (
+          this.isCurrentActor(person) &&
+          scope === 'team' &&
+          (!group || group === person.teamId) &&
+          this.api.teamMembers
+        )
+          return this.myTeamPeople;
+        return fixtures.peopleFor(person, scope, group);
+      },
+      availabilityFor: (person, scope, group) => {
+        if (
+          this.isCurrentActor(person) &&
+          scope === 'team' &&
+          (!group || group === person.teamId) &&
+          this.api.teamMembers
+        ) {
+          const ids = new Set(this.myTeamPeople.map((member) => member.id));
+          return fixtures.entries
+            .filter((entry) => entry.companyId === person.companyId && ids.has(entry.person))
+            .map(({ id, person, companyId, start, end }) => ({
+              id,
+              person,
+              companyId,
+              start,
+              end,
+            }));
+        }
+        return fixtures.availabilityFor(person, scope, group);
+      },
       eligibilityProfileFor: (person: import('../models/workspace.models').Person) => {
-        const base = fixtures.eligibilityProfileFor(person) as Record<string, unknown> | null;
+        const base = fixtures.eligibilityProfileFor(this.referencePerson(person)) as Record<
+          string,
+          unknown
+        > | null;
         const own = this.profiles.read();
         if (!base || !own || person.id !== this.currentUser()?.id) return base;
         return {
@@ -108,6 +166,48 @@ export class WorkspaceDataService {
         set: (value) => Object.assign(this.environment, { [name]: value }),
       });
     }
+  }
+
+  private referencePerson(person: Person): Person {
+    const reference = this.environment.VacateFixtures.people.find(
+      (item) => item.id === person.id && item.companyId === person.companyId,
+    );
+    return this.isCurrentActor(person) && reference ? reference : person;
+  }
+
+  private isCurrentActor(person: Person | null) {
+    const actor = this.api.currentUser();
+    return (
+      !!actor &&
+      !!person &&
+      actor.id === person.id &&
+      actor.companyId === person.companyId &&
+      actor.teamId === person.teamId &&
+      actor.departmentId === person.departmentId
+    );
+  }
+
+  get myTeamPeople(): Person[] {
+    const actor = this.currentUser();
+    if (!actor?.teamId) return [];
+    const members = this.api.teamMembers;
+    if (!members) return this.fixtures.peopleFor(actor, 'team');
+    return members.map((member) => {
+      const reference = this.fixtures.people.find((person) => person.email === member.email);
+      return {
+        ...actor,
+        id: member.email === actor.email ? actor.id : reference?.id || member.username,
+        personId:
+          member.email === actor.email ? actor.personId : reference?.personId || member.username,
+        name: [member.firstName, member.middleName, member.lastName].filter(Boolean).join(' '),
+        title: member.jobTitle || '',
+        username: member.username,
+        email: member.email,
+        capability: member.systemRole === 'admin' ? 'admin' : 'employee',
+        role: member.systemRole === 'admin' ? 'Admin' : 'Employee',
+        initials: (member.firstName[0] + member.lastName[0]).toUpperCase(),
+      };
+    });
   }
 
   get companyName() {
@@ -166,7 +266,8 @@ export class WorkspaceDataService {
     } catch {
       return {
         ok: false,
-        error: 'This browser could not save your display preferences. Check browser storage permissions and try again.',
+        error:
+          'This browser could not save your display preferences. Check browser storage permissions and try again.',
       };
     }
     return { ok: true };

@@ -100,6 +100,17 @@ export class WorkspaceApiService {
     sessionStorage.removeItem('vacate.demo.account.v2');
   }
 
+  async directory() {
+    const token = this.token;
+    const people = await firstValueFrom(this.users.list(token));
+    if (!token || token !== this.token) throw Error('Your account changed. Reopen People.');
+    return people;
+  }
+
+  get teamMembers() {
+    return this.summaryRecord?.teamMembers;
+  }
+
   async refresh() {
     const token = this.token;
     const response = await firstValueFrom(this.sessions.current(token));

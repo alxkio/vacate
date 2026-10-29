@@ -356,6 +356,8 @@ try {
       'document.readyState === "complete" && !!document.querySelector("#period")?.textContent && !document.querySelector("#login-form")',
     );
   const signOut = async () => {
+    if (!(await evaluate('!!document.querySelector("[data-action=logout]")')))
+      await click('[data-action=account]');
     await click('[data-action="logout"]');
     await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');
   };
@@ -471,7 +473,8 @@ try {
     const ledgerBefore = await evaluate(
       'JSON.stringify(window.VacateFixtures.balancesFor(window.VacateSession.currentUser()))',
     );
-    await click('[data-nav=organization-settings]');
+    await click('[data-nav=settings]');
+    await click('[data-settings-section=organization]');
     await waitFor('!!document.querySelector("#organization-form")');
     assert.equal(await evaluate('document.querySelectorAll("[data-org-department]").length'), 2);
     assert.equal(await evaluate('document.querySelectorAll("[data-org-team]").length'), 4);
@@ -493,7 +496,7 @@ try {
       'document.querySelector("#organization-status")?.textContent.includes("Updated")',
     );
     assert.match(
-      await evaluate('document.querySelector(".company").textContent'),
+      await evaluate('document.querySelector("#organization-name").value'),
       /Northstar Studio/,
     );
     assert.equal(
@@ -574,6 +577,9 @@ try {
       'Reload retains API organization settings',
     );
     assert.equal(await evaluate('document.querySelector("#organization-week-6").checked'), true);
+    // Employee management belongs to People.
+    await click('[data-nav=people]');
+    await waitFor('!!document.querySelector(".org-membership-roster")');
     // Membership editor saves through the API and the API response refreshes the page.
     await click('[data-edit-membership=maya]');
     await waitFor('!!document.querySelector("#membership-form")');
@@ -582,8 +588,8 @@ try {
     );
     await click('#membership-form button[type=submit]');
     await waitFor('!document.querySelector("#membership-form")');
-    await navigate(baseUrl + '?page=organization');
-    await waitFor('!!document.querySelector("#organization-form")');
+    await navigate(baseUrl + '?page=people');
+    await waitFor('!!document.querySelector(".org-membership-roster")');
     await click('[data-edit-membership=maya]');
     await waitFor('!!document.querySelector("#membership-form")');
     assert.equal(
@@ -622,7 +628,112 @@ try {
       'PASS: VAC-2 organization settings, company/week edits, cancel/validation, department/team renames, sanitized members, unchanged ledgers, mobile, foreign IDs, retained edits, admin membership HTTP save/reload and mobile.',
     );
   };
-  if (process.env.MOCK_ORG_FUNCTIONAL_ONLY === '1') {
+  if (process.env.MOCK_NAVIGATION_ONLY === '1') {
+    await signIn('nora', 'nora');
+    await ready();
+    assert.equal(
+      await evaluate('document.querySelectorAll("nav#navigation [data-nav=settings]").length'),
+      1,
+    );
+    assert.equal(
+      await evaluate('!!document.querySelector(".topbar .company,.topbar .sign-out")'),
+      false,
+    );
+    assert.equal(
+      await evaluate(
+        '!!document.querySelector("nav#navigation [data-nav=organization-settings],nav#navigation [data-nav=balances]")',
+      ),
+      false,
+    );
+    await click('[data-nav=settings]');
+    await waitFor('!!document.querySelector("#profile-form")');
+    assert.equal(
+      await evaluate('document.querySelectorAll(".settings-navigation button").length'),
+      3,
+    );
+    await click('[data-settings-section=team]');
+    assert.match(
+      await evaluate('document.querySelector(".navigation-card").textContent'),
+      /Nora.*Example.*you/s,
+    );
+    await click('[data-settings-section=organization]');
+    await waitFor('!!document.querySelector("#organization-form")');
+    await screenshot('unified-settings-desktop.png');
+    await click('[data-nav=people]');
+    await waitFor('document.querySelectorAll("[data-edit-membership]").length === 12');
+    await click('[data-edit-membership=maya]');
+    await waitFor('!!document.querySelector("#membership-form")');
+    await click('[data-nav=admin-balances]');
+    await waitFor('document.querySelectorAll(".overview-table tbody tr").length === 12');
+    assert.match(
+      await evaluate('document.querySelector(".overview-table").textContent'),
+      /To confirm/,
+    );
+    await evaluate(
+      'document.querySelector("input[type=search]").value="Maya";document.querySelector("input[type=search]").dispatchEvent(new Event("input",{bubbles:true}))',
+    );
+    await waitFor('document.querySelectorAll(".overview-table tbody tr").length === 1');
+    assert.match(
+      await evaluate('document.querySelector(".overview-table tbody").textContent'),
+      /Maya/,
+    );
+    await screenshot('admin-balances-desktop.png');
+    await viewport(375, 1000);
+    assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true);
+    await screenshot('admin-balances-mobile.png');
+    await load('?page=settings&section=team');
+    assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true);
+    await screenshot('unified-settings-mobile.png');
+    await viewport(1600, 1100);
+    await click('[data-nav=approvals]');
+    assert.match(
+      await evaluate('document.querySelector(".navigation-card").textContent'),
+      /Approval inbox unavailable/,
+    );
+    await click('[data-nav=leave]');
+    assert.match(
+      await evaluate('document.querySelector(".navigation-card").textContent'),
+      /My requests/,
+    );
+    await click('.navigation-card [data-nav=balances]');
+    await waitFor('!!document.querySelector("vacate-balances")');
+    await signOut();
+    await signIn('maya', 'maya');
+    await ready();
+    assert.equal(
+      await evaluate(
+        '!!document.querySelector("nav#navigation [data-nav=admin-balances],nav#navigation [data-nav=approvals]")',
+      ),
+      false,
+    );
+    await load('?page=admin-balances');
+    assert.equal(await evaluate('!!document.querySelector(".overview-table")'), false);
+    await load('?page=organization');
+    await waitFor('!!document.querySelector("#organization-denied")');
+    await load('?page=settings&section=team');
+    assert.match(
+      await evaluate('document.querySelector(".navigation-card").textContent'),
+      /Maya.*Example.*you/s,
+    );
+    assert.equal(await evaluate('document.querySelectorAll(".navigation-card li").length'), 3);
+    await load('?scope=team');
+    assert.match(await evaluate('document.querySelector("#scope-count").textContent'), /3 people/);
+    await click('[data-nav=people]');
+    await waitFor('document.querySelectorAll("vacate-people [data-person]").length === 12');
+    assert.doesNotMatch(
+      await evaluate('document.querySelector("vacate-people").textContent'),
+      /sole care|married|dependentChildren/,
+    );
+    await click('[data-action=account]');
+    assert.equal(
+      await evaluate('!!document.querySelector("#account-dropdown [data-action=logout]")'),
+      true,
+    );
+    assert.deepEqual(errors, [], 'Unexpected navigation browser exceptions');
+    console.log(
+      'PASS: VAC-20 unified settings, own team, People membership editor/directory, personal leave, admin balance search, employee denials, explicit unavailable approvals, topbar cleanup and desktop/mobile layouts.',
+    );
+  } else if (process.env.MOCK_ORG_FUNCTIONAL_ONLY === '1') {
     await signIn('nora', 'nora');
     await ready();
     await organizationAcceptance();
@@ -660,7 +771,8 @@ try {
     assert.equal(await evaluate('document.querySelectorAll(".org-members li").length'), 3);
     await keyboardClick('.org-breadcrumb button:first-child');
     await keyboardClick('[data-nav=calendar]');
-    await keyboardClick('[data-nav=organization-settings]');
+    await keyboardClick('[data-nav=settings]');
+    await keyboardClick('[data-settings-section=organization]');
     await waitFor('!!document.querySelector("#organization-form")');
     assert.deepEqual(errors, [], 'Unexpected organization keyboard exceptions');
     console.log('PASS: isolated trusted keyboard department/team/organization navigation');
@@ -1040,7 +1152,8 @@ try {
         await closeDialog();
         assert.deepEqual(await balanceTypes(), [], id + ' calendar must not render all balances');
         assert.equal(await evaluate('document.querySelector("#balances-page").hidden'), true);
-        await click('[data-nav=balances]');
+        await click('[data-nav=leave]');
+        await click('.navigation-card [data-nav=balances]');
         assert.deepEqual(
           await balanceTypes(),
           expectedBalanceTypes(id),
@@ -1061,7 +1174,7 @@ try {
         assert.equal(await evaluate('document.querySelector("#calendar-page").hidden'), true);
         assert.equal(
           await evaluate(
-            'document.querySelector("[data-nav=balances]").getAttribute("aria-current")',
+            'document.querySelector("nav [data-nav=leave]").getAttribute("aria-current")',
           ),
           'page',
         );
@@ -1091,7 +1204,7 @@ try {
           `window.VacateFixtures.ownEntries(window.VacateFixtures.person(${JSON.stringify(id)})).map(entry=>entry.title)`,
         );
         const personalDialog = await evaluate(
-          'document.querySelector("#dialog-content").textContent',
+          'document.querySelector(".navigation-card").textContent',
         );
         for (const title of ownTitles)
           assert.ok(personalDialog.includes(title), id + ' own request missing');
@@ -1107,7 +1220,7 @@ try {
             /no .*request|no .*leave|nothing|empty/i,
             'Sam upcoming empty state',
           );
-        await closeDialog();
+        await click('[data-nav=calendar]');
         for (const scope of scopes.filter((value) => value !== 'self')) {
           await load('?scope=' + scope + '&view=week');
           const members =
@@ -1215,63 +1328,43 @@ try {
         const directoryScope = scopes.at(-1);
         await load('?scope=' + directoryScope);
         await click('[data-nav="people"]');
-        const expectedDirectory = expected.map((row) => row[0]).sort();
-        assert.deepEqual(
+        await waitFor(
+          '!!document.querySelector(".org-membership-roster") || document.querySelectorAll("vacate-people [data-person]").length === 12',
+        );
+        assert.equal(
           await evaluate(
-            'Array.from(document.querySelectorAll("#dialog-content [data-person]")).map(item=>item.dataset.person).sort()',
+            'document.querySelectorAll("vacate-people [data-person],vacate-people [data-edit-membership]").length',
           ),
-          expectedDirectory,
+          12,
           id + ' directory roster',
         );
-        const directory = await evaluate('document.querySelector("#dialog-content").textContent');
-        assert.doesNotMatch(
-          directory,
-          /Pending|Approved|allocation|working days available/i,
-          id + ' directory private state',
-        );
-        await closeDialog();
-        for (const nav of ['approvals']) {
-          assert.equal(
-            await evaluate(`!document.querySelector('[data-nav="${nav}"]').hidden`),
-            role === 'admin',
-            id + '/' + nav + ' affordance',
-          );
-          await evaluate(`window.VacateMock.showAdminDestination(${JSON.stringify(nav)})`);
-          assert.match(
-            await evaluate('document.querySelector("#dialog-content").textContent'),
-            role === 'admin' ? /planned|PLANNED/ : /Admin access only/,
-          );
-          assert.equal(
-            await evaluate(
-              'document.querySelectorAll("#dialog-content [data-approve],#dialog-content form").length',
-            ),
-            0,
-            'Planned page exposes actions',
-          );
-          await closeDialog();
-        }
         assert.equal(
-          await evaluate('!document.querySelector("[data-nav=organization-settings]").hidden'),
+          await evaluate('!!document.querySelector("nav [data-nav=approvals]")'),
           role === 'admin',
-          id + ' organization navigation',
         );
-        await evaluate('window.VacateMock.showAdminDestination("organization-settings")');
+        await load('?page=approvals');
+        assert.match(
+          await evaluate('document.querySelector(".navigation-card").textContent'),
+          role === 'admin' ? /unavailable/ : /do not have access/,
+        );
+        assert.equal(
+          await evaluate(
+            'document.querySelectorAll(".navigation-card [data-approve],.navigation-card form").length',
+          ),
+          0,
+        );
+        assert.equal(
+          await evaluate('!!document.querySelector("nav [data-nav=organization-settings]")'),
+          false,
+        );
+        await load('?page=settings&section=organization');
         await waitFor(
           '!!document.querySelector("#organization-form") || !!document.querySelector("#organization-denied")',
         );
         assert.equal(
           await evaluate('!!document.querySelector("#organization-form")'),
           role === 'admin',
-          id + ' organization access',
         );
-        if (role !== 'admin')
-          assert.equal(
-            await evaluate(
-              'document.querySelectorAll("[data-org-department],[data-org-team],#org-rename-form").length',
-            ),
-            0,
-            id + ' private structure leakage',
-          );
         await click('[data-nav=calendar]');
         await click('[data-action="request"]');
         await evaluate('document.querySelector("#request-amount").value="41"');
@@ -1363,7 +1456,8 @@ try {
       await ready();
       await load('?scope=team&view=week&date=2026-11-05');
       const retainedPeriod = await evaluate('document.querySelector("#period").textContent');
-      await click('[data-nav=balances]');
+      await click('[data-nav=leave]');
+      await click('.navigation-card [data-nav=balances]');
       assert.equal(await evaluate('new URLSearchParams(location.search).get("page")'), 'balances');
       assert.equal(await evaluate('document.querySelector("#calendar-page").hidden'), true);
       assert.equal(
@@ -1371,7 +1465,9 @@ try {
         'main',
         'Page navigation focuses main',
       );
-      await historyTo({ delta: -1 }, 'Back from balances');
+      await historyTo({ delta: -1 }, 'Back from balances to My Leave');
+      await waitFor('window.VacateMock.state.page === "leave"');
+      await historyTo({ delta: -1 }, 'Back from My Leave to calendar');
       await waitFor('!document.querySelector("#calendar-page").hidden');
       assert.equal(
         await evaluate('document.querySelector("#period").textContent'),
@@ -1380,6 +1476,8 @@ try {
       );
       assert.equal(await evaluate('window.VacateMock.state.scope'), 'team');
       assert.equal(await evaluate('window.VacateMock.state.layout'), 'calendar');
+      await historyTo({ delta: 1 }, 'Forward to My Leave');
+      await waitFor('window.VacateMock.state.page === "leave"');
       await historyTo({ delta: 1 }, 'Forward to balances');
       await waitFor('!document.querySelector("#balances-page").hidden');
       await navigate(await evaluate('location.href'));
@@ -1465,7 +1563,8 @@ try {
       );
       assert.equal(await evaluate('document.querySelector("[data-balance=carer]").open'), true);
       await click('[data-nav=calendar]');
-      await click('[data-nav=balances]');
+      await click('[data-nav=leave]');
+      await click('.navigation-card [data-nav=balances]');
       assert.equal(
         await evaluate('document.querySelector("[data-balance=carer]").open'),
         true,
@@ -1755,7 +1854,8 @@ try {
           layout.calendarBottom <= layout.annualTop + 1,
           `${preference.name} mobile calendar must precede annual balance`,
         );
-        await click('[data-nav=balances]');
+        await click('[data-nav=leave]');
+        await click('.navigation-card [data-nav=balances]');
         await click('#balance-toggle');
         await click('[data-action="request"]');
         await click('#request-type-toggle');

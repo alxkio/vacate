@@ -14,8 +14,9 @@ import { BalanceBar } from '../leave/allowance';
 import { Balances } from '../leave/balances';
 import { Calendar } from '../calendar/calendar';
 import { Request } from '../leave/request';
-import { ProfileSettings } from '../profile/profile-settings';
-import { OrganizationSettings } from '../organizations/organization-settings';
+import { UnifiedSettings } from '../settings/settings';
+import { People } from '../people/people';
+import { AdminBalances } from '../leave/admin-balances';
 import {
   addDays,
   dateFromKey,
@@ -42,7 +43,7 @@ interface DialogContent {
 
 @Component({
   selector: 'vacate-workspace',
-  imports: [Calendar, Balances, BalanceBar, Request, ProfileSettings, OrganizationSettings],
+  imports: [Calendar, Balances, BalanceBar, Request, UnifiedSettings, People, AdminBalances],
   templateUrl: './workspace.html',
 })
 export class Workspace implements OnInit, OnDestroy {
@@ -50,10 +51,21 @@ export class Workspace implements OnInit, OnDestroy {
   readonly router = inject(Router);
   readonly route = inject(ActivatedRoute);
   readonly changeDetector = inject(ChangeDetectorRef);
-  readonly user = this.data.currentUser()!;
+  private readonly initialUser = this.data.currentUser()!;
+
+  get user() {
+    return this.data.currentUser() || this.initialUser;
+  }
+
   readonly displayPreferences = this.data.displayPreferences(this.user);
-  readonly entries = this.data.fixtures.ownEntries(this.user);
-  readonly scopes = this.data.fixtures.allowedScopes(this.user);
+  get entries() {
+    return this.data.fixtures.ownEntries(this.user);
+  }
+
+  get scopes() {
+    return this.data.fixtures.allowedScopes(this.user);
+  }
+
   readonly defaultScope =
     this.user.capability === 'admin'
       ? 'org'
@@ -71,6 +83,14 @@ export class Workspace implements OnInit, OnDestroy {
     date: new Date(REFERENCE_TODAY),
   };
   balanceViewState = { showAll: false, expanded: new Set<string>() };
+  readonly navigation = [
+    { id: 'leave', name: 'My Leave', icon: '☀', admin: false },
+    { id: 'people', name: 'People', icon: '♧', admin: false },
+    { id: 'approvals', name: 'Approval Requests', icon: '☑', admin: true },
+    { id: 'admin-balances', name: 'Leave balances', icon: '▤', admin: true },
+    { id: 'settings', name: 'Settings', icon: '⚙', admin: false },
+  ];
+  settingsSection = 'profile';
   mobileOpen = false;
   accountOpen = false;
   get profileName() {
@@ -108,13 +128,26 @@ export class Workspace implements OnInit, OnDestroy {
     this.subscription = this.route.queryParamMap.subscribe((params) => {
       if (!this.ensureSession()) return;
       const previousPage = this.state.page;
-      this.state.page = ['organization', 'organization-settings'].includes(params.get('page') || '')
+      const requested = params.get('page') || this.route.snapshot.routeConfig?.path || 'calendar';
+      this.state.page = ['organization', 'organization-settings'].includes(requested)
+        ? 'settings'
+        : [
+              'calendar',
+              'balances',
+              'settings',
+              'leave',
+              'people',
+              'approvals',
+              'admin-balances',
+            ].includes(requested)
+          ? (requested as CalendarState['page'])
+          : 'calendar';
+      const section = params.get('section');
+      this.settingsSection = ['organization', 'organization-settings'].includes(requested)
         ? 'organization'
-        : params.get('page') === 'settings'
-          ? 'settings'
-          : params.get('page') === 'balances'
-            ? 'balances'
-            : 'calendar';
+        : section && ['organization', 'team', 'profile'].includes(section)
+          ? section
+          : 'profile';
       this.accountOpen = false;
       this.state.scope = params.get('scope') || this.defaultScope;
       this.state.groupId =
@@ -167,7 +200,7 @@ export class Workspace implements OnInit, OnDestroy {
   }
 
   ensureSession() {
-    if (this.data.currentUser()?.id === this.user.id) return true;
+    if (this.data.currentUser()?.id === this.initialUser.id) return true;
     location.replace('/login.html');
     return false;
   }
@@ -221,17 +254,36 @@ export class Workspace implements OnInit, OnDestroy {
       last = addDays(first, 6);
     return `${first.getDate()} ${monthName(first, 'short')} – ${last.getDate()} ${monthName(last, 'short')} ${last.getFullYear()}`;
   }
-  get subtitle() {
-    return this.state.page === 'organization'
-      ? 'Your organization, departments and teams.'
-      : this.state.page === 'settings'
-        ? 'Your profile and your place in the company.'
-        : this.state.page === 'balances'
-          ? 'Your own allowances, eligibility and rules. Each leave type keeps its own unit and period.'
-          : this.state.layout === 'planner'
-            ? 'A shared view of time away. A little easier to plan together.'
-            : 'Plan your next break. Keep your team in the picture.';
+  get pageTitle() {
+    return {
+      calendar: 'Your time, in view',
+      balances: 'Your leave, in balance',
+      settings: 'Settings',
+      organization: 'Settings',
+      leave: 'My Leave',
+      people: 'People',
+      approvals: 'Approval Requests',
+      'admin-balances': 'Leave balances overview',
+    }[this.state.page];
   }
+
+  get subtitle() {
+    return {
+      calendar:
+        this.state.layout === 'planner'
+          ? 'A shared view of time away. A little easier to plan together.'
+          : 'Plan your next break. Keep your team in the picture.',
+      balances:
+        'Your own allowances, eligibility and rules. Each leave type keeps its own unit and period.',
+      settings: 'Organization, team and profile settings in one place.',
+      organization: 'Organization settings.',
+      leave: 'Your requests and personal leave balances.',
+      people: 'Colleagues and employee management.',
+      approvals: 'Leave requests awaiting your approval.',
+      'admin-balances': 'Review employee annual leave balances across your organization.',
+    }[this.state.page];
+  }
+
   get upcoming() {
     return this.entries
       .filter((entry) => entry.end >= dateKey(REFERENCE_TODAY))
@@ -263,13 +315,14 @@ export class Workspace implements OnInit, OnDestroy {
   refresh() {
     this.state = { ...this.state };
     this.selectedDate = null;
-    document.title = `Vacate · ${this.state.page === 'organization' ? 'OrganizationSettings' : this.state.page === 'settings' ? 'ProfileSettings' : this.state.page === 'balances' ? 'My balances' : 'Calendar'}`;
+    document.title = `Vacate · ${this.pageTitle}`;
     this.changeDetector.markForCheck();
   }
 
   private query(page: string) {
     return {
       page,
+      section: page === 'settings' ? this.settingsSection : null,
       scope: this.state.scope,
       view: this.state.view,
       date: dateKey(this.state.date),
@@ -419,31 +472,19 @@ export class Workspace implements OnInit, OnDestroy {
 
   showAdminDestination(nav: string, trigger?: HTMLElement) {
     if (!this.ensureSession()) return;
-    if (nav !== 'approvals') {
-      void this.navigatePage('organization');
-      return;
-    }
-    const title = nav === 'approvals' ? 'Approvals' : 'OrganizationSettings settings';
-    this.open(
-      this.user.capability !== 'admin'
-        ? {
-            kind: 'info',
-            title: 'Admin access only',
-            paragraphs: [
-              `${title} is unavailable to this demo persona. Team-lead titles do not grant admin capability.`,
-            ],
-          }
-        : {
-            kind: 'info',
-            title,
-            eyebrow: `PLANNED · ${nav === 'approvals' ? 'VAC-4' : 'VAC-2'}`,
-            paragraphs: [
-              `This entry is reserved for admin personas. ${nav === 'approvals' ? 'The approval inbox is planned; there are no approval or self-approval actions yet.' : 'The settings preview is planned; no company configuration can be changed yet.'}`,
-              'Shared calendars continue to show availability only.',
-            ],
-          },
-      trigger,
-    );
+    if (nav === 'approvals') void this.navigatePage('approvals');
+    else void this.selectSettingsSection('organization');
+  }
+
+  async selectSettingsSection(section: string) {
+    if (!this.ensureSession()) return;
+    this.accountOpen = false;
+    this.mobileOpen = false;
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: 'settings', section },
+      queryParamsHandling: 'merge',
+    });
   }
 
   handleClick(event: Event) {
@@ -459,41 +500,20 @@ export class Workspace implements OnInit, OnDestroy {
       this.refresh();
     }
     if (button.classList.contains('mobile-menu')) this.mobileOpen = !this.mobileOpen;
-    if (nav === 'calendar' || nav === 'balances' || nav === 'settings') void this.navigatePage(nav);
-    if (nav === 'leave')
-      this.open(
-        {
-          kind: 'info',
-          title: 'Your leave',
-          paragraphs: [
-            `Fictional requests for ${this.user.name}. Balance figures are illustrative.`,
-          ],
-          items: this.entries.map((entry) => ({
-            text: entry.title || 'Leave',
-            detail: `${shortDate(entry.start)} – ${shortDate(entry.end)} · ${this.data.typeName(entry.type)} · ${entry.status}`,
-          })),
-        },
-        button,
-      );
-    if (nav === 'people')
-      this.open(
-        {
-          kind: 'info',
-          title: 'People in this scope',
-          paragraphs: [
-            'Fictional colleagues permitted by the current calendar filter. Availability only; no private requests or balances.',
-            ...(!this.visiblePeople.length ? ['No people in this scope.'] : []),
-          ],
-          items: this.visiblePeople.map((person) => ({
-            id: person.id,
-            text: person.name,
-            detail: `${person.title} · ${this.data.groupName('team', person.teamId) || person.team}`,
-          })),
-        },
-        button,
-      );
-    if (nav === 'approvals' || nav === 'organization-settings')
-      this.showAdminDestination(nav, button);
+    if (nav === 'settings') this.settingsSection = 'profile';
+    if (
+      nav &&
+      [
+        'calendar',
+        'balances',
+        'settings',
+        'leave',
+        'people',
+        'approvals',
+        'admin-balances',
+      ].includes(nav)
+    )
+      void this.navigatePage(nav);
     if (action === 'today') {
       this.state.date = new Date(REFERENCE_TODAY);
       this.refresh();

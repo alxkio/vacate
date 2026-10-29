@@ -32,7 +32,8 @@ public sealed record OrganizationRecord(int Id, Guid Guid, string Name, int Work
     IReadOnlyList<TeamRecord> Teams, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt,
     DateTimeOffset? DeleteRequestedAt, DateTimeOffset? DeletedAt);
 
-public sealed record OrganizationSummary(int Id, Guid Guid, string Name, int WorkWeekDays, string? DepartmentName, string? TeamName);
+public sealed record OrganizationSummary(int Id, Guid Guid, string Name, int WorkWeekDays, string? DepartmentName, string? TeamName,
+    IReadOnlyList<DirectoryUserRecord> TeamMembers);
 
 public sealed record ReferenceRecord(int Id, Guid Guid, string Name);
 

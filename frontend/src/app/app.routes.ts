@@ -24,10 +24,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login').then((module) => module.Login),
   },
   { path: 'index.html', canActivate: [signedIn], loadComponent: workspace },
-  ...['leave', 'approvals', 'availability', 'people'].map((path) => ({
-    path,
-    canActivate: [signedIn],
-    loadComponent: workspace,
-  })),
+  ...['leave', 'approvals', 'availability', 'people', 'settings', 'balances', 'admin-balances'].map(
+    (path) => ({
+      path,
+      canActivate: [signedIn],
+      loadComponent: workspace,
+    }),
+  ),
   { path: '**', redirectTo: 'index.html' },
 ];

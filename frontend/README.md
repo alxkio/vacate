@@ -65,7 +65,7 @@ See the [root README](../README.md#tests-todo).
 
 ## Profile and membership settings
 
-Open **Settings** in the sidebar or **Profile & membership** from the profile-initials dropdown (`/index.html?page=settings`). Names, gender, married, dependent children and sole care are editable; membership, sign-in email and account status are read-only. Save/cancel and validation use the profile API; edits survive browser reload/sign-out and reset on API restart. Only fictional accounts are seeded. Existing lead visibility remains separate from employee/admin system-role labels. Family edits refresh own fictional eligibility without changing allocations or assuming divorce. Admins edit membership configuration under Organization. Invitation delivery/acceptance remains open.
+Open **Settings** in the sidebar or **Profile settings** from the profile-initials dropdown (`/index.html?page=settings`). Names, gender, married, dependent children and sole care are editable; membership, sign-in email and account status are read-only. Save/cancel and validation use the profile API; edits survive browser reload/sign-out and reset on API restart. Only fictional accounts are seeded. Existing lead visibility remains separate from employee/admin system-role labels. Family edits refresh own fictional eligibility without changing allocations or assuming divorce. Admins edit membership configuration under People. Invitation delivery/acceptance remains open.
 
 The separate display-preferences card saves the calendar workspace/planner layout and green/warm-brown color scheme in browser local storage, keyed by fictional company and account. Preferences do not use the profile API. The calendar workspace and green scheme are the defaults.
 
@@ -73,7 +73,7 @@ On older macOS hosts where embedded Sass cannot run, `NG_BUILD_SASS_EMBEDDED=0` 
 
 ## Organization administration
 
-Company admins can open **Organization** from the sidebar or use `/index.html?page=organization`. Rename the organization, choose five/six working days, browse departments/teams and rename them. These pages and application services reject employees, non-admin leads, foreign companies and stale administrator forms. In the fictional calendar fixture, every demo account can now select organization-wide generic availability; this does not change admin authorization or implement production visibility rules.
+Company admins can open **Settings → Organization** or use `/index.html?page=organization`. Rename the organization, choose five/six working days, browse departments/teams and rename them. These pages and application services reject employees, non-admin leads, foreign companies and stale administrator forms. In the fictional calendar fixture, every demo account can now select organization-wide generic availability; this does not change admin authorization or implement production visibility rules.
 
 Structure is optional: the read model supports empty departments/teams, organization members without teams and teams without a department. The shipped Northstar fixture is one department/team example, not a hierarchy requirement. Standalone/cross-company organizations and arbitrary groups remain deferred. Create/delete operations are API-only.
 
@@ -86,3 +86,11 @@ Organization-only functional browser checks can run with `MOCK_ORG_FUNCTIONAL_ON
 Sign-in, own profile, memberships, organization/workweek and department/team edits require the Functions API with development sign-in and fictional seed data enabled. Start it on port 7071 using the [API development instructions](../api/README.md#development); `npm start` proxies /api. Resource clients use `ApiClient`, while `WorkspaceApiService` manages UI state with server-issued bearer sessions, caches read projections for rendering, and awaits HTTP before reporting save success. No local write fallback. Edits survive page reload/sign-out and reset on API restart. Public leave catalogue/ledger examples still use explicit fictional fixtures. The local profile/organization write factories are retained only as reference/component-test doubles. See [API contract](../docs/contracts/api.md).
 
 `verify.mjs` now proxies its /api requests to MOCK_API_URL (default http://127.0.0.1:7071) and requires a running enabled API. Its static server overrides config.json to use that proxy. Paired CI starts the actual Functions host and runs the built Angular acceptance journey.
+
+## Unified navigation · VAC-20
+
+The main sidebar contains Calendar, My Leave, People, admin-only Approval Requests/Leave balances, and one Settings entry. Settings has Organization, Team and Profile section navigation (`?page=settings&section=organization|team|profile`); the legacy `?page=organization` route resolves to the Organization section. Profile retains account membership and display preferences. My Leave contains own request history and links to the existing My balances view. People reuses the server directory for employees and membership editor for administrators.
+
+The employee balance overview (`?page=admin-balances`) uses the existing administrator-only membership API, filters by team/name and sorts remaining totals, names or teams. Its adjustable high-balance threshold defaults to 75% of known allocation. Null server totals remain “To confirm”, while provisional custom allocations are shown separately. My Team uses the current actor's team directory from the organization summary, includes the actor and does not imply management rights. Sign-out lives in the profile dropdown; the redundant demo company marker is removed from the top bar.
+
+Approval Requests is explicitly unavailable by product lead confirmation until a request/assignment backend exists. Public fictional pending entries are never presented as assigned work. No calendar redesign is included. `MOCK_NAVIGATION_ONLY=1 node verify.mjs` checks these flows against the running Functions API and built Angular artifact.

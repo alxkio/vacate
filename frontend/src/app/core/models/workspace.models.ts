@@ -125,7 +125,15 @@ export interface DisplayPreferences {
   colorScheme: ColorScheme;
 }
 export interface CalendarState {
-  page: 'calendar' | 'balances' | 'settings' | 'organization';
+  page:
+    | 'calendar'
+    | 'balances'
+    | 'settings'
+    | 'organization'
+    | 'leave'
+    | 'people'
+    | 'approvals'
+    | 'admin-balances';
   layout: CalendarLayout;
   colorScheme: ColorScheme;
   scope: string;

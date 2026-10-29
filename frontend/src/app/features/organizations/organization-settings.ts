@@ -88,6 +88,7 @@ export class OrganizationSettings implements OnChanges {
   }
 
   @Input() companyId = '';
+  @Input() membersOnly = false;
   readonly changed = output<void>();
   readonly staleSession = output<void>();
   readonly actorId = this.data.currentUser()?.id || '';

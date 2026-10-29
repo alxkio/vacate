@@ -122,6 +122,10 @@ export const fixtureWorkspaceProvider = {
         return organization.summary()?.workWeekDays || 5;
       },
       groupName: organization.groupName,
+      typeName: (id?: string) => {
+        const type = id && environment.VacateLeave.getType(id);
+        return type ? environment.VacateLeave.typeLabel(type) : 'Leave';
+      },
     };
   },
 };

@@ -76,6 +76,55 @@ describe('Angular demo data boundary', () => {
     expect(data.balance('annual')).toBeNull();
   });
 
+  it('uses current API team membership consistently for own-team listings, filters and availability after reassignment', () => {
+    data.environment.VacateSession.login('maya', 'maya');
+    const original = data.currentUser()!;
+    const moved = { ...original, teamId: 'platform', team: 'Platform' };
+    vi.spyOn(data.api, 'currentUser').mockReturnValue(moved);
+    Object.defineProperty(data.api, 'teamMembers', {
+      configurable: true,
+      value: [
+        {
+          username: 'maya@example.invalid',
+          email: 'maya@example.invalid',
+          firstName: 'Maya',
+          middleName: null,
+          lastName: 'Example',
+          jobTitle: 'Engineer',
+          systemRole: 'employee',
+        },
+        {
+          username: 'ravi@example.invalid',
+          email: 'ravi@example.invalid',
+          firstName: 'Ravi',
+          middleName: null,
+          lastName: 'Example',
+          jobTitle: 'Engineer',
+          systemRole: 'employee',
+        },
+      ],
+    });
+    expect(data.myTeamPeople.map((person) => person.id)).toEqual(['maya', 'ravi']);
+    expect(data.fixtures.peopleFor(moved, 'team').map((person) => person.id)).toEqual([
+      'maya',
+      'ravi',
+    ]);
+    expect(data.fixtures.allowedTeams(moved).map((team) => team.id)).toContain('platform');
+    expect(data.fixtures.peopleFor(moved, 'self')).toEqual([moved]);
+    expect(data.balance('annual')?.available).toBe(14);
+    expect(data.fixtures.ownEntries(moved).every((entry) => entry.person === 'maya')).toBe(true);
+    expect(
+      new Set(data.fixtures.availabilityFor(moved, 'team').map((entry) => entry.person)),
+    ).toEqual(new Set(['maya', 'ravi']));
+    expect(data.fixtures.availabilityFor(moved, 'team')[0].type).toBeUndefined();
+    expect(data.fixtures.peopleFor(moved, 'team', 'foreign-team')).toEqual([]);
+    expect(data.fixtures.peopleFor({ ...moved, companyId: 'foreign-company' }, 'team')).toEqual([]);
+    expect(data.fixtures.peopleFor(original, 'team').map((person) => person.id)).not.toContain(
+      'ravi',
+    );
+    vi.restoreAllMocks();
+  });
+
   it('stores display preferences by company and demo account and rejects stale-account writes', () => {
     data.environment.VacateSession.login('maya', 'maya');
     const maya = data.currentUser()!;
@@ -83,9 +132,10 @@ describe('Angular demo data boundary', () => {
     expect(data.displayPreferences()).toEqual({ layout: 'calendar', colorScheme: 'a' });
     expect(data.saveDisplayPreferences(maya, mayaPreferences)).toEqual({ ok: true });
     expect(data.displayPreferences()).toEqual(mayaPreferences);
-    expect(
-      data.displayPreferences({ ...maya, companyId: 'foreign-company' }),
-    ).toEqual({ layout: 'calendar', colorScheme: 'a' });
+    expect(data.displayPreferences({ ...maya, companyId: 'foreign-company' })).toEqual({
+      layout: 'calendar',
+      colorScheme: 'a',
+    });
 
     data.environment.VacateSession.logout();
     data.environment.VacateSession.login('nora', 'nora');

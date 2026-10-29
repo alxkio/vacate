@@ -31,6 +31,7 @@ export interface OrganizationSummary {
   workWeekDays: number;
   departmentName: string | null;
   teamName: string | null;
+  teamMembers: DirectoryUser[];
 }
 export interface ApiDepartment extends Lifecycle {
   id: number;
@@ -47,4 +48,15 @@ export interface OrganizationResponse extends Lifecycle {
   workWeekDays: number;
   departments: ApiDepartment[];
   teams: ApiTeam[];
+}
+
+export interface DirectoryUser {
+  username: string;
+  email: string;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  gender: string;
+  jobTitle: string | null;
+  systemRole: string | null;
 }
