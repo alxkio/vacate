@@ -102,6 +102,23 @@ Post-deploy checks poll for up to 24 attempts. Full deployments verify API liven
 
 There is no atomic rollback across Functions and Static Web Apps. If publishing or smoke checks fail, the workflow fails visibly; inspect the failed step, then redeploy a known good commit using the same environment. Do not delete the resource group or roll back database migrations. This first release has no database migrations. Changing environment infrastructure settings must be reviewed independently when redeploying older code.
 
+### Fictional demo sign-in in dev
+
+GitHub deployments to `dev` with `apply=true` set `DevelopmentAuthentication__Enabled=true` and `SeedData__Enabled=true` through Bicep. A preview with `apply=false` does not change settings. Staging and production deployments set both to `false`. The current dev target uses subscription `07d79495-1f4f-40fd-9fdf-84605214e5e6`, resource group `rg-vacate-dev`, and Function App `vacate-dev-wv5pdctnrzamu-api` (API URL: `https://vacate-dev-wv5pdctnrzamu-api.azurewebsites.net`). After a successful dev deployment/restart, try a seeded fictional account such as `maya` / `maya` or `nora` / `nora`; every seeded demo user uses their lowercase first name as both username and password.
+
+To check the active settings in the VS Code integrated terminal:
+
+```sh
+az account set --subscription 07d79495-1f4f-40fd-9fdf-84605214e5e6
+az functionapp config appsettings list \
+  --resource-group rg-vacate-dev \
+  --name vacate-dev-wv5pdctnrzamu-api \
+  --query "[?name=='DevelopmentAuthentication__Enabled' || name=='SeedData__Enabled'].[name,value]" \
+  --output table
+```
+
+This deliberately enables shared, predictable demo credentials on a publicly reachable API. Use only for fictional dev data; never enable these settings in staging or production. A subsequent Bicep deployment to dev re-applies the settings. Newly API-created users have no demo password. The API's seed data and session store are in-memory and process-local; this does not guarantee session continuity if Flex Consumption routes requests to different instances. Shared persistence/session storage or a single-instance hosting design is needed before treating this as reliable multi-instance authentication.
+
 ## Acceptance and verification
 
 - Given a PR modifying infrastructure, all environment parameter files compile without Azure login.
@@ -116,4 +133,4 @@ Sources checked 2026-10-21: [isolated .NET worker](https://learn.microsoft.com/e
 
 Frontend source and lockfile live in `frontend/`. CI publishes the built Angular index directly; `scripts/prepare-frontend.py` stamps revision metadata without overwriting it. The earlier static-gallery packaging pipeline is retired by VAC-10.
 
-The API-backed fictional settings iteration (VAC-13) requires development sign-in and seed adapters, which remain disabled in cloud configuration. Its in-memory store/sessions require a single worker and do not support the existing scalable cloud topology. No cloud enablement is included; select shared storage/identity before a real-data or multi-instance release. Full CI now also verifies built Angular against a running Functions host with fictional seed data; an explicitly selected frontend-only deployment skips that paired job and cannot validate API-backed changes.
+The API-backed fictional settings iteration (VAC-13) requires development sign-in and seed adapters, which are enabled only in dev through the environment-specific settings above. Its in-memory store/sessions do not provide durable or shared state across workers; this remains a fictional demo configuration, not a real-data or production authentication setup. Full CI also verifies built Angular against a running Functions host with fictional seed data; an explicitly selected frontend-only deployment skips that paired job and cannot validate API-backed changes.

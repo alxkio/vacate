@@ -21,6 +21,7 @@ param monitoringDailyCapGb string = '0.025'
 
 var suffix = uniqueString(subscription().subscriptionId, resourceGroup().id, environmentName)
 var baseName = '${namePrefix}-${environmentName}-${suffix}'
+var enableDevelopmentData = environmentName == 'dev'
 var tags = { application: 'vacate', environment: environmentName, managedBy: 'bicep' }
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
@@ -100,6 +101,8 @@ resource api 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'AzureWebJobsStorage__accountName', value: storage.name }
         { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
         { name: 'AzureWebJobsStorage__clientId', value: identity.properties.clientId }
+        { name: 'DevelopmentAuthentication__Enabled', value: enableDevelopmentData ? 'true' : 'false' }
+        { name: 'SeedData__Enabled', value: enableDevelopmentData ? 'true' : 'false' }
       ]
     }
     functionAppConfig: {
