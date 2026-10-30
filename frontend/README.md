@@ -79,7 +79,7 @@ Structure is optional: the read model supports empty departments/teams, organiza
 
 Changes survive reload/sign-out and reset on API restart. Renamed labels appear in the organization, calendar and membership views. Working days is company demo configuration; the reviewed leave catalogue/ledgers retain explicitly labelled five-day reference behavior. No six-day legal-policy calculator is implemented. `verify-organization.mjs` checks the component-test double, including flat/direct-team layouts and negative authorization contexts. [VAC-2](../docs/jira/VAC-2-organization-settings-mock.md) records scope and evidence.
 
-Organization-only functional browser checks can run with `MOCK_ORG_FUNCTIONAL_ONLY=1 node verify.mjs`. `MOCK_ORG_NATIVE_ONLY=1` isolates trusted keyboard navigation, and `MOCK_HEADFUL=1` opens a visible temporary test window instead of headless Chrome. The isolated organization keyboard check remains unverified on the current macOS host: CDP produced no DOM key/pointer events in both modes despite the focused-document report. Do not treat that diagnostic as passed; see VAC-2 for evidence and the remaining manual/alternate-host review gate.
+Organization-only functional browser checks can run with `MOCK_ORG_FUNCTIONAL_ONLY=1 node verify.mjs`. `MOCK_ORG_NATIVE_ONLY=1` isolates trusted keyboard navigation, and `MOCK_HEADFUL=1` opens a visible temporary test window instead of headless Chrome. Earlier organization keyboard verification on macOS could not deliver native key/pointer events despite the focused-document report; VAC-2 retains that historical evidence. The current renderer-focus and trusted-event checks are documented in [VAC-15](../docs/jira/media/VAC-15/verification-2026-10-30.md).
 
 ## API-backed profiles and organization settings · VAC-13
 
@@ -102,3 +102,7 @@ Approval Requests is explicitly unavailable by product lead confirmation until a
 ### Four advertised test personas · 2026-10-30
 
 The sign-in chooser and credential hints now show Maya (Employee), Leah (Team lead), Ella (Department lead), and Nora (Organization admin), each using the existing firstname/firstname credential. The two lead labels identify review scenarios with the same existing access. This only curates the chooser: all twelve fictional people, leave data, memberships, development credentials/aliases and automated tests remain intact. Separate lead permissions are deferred by explicit product lead instruction. API behavior and contracts are unchanged.
+
+### Native input readiness · VAC-15
+
+The harness brings Chrome forward, focuses the renderer with a trusted pointer interaction on inert text in the current document, then focuses the intended button and sends native Enter. It requires both a trusted Enter keydown and a trusted keyboard click. Focus emulation is not used; background renderer/window/timer throttling is disabled in every mode. Evidence listeners live on the document so Angular button replacement cannot detach them. Native actions are not retried or replaced with scripted clicks. `MOCK_NATIVE_ONLY=1` isolates this journey; default CI/deployment checks retain it alongside the complete browser suite. See the [verification record](../docs/jira/media/VAC-15/verification-2026-10-30.md).

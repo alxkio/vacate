@@ -18,7 +18,7 @@ All real Vacate issues, including completed releases. [Workflow, types and statu
 | VAC-12 | ![Story](badges/story.svg) | View membership and edit own profile from settings | 🔍 QA | [VAC-11](VAC-11-draft-user-schema.md), [VAC-10](VAC-10-consolidate-angular-frontend.md) (released) | [VAC-12](VAC-12-profile-and-membership-settings.md) |
 | VAC-13 | ![Story](badges/story.svg) | Support profiles, memberships and organizations through application services and API | 🔍 QA | [VAC-12](VAC-12-profile-and-membership-settings.md), [VAC-2](VAC-2-organization-settings-mock.md) | [VAC-13](VAC-13-api-backed-settings.md) |
 | VAC-14 | ![Bug](badges/bug.svg) | Fix local Azure Functions startup with supported Core Tools | ✅ Done | None | [VAC-14](VAC-14-fix-functions-core-tools-startup.md) |
-| VAC-15 | ![Bug](badges/bug.svg) | Stabilize trusted keyboard browser acceptance after closing a dialog | 🔍 QA | None | [VAC-15](VAC-15-stabilize-keyboard-browser-acceptance.md) |
+| VAC-15 | ![Bug](badges/bug.svg) | Stabilize trusted keyboard browser acceptance | 🔍 QA | None | [VAC-15](VAC-15-stabilize-keyboard-browser-acceptance.md) |
 | VAC-16 | ![Task](badges/task.svg) | Expose each API path and HTTP method as a separate Azure Function | 🔍 QA | None | [VAC-16](VAC-16-explicit-functions-routes-and-openapi.md) |
 | VAC-17 | ![Bug](badges/bug.svg) | Resolve the Azure Functions runtime mismatch blocking deployed API health | 🔍 QA | None | [VAC-17](VAC-17-resolve-azure-functions-runtime-mismatch.md) |
 | VAC-19 | ![Story](badges/story.svg) | Consolidate calendar preferences and balance ordering | 🔍 QA | None | [VAC-19](VAC-19-calendar-display-preferences-and-balances.md) |

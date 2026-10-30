@@ -92,9 +92,9 @@ const chrome = spawn(
     '--disable-gpu',
     '--disable-background-networking',
     '--no-first-run',
-    ...(process.env.MOCK_ORG_NATIVE_ONLY === '1'
-      ? ['--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows']
-      : []),
+    '--disable-renderer-backgrounding',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-background-timer-throttling',
     '--no-default-browser-check',
     '--disable-component-update',
     '--remote-debugging-port=0',
@@ -207,18 +207,62 @@ try {
           `(async()=>{document.querySelector(${JSON.stringify(selector)}).click();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));})()`,
           true,
         );
-  const keyboardClick = async (selector) => {
+  const prepareNativeFocus = async () => {
     await call('Page.bringToFront');
+    if (await evaluate('window.__nativeFocusReady && document.hasFocus()')) return;
+    // Focus emulation changes reported state without proving native input delivery.
+    // A click on inert text focuses the renderer without activating the tested control.
+    const point = await evaluate(`(()=>{
+      const anchor = document.querySelector('dialog[open] h2')
+        || document.querySelector('#account-dropdown strong')
+        || document.querySelector('main h1');
+      if (!anchor) throw Error('No inert focus anchor in the current document');
+      anchor.scrollIntoView({block:'center'});
+      window.__nativeFocusReady = false;
+      document.addEventListener('pointerdown', event => {
+        window.__nativeFocusReady = event.isTrusted;
+      }, {once:true, capture:true});
+      const rect = anchor.getBoundingClientRect();
+      return {x:rect.left + rect.width / 2, y:rect.top + rect.height / 2};
+    })()`);
+    await call('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point });
+    await call('Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      ...point,
+      button: 'left',
+      clickCount: 1,
+    });
+    await call('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      ...point,
+      button: 'left',
+      clickCount: 1,
+    });
+    await waitFor('window.__nativeFocusReady && document.hasFocus()');
+  };
+  const keyboardClick = async (selector) => {
+    await prepareNativeFocus();
     await evaluate(
       'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))',
     );
-    // Dialog close handlers can restore focus on the next frame. Select and focus
-    // the current rendered button only after those handlers have completed.
+    // Dialog close handlers can restore focus on the next frame.
     await evaluate(`document.querySelector(${JSON.stringify(selector)}).focus()`);
     await waitFor(`document.activeElement === document.querySelector(${JSON.stringify(selector)})`);
-    await evaluate(
-      `window.__keyboardClick=false;document.querySelector(${JSON.stringify(selector)}).addEventListener('click',event=>window.__keyboardClick=event.isTrusted,{once:true})`,
-    );
+    // Capture at the document so replacing an Angular button cannot detach the evidence listener.
+    await evaluate(`(()=>{
+      window.__keyboardObserver?.abort();
+      const observer = new AbortController();
+      window.__keyboardObserver = observer;
+      window.__keyboardClick = false;
+      window.__keyboardKeyTrusted = false;
+      window.__keyboardEvents = [];
+      for (const type of ['keydown', 'keyup', 'click']) document.addEventListener(type, event => {
+        const target = event.target.closest?.(${JSON.stringify(selector)});
+        window.__keyboardEvents.push({type, key:event.key, trusted:event.isTrusted, matches:!!target, detail:event.detail});
+        if (target && type === 'keydown' && event.key === 'Enter') window.__keyboardKeyTrusted = event.isTrusted;
+        if (target && type === 'click') window.__keyboardClick = event.isTrusted && event.detail === 0;
+      }, {capture:true, signal:observer.signal});
+    })()`);
     await call('Input.dispatchKeyEvent', {
       type: 'keyDown',
       key: 'Enter',
@@ -234,14 +278,14 @@ try {
       windowsVirtualKeyCode: 13,
     });
     try {
-      await waitFor('window.__keyboardClick');
+      await waitFor('window.__keyboardKeyTrusted && window.__keyboardClick');
     } catch (error) {
       throw Error(
         error.message +
           '; ' +
           JSON.stringify(
             await evaluate(
-              '({keyEvents:window.__keyLog,pointerEvents:window.__pointerLog,visibility:document.visibilityState,focused:document.hasFocus(),active:document.activeElement?.outerHTML.slice(0,250),organizationHeading:document.querySelector("#org-view-heading")?.textContent,dialog:document.querySelector("#dialog")?.open})',
+              '({nativeFocusReady:window.__nativeFocusReady,events:window.__keyboardEvents,visibility:document.visibilityState,focused:document.hasFocus(),active:document.activeElement?.outerHTML.slice(0,250),dialog:document.querySelector("#dialog")?.open})',
             ),
           ),
       );
@@ -332,7 +376,7 @@ try {
   };
   await call('Runtime.enable');
   await call('Page.enable');
-  await call('Emulation.setFocusEmulationEnabled', { enabled: true });
+  await call('Page.bringToFront');
   await viewport(1600, 1250);
   await navigate(baseUrl);
   await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');
