@@ -89,6 +89,7 @@ const chrome = spawn(
   process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   [
     ...(process.env.MOCK_HEADFUL === '1' ? [] : ['--headless']),
+    '--allow-pre-commit-input',
     '--disable-gpu',
     '--disable-background-networking',
     '--no-first-run',
@@ -207,39 +208,182 @@ try {
           `(async()=>{document.querySelector(${JSON.stringify(selector)}).click();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));})()`,
           true,
         );
-  const prepareNativeFocus = async () => {
-    await call('Page.bringToFront');
-    if (await evaluate('window.__nativeFocusReady && document.hasFocus()')) return;
-    // Focus emulation changes reported state without proving native input delivery.
-    // A click on inert text focuses the renderer without activating the tested control.
-    const point = await evaluate(`(()=>{
-      const anchor = document.querySelector('dialog[open] h2')
-        || document.querySelector('#account-dropdown strong')
-        || document.querySelector('main h1');
-      if (!anchor) throw Error('No inert focus anchor in the current document');
-      anchor.scrollIntoView({block:'center'});
-      window.__nativeFocusReady = false;
-      document.addEventListener('pointerdown', event => {
-        window.__nativeFocusReady = event.isTrusted;
-      }, {once:true, capture:true});
-      const rect = anchor.getBoundingClientRect();
-      return {x:rect.left + rect.width / 2, y:rect.top + rect.height / 2};
-    })()`);
-    await call('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point });
-    await call('Input.dispatchMouseEvent', {
-      type: 'mousePressed',
-      ...point,
-      button: 'left',
-      clickCount: 1,
-    });
-    await call('Input.dispatchMouseEvent', {
-      type: 'mouseReleased',
-      ...point,
-      button: 'left',
-      clickCount: 1,
-    });
-    await waitFor('window.__nativeFocusReady && document.hasFocus()');
+
+  const prepareNativeFocus = async ({ dispatch = call, timeoutMs = 5000 } = {}) => {
+    const started = Date.now();
+    let attempts = 0;
+    try {
+      do {
+        attempts++;
+        await dispatch('Page.bringToFront');
+        const point = await evaluate(`(async()=>{
+          window.__nativeFocusObserver?.abort();
+          const observer = new AbortController();
+          window.__nativeFocusObserver = observer;
+          window.__nativeFocusReady = false;
+          const state = window.__nativeFocus = {pointer:false, keyDown:false, keyUp:false, events:[]};
+          const anchor = document.querySelector('dialog[open] h2')
+            || document.querySelector('#account-dropdown strong')
+            || document.querySelector('main h1');
+          if (!anchor) throw Error('No inert focus anchor in the current document');
+          anchor.scrollIntoView({block:'center', inline:'nearest', behavior:'instant'});
+          await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+          const rect = anchor.getBoundingClientRect();
+          const point = {x:rect.left + rect.width / 2, y:rect.top + rect.height / 2};
+          const hit = document.elementFromPoint(point.x, point.y);
+          state.anchor = anchor.tagName;
+          state.hit = hit?.tagName;
+          state.point = point;
+          // Never let focus preparation activate a control or click through an overlay.
+          if (!rect.width || !rect.height || !anchor.contains(hit)
+            || hit.closest('button, a, input, select, textarea, [role="button"], [contenteditable="true"]')) return null;
+          for (const type of ['pointerdown', 'keydown', 'keyup']) document.addEventListener(type, event => {
+            state.events.push({type, key:event.key, trusted:event.isTrusted});
+            if (type === 'pointerdown') state.pointer = event.isTrusted && anchor.contains(event.target);
+            if (event.key === 'Shift' && type === 'keydown') state.keyDown = event.isTrusted;
+            if (event.key === 'Shift' && type === 'keyup') state.keyUp = event.isTrusted;
+          }, {capture:true, signal:observer.signal});
+          return point;
+        })()`);
+        if (point) {
+          await dispatch('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point });
+          await dispatch('Input.dispatchMouseEvent', {
+            type: 'mousePressed',
+            ...point,
+            button: 'left',
+            buttons: 1,
+            clickCount: 1,
+          });
+          await dispatch('Input.dispatchMouseEvent', {
+            type: 'mouseReleased',
+            ...point,
+            button: 'left',
+            buttons: 0,
+            clickCount: 1,
+          });
+          // A modifier probe proves the keyboard path without activating application UI.
+          await dispatch('Input.dispatchKeyEvent', {
+            type: 'rawKeyDown',
+            key: 'Shift',
+            code: 'ShiftLeft',
+            windowsVirtualKeyCode: 16,
+            modifiers: 8,
+            location: 1,
+          });
+          await dispatch('Input.dispatchKeyEvent', {
+            type: 'keyUp',
+            key: 'Shift',
+            code: 'ShiftLeft',
+            windowsVirtualKeyCode: 16,
+            modifiers: 0,
+            location: 1,
+          });
+          if (
+            await evaluate(`window.__nativeFocusReady = document.hasFocus()
+              && window.__nativeFocus.pointer && window.__nativeFocus.keyDown && window.__nativeFocus.keyUp`)
+          )
+            return;
+        }
+        // Only inert readiness probes repeat. The subsequent application action runs once.
+        await pause(100);
+      } while (Date.now() - started < timeoutMs);
+      throw Error(
+        'Native input readiness failed: ' +
+          JSON.stringify({
+            attempts,
+            ...(await evaluate(`({focused:document.hasFocus(), visibility:document.visibilityState,
+              active:document.activeElement?.tagName, ...window.__nativeFocus})`)),
+          }),
+      );
+    } finally {
+      await evaluate('window.__nativeFocusObserver?.abort()');
+    }
   };
+
+  const nativeFocusAcceptance = async () => {
+    let attempts = 0;
+    // Reproduce delayed input readiness without retrying the subsequent Enter action.
+    await prepareNativeFocus({
+      dispatch: async (method, params) => {
+        if (method === 'Page.bringToFront') attempts++;
+        if (attempts <= 3 && method.startsWith('Input.')) return {};
+        return call(method, params);
+      },
+    });
+    assert.ok(attempts >= 4, 'Readiness must recover from dropped preparation input');
+    assert.equal(await evaluate('window.__nativeFocusReady'), true);
+
+    // Neither a CDP success response nor scripted DOM events prove native delivery.
+    for (const delivery of ['none', 'synthetic', 'pointer', 'keyboard']) {
+      await assert.rejects(
+        prepareNativeFocus({
+          timeoutMs: 250,
+          dispatch: async (method, params) => {
+            if (!method.startsWith('Input.')) return call(method, params);
+            if (delivery === 'pointer' && method === 'Input.dispatchMouseEvent')
+              return call(method, params);
+            if (delivery === 'keyboard' && method === 'Input.dispatchKeyEvent')
+              return call(method, params);
+            if (delivery === 'synthetic') {
+              if (params.type === 'mousePressed') {
+                await evaluate(
+                  `document.querySelector('main h1').dispatchEvent(new PointerEvent('pointerdown', {bubbles:true}))`,
+                );
+              }
+              if (method === 'Input.dispatchKeyEvent') {
+                await evaluate(
+                  `document.dispatchEvent(new KeyboardEvent(${JSON.stringify(params.type === 'keyUp' ? 'keyup' : 'keydown')}, {key:'Shift', bubbles:true}))`,
+                );
+              }
+            }
+            return {};
+          },
+        }),
+        /Native input readiness failed:/,
+      );
+      assert.equal(await evaluate('window.__nativeFocusReady'), false);
+      assert.deepEqual(
+        await evaluate(
+          '({pointer:window.__nativeFocus.pointer, keyDown:window.__nativeFocus.keyDown, keyUp:window.__nativeFocus.keyUp})',
+        ),
+        {
+          pointer: delivery === 'pointer',
+          keyDown: delivery === 'keyboard',
+          keyUp: delivery === 'keyboard',
+        },
+        `Incomplete or untrusted ${delivery} delivery must not pass readiness`,
+      );
+    }
+
+    // An overlay must block preparation rather than receive a misplaced click.
+    await evaluate(`(()=>{
+      const blocker = document.createElement('button');
+      blocker.id = 'native-focus-blocker';
+      blocker.style.cssText = 'position:fixed;inset:0;z-index:2147483647';
+      document.body.append(blocker);
+    })()`);
+    let blockedInput = 0;
+    try {
+      await assert.rejects(
+        prepareNativeFocus({
+          timeoutMs: 250,
+          dispatch: async (method, params) => {
+            if (method.startsWith('Input.')) blockedInput++;
+            return call(method, params);
+          },
+        }),
+        /Native input readiness failed:/,
+      );
+      assert.equal(blockedInput, 0, 'Preparation must not click an overlay');
+    } finally {
+      await evaluate('document.querySelector("#native-focus-blocker").remove()');
+    }
+    assert.equal(await evaluate('document.querySelector("#dialog").open'), false);
+    console.log(
+      'PASS: native readiness recovers dropped probes, rejects missing/untrusted input and refuses overlays',
+    );
+  };
+
   const keyboardClick = async (selector) => {
     await prepareNativeFocus();
     await evaluate(
@@ -376,6 +520,12 @@ try {
   };
   await call('Runtime.enable');
   await call('Page.enable');
+  console.log('Browser acceptance: ' + (await call('Browser.getVersion')).product);
+  if (process.env.MOCK_CPU_THROTTLE) {
+    const rate = Number(process.env.MOCK_CPU_THROTTLE);
+    assert.ok(Number.isFinite(rate) && rate >= 1, 'MOCK_CPU_THROTTLE must be at least 1');
+    await call('Emulation.setCPUThrottlingRate', { rate });
+  }
   await call('Page.bringToFront');
   await viewport(1600, 1250);
   await navigate(baseUrl);
@@ -1060,6 +1210,7 @@ try {
       await signIn('user', 'user');
       await ready();
       await load('?scope=self&view=month');
+      await nativeFocusAcceptance();
       // Exercise native keyboard behavior on a fresh document, independently of history traversal.
       // Native keyboard activation creates trusted browser input in a fresh document,
       // independently of the synthetic DOM clicks used for the data-oriented checks below.

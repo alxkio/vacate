@@ -42,6 +42,7 @@ None.
 - [x] Tenant isolation is not exercised: this issue changes only browser-test sequencing, not application data or authorization.
 
 - [x] Native actions establish real renderer focus and require both a trusted Enter keydown and a trusted keyboard click; reported/emulated focus alone is insufficient.
+- [x] Dropped preparation input recovers; absent, untrusted, pointer-only and keyboard-only input fails readiness; an overlay receives no preparation input. Application actions remain single-attempt.
 - [ ] Repeated fresh-browser native acceptance and the complete hosted check pass without synthetic click fallback, skipped native assertions or retrying application actions.
 
 ## Subtasks and responsibilities
@@ -89,11 +90,17 @@ C-6 · 2026-10-30 · Codex: reopened for the first-date native-input failure in 
 
 C-7 · 2026-10-30 · Codex: removed focus emulation, enabled standard renderer/background automation flags for all test modes, and added verified native renderer focus before Enter. Document-level evidence must observe both trusted Enter and trusted keyboard click on the intended control. Three consecutive fresh-browser native-only runs passed; full default suite is running. See [current verification](media/VAC-15/verification-2026-10-30.md).
 
+C-8 · 2026-10-30 · Codex: correction C-7 passed standalone CI twice at 6ff8c24, but [Deploy Azure 41031274200](https://github.com/alxkio/vacate/actions/runs/41031274200) failed waiting for its single pointer focus probe. Reopened for bounded inert preparation, trusted pointer and modifier-key delivery checks, and deterministic dropped/missing/untrusted input and overlay regression scenarios. User requested extensive local verification before committing. Application actions remain single-attempt; product/API/authorization behavior is unaffected.
+
+C-9 · 2026-10-30 · Codex: follow-up correction passed six fresh-browser native journeys (including 4× and 8× CPU slowdown), two complete default suites (normal/4×), and focused unified navigation/admin balances/history acceptance. All six preparation fault scenarios ran in every native/full journey. Existing frontend/backend tests, production frontend build, real HTTP/schema, TypeScript and fixture checks passed. Hosted execution of this correction and independent release acceptance remain separate from this local evidence.
+
 ## Decisions
 
 D-1 · 2026-10-28 · Codex: Exercise the dialog's native keyboard close path rather than closing the dialog through DOM scripting immediately before another trusted keyboard check.
 
 D-2 · 2026-10-30 · Codex: a DOM/emulated focus report does not establish native input delivery. Require trusted transport evidence and retain every application-action assertion; no scripted fallback, action retry or native skip.
+
+D-3 · 2026-10-30 · Codex: repeat only harmless preparation probes within five seconds, after waiting for rendered layout and verifying an inert hit target. Require both trusted pointer input and a complete trusted Shift press/release before dispatching the tested action once. Negative browser scenarios must still fail closed for absent, partially delivered or untrusted input.
 
 ## Work log
 
@@ -102,6 +109,7 @@ D-2 · 2026-10-30 · Codex: a DOM/emulated focus report does not establish nativ
 | W-1 | 2026-10-28 | Codex / assistant recorded | Investigate the browser failure and stabilize keyboard acceptance sequencing | Unknown | Session work; no complete issue duration measured |
 | W-2 | 2026-10-28 | Codex / assistant recorded | Update issue evidence and backlog after focused browser verification | Unknown | Session work; no complete issue duration measured |
 | W-3 | 2026-10-30 | Codex / assistant recorded | Reproduce deployment-check focus failure, validate native renderer transport and run repeated native/full-browser checks | Unknown | No complete session duration measured; current verification record |
+| W-4 | 2026-10-30 | Codex / assistant recorded | Investigate repeated focus-preparation failure, add deterministic browser fault scenarios and verify locally under CPU throttling | Unknown | No complete session duration measured; current verification record |
 
 Human actual: Unknown. Assistant recorded: Unknown. No estimates or overlapping elapsed totals.
 
@@ -115,6 +123,10 @@ H-3 · 2026-10-30 · Codex: reopened In progress after deployment checks failed 
 
 H-4 · 2026-10-30 · Codex: returned to QA after three consecutive fresh-browser native-only runs and the complete default browser suite passed; hosted verification and independent acceptance remain pending.
 
+H-5 · 2026-10-30 · Codex: reopened In progress because deployment checks still failed at 6ff8c24 despite two successful standalone CI executions. Extensive local verification of the preparation correction is in progress before committing.
+
+H-6 · 2026-10-30 · Codex: returned to QA after deterministic input-failure scenarios, repeated native/stressed/full browser journeys and focused navigation passed locally. See the follow-up evidence; this does not claim an Azure release.
+
 ## Verification and release
 
 ### Original verification · 2026-10-28
@@ -125,6 +137,10 @@ Focused browser acceptance passed with `MOCK_NATIVE_ONLY=1`, the locally built f
 
 The existing real-HTTP suite, three consecutive fresh-browser native-only runs and the complete default browser suite passed against the actual local Functions API. All native assertions were enabled, including both trusted Enter delivery and trusted keyboard activation. Formatting, syntax and whitespace checks passed. [Current evidence and technical sources](media/VAC-15/verification-2026-10-30.md) record the focus correction. Hosted CI verification follows the push; no new Azure deployment is claimed.
 
+### Follow-up preparation correction · 2026-10-30
+
+The first correction above was insufficient on the deployment runner. The follow-up now verifies both pointer and keyboard delivery, waits for rendered/hit-tested inert text and repeats only harmless preparation within a five-second retry budget. Six focused native runs, two complete default runs and focused navigation acceptance passed locally, including CPU slowdown and deterministic absent/partial/untrusted input scenarios. The [follow-up evidence](media/VAC-15/verification-2026-10-30.md#follow-up-after-the-second-deployment-check-failure) records the full local matrix and the original runner-state uncertainty. No application, API, permissions or fixture changes.
+
 ## Open questions and follow-up
 
-The full browser suite still needs to complete in CI to confirm the reported failure is resolved end to end.
+Local verification cannot establish the precise Chromium state in the earlier failed runner; that remains UNVERIFIED. Hosted CI and deployment verification of the follow-up are still required at the time of this local evidence record.
