@@ -32,11 +32,27 @@ export interface OrganizationSummary {
   departmentName: string | null;
   teamName: string | null;
   teamMembers: DirectoryUser[];
+  settingsAccess?: SettingsAccess;
+}
+export interface VacationSettings {
+  requireVacationApproval: boolean;
+  departmentLeadSettingsEnabled: boolean;
+  teamLeadSettingsEnabled: boolean;
+  carryoverEnabled: boolean;
+  carryoverYears: number;
+}
+export interface SettingsAccess {
+  role: string;
+  organization: boolean;
+  effectiveVacationApproval: boolean;
+  departments: ApiDepartment[];
+  teams: ApiTeam[];
 }
 export interface ApiDepartment extends Lifecycle {
   id: number;
   guid: string;
   name: string;
+  requireVacationApproval?: boolean | null;
 }
 export interface ApiTeam extends ApiDepartment {
   departmentId: string | null;
@@ -48,6 +64,7 @@ export interface OrganizationResponse extends Lifecycle {
   workWeekDays: number;
   departments: ApiDepartment[];
   teams: ApiTeam[];
+  settings?: VacationSettings;
 }
 
 export interface DirectoryUser {

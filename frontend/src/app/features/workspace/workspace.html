@@ -11,9 +11,12 @@
       <span class="brand-symbol">v<span>•</span></span
       >vacate<span class="brand-dot">.</span>
     </div>
+    <span class="company" id="workspace-organization">
+      <span class="company-mark" aria-hidden="true">{{ data.companyName.charAt(0) }}</span>
+      {{ data.companyName }}
+    </span>
     <div class="top-actions">
-      <span id="demo-person" class="demo-person">{{ profileName }}</span
-      ><span class="role-badge" id="demo-role">{{ user.role }} preview</span
+      <span class="role-badge" id="demo-role">{{ user.role }} preview</span
       ><button class="text-button" data-action="help">Help & feedback</button>
       <div class="account-menu">
         <button
@@ -28,7 +31,7 @@
         @if (accountOpen) {
           <div class="account-dropdown" id="account-dropdown" aria-label="Account options">
             <strong>{{ profileName }}</strong>
-            <button data-nav="settings">Profile settings</button>
+            <button data-nav="settings">Settings</button>
             <button data-action="account-details">Demo account details</button>
             <button data-action="logout">Sign out</button>
           </div>
@@ -318,24 +321,7 @@
       </section>
     }
     @if (state.page === 'leave') {
-      <section class="navigation-card">
-        <h2>My requests</h2>
-        <p>Your fictional request history. Requests are not saved or sent.</p>
-        <button class="inline-link" data-nav="balances">View my balances →</button>
-        <ul class="dialog-list">
-          @for (entry of entries; track entry.id) {
-            <li>
-              <strong>{{ entry.title }}</strong
-              ><small
-                >{{ shortDate(entry.start) }} – {{ shortDate(entry.end) }} ·
-                {{ data.typeName(entry.type) }} · {{ entry.status }}</small
-              >
-            </li>
-          } @empty {
-            <li>No requests.</li>
-          }
-        </ul>
-      </section>
+      <vacate-my-leave />
     }
     @if (state.page === 'balances') {
       <vacate-balances

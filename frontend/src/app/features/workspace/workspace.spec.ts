@@ -3,6 +3,7 @@ import { Location } from '@angular/common';
 import { provideLocationMocks } from '@angular/common/testing';
 import { firstValueFrom, filter } from 'rxjs';
 import { NavigationEnd, Router, provideRouter } from '@angular/router';
+import { routes } from '../../app.routes';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
@@ -13,15 +14,7 @@ describe('Workspace navigation', () => {
     sessionStorage.clear();
     TestBed.configureTestingModule({
       imports: [Workspace],
-      providers: [
-        fixtureWorkspaceProvider,
-        provideLocationMocks(),
-        provideRouter([
-          { path: 'index.html', component: Workspace },
-          { path: 'people', component: Workspace },
-          { path: 'leave', component: Workspace },
-        ]),
-      ],
+      providers: [fixtureWorkspaceProvider, provideLocationMocks(), provideRouter(routes)],
     });
   });
 
@@ -40,8 +33,15 @@ describe('Workspace navigation', () => {
     expect(element.querySelectorAll('nav#navigation [data-nav="settings"]').length).toBe(1);
     expect(element.querySelector('[data-nav="organization-settings"]')).toBeNull();
     expect(element.querySelector('nav#navigation [data-nav="balances"]')).toBeNull();
-    expect(element.querySelectorAll('.settings-navigation button').length).toBe(3);
-    expect(element.querySelector('.company')).toBeNull();
+    expect(
+      Array.from(element.querySelectorAll('.settings-navigation button'), (button) =>
+        button.getAttribute('data-settings-section'),
+      ),
+    ).toEqual(['organization', 'department', 'team', 'profile', 'system']);
+    expect(element.querySelector('#workspace-organization')?.textContent).toContain(
+      'Northstar Example',
+    );
+    expect(element.querySelector('#demo-person')).toBeNull();
     expect(element.querySelector('.topbar [data-action="logout"]')).toBeNull();
     page.accountOpen = true;
     page.changeDetector.markForCheck();
@@ -49,12 +49,71 @@ describe('Workspace navigation', () => {
     expect(element.querySelector('#account-dropdown [data-action="logout"]')).not.toBeNull();
   });
 
-  it('resolves legacy organization links within Settings and preserves organization authorization', async () => {
-    const { page, element } = await setup('/index.html?page=organization', 'maya');
-    expect(page.state.page).toBe('settings');
+  it.each(['maya', 'ravi', 'sam'])(
+    'limits %s to Profile/System and redirects restricted query, direct-route and legacy settings links',
+    async (account) => {
+      const { harness } = await setup('/index.html?page=settings', account);
+      const router = TestBed.inject(Router);
+      for (const url of [
+        '/index.html?page=settings&section=organization',
+        '/index.html?page=settings&section=team',
+        '/index.html?page=organization',
+        '/index.html?page=organization-settings',
+        '/settings?section=organization',
+        '/settings?section=team',
+      ]) {
+        const page = await harness.navigateByUrl(url, Workspace);
+        const params = router.parseUrl(router.url).queryParams;
+        expect(params['page']).toBe('settings');
+        expect(params['section']).toBe('profile');
+        expect(page.settingsSection).toBe('profile');
+        const element = harness.routeNativeElement!;
+        expect(
+          Array.from(element.querySelectorAll('.settings-navigation button'), (button) =>
+            button.getAttribute('data-settings-section'),
+          ),
+        ).toEqual(['profile', 'system']);
+        expect(
+          element.querySelector(
+            'vacate-organization, [data-settings-section="team"], [data-settings-section="organization"]',
+          ),
+        ).toBeNull();
+        expect(element.querySelector('#profile-form')).not.toBeNull();
+        expect(element.querySelector('#display-preferences-form')).toBeNull();
+      }
+    },
+  );
+
+  it('keeps display preferences in System and prevents an employee selecting restricted sections imperatively', async () => {
+    const { page, harness } = await setup('/settings?section=system', 'maya');
+    expect(page.settingsSection).toBe('system');
+    expect(harness.routeNativeElement!.querySelector('#display-preferences-form')).not.toBeNull();
+    expect(harness.routeNativeElement!.querySelector('#profile-form, .membership-card')).toBeNull();
+    await page.selectSettingsSection('team');
+    harness.detectChanges();
+    expect(page.settingsSection).toBe('profile');
+    expect(harness.routeNativeElement!.querySelector('#profile-form')).not.toBeNull();
+    expect(harness.routeNativeElement!.querySelector('vacate-organization')).toBeNull();
+  });
+
+  it('retains admin organization/legacy access and rejects foreign organization/team settings', async () => {
+    const { page, harness } = await setup('/index.html?page=organization');
     expect(page.settingsSection).toBe('organization');
-    expect(element.querySelector('#organization-denied')).not.toBeNull();
-    expect(element.querySelector('#organization-form')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('#organization-form')).not.toBeNull();
+    for (const section of ['organization', 'team']) {
+      await harness.navigateByUrl(
+        `/index.html?page=settings&section=${section}&company=foreign`,
+        Workspace,
+      );
+      expect(
+        harness.routeNativeElement!.querySelector(
+          '#organization-form, [data-org-team], .dialog-list',
+        ),
+      ).toBeNull();
+      expect(harness.routeNativeElement!.textContent).toContain(
+        section === 'organization' ? 'Admin access only' : 'Team unavailable',
+      );
+    }
   });
 
   it('shows the unavailable approval inbox without revealing reference pending requests', async () => {
@@ -67,7 +126,7 @@ describe('Workspace navigation', () => {
   it('opens My Leave from its route with own request history and a personal balances link', async () => {
     const { page, element } = await setup('/leave', 'maya');
     expect(page.state.page).toBe('leave');
-    expect(element.querySelector('.navigation-card')!.textContent).toContain('My requests');
+    expect(element.querySelector('vacate-my-leave')!.textContent).toContain('My requests');
     expect(element.querySelector('.navigation-card [data-nav="balances"]')).not.toBeNull();
     expect(element.querySelector('vacate-organization')).toBeNull();
   });

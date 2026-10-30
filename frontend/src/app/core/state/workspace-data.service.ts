@@ -148,7 +148,10 @@ export class WorkspaceDataService {
       },
     };
 
-    this.environment.VacateLeave = createCatalogue(this.environment) as unknown as Catalogue;
+    this.environment.VacateLeave = createCatalogue(
+      this.environment,
+      () => this.api.settingsAccess?.effectiveVacationApproval === true,
+    ) as unknown as Catalogue;
     this.environment.VacateEligibility = createEligibility(
       this.environment,
     ) as unknown as Eligibility;

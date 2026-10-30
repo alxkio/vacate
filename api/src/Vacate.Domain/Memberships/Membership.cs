@@ -10,6 +10,11 @@ public static class SystemRoles
     public static bool Contains(int id) => id is Admin or Employee;
 }
 
+public enum SettingsRole
+{
+    Employee, TeamLead, DepartmentLead, Owner, Hr
+}
+
 public sealed record MembershipConfiguration(int SystemRoleId, int JobRoleId, int? DepartmentId = null,
     int? TeamId = null, int? ManagerUserId = null, DateOnly? HireDate = null, DateOnly? EmploymentEndDate = null,
     decimal? PriorService = null, int? WorkScheduleId = null, int? HolidayCalendarId = null, int? LeavePolicyId = null)
@@ -49,7 +54,9 @@ public sealed record AnnualBalance
     public decimal Used { get; }
     public decimal Pending { get; }
     public decimal? Allocation => PolicyMinimum is null ? null : CustomAllocation ?? PolicyMinimum;
-    public decimal? Available => Allocation - Used - Pending;
+    public decimal? Available => AvailableFor(false);
+
+    public decimal? AvailableFor(bool approvalRequired) => Allocation - Used - (approvalRequired ? 0 : Pending);
 
     public AnnualBalance(DateOnly periodStart, DateOnly periodEnd, DateOnly asOf, string? policyVersion,
         decimal? policyMinimum, decimal? customAllocation, decimal used, decimal pending)
@@ -80,6 +87,7 @@ public sealed record AnnualBalance
 
 public sealed class Membership : AggregateRoot
 {
+    public SettingsRole SettingsRole { get; private set; }
     public int UserId { get; }
     public int CompanyId { get; }
     public MembershipConfiguration Configuration { get; private set; }
@@ -87,13 +95,18 @@ public sealed class Membership : AggregateRoot
     public bool IsAdmin => !IsDeleted && Configuration.SystemRoleId == SystemRoles.Admin;
 
     public Membership(int id, Guid guid, int userId, int companyId, MembershipConfiguration configuration,
-        AnnualBalance balance, DateTimeOffset now) : base(id, guid, now)
+        AnnualBalance balance, DateTimeOffset now, SettingsRole settingsRole = SettingsRole.Employee) : base(id, guid, now)
     {
         configuration.Validate();
+        if (!Enum.IsDefined(settingsRole) || settingsRole is SettingsRole.Owner or SettingsRole.Hr && configuration.SystemRoleId != SystemRoles.Admin)
+        {
+            throw new DomainValidationException("Invalid settings role assignment.");
+        }
         UserId = userId;
         CompanyId = companyId;
         Configuration = configuration;
         Balance = balance;
+        SettingsRole = settingsRole;
     }
 
     public void Update(MembershipConfiguration configuration, decimal? customAllocation, DateTimeOffset now)
@@ -103,5 +116,9 @@ public sealed class Membership : AggregateRoot
         Touch(now);
         Configuration = configuration;
         Balance = balance;
+        if (!IsAdmin && SettingsRole is SettingsRole.Owner or SettingsRole.Hr)
+        {
+            SettingsRole = SettingsRole.Employee;
+        }
     }
 }

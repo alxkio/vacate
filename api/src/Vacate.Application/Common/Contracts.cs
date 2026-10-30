@@ -1,3 +1,5 @@
+using Vacate.Domain.Organizations;
+
 namespace Vacate.Application.Common;
 
 public sealed record BalanceRecord(string LeaveTypeId, DateOnly PeriodStart, DateOnly PeriodEnd, string Unit,
@@ -23,17 +25,20 @@ public sealed record PersonRecord(string Id, string PersonId, Guid Guid, string 
 public sealed record MembershipDetails(int UserId, Guid UserGuid, PersonRecord Person, MembershipRecord Membership);
 
 public sealed record DepartmentRecord(int Id, Guid Guid, string Name, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt,
-    DateTimeOffset? DeleteRequestedAt, DateTimeOffset? DeletedAt);
+    DateTimeOffset? DeleteRequestedAt, DateTimeOffset? DeletedAt, bool? RequireVacationApproval);
 
 public sealed record TeamRecord(int Id, Guid Guid, string Name, Guid? DepartmentId, DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt, DateTimeOffset? DeleteRequestedAt, DateTimeOffset? DeletedAt);
+    DateTimeOffset UpdatedAt, DateTimeOffset? DeleteRequestedAt, DateTimeOffset? DeletedAt, bool? RequireVacationApproval);
 
 public sealed record OrganizationRecord(int Id, Guid Guid, string Name, int WorkWeekDays, IReadOnlyList<DepartmentRecord> Departments,
     IReadOnlyList<TeamRecord> Teams, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt,
-    DateTimeOffset? DeleteRequestedAt, DateTimeOffset? DeletedAt);
+    DateTimeOffset? DeleteRequestedAt, DateTimeOffset? DeletedAt, VacationSettings Settings);
+
+public sealed record SettingsAccessRecord(string Role, bool Organization, bool EffectiveVacationApproval,
+    IReadOnlyList<DepartmentRecord> Departments, IReadOnlyList<TeamRecord> Teams);
 
 public sealed record OrganizationSummary(int Id, Guid Guid, string Name, int WorkWeekDays, string? DepartmentName, string? TeamName,
-    IReadOnlyList<DirectoryUserRecord> TeamMembers);
+    IReadOnlyList<DirectoryUserRecord> TeamMembers, SettingsAccessRecord SettingsAccess);
 
 public sealed record ReferenceRecord(int Id, Guid Guid, string Name);
 

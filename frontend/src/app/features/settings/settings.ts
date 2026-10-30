@@ -3,10 +3,12 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { DisplayPreferences } from '../../core/models/workspace.models';
 import { ProfileSettings } from '../profile/profile-settings';
 import { OrganizationSettings } from '../organizations/organization-settings';
+import { resolveSettingsSection, settingsSections } from './settings-navigation';
+import { ScopeSettings } from './scope-settings';
 
 @Component({
   selector: 'vacate-unified-settings',
-  imports: [ProfileSettings, OrganizationSettings],
+  imports: [ProfileSettings, OrganizationSettings, ScopeSettings],
   template: `
     <div class="unified-settings">
       <nav class="settings-navigation" aria-label="Settings sections">
@@ -14,8 +16,8 @@ import { OrganizationSettings } from '../organizations/organization-settings';
           <button
             [attr.data-settings-section]="section.id"
             class="nav-item"
-            [class.selected]="selected === section.id"
-            [attr.aria-current]="selected === section.id ? 'page' : null"
+            [class.selected]="activeSection === section.id"
+            [attr.aria-current]="activeSection === section.id ? 'page' : null"
             (click)="sectionChanged.emit(section.id)"
           >
             {{ section.name }}
@@ -23,45 +25,28 @@ import { OrganizationSettings } from '../organizations/organization-settings';
         }
       </nav>
       <div class="settings-content">
-        @if (selected === 'team' && companyId !== data.currentUser()?.companyId) {
+        @if (
+          (activeSection === 'team' || activeSection === 'department') &&
+          companyId !== data.currentUser()?.companyId
+        ) {
           <section class="navigation-card">
             <h2>Team unavailable</h2>
             <p>This team is outside your organization.</p>
           </section>
-        } @else if (selected === 'organization') {
+        } @else if (activeSection === 'organization') {
           <vacate-organization
             [companyId]="companyId"
             (changed)="saved.emit()"
             (staleSession)="staleSession.emit()"
           />
-        } @else if (selected === 'team' && companyId === data.currentUser()?.companyId) {
-          <section class="navigation-card">
-            <h2>My team</h2>
-            <p>
-              {{ data.groupName('team', data.currentUser()?.teamId || '') || 'No team assigned' }}
-            </p>
-            <p>
-              Your assigned team includes you. A job title or manager assignment does not grant team
-              administration or approval rights.
-            </p>
-            <ul class="dialog-list">
-              @for (person of data.myTeamPeople; track person.id) {
-                <li>
-                  {{ person.name }}{{ person.email === data.currentUser()?.email ? ' (you)' : ''
-                  }}<small>{{ person.title }}</small>
-                </li>
-              } @empty {
-                <li>No team membership assigned.</li>
-              }
-            </ul>
-            @if (data.currentUser()?.capability === 'admin') {
-              <button class="inline-link" (click)="sectionChanged.emit('organization')">
-                Manage organization teams →
-              </button>
-            }
-          </section>
+        } @else if (activeSection === 'team' || activeSection === 'department') {
+          <vacate-scope-settings
+            [companyId]="companyId"
+            [kind]="activeSection === 'team' ? 'teams' : 'departments'"
+          />
         } @else {
           <vacate-settings
+            [section]="activeSection === 'system' ? 'system' : 'profile'"
             (saved)="saved.emit()"
             (displayPreferencesSaved)="displayPreferencesSaved.emit($event)"
             (staleSession)="staleSession.emit()"
@@ -75,11 +60,18 @@ export class UnifiedSettings {
   readonly data = inject(WorkspaceDataService);
   @Input() companyId = '';
   @Input() selected = 'profile';
-  readonly sections = [
-    { id: 'organization', name: 'Organization' },
-    { id: 'team', name: 'Team' },
-    { id: 'profile', name: 'Profile' },
-  ];
+  get sections() {
+    return settingsSections(this.data.currentUser(), this.data.api.settingsAccess);
+  }
+
+  get activeSection() {
+    return resolveSettingsSection(
+      this.selected,
+      this.data.currentUser(),
+      this.data.api.settingsAccess,
+    );
+  }
+
   readonly sectionChanged = output<string>();
   readonly saved = output<void>();
   readonly staleSession = output<void>();

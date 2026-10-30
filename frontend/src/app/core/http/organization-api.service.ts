@@ -30,4 +30,16 @@ export class OrganizationApiService {
   ) {
     return this.api.request('PATCH', `organizations/${id}/${kind}/${nodeId}`, token, { name });
   }
+
+  updateApproval(
+    id: string,
+    kind: 'departments' | 'teams',
+    nodeId: string,
+    required: boolean | null,
+    token: string,
+  ) {
+    return this.api.request('PATCH', `organizations/${id}/${kind}/${nodeId}`, token, {
+      requireVacationApproval: required,
+    });
+  }
 }

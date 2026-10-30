@@ -12,6 +12,39 @@ public sealed class DomainRulesTests
 
     private static User User() => new(1, Guid.NewGuid(), "person@example.invalid", new("First", null, "Last"), "unspecified", new(), Start);
 
+    [TestCase(SettingsRole.Owner)]
+    [TestCase(SettingsRole.Hr)]
+    public void privileged_settings_assignment_requires_admin_and_is_cleared_on_demotion(SettingsRole role)
+    {
+        var employee = new MembershipConfiguration(SystemRoles.Employee, 1);
+        var balance = new AnnualBalance(new(2026, 1, 1), new(2026, 12, 31), new(2026, 10, 22), null, null, null, 0, 0);
+        Assert.Throws<DomainValidationException>(() => new Membership(1, Guid.NewGuid(), 1, 1, employee, balance, Start, role));
+        var member = new Membership(1, Guid.NewGuid(), 1, 1, employee with { SystemRoleId = SystemRoles.Admin }, balance, Start, role);
+        member.Update(employee, null, Start.AddDays(1));
+        Assert.That(member.SettingsRole, Is.EqualTo(SettingsRole.Employee));
+        Assert.That(member.IsAdmin, Is.False);
+        Assert.That(member.UpdatedAt, Is.EqualTo(Start.AddDays(1)));
+    }
+
+    [Test]
+    public void approval_policy_preserves_pending_separately_and_team_false_is_an_override()
+    {
+        var org = new Organization(1, Guid.NewGuid(), "Example", 5, Start);
+        var department = org.AddDepartment(1, Guid.NewGuid(), "Dept", Start);
+        var team = org.AddTeam(1, Guid.NewGuid(), "Team", department.Id, Start);
+        Assert.That(org.VacationApprovalRequired(team.Id, department.Id), Is.True);
+        org.SetDepartmentApproval(department.Id, true, Start.AddDays(1));
+        org.SetTeamApproval(team.Id, false, Start.AddDays(2));
+        Assert.That(org.VacationApprovalRequired(team.Id, department.Id), Is.False);
+        org.SetTeamApproval(team.Id, null, Start.AddDays(3));
+        Assert.That(org.VacationApprovalRequired(team.Id, department.Id), Is.True);
+        var balance = new AnnualBalance(new(2026, 1, 1), new(2026, 12, 31), new(2026, 10, 22), "test", 20, 25, 8, 3);
+        Assert.That(balance.AvailableFor(true), Is.EqualTo(17));
+        Assert.That(balance.AvailableFor(false), Is.EqualTo(14));
+        Assert.That(balance.Pending, Is.EqualTo(3));
+        Assert.Throws<DomainValidationException>(() => new VacationSettings(carryoverYears: -1));
+    }
+
     [Test]
     public void unknown_family_attributes_use_confirmed_defaults_and_conflicting_facts_are_rejected()
     {

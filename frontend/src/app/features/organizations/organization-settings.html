@@ -26,6 +26,80 @@
       <div class="org-notice">
         Fictional demo · Changes are stored by the demo API and reset when the API restarts.
       </div>
+      @if (!department && !team && data.api.organizationSettings) {
+        <form
+          id="organization-policy-form"
+          class="org-card"
+          (ngSubmit)="savePolicies()"
+          #policyForm="ngForm"
+        >
+          <h2>Organization settings</h2>
+          <label
+            >Vacation approval
+            <select
+              name="requireVacationApproval"
+              id="organization-vacation-approval"
+              [(ngModel)]="settingsDraft.requireVacationApproval"
+            >
+              <option [ngValue]="true">Require approval by default</option>
+              <option [ngValue]="false">Do not require approval by default</option>
+            </select>
+          </label>
+          <label
+            >Department lead settings access
+            <select
+              name="departmentLeadSettingsEnabled"
+              id="department-lead-settings"
+              [(ngModel)]="settingsDraft.departmentLeadSettingsEnabled"
+            >
+              <option [ngValue]="true">Allowed for their department and its teams</option>
+              <option [ngValue]="false">Not allowed</option>
+            </select>
+          </label>
+          <label
+            >Team lead settings access
+            <select
+              name="teamLeadSettingsEnabled"
+              id="team-lead-settings"
+              [(ngModel)]="settingsDraft.teamLeadSettingsEnabled"
+            >
+              <option [ngValue]="true">Allowed for their team</option>
+              <option [ngValue]="false">Not allowed</option>
+            </select>
+          </label>
+          <label
+            >Vacation-day carryover
+            <select
+              name="carryoverEnabled"
+              id="carryover-enabled"
+              [(ngModel)]="settingsDraft.carryoverEnabled"
+            >
+              <option [ngValue]="false">Disabled</option>
+              <option [ngValue]="true">Allowed</option>
+            </select>
+          </label>
+          <label
+            >Carryover years (0 = unlimited)
+            <input
+              id="carryover-years"
+              name="carryoverYears"
+              type="number"
+              min="0"
+              step="1"
+              required
+              [(ngModel)]="settingsDraft.carryoverYears"
+            />
+          </label>
+          <p class="org-hint">
+            Carryover is saved configuration only; it does not change days or balances.
+          </p>
+          <div class="org-actions">
+            <button class="primary" [disabled]="policyForm.invalid || busy">
+              Save organization settings
+            </button>
+          </div>
+        </form>
+      }
       @if (department || team) {
         <section class="org-card" aria-labelledby="org-view-heading">
           <div class="org-section-heading">

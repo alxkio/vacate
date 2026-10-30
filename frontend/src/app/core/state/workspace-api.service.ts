@@ -111,6 +111,39 @@ export class WorkspaceApiService {
     return this.summaryRecord?.teamMembers;
   }
 
+  get settingsAccess() {
+    return this.summaryRecord?.settingsAccess;
+  }
+
+  get organizationSettings() {
+    return this.org?.settings;
+  }
+
+  updateOrganizationSettings(actorId: string, patch: unknown) {
+    return this.writeOrganization(this.actor?.companyId || '', actorId, (token) =>
+      firstValueFrom(this.organizations.update(apiId(this.actor!.companyId), patch, token)),
+    );
+  }
+
+  updateApproval(
+    actorId: string,
+    kind: 'departments' | 'teams',
+    nodeId: string,
+    required: boolean | null,
+  ) {
+    return this.write(actorId, (token) =>
+      firstValueFrom(
+        this.organizations.updateApproval(
+          apiId(this.actor!.companyId),
+          kind,
+          nodeId,
+          required,
+          token,
+        ),
+      ),
+    );
+  }
+
   async refresh() {
     const token = this.token;
     const response = await firstValueFrom(this.sessions.current(token));

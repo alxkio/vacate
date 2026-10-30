@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, output } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, Input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { DisplayPreferences, OwnProfileFields } from '../../core/models/workspace.models';
@@ -10,6 +10,7 @@ import { DisplayPreferences, OwnProfileFields } from '../../core/models/workspac
   styleUrl: './profile-settings.scss',
 })
 export class ProfileSettings {
+  @Input() section: 'profile' | 'system' = 'profile';
   readonly data = inject(WorkspaceDataService);
   readonly detector = inject(ChangeDetectorRef);
   readonly saved = output<void>();

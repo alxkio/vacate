@@ -68,7 +68,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "TeamLead"
     },
     {
       "alias": "ravi",
@@ -138,7 +139,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "Employee"
     },
     {
       "alias": "noah",
@@ -208,7 +210,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "Employee"
     },
     {
       "alias": "maya",
@@ -278,7 +281,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "Employee"
     },
     {
       "alias": "theo",
@@ -348,7 +352,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "Employee"
     },
     {
       "alias": "iris",
@@ -418,7 +423,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "Employee"
     },
     {
       "alias": "ella",
@@ -488,7 +494,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "DepartmentLead"
     },
     {
       "alias": "owen",
@@ -558,7 +565,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "Employee"
     },
     {
       "alias": "zoe",
@@ -628,7 +636,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "Employee"
     },
     {
       "alias": "daria",
@@ -698,7 +707,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "Hr"
     },
     {
       "alias": "nora",
@@ -768,7 +778,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "Owner"
     },
     {
       "alias": "sam",
@@ -838,7 +849,8 @@
         "deleteRequestedAt": null,
         "deletedAt": null
       },
-      "seeded": true
+      "seeded": true,
+      "settingsRole": "Employee"
     }
   ],
   "organizations": [
@@ -912,7 +924,14 @@
           "guid": "20000000-0000-4000-8000-000000000403"
         }
       ],
-      "guid": "20000000-0000-4000-8000-000000000100"
+      "guid": "20000000-0000-4000-8000-000000000100",
+      "settings": {
+        "requireVacationApproval": true,
+        "departmentLeadSettingsEnabled": true,
+        "teamLeadSettingsEnabled": true,
+        "carryoverEnabled": false,
+        "carryoverYears": 0
+      }
     }
   ],
   "systemRoles": [

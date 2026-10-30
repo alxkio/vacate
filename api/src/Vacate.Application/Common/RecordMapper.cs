@@ -21,7 +21,8 @@ public sealed class RecordMapper(IUserRepository users, IMembershipRepository me
             org.Departments.SingleOrDefault(d => d.Id == m.DepartmentId)?.Guid, org.Teams.SingleOrDefault(t => t.Id == m.TeamId)?.Guid,
             m.ManagerUserId is { } managerId ? users.Find(managerId)?.Guid : null, m.HireDate, m.EmploymentEndDate, m.PriorService,
             roles.WorkSchedules().SingleOrDefault(r => r.Id == m.WorkScheduleId)?.Guid, null, null,
-            new("annual", b.PeriodStart, b.PeriodEnd, "days", b.AsOf, b.PolicyVersion, b.PolicyMinimum, b.CustomAllocation, b.Allocation, b.Used, b.Pending, b.Available),
+            new("annual", b.PeriodStart, b.PeriodEnd, "days", b.AsOf, b.PolicyVersion, b.PolicyMinimum, b.CustomAllocation, b.Allocation, b.Used, b.Pending,
+                b.AvailableFor(org.VacationApprovalRequired(m.TeamId, m.DepartmentId))),
             member.CreatedAt, member.UpdatedAt, member.DeleteRequestedAt, member.DeletedAt);
     }
 
@@ -49,9 +50,9 @@ public sealed class RecordMapper(IUserRepository users, IMembershipRepository me
     public MembershipDetails Member(User user, Membership m) => new(user.Id, user.Guid, Person(user), Membership(m));
 
     public OrganizationRecord Organization(Organization org) => new(org.Id, org.Guid, org.Name, org.WorkWeekDays,
-        org.Departments.Where(d => !d.IsDeleted).Select(Department).ToArray(), org.Teams.Where(t => !t.IsDeleted).Select(t => Team(org, t)).ToArray(), org.CreatedAt, org.UpdatedAt, org.DeleteRequestedAt, org.DeletedAt);
+        org.Departments.Where(d => !d.IsDeleted).Select(Department).ToArray(), org.Teams.Where(t => !t.IsDeleted).Select(t => Team(org, t)).ToArray(), org.CreatedAt, org.UpdatedAt, org.DeleteRequestedAt, org.DeletedAt, org.Settings);
 
-    public static DepartmentRecord Department(Department d) => new(d.Id, d.Guid, d.Name, d.CreatedAt, d.UpdatedAt, d.DeleteRequestedAt, d.DeletedAt);
+    public static DepartmentRecord Department(Department d) => new(d.Id, d.Guid, d.Name, d.CreatedAt, d.UpdatedAt, d.DeleteRequestedAt, d.DeletedAt, d.RequireVacationApproval);
 
-    public static TeamRecord Team(Organization org, Team t) => new(t.Id, t.Guid, t.Name, org.Departments.SingleOrDefault(d => d.Id == t.DepartmentId)?.Guid, t.CreatedAt, t.UpdatedAt, t.DeleteRequestedAt, t.DeletedAt);
+    public static TeamRecord Team(Organization org, Team t) => new(t.Id, t.Guid, t.Name, org.Departments.SingleOrDefault(d => d.Id == t.DepartmentId)?.Guid, t.CreatedAt, t.UpdatedAt, t.DeleteRequestedAt, t.DeletedAt, t.RequireVacationApproval);
 }

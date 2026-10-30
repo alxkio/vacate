@@ -27,7 +27,7 @@ export const fixtureWorkspaceProvider = {
       VacateFixtures: fixtures,
       VacateSession: createSession(fixtures, sessionStorage),
     } as WorkspaceEnvironment;
-    environment.VacateLeave = createCatalogue(environment);
+    environment.VacateLeave = createCatalogue(environment, () => true);
     environment.VacateEligibility = createEligibility(environment);
     const profiles = createProfiles(environment),
       organization = createOrganization(environment);
@@ -46,6 +46,7 @@ export const fixtureWorkspaceProvider = {
       },
     };
     return {
+      initialize: async () => {},
       environment,
       profiles,
       organization,
@@ -56,7 +57,42 @@ export const fixtureWorkspaceProvider = {
       get eligibility() {
         return environment.VacateEligibility;
       },
-      api: { members: [], roles: { systemRoles: [], jobRoles: [] } },
+      api: {
+        members: [],
+        roles: { systemRoles: [], jobRoles: [] },
+        refresh: async () => {},
+        get settingsAccess() {
+          const person = environment.VacateSession.currentUser();
+          const admin = person?.capability === 'admin';
+          return {
+            role: admin
+              ? 'admin'
+              : person?.id === 'ella'
+                ? 'DepartmentLead'
+                : person?.id === 'leah'
+                  ? 'TeamLead'
+                  : 'Employee',
+            organization: admin,
+            effectiveVacationApproval: true,
+            departments: fixtures.departments
+              .filter(
+                (d) =>
+                  d.companyId === person?.companyId &&
+                  (admin || (person?.id === 'ella' && d.id === person.departmentId)),
+              )
+              .map((d) => ({ ...d, guid: d.id, requireVacationApproval: null })),
+            teams: fixtures.teams
+              .filter(
+                (t) =>
+                  t.companyId === person?.companyId &&
+                  (admin ||
+                    (person?.id === 'ella' && t.departmentId === person.departmentId) ||
+                    (person?.id === 'leah' && t.id === person.teamId)),
+              )
+              .map((t) => ({ ...t, guid: t.id, requireVacationApproval: null })),
+          };
+        },
+      },
       currentUser: () => environment.VacateSession.currentUser(),
       decision: (id: string) => environment.VacateEligibility.decisionFor(id),
       balance: (id: string) =>

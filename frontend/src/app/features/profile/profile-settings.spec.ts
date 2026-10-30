@@ -68,6 +68,8 @@ describe('Own profile settings', async () => {
 
   it('saves and confirms the chosen layout and color scheme through the settings form', async () => {
     const { data, fixture, page } = setup();
+    fixture.componentRef.setInput('section', 'system');
+    fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
     const layout = fixture.nativeElement.querySelector('#display-layout') as HTMLSelectElement;
@@ -94,5 +96,17 @@ describe('Own profile settings', async () => {
     ).toContain('saved in this browser');
     expect(fixture.nativeElement.querySelector('#display-layout').value).toBe('planner');
     expect(fixture.nativeElement.querySelector('#display-color-scheme').value).toBe('c');
+    expect(fixture.nativeElement.querySelector('#profile-form, .membership-card')).toBeNull();
+  });
+
+  it('refuses saving System preferences after the originating account changes', () => {
+    const { data, fixture, page } = setup();
+    fixture.componentRef.setInput('section', 'system');
+    fixture.detectChanges();
+    page.displayPreferences = { layout: 'planner', colorScheme: 'c' };
+    data.environment.VacateSession.login('nora', 'nora');
+    page.saveDisplayPreferences();
+    expect(page.displayPreferencesError).toContain('account changed');
+    expect(data.displayPreferences()).toEqual({ layout: 'calendar', colorScheme: 'a' });
   });
 });

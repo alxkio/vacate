@@ -4,6 +4,14 @@ namespace Vacate.Domain.Organizations;
 
 public sealed class Department(int id, Guid guid, string name, DateTimeOffset now) : Entity(id, guid, now)
 {
+    public bool? RequireVacationApproval { get; private set; }
+
+    internal void SetApproval(bool? required, DateTimeOffset now)
+    {
+        Touch(now);
+        RequireVacationApproval = required;
+    }
+
     public string Name { get; private set; } = DomainValue.Name(name, "department name");
 
     internal void RequestDeletion(DateTimeOffset now) => RequestDeletionCore(now);
@@ -20,6 +28,14 @@ public sealed class Department(int id, Guid guid, string name, DateTimeOffset no
 
 public sealed class Team(int id, Guid guid, string name, int? departmentId, DateTimeOffset now) : Entity(id, guid, now)
 {
+    public bool? RequireVacationApproval { get; private set; }
+
+    internal void SetApproval(bool? required, DateTimeOffset now)
+    {
+        Touch(now);
+        RequireVacationApproval = required;
+    }
+
     public string Name { get; private set; } = DomainValue.Name(name, "team name");
 
     internal void RequestDeletion(DateTimeOffset now) => RequestDeletionCore(now);
@@ -42,6 +58,7 @@ public sealed class Organization : AggregateRoot
     private readonly List<Team> teams = [];
     public string Name { get; private set; }
     public int WorkWeekDays { get; private set; }
+    public VacationSettings Settings { get; private set; } = new();
     public IReadOnlyList<Department> Departments => departments.AsReadOnly();
     public IReadOnlyList<Team> Teams => teams.AsReadOnly();
 
@@ -53,13 +70,33 @@ public sealed class Organization : AggregateRoot
 
     private static int ValidateWeek(int days) => days is 5 or 6 ? days : throw new DomainValidationException("Choose five or six working days.");
 
-    public void Update(string name, int days, DateTimeOffset now)
+    public void Update(string name, int days, DateTimeOffset now, VacationSettings? settings = null)
     {
         var valid = DomainValue.Name(name, "organization name");
         var week = ValidateWeek(days);
         Touch(now);
         Name = valid;
         WorkWeekDays = week;
+        Settings = settings ?? Settings;
+    }
+
+    public bool VacationApprovalRequired(int? teamId, int? departmentId)
+    {
+        var team = teams.SingleOrDefault(t => !t.IsDeleted && t.Id == teamId);
+        var department = departments.SingleOrDefault(d => !d.IsDeleted && d.Id == (team?.DepartmentId ?? departmentId));
+        return team?.RequireVacationApproval ?? department?.RequireVacationApproval ?? Settings.RequireVacationApproval;
+    }
+
+    public void SetDepartmentApproval(int id, bool? required, DateTimeOffset now)
+    {
+        Department(id).SetApproval(required, now);
+        Touch(now);
+    }
+
+    public void SetTeamApproval(int id, bool? required, DateTimeOffset now)
+    {
+        Team(id).SetApproval(required, now);
+        Touch(now);
     }
 
     public Department AddDepartment(int id, Guid guid, string name, DateTimeOffset now)

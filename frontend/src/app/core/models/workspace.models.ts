@@ -210,6 +210,7 @@ export interface OrganizationTeam extends OrganizationNode {
   members: { id: string; name: string; jobTitle: string; systemRole: string }[];
 }
 export interface OrganizationRecord extends Lifecycle {
+  settings?: import('../http/contracts').VacationSettings;
   companyId: string;
   name: string;
   workWeekDays: number;

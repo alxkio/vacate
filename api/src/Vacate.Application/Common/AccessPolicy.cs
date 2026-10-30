@@ -53,6 +53,44 @@ public sealed class AccessPolicy(IUserRepository users, IMembershipRepository me
         return Organization(companyId);
     }
 
+    public bool MayConfigureDepartment(int actorId, Organization org, int departmentId)
+    {
+        if (IsAdmin(actorId, org.Id))
+        {
+            return true;
+        }
+
+        var member = memberships.Current(actorId);
+        return users.Find(actorId)?.CanSignIn == true && member?.CompanyId == org.Id
+            && org.Settings.DepartmentLeadSettingsEnabled && member.SettingsRole == SettingsRole.DepartmentLead
+            && member.Configuration.DepartmentId == departmentId;
+    }
+
+    public bool MayConfigureTeam(int actorId, Organization org, int teamId)
+    {
+        if (IsAdmin(actorId, org.Id))
+        {
+            return true;
+        }
+
+        var member = memberships.Current(actorId);
+        var team = org.Teams.SingleOrDefault(t => !t.IsDeleted && t.Id == teamId);
+        return users.Find(actorId)?.CanSignIn == true && member?.CompanyId == org.Id && team is not null
+            && (org.Settings.TeamLeadSettingsEnabled && member.SettingsRole == SettingsRole.TeamLead && member.Configuration.TeamId == teamId
+                || org.Settings.DepartmentLeadSettingsEnabled && member.SettingsRole == SettingsRole.DepartmentLead
+                && member.Configuration.DepartmentId is not null && member.Configuration.DepartmentId == team.DepartmentId);
+    }
+
+    public Organization RequireStructureSettings(int actorId, Guid organizationGuid, bool team, Guid nodeGuid)
+    {
+        var org = Organization(organizationGuid);
+        Actor(actorId);
+        var allowed = team
+            ? org.Teams.Any(t => !t.IsDeleted && t.Guid == nodeGuid && MayConfigureTeam(actorId, org, t.Id))
+            : org.Departments.Any(d => !d.IsDeleted && d.Guid == nodeGuid && MayConfigureDepartment(actorId, org, d.Id));
+        return allowed ? org : throw new ServiceException(ServiceError.NotFound, "Settings unavailable.");
+    }
+
     public int AssignmentScope(int userId) => memberships.Current(userId)?.CompanyId ?? provisioning.InvitationOrganization(userId)
         ?? throw new ServiceException(ServiceError.Forbidden, "Company administrator required.");
 

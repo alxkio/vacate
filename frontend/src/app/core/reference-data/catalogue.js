@@ -1,6 +1,6 @@
 'use strict';
 // Approved catalogue for the fictional UI only. No statutory eligibility engine.
-export function createCatalogue(environment) {
+export function createCatalogue(environment, vacationApprovalRequired = () => false) {
   const guide = 'INE/GSEE guide · 2022 · current applicability unverified';
   const official = 'Official guidance checked 22 Oct 2026 · policy validation pending';
   const types = [
@@ -48,7 +48,7 @@ export function createCatalogue(environment) {
   function balanceOf(id) {
     const balance = environment.VacateFixtures.balancesFor(environment.VacateSession.currentUser())?.[id];
     if(!balance) return null;
-    const available = balance.allocation-balance.used-balance.pending;
+    const available = balance.allocation-balance.used-(id==='annual' && vacationApprovalRequired() ? 0 : balance.pending);
     return {...balance,available,percentage:balance.allocation>0?Math.round(available/balance.allocation*100):null};
   }
   return Object.freeze({workWeekDays:5,types:Object.freeze(types),shortlistIds,typeLabel,typeGroups,getType,balanceOf});

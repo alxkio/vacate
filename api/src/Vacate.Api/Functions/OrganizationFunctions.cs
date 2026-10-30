@@ -40,8 +40,10 @@ public sealed class OrganizationFunctions(
     public Task<IActionResult> Update([HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "organizations/{companyId}")] HttpRequest request, string companyId) =>
         WithActor(request, (body, actor) =>
         {
-            Allow(body, "name", "workWeekDays");
-            return Ok(organizations.Update(actor, new UpdateOrganization(Id(companyId), Field<string>(body, "name"), Field<int>(body, "workWeekDays"))));
+            Allow(body, "name", "workWeekDays", "requireVacationApproval", "departmentLeadSettingsEnabled", "teamLeadSettingsEnabled", "carryoverEnabled", "carryoverYears");
+            return Ok(organizations.Update(actor, new UpdateOrganization(Id(companyId), Field<string>(body, "name"), Field<int>(body, "workWeekDays"),
+                Field<bool>(body, "requireVacationApproval"), Field<bool>(body, "departmentLeadSettingsEnabled"), Field<bool>(body, "teamLeadSettingsEnabled"),
+                Field<bool>(body, "carryoverEnabled"), Field<int>(body, "carryoverYears"))));
         });
 
     [Function("DeleteOrganization")]
@@ -178,8 +180,8 @@ public sealed class OrganizationFunctions(
 
     private IActionResult UpdateStructure(int actor, JsonObject body, string companyId, string nodeId, StructureKind kind)
     {
-        Allow(body, kind == StructureKind.Team ? ["name", "departmentId"] : ["name"]);
-        return Ok(organizations.UpdateStructure(actor, new UpdateStructure(Id(companyId), kind, Id(nodeId), Field<string>(body, "name"), Field<Guid?>(body, "departmentId"))));
+        Allow(body, kind == StructureKind.Team ? ["name", "departmentId", "requireVacationApproval"] : ["name", "requireVacationApproval"]);
+        return Ok(organizations.UpdateStructure(actor, new UpdateStructure(Id(companyId), kind, Id(nodeId), Field<string>(body, "name"), Field<Guid?>(body, "departmentId"), Field<bool?>(body, "requireVacationApproval"))));
     }
 
     private IActionResult DeleteStructure(int actor, string companyId, string nodeId, StructureKind kind)

@@ -23,6 +23,12 @@ internal static class DevelopmentDataSeeder
         {
             var now = DateTimeOffset.Parse(n["createdAt"]!.ToString());
             var org = new Organization(Id(n), Uuid(n), n["name"]!.ToString(), Id(n, "workWeekDays"), now);
+            if (n["settings"] is { } settings)
+            {
+                org.Update(org.Name, org.WorkWeekDays, now, new(settings["requireVacationApproval"]!.GetValue<bool>(),
+                    settings["departmentLeadSettingsEnabled"]!.GetValue<bool>(), settings["teamLeadSettingsEnabled"]!.GetValue<bool>(),
+                    settings["carryoverEnabled"]!.GetValue<bool>(), settings["carryoverYears"]!.GetValue<int>()));
+            }
             foreach (var d in n["departments"]!.AsArray().Select(x => x!))
             {
                 org.AddDepartment(Id(d), Uuid(d), d["name"]!.ToString(), now);
@@ -65,7 +71,8 @@ internal static class DevelopmentDataSeeder
             var b = m["balance"]!;
             var balance = new AnnualBalance(DateOnly.Parse(b["periodStart"]!.ToString()), DateOnly.Parse(b["periodEnd"]!.ToString()), DateOnly.Parse(b["asOf"]!.ToString()),
                 b["policyVersion"]?.ToString(), b["policyMinimum"]?.GetValue<decimal>(), b["customAllocation"]?.GetValue<decimal>(), b["used"]!.GetValue<decimal>(), b["pending"]!.GetValue<decimal>());
-            database.Memberships.Add(new(Id(m), Uuid(m), user.Id, Id(m, "companyId"), config, balance, now));
+            var settingsRole = item["settingsRole"] is { } role ? Enum.Parse<SettingsRole>(role.ToString()) : SettingsRole.Employee;
+            database.Memberships.Add(new(Id(m), Uuid(m), user.Id, Id(m, "companyId"), config, balance, now, settingsRole));
             database.Invitations.Add(user.Id, Id(m, "companyId"));
         }
     }

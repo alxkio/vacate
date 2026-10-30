@@ -15,8 +15,10 @@ import { Balances } from '../leave/balances';
 import { Calendar } from '../calendar/calendar';
 import { Request } from '../leave/request';
 import { UnifiedSettings } from '../settings/settings';
+import { resolveSettingsSection } from '../settings/settings-navigation';
 import { People } from '../people/people';
 import { AdminBalances } from '../leave/admin-balances';
+import { MyLeave } from '../leave/my-leave';
 import {
   addDays,
   dateFromKey,
@@ -43,7 +45,16 @@ interface DialogContent {
 
 @Component({
   selector: 'vacate-workspace',
-  imports: [Calendar, Balances, BalanceBar, Request, UnifiedSettings, People, AdminBalances],
+  imports: [
+    Calendar,
+    Balances,
+    BalanceBar,
+    Request,
+    UnifiedSettings,
+    People,
+    AdminBalances,
+    MyLeave,
+  ],
   templateUrl: './workspace.html',
 })
 export class Workspace implements OnInit, OnDestroy {
@@ -143,11 +154,11 @@ export class Workspace implements OnInit, OnDestroy {
           ? (requested as CalendarState['page'])
           : 'calendar';
       const section = params.get('section');
-      this.settingsSection = ['organization', 'organization-settings'].includes(requested)
-        ? 'organization'
-        : section && ['organization', 'team', 'profile'].includes(section)
-          ? section
-          : 'profile';
+      this.settingsSection = resolveSettingsSection(
+        ['organization', 'organization-settings'].includes(requested) ? 'organization' : section,
+        this.user,
+        this.data.api.settingsAccess,
+      );
       this.accountOpen = false;
       this.state.scope = params.get('scope') || this.defaultScope;
       this.state.groupId =
@@ -275,7 +286,10 @@ export class Workspace implements OnInit, OnDestroy {
           : 'Plan your next break. Keep your team in the picture.',
       balances:
         'Your own allowances, eligibility and rules. Each leave type keeps its own unit and period.',
-      settings: 'Organization, team and profile settings in one place.',
+      settings:
+        this.user.capability === 'admin'
+          ? 'Organization, department, team, profile and system settings in one place.'
+          : 'Your profile and system display preferences.',
       organization: 'Organization settings.',
       leave: 'Your requests and personal leave balances.',
       people: 'Colleagues and employee management.',
@@ -482,7 +496,10 @@ export class Workspace implements OnInit, OnDestroy {
     this.mobileOpen = false;
     await this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { page: 'settings', section },
+      queryParams: {
+        page: 'settings',
+        section: resolveSettingsSection(section, this.user, this.data.api.settingsAccess),
+      },
       queryParamsHandling: 'merge',
     });
   }

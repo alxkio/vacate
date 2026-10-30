@@ -61,3 +61,48 @@ Changed implementation sources: [login component](../../../../frontend/src/app/f
 Validation: **43 frontend tests passed**, including all four chooser scenarios, unchanged lead capabilities, foreign-company rejection and unchanged fixture records. Production build passed with the existing organization stylesheet warning. The existing real-HTTP suite passed for **all twelve accounts**, session revocation, sanitized projections, CRUD, lifecycle timestamps and deletion conflicts. The real API/browser navigation suite passed with the four chooser/autofill checks, all twelve fixture people, unchanged employee/admin denials, My Team, settings, People and personal balances, Back/Forward period retention, and desktop/mobile layouts.
 
 The earlier history correction at 4d06d57 also passed all three jobs of [CI run 41019707464](https://github.com/alxkio/vacate/actions/runs/41019707464), including the complete default API/browser suite with native keyboard checks.
+
+## Header identity and employee Settings correction · 2026-10-30
+
+Source: product lead feedback in this session. The top bar was intended to remove the visible user name and retain the organization name. Employees such as Maya must have only Profile and System (display preferences) within Settings, with neither Organization/Team menu entries nor accessible settings pages. The earlier company-name removal and employee Team Settings view are superseded by this explicit clarification.
+
+Implementation:
+
+- The [workspace header](../../../../frontend/src/app/features/workspace/workspace.html) restores the organization name, removes the visible user-name span and keeps account identity/sign-out in the avatar dropdown.
+- [Shared section rules](../../../../frontend/src/app/features/settings/settings-navigation.ts) expose Profile/System to employees and existing non-admin leads, and Organization/Team additionally to company admins. [Route guards](../../../../frontend/src/app/app.routes.ts) redirect restricted query, direct-route and legacy links to Profile and run again on query changes. Workspace section selection and [unified rendering](../../../../frontend/src/app/features/settings/settings.ts) use the same rules, so bypassing menu visibility cannot mount Organization/Team Settings for an employee.
+- [Profile settings](../../../../frontend/src/app/features/profile/profile-settings.ts) reuses its existing editor, preference form, persistence and styling in separate Profile and System views. Profile keeps self-profile editing/read-only membership; System has only browser/account-scoped display preferences. No copied editor, new dependency or backend endpoint.
+- [Browser acceptance](../../../../frontend/verify.mjs) now checks the header, role-specific sections across all twelve accounts, restricted Team links, employee legacy routes, and separate System preferences/mobile layout. Identity/history assertions use the avatar's accessible account label instead of requiring the removed visible name.
+
+Local verification:
+
+- **50 frontend tests passed**. Production-route tests exercise Maya, Leah and Ella against restricted query, direct-route and legacy URLs; every redirect renders Profile without administration/team components. Direct component-input bypass attempts also fail to mount restricted content. Admin Organization access remains available and foreign-company Organization/Team settings disclose no structure. System preference saves retain stale-account protection and Profile/System forms are separated.
+- **22 Release backend tests passed** (15 integration, 7 domain/unit), retaining authorization and tenant-isolation regression coverage. Server APIs and resource calls are unchanged: employee own-organization summaries and safe team directory remain needed for existing authorized calendars, while administration endpoints keep their server checks. No lifecycle timestamps or records change.
+- Production frontend build passed. Existing organization stylesheet budget warning remains: 4.44 kB against 4 kB (438-byte excess).
+- Both TypeScript project checks and existing fixture, eligibility-schema, identity/API-contract, profile and organization scripts passed. Changed TypeScript/templates/test code formatted; browser-script syntax and whitespace checks passed.
+- **Local real-HTTP/browser verification was not run for this correction.** The tool request to start Functions was declined; neither test port 7071 nor 7072 had a listener. Earlier browser/API passes above belong to previous changes and are not evidence for this correction. Hosted execution is pending at the time of this local record; no screenshot or Azure release is claimed.
+
+Product sources updated together: [product charter](../../../product/product-charter.md), [API contract](../../../contracts/api.md), [frontend README](../../../../frontend/README.md), and [VAC-20](../../VAC-20-unified-settings-and-navigation.md). No lead administration permissions, calendar redesign, new fixtures, new API behavior or future backlog was introduced.
+
+## Completed settings and My Leave feedback · 2026-10-30
+
+The product lead confirmed feedback complete and selected **team → department → organization** approval precedence before testing resumed. This supersedes the earlier blanket admin-only Team Settings rule and the temporary test hold. The local Functions API was subsequently authorized and started with fictional seeds on port 7072.
+
+Changed implementation sources:
+
+- Domain/application/HTTP: organization vacation configuration, nullable scope overrides, explicit server-owned membership settings roles, filtered access summary and scoped read/write checks. Existing resource endpoints, tenant boundaries, UTC timestamps and thin HTTP binding are reused. Role assignment is not accepted by public membership PATCH.
+- Frontend: shared Settings sections/route guards, reused Profile/System forms, scoped Team/Department approval editor, Organization policy controls, restored organization header, avatar menu label Settings, My Leave used-type balances/pending/history and balance-bar rendering.
+- Contracts and sources: [API contract](../../../contracts/api.md), OpenAPI, [product charter](../../../product/product-charter.md), [frontend README](../../../../frontend/README.md), VAC-20 and backlog updated together. No dependencies or calendar functionality added.
+
+Verification of this feedback:
+
+- **56 frontend unit/component tests passed**, covering production routes, defensive rendering, four management/employee settings scopes, stale-account preferences, used recurring types, event exclusions, current reference year and descending personal requests.
+- Release API build and production Angular build passed. Existing organization stylesheet warning remains 438 bytes over its warning budget; no build error.
+- Both TypeScript project checks and fixture, eligibility schema, identity/API schema, profile and organization verification scripts passed.
+- Real HTTP verification passed for all twelve sessions, bearer revocation, private projections, account/membership/organization/structure CRUD, timestamps and deletion conflicts. All twelve real HTTP account/membership responses also satisfy the shared JSON Schema.
+- Focused feedback browser acceptance passed: Maya's annual remaining 17/pending 3 with approval on; org delegation revocation removes Leah's Team page; HR can restore it; leads can save only permitted node overrides; organization approval off yields remaining 14; carryover 2 and unlimited 0 save without changing reference ledgers. Settings are restored in cleanup.
+
+Browser regression investigation retained strict native input checks. Early full runs exposed stale assertions selecting only My Leave's first card and using the old pending-deducted annual total; both now assert the requested layout/balance semantics. Sign-out now waits for Calendar navigation and closes its request dialog before opening the avatar menu. Synthetic click helpers await target rendering, including the System section after the Settings permission refresh. Two subsequent local Chrome 150 attempts rejected all trusted input during readiness (focused/visible document, no pointer/key events), before application actions. That failure is recorded rather than treated as a pass; default CI continues to require the native suite.
+
+**28 Release backend tests passed** (18 integration and 10 domain cases), including scoped role access, actual foreign-organization nodes, attempted public settings-role writes, immediate delegation revocation, inheritance, carryover validation and owner/HR demotion. Final full-browser outcomes are recorded below after execution. Independent product/security/release review and Azure deployment remain pending. Approval Requests is still explicitly unavailable; no leave transaction/assignment/decision workflow is claimed. Carryover remains configuration only.
+
+Final complete default browser run: **passed** on local Chrome 150 against the built production frontend and actual Functions API. This run included the strict native readiness/trusted keyboard journeys, all twelve accounts, roster/privacy/eligibility regressions, logout/account-switch and calendar-period Back/Forward/refresh, balances and request previews, Profile/System desktop/mobile persistence, organization/membership HTTP editing and every new feedback scenario. No native checks were skipped in this passing run. Earlier local readiness failures remain documented above. The final focused navigation run also **passed**, verifying the generalized wait-for-render click helper and admin balances/settings mobile access.

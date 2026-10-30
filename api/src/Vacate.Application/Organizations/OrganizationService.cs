@@ -32,7 +32,11 @@ public sealed class OrganizationService(IOrganizationRepository organizations, I
                 ? memberships.ForOrganization(org.Id).Where(member => member.Configuration.TeamId == teamId)
                     .Select(member => users.Find(member.UserId)).Where(user => user is { IsDeleted: false })
                     .Select(user => mapper.Directory(user!)).ToArray()
-                : []);
+                : [],
+            new SettingsAccessRecord(access.IsAdmin(actorId, org.Id) ? m.SettingsRole is Domain.Memberships.SettingsRole.Owner ? "owner" : m.SettingsRole is Domain.Memberships.SettingsRole.Hr ? "hr" : "admin"
+                    : m.SettingsRole.ToString(), access.IsAdmin(actorId, org.Id), org.VacationApprovalRequired(m.Configuration.TeamId, m.Configuration.DepartmentId),
+                org.Departments.Where(d => !d.IsDeleted && access.MayConfigureDepartment(actorId, org, d.Id)).Select(RecordMapper.Department).ToArray(),
+                org.Teams.Where(t => !t.IsDeleted && access.MayConfigureTeam(actorId, org, t.Id)).Select(t => RecordMapper.Team(org, t)).ToArray()));
     });
 
     public IReadOnlyList<DirectoryUserRecord> Directory(int actorId, Guid guid) => unitOfWork.Execute(() =>
@@ -63,7 +67,11 @@ public sealed class OrganizationService(IOrganizationRepository organizations, I
     public OrganizationRecord Update(int actorId, UpdateOrganization command) => unitOfWork.Execute(() =>
     {
         var org = access.RequireAdmin(actorId, command.Guid);
-        org.Update(command.Name.Or(org.Name), command.WorkWeekDays.Or(org.WorkWeekDays), clock.GetUtcNow());
+        var settings = org.Settings;
+        var updatedSettings = new VacationSettings(command.RequireVacationApproval.Or(settings.RequireVacationApproval),
+            command.DepartmentLeadSettingsEnabled.Or(settings.DepartmentLeadSettingsEnabled), command.TeamLeadSettingsEnabled.Or(settings.TeamLeadSettingsEnabled),
+            command.CarryoverEnabled.Or(settings.CarryoverEnabled), command.CarryoverYears.Or(settings.CarryoverYears));
+        org.Update(command.Name.Or(org.Name), command.WorkWeekDays.Or(org.WorkWeekDays), clock.GetUtcNow(), updatedSettings);
         return mapper.Organization(org);
     });
 
@@ -88,14 +96,24 @@ public sealed class OrganizationService(IOrganizationRepository organizations, I
 
     public IReadOnlyList<object> ListStructure(int actorId, Guid organizationGuid, StructureKind kind) => unitOfWork.Execute(() =>
     {
-        var org = access.RequireAdmin(actorId, organizationGuid);
-        return kind == StructureKind.Team ? org.Teams.Where(n => !n.IsDeleted).Select(n => (object)RecordMapper.Team(org, n)).ToArray() :
-            (IReadOnlyList<object>)org.Departments.Where(n => !n.IsDeleted).Select(n => (object)RecordMapper.Department(n)).ToArray();
+        var org = access.Organization(organizationGuid);
+        if (!access.IsAdmin(actorId, org.Id))
+        {
+            access.RequireMember(actorId, organizationGuid);
+        }
+
+        if (!access.IsAdmin(actorId, org.Id) && !org.Departments.Any(d => !d.IsDeleted && access.MayConfigureDepartment(actorId, org, d.Id))
+            && !org.Teams.Any(t => !t.IsDeleted && access.MayConfigureTeam(actorId, org, t.Id)))
+        {
+            throw new ServiceException(ServiceError.NotFound, "Settings unavailable.");
+        }
+        return kind == StructureKind.Team ? org.Teams.Where(n => !n.IsDeleted && access.MayConfigureTeam(actorId, org, n.Id)).Select(n => (object)RecordMapper.Team(org, n)).ToArray() :
+            (IReadOnlyList<object>)org.Departments.Where(n => !n.IsDeleted && access.MayConfigureDepartment(actorId, org, n.Id)).Select(n => (object)RecordMapper.Department(n)).ToArray();
     });
 
     public object GetStructure(int actorId, Guid organizationGuid, StructureKind kind, Guid guid) => unitOfWork.Execute(() =>
     {
-        var org = access.RequireAdmin(actorId, organizationGuid);
+        var org = access.RequireStructureSettings(actorId, organizationGuid, kind == StructureKind.Team, guid);
         var id = NodeId(org, kind, guid);
         return kind == StructureKind.Team ? (object)RecordMapper.Team(org, org.Team(id)) : RecordMapper.Department(org.Department(id));
     });
@@ -110,12 +128,21 @@ public sealed class OrganizationService(IOrganizationRepository organizations, I
 
     public object UpdateStructure(int actorId, UpdateStructure command) => unitOfWork.Execute(() =>
     {
-        var org = access.RequireAdmin(actorId, command.OrganizationGuid);
+        var org = access.RequireStructureSettings(actorId, command.OrganizationGuid, command.Kind == StructureKind.Team, command.Guid);
+        if (!access.IsAdmin(actorId, org.Id) && (command.Name.IsSpecified || command.DepartmentId.IsSpecified))
+        {
+            throw new ServiceException(ServiceError.NotFound, "Only vacation approval settings are available.");
+        }
         var id = NodeId(org, command.Kind, command.Guid);
         var now = clock.GetUtcNow();
         if (command.Kind == StructureKind.Department)
         {
             org.RenameDepartment(id, command.Name.Or(org.Department(id).Name), now);
+            if (command.RequireVacationApproval.IsSpecified)
+            {
+                org.SetDepartmentApproval(id, command.RequireVacationApproval.Value, now);
+            }
+
             return (object)RecordMapper.Department(org.Department(id));
         }
         var team = org.Team(id);
@@ -126,6 +153,11 @@ public sealed class OrganizationService(IOrganizationRepository organizations, I
         }
 
         org.UpdateTeam(id, command.Name.Or(team.Name), parent, now);
+        if (command.RequireVacationApproval.IsSpecified)
+        {
+            org.SetTeamApproval(id, command.RequireVacationApproval.Value, now);
+        }
+
         return RecordMapper.Team(org, team);
     });
 

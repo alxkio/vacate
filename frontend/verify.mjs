@@ -201,13 +201,15 @@ try {
     return result.result.value;
   };
   // Synthetic UI clicks need the same activation context as real user input.
-  const click = (selector) =>
-    selector.includes('logout')
+  const click = async (selector) => {
+    await waitFor(`!!document.querySelector(${JSON.stringify(selector)})`);
+    return selector.includes('logout')
       ? evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`, true)
       : evaluate(
           `(async()=>{document.querySelector(${JSON.stringify(selector)}).click();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));})()`,
           true,
         );
+  };
 
   const prepareNativeFocus = async ({ dispatch = call, timeoutMs = 5000 } = {}) => {
     const started = Date.now();
@@ -492,6 +494,8 @@ try {
   };
   const saveDisplayPreferences = async (layout, colorScheme) => {
     await click('[data-nav=settings]');
+    await waitFor('!!document.querySelector("[data-settings-section=system]")');
+    await click('[data-settings-section=system]');
     await waitFor('!!document.querySelector("#display-preferences-form")');
     await evaluate(
       `(()=>{const layout=document.querySelector("#display-layout"),scheme=document.querySelector("#display-color-scheme");layout.value=${JSON.stringify(layout)};layout.dispatchEvent(new Event("change",{bubbles:true}));scheme.value=${JSON.stringify(colorScheme)};scheme.dispatchEvent(new Event("change",{bubbles:true}));})()`,
@@ -500,8 +504,21 @@ try {
     await waitFor(
       'document.querySelector("#display-preferences-status").textContent.includes("saved in this browser")',
     );
+    const previousViewport = await evaluate('({width:innerWidth, height:innerHeight})');
+    await viewport(375, 1100);
+    assert.equal(
+      await evaluate('document.documentElement.scrollWidth <= innerWidth'),
+      true,
+      'System settings mobile overflow',
+    );
+    assert.equal(
+      await evaluate('!!document.querySelector("#profile-form, .membership-card")'),
+      false,
+    );
+    await screenshot(`system-settings-${layout}-${colorScheme}-mobile.png`);
+    await viewport(previousViewport.width, previousViewport.height);
     await click('[data-nav=calendar]');
-    await waitFor('!document.querySelector("#calendar-page").hidden');
+    await waitFor('document.querySelector("#calendar-page")?.hidden === false');
   };
   const viewport = (width, height) =>
     call('Emulation.setDeviceMetricsOverride', {
@@ -583,8 +600,10 @@ try {
       'document.readyState === "complete" && !!document.querySelector("#period")?.textContent && !document.querySelector("#login-form")',
     );
   const signOut = async () => {
+    if (await evaluate('document.querySelector("#dialog")?.open === true')) await closeDialog();
     if (!(await evaluate('!!document.querySelector("[data-action=logout]")')))
       await click('[data-action=account]');
+    await waitFor('!!document.querySelector("[data-action=logout]")');
     await click('[data-action="logout"]');
     await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');
   };
@@ -844,7 +863,8 @@ try {
     await signIn('maya', 'maya');
     await ready();
     await navigate(baseUrl + '?page=organization');
-    await waitFor('!!document.querySelector("#organization-denied")');
+    await waitFor('!!document.querySelector("#profile-form")');
+    assert.equal(await evaluate('!!document.querySelector("vacate-organization")'), false);
     assert.equal(
       await evaluate(
         'document.querySelectorAll("#organization-form,[data-org-department],[data-org-team]").length',
@@ -891,7 +911,9 @@ try {
     await signIn('nora', 'nora');
     await ready();
     await historyTo({ name: 'maya-one' }, 'Back after account switch');
-    await waitFor('document.querySelector("#demo-person")?.textContent === "Nora Example"');
+    await waitFor(
+      'document.querySelector("[data-action=account]")?.getAttribute("aria-label") === "Nora Example, account options"',
+    );
     await ready();
     assert.equal(
       await evaluate('window.VacateSession.currentUser().id'),
@@ -899,8 +921,8 @@ try {
       'History restored prior account after switch',
     );
     assert.equal(
-      await evaluate('document.querySelector("#demo-person").textContent'),
-      'Nora Example',
+      await evaluate('document.querySelector("[data-action=account]").getAttribute("aria-label")'),
+      'Nora Example, account options',
     );
     assert.equal(
       await evaluate('document.querySelector("#dialog").open'),
@@ -1017,7 +1039,169 @@ try {
       'Calendar return retains period',
     );
   };
-  if (process.env.MOCK_HISTORY_ONLY === '1') {
+  const feedbackAcceptance = async () => {
+    const login = async (account) => {
+      if (await evaluate('!!window.VacateSession.currentUser()')) await signOut();
+      await signIn(account, account);
+      await ready();
+    };
+    const select = async (selector, index) =>
+      evaluate(
+        `(()=>{const element=document.querySelector(${JSON.stringify(selector)});element.selectedIndex=${index};element.dispatchEvent(new Event('change',{bubbles:true}));})()`,
+      );
+    const policy = async () => {
+      await load('?page=settings&section=organization');
+      await waitFor('!!document.querySelector("#organization-policy-form")');
+    };
+    const savePolicy = async () => {
+      await click('#organization-policy-form button');
+      await waitFor(
+        'document.querySelector("#organization-status").textContent.includes("Updated")',
+      );
+    };
+    const patch = async (path, body) =>
+      evaluate(
+        `fetch('/api/organizations/20000000-0000-4000-8000-000000000100'+${JSON.stringify(path)},{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')},body:JSON.stringify(${JSON.stringify(body)})}).then(response=>response.status)`,
+      );
+    try {
+      await login('maya');
+      await load('?page=leave');
+      assert.deepEqual(
+        await evaluate(
+          'Array.from(document.querySelectorAll("[data-used-balance]"),element=>element.dataset.usedBalance)',
+        ),
+        ['annual', 'carer', 'school'],
+      );
+      assert.match(
+        await evaluate('document.querySelector("[data-used-balance=annual]").textContent'),
+        /17.*Pending 3/s,
+      );
+      assert.match(
+        await evaluate('document.querySelector("vacate-my-leave").textContent'),
+        /Pending approval/,
+      );
+      const dates = await evaluate(
+        'Array.from(document.querySelectorAll("[data-request-start]"),element=>element.dataset.requestStart)',
+      );
+      assert.deepEqual(dates, [...dates].sort().reverse());
+      await click('[data-action=account]');
+      assert.equal(
+        await evaluate(
+          'document.querySelector("#account-dropdown [data-nav=settings]").textContent.trim()',
+        ),
+        'Settings',
+      );
+      await login('nora');
+      await policy();
+      const before = await evaluate(
+        'JSON.stringify(window.VacateFixtures.balancesFor(window.VacateSession.currentUser()))',
+      );
+      await select('#carryover-enabled', 1);
+      await evaluate(
+        'document.querySelector("#carryover-years").value="2";document.querySelector("#carryover-years").dispatchEvent(new Event("input",{bubbles:true}))',
+      );
+      await select('#team-lead-settings', 1);
+      await savePolicy();
+      await policy();
+      assert.equal(await evaluate('document.querySelector("#carryover-years").value'), '2');
+      assert.equal(
+        await evaluate(
+          'JSON.stringify(window.VacateFixtures.balancesFor(window.VacateSession.currentUser()))',
+        ),
+        before,
+      );
+      await login('leah');
+      await load('?page=settings&section=team');
+      await waitFor('!!document.querySelector("#profile-form")');
+      assert.equal(
+        await evaluate('!!document.querySelector("[data-settings-section=team]")'),
+        false,
+      );
+      await login('daria');
+      await policy();
+      await select('#team-lead-settings', 0);
+      await evaluate(
+        'document.querySelector("#carryover-years").value="0";document.querySelector("#carryover-years").dispatchEvent(new Event("input",{bubbles:true}))',
+      );
+      await savePolicy();
+      await login('leah');
+      await load('?page=settings&section=team');
+      await waitFor('!!document.querySelector("#scope-settings-form")');
+      assert.equal(await evaluate('document.querySelector("#settings-node").options.length'), 1);
+      assert.match(
+        await evaluate('document.querySelector("#settings-node").textContent'),
+        /Platform/,
+      );
+      await select('#scope-vacation-approval', 2);
+      await click('#scope-settings-form button');
+      await waitFor(
+        'document.querySelector("#scope-settings-status").textContent.includes("saved")',
+      );
+      assert.equal(
+        await patch('/teams/20000000-0000-4000-8000-000000000401', {
+          requireVacationApproval: true,
+        }),
+        404,
+      );
+      await login('ella');
+      await load('?page=settings&section=department');
+      await waitFor('!!document.querySelector("#scope-settings-form")');
+      assert.equal(await evaluate('document.querySelector("#settings-node").options.length'), 1);
+      await select('#scope-vacation-approval', 2);
+      await click('#scope-settings-form button');
+      await waitFor(
+        'document.querySelector("#scope-settings-status").textContent.includes("saved")',
+      );
+      await click('[data-settings-section=team]');
+      await waitFor('document.querySelector("#settings-node").options.length === 2');
+      assert.match(
+        await evaluate('document.querySelector("#settings-node").textContent'),
+        /Product.*Operations/s,
+      );
+      await login('nora');
+      await policy();
+      await select('#organization-vacation-approval', 1);
+      await savePolicy();
+      await login('maya');
+      await load('?page=leave');
+      assert.match(
+        await evaluate('document.querySelector("[data-used-balance=annual]").textContent'),
+        /14.*Pending 3/s,
+      );
+    } finally {
+      await login('nora');
+      assert.equal(
+        await patch('', {
+          requireVacationApproval: true,
+          departmentLeadSettingsEnabled: true,
+          teamLeadSettingsEnabled: true,
+          carryoverEnabled: false,
+          carryoverYears: 0,
+        }),
+        200,
+      );
+      assert.equal(
+        await patch('/teams/20000000-0000-4000-8000-000000000400', {
+          requireVacationApproval: null,
+        }),
+        200,
+      );
+      assert.equal(
+        await patch('/departments/20000000-0000-4000-8000-000000000301', {
+          requireVacationApproval: null,
+        }),
+        200,
+      );
+      await login('maya');
+    }
+    console.log(
+      'PASS: feedback header/avatar label, My Leave used balances/pending/date order, owner/HR policy persistence, carryover configuration only, delegated lead scope/revocation and approval hierarchy.',
+    );
+  };
+  if (process.env.MOCK_FEEDBACK_ONLY === '1') {
+    await feedbackAcceptance();
+    assert.deepEqual(errors, [], 'Unexpected feedback acceptance browser exceptions');
+  } else if (process.env.MOCK_HISTORY_ONLY === '1') {
     await evaluate(
       'for(let index=0; index<60; index++) history.pushState(null, "", location.href)',
     );
@@ -1033,8 +1217,12 @@ try {
       1,
     );
     assert.equal(
-      await evaluate('!!document.querySelector(".topbar .company,.topbar .sign-out")'),
+      await evaluate('!!document.querySelector(".topbar .sign-out,.topbar #demo-person")'),
       false,
+    );
+    assert.match(
+      await evaluate('document.querySelector("#workspace-organization").textContent'),
+      /Northstar Example/,
     );
     assert.equal(
       await evaluate(
@@ -1046,9 +1234,10 @@ try {
     await waitFor('!!document.querySelector("#profile-form")');
     assert.equal(
       await evaluate('document.querySelectorAll(".settings-navigation button").length'),
-      3,
+      5,
     );
     await click('[data-settings-section=team]');
+    await waitFor('!!document.querySelector("#scope-settings-form")');
     assert.match(
       await evaluate('document.querySelector(".navigation-card").textContent'),
       /Nora.*Example.*you/s,
@@ -1079,17 +1268,20 @@ try {
     assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true);
     await screenshot('admin-balances-mobile.png');
     await load('?page=settings&section=team');
+    await waitFor('!!document.querySelector("#scope-settings-form")');
     assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true);
     await screenshot('unified-settings-mobile.png');
     await viewport(1600, 1100);
     await click('[data-nav=approvals]');
+    await waitFor('window.VacateMock?.state.page === "approvals"');
     assert.match(
       await evaluate('document.querySelector(".navigation-card").textContent'),
       /Approval inbox unavailable/,
     );
     await click('[data-nav=leave]');
+    await waitFor('!!document.querySelector("vacate-my-leave")');
     assert.match(
-      await evaluate('document.querySelector(".navigation-card").textContent'),
+      await evaluate('document.querySelector("vacate-my-leave").textContent'),
       /My requests/,
     );
     await click('.navigation-card [data-nav=balances]');
@@ -1105,14 +1297,39 @@ try {
     );
     await load('?page=admin-balances');
     assert.equal(await evaluate('!!document.querySelector(".overview-table")'), false);
-    await load('?page=organization');
-    await waitFor('!!document.querySelector("#organization-denied")');
-    await load('?page=settings&section=team');
-    assert.match(
-      await evaluate('document.querySelector(".navigation-card").textContent'),
-      /Maya.*Example.*you/s,
+    for (const query of [
+      '?page=organization',
+      '?page=organization-settings',
+      '?page=settings&section=organization',
+      '?page=settings&section=team',
+    ]) {
+      await load(query);
+      await waitFor('!!document.querySelector("#profile-form")');
+      assert.equal(
+        await evaluate(
+          '!!document.querySelector("vacate-organization, [data-settings-section=organization], [data-settings-section=team]")',
+        ),
+        false,
+      );
+      assert.equal(await evaluate('new URL(location.href).searchParams.get("section")'), 'profile');
+    }
+    assert.deepEqual(
+      await evaluate(
+        'Array.from(document.querySelectorAll(".settings-navigation button"), button=>button.dataset.settingsSection)',
+      ),
+      ['profile', 'system'],
     );
-    assert.equal(await evaluate('document.querySelectorAll(".navigation-card li").length'), 3);
+    await click('[data-settings-section=system]');
+    await waitFor('!!document.querySelector("#display-preferences-form")');
+    assert.equal(
+      await evaluate('!!document.querySelector("#profile-form, .membership-card")'),
+      false,
+    );
+    await screenshot('employee-system-settings-desktop.png');
+    await viewport(375, 1000);
+    assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true);
+    await screenshot('employee-system-settings-mobile.png');
+    await viewport(1600, 1100);
     await load('?scope=team');
     assert.match(await evaluate('document.querySelector("#scope-count").textContent'), /3 people/);
     await click('[data-nav=people]');
@@ -1210,6 +1427,11 @@ try {
       await signIn('user', 'user');
       await ready();
       await load('?scope=self&view=month');
+      assert.equal(await evaluate('!!document.querySelector(".topbar #demo-person")'), false);
+      assert.match(
+        await evaluate('document.querySelector("#workspace-organization").textContent'),
+        /Northstar Example/,
+      );
       await nativeFocusAcceptance();
       // Exercise native keyboard behavior on a fresh document, independently of history traversal.
       // Native keyboard activation creates trusted browser input in a fresh document,
@@ -1595,7 +1817,7 @@ try {
         assert.match(
           await evaluate('document.querySelector("#annual-overview").textContent'),
           new RegExp(
-            `${expectedBalance.allocation - expectedBalance.used - expectedBalance.pending} / ${expectedBalance.allocation} working days available`,
+            `${expectedBalance.allocation - expectedBalance.used} / ${expectedBalance.allocation} working days available`,
           ),
           id + ' own annual balance',
         );
@@ -1604,7 +1826,7 @@ try {
           `window.VacateFixtures.ownEntries(window.VacateFixtures.person(${JSON.stringify(id)})).map(entry=>entry.title)`,
         );
         const personalDialog = await evaluate(
-          'document.querySelector(".navigation-card").textContent',
+          'document.querySelector("vacate-my-leave").textContent',
         );
         for (const title of ownTitles)
           assert.ok(personalDialog.includes(title), id + ' own request missing');
@@ -1759,14 +1981,41 @@ try {
         );
         await load('?page=settings&section=organization');
         await waitFor(
-          '!!document.querySelector("#organization-form") || !!document.querySelector("#organization-denied")',
+          '!!document.querySelector("#organization-form") || !!document.querySelector("#profile-form")',
         );
         assert.equal(
           await evaluate('!!document.querySelector("#organization-form")'),
           role === 'admin',
         );
+        assert.deepEqual(
+          await evaluate(
+            'Array.from(document.querySelectorAll(".settings-navigation button"), button=>button.dataset.settingsSection)',
+          ),
+          role === 'admin'
+            ? ['organization', 'department', 'team', 'profile', 'system']
+            : id === 'ella'
+              ? ['department', 'team', 'profile', 'system']
+              : id === 'leah'
+                ? ['team', 'profile', 'system']
+                : ['profile', 'system'],
+        );
+        if (role !== 'admin') {
+          assert.equal(await evaluate('!!document.querySelector("vacate-organization")'), false);
+          await load('?page=settings&section=team');
+          await waitFor(
+            '!!document.querySelector("#profile-form") || !!document.querySelector("#scope-settings-form")',
+          );
+          assert.equal(
+            await evaluate('!!document.querySelector("#scope-settings-form")'),
+            ['leah', 'ella'].includes(id),
+          );
+        }
         await click('[data-nav=calendar]');
+        await waitFor(
+          'window.VacateMock?.state.page === "calendar" && document.querySelector("#calendar-page")?.hidden === false',
+        );
         await click('[data-action="request"]');
+        await waitFor('document.querySelector("#dialog")?.open === true');
         await evaluate('document.querySelector("#request-amount").value="41"');
         await signOut();
         if (['noah', 'iris', 'zoe', 'sam'].includes(id))
@@ -1815,18 +2064,18 @@ try {
       );
       assert.match(
         await evaluate('document.querySelector("#annual-overview").textContent'),
-        /14 \/ 25 working days available/,
+        /17 \/ 25 working days available/,
         'Restore original annual fixture after zero-allocation regression',
       );
       await click('[data-page-link=balances]');
       assert.deepEqual(await balanceTypes(), mayaBalanceTypes);
       assert.match(
         await evaluate('document.querySelector("[data-balance=annual]").textContent'),
-        /14 \/ 25 working days available/,
+        /17 \/ 25 working days available/,
       );
       assert.match(
         await evaluate('document.querySelector("[data-balance=annual]").textContent'),
-        /56% available/,
+        /68% available/,
       );
       await click('[data-balance=annual] summary');
       await waitFor(
@@ -1961,9 +2210,9 @@ try {
       );
       assert.match(
         await evaluate('document.querySelector("#request-balance").textContent'),
-        /Exceeds.*86 working days/,
+        /Exceeds.*83 working days/,
       );
-      assert.equal(await evaluate('window.VacateLeave.balanceOf("annual").available'), 14);
+      assert.equal(await evaluate('window.VacateLeave.balanceOf("annual").available'), 17);
       await evaluate(
         'document.querySelector("#start-date").value="2026-10-29";document.querySelector("#start-date").dispatchEvent(new Event("input"));document.querySelector("#start-date").dispatchEvent(new Event("input"));document.querySelector("#request-form").requestSubmit()',
       );
@@ -2210,7 +2459,7 @@ try {
         'Programmatic submit after account change must not complete stale request',
       );
       await waitFor(
-        'document.readyState === "complete" && document.querySelector("#demo-person")?.textContent === "Nora Example"',
+        'document.readyState === "complete" && document.querySelector("[data-action=account]")?.getAttribute("aria-label") === "Nora Example, account options"',
       );
       await ready();
       assert.equal(
@@ -2252,7 +2501,9 @@ try {
         'document.querySelector("#profile-status")?.textContent.includes("Profile saved")',
       );
       assert.match(
-        await evaluate('document.querySelector("#demo-person").textContent'),
+        await evaluate(
+          'document.querySelector("[data-action=account]").getAttribute("aria-label")',
+        ),
         /Maya Updated/,
       );
       assert.equal(
@@ -2321,6 +2572,7 @@ try {
         'PASS: VAC-12 sidebar/avatar settings, family validation, save/cancel, name/eligibility refresh, read-only membership, keyboard/Escape, mobile, direct entry, account isolation and API persistence.',
       );
       await organizationAcceptance();
+      await feedbackAcceptance();
       assert.deepEqual(errors, [], 'Unexpected browser exceptions');
       console.log(
         (process.env.MOCK_FUNCTIONAL_ONLY === '1'

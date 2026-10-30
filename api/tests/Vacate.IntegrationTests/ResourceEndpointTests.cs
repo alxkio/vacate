@@ -157,6 +157,94 @@ public sealed class ResourceEndpointTests
     }
 
     [Test]
+    public async Task settings_permissions_are_scoped_by_membership_not_presentation_title()
+    {
+        foreach (var (alias, departments, teams) in new[] { ("maya", 0, 0), ("leah", 0, 1), ("ella", 1, 2), ("nora", 2, 4), ("daria", 2, 4) })
+        {
+            var token = await Login(alias);
+            var result = await Call("GET", $"organizations/{Company}/summary", token);
+            var access = result.Json!["settingsAccess"]!;
+            Assert.That(access["departments"]!.AsArray(), Has.Count.EqualTo(departments));
+            Assert.That(access["teams"]!.AsArray(), Has.Count.EqualTo(teams));
+            Assert.That((await Call("GET", $"organizations/{GuidFor(999)}/summary", token)).Status, Is.EqualTo(404));
+        }
+        var lead = await Login("leah");
+        Assert.That((await Call("GET", $"organizations/{Company}", lead)).Status, Is.EqualTo(404));
+        Assert.That((await Call("GET", $"organizations/{Company}/teams/{GuidFor(401)}", lead)).Status, Is.EqualTo(404));
+        Assert.That((await Call("PATCH", $"organizations/{Company}/teams/{GuidFor(400)}", lead, new { name = "Not authorized" })).Status, Is.EqualTo(404));
+        Assert.That((await Call("PATCH", $"organizations/{Company}/teams/{GuidFor(401)}", lead, new { requireVacationApproval = false })).Status, Is.EqualTo(404));
+        Assert.That((await Call("PATCH", $"organizations/{Company}/departments/{GuidFor(300)}", lead, new { requireVacationApproval = false })).Status, Is.EqualTo(404));
+        var departmentLead = await Login("ella");
+        Assert.That((await Call("PATCH", $"organizations/{Company}/teams/{GuidFor(400)}", departmentLead, new { requireVacationApproval = false })).Status, Is.EqualTo(404));
+        Assert.That((await Call("PATCH", $"organizations/{Company}/teams/{GuidFor(403)}", departmentLead, new { requireVacationApproval = false })).Status, Is.EqualTo(200));
+        var employee = await Login("maya");
+        Assert.That((await Call("GET", $"organizations/{Company}/teams/{GuidFor(400)}", employee)).Status, Is.EqualTo(404));
+        Assert.That((await Call("PATCH", $"organizations/{Company}/teams/{GuidFor(400)}", employee, new { requireVacationApproval = false })).Status, Is.EqualTo(404));
+        var admin = await Login("nora");
+        Assert.That((await Call("PATCH", $"organizations/{Company}/memberships/{GuidFor(4)}", admin, new { settingsRole = "Owner" })).Status, Is.EqualTo(400));
+        var foreign = (await Call("POST", "organizations", admin, new { name = "Foreign settings", workWeekDays = 5 })).Json!["guid"]!.ToString();
+        var foreignTeam = (await Call("POST", $"organizations/{foreign}/teams", admin, new { name = "Foreign team" })).Json!["guid"]!.ToString();
+        foreach (var token in new[] { lead, departmentLead, employee })
+        {
+            Assert.That((await Call("GET", $"organizations/{foreign}/teams/{foreignTeam}", token)).Status, Is.EqualTo(404));
+            Assert.That((await Call("PATCH", $"organizations/{foreign}/teams/{foreignTeam}", token, new { requireVacationApproval = false })).Status, Is.EqualTo(404));
+        }
+    }
+
+    [Test]
+    public async Task vacation_approval_overrides_inherit_and_delegation_revocation_is_immediate()
+    {
+        var admin = await Login("nora");
+        var lead = await Login("leah");
+        var path = $"organizations/{Company}";
+        async Task<bool> Required() => (await Call("GET", path + "/summary", lead)).Json!["settingsAccess"]!["effectiveVacationApproval"]!.GetValue<bool>();
+        Assert.That(await Required(), Is.True);
+        Assert.That((await Call("PATCH", path + $"/departments/{GuidFor(300)}", admin, new { requireVacationApproval = false })).Status, Is.EqualTo(200));
+        Assert.That(await Required(), Is.False);
+        var before = (await Call("GET", path + $"/teams/{GuidFor(400)}", lead)).Json!;
+        var changed = await Call("PATCH", path + $"/teams/{GuidFor(400)}", lead, new { requireVacationApproval = true });
+        Assert.That(changed.Status, Is.EqualTo(200));
+        Assert.That(changed.Json!["createdAt"]!.ToString(), Is.EqualTo(before["createdAt"]!.ToString()));
+        Assert.That(DateTimeOffset.Parse(changed.Json["updatedAt"]!.ToString()), Is.GreaterThanOrEqualTo(DateTimeOffset.Parse(before["updatedAt"]!.ToString())));
+        Assert.That(await Required(), Is.True);
+        Assert.That((await Call("PATCH", path + $"/teams/{GuidFor(400)}", lead, new { requireVacationApproval = (bool?)null })).Status, Is.EqualTo(200));
+        Assert.That(await Required(), Is.False);
+        await Call("PATCH", path, admin, new { requireVacationApproval = false });
+        await Call("PATCH", path + $"/departments/{GuidFor(300)}", admin, new { requireVacationApproval = (bool?)null });
+        Assert.That(await Required(), Is.False);
+        await Call("PATCH", path, admin, new { teamLeadSettingsEnabled = false, departmentLeadSettingsEnabled = false });
+        Assert.That((await Call("PATCH", path + $"/teams/{GuidFor(400)}", lead, new { requireVacationApproval = true })).Status, Is.EqualTo(404));
+        Assert.That((await Call("GET", path + "/summary", lead)).Json!["settingsAccess"]!["teams"]!.AsArray(), Is.Empty);
+        var departmentLead = await Login("ella");
+        Assert.That((await Call("GET", path + "/summary", departmentLead)).Json!["settingsAccess"]!["departments"]!.AsArray(), Is.Empty);
+        Assert.That((await Call("PATCH", path + $"/departments/{GuidFor(301)}", departmentLead, new { requireVacationApproval = true })).Status, Is.EqualTo(404));
+        var employee = await Login("maya");
+        Assert.That((await Call("PATCH", path, employee, new { teamLeadSettingsEnabled = true })).Status, Is.EqualTo(404));
+    }
+
+    [Test]
+    public async Task carryover_is_validated_configuration_only_and_cannot_change_balances()
+    {
+        var admin = await Login("nora");
+        var path = $"organizations/{Company}";
+        var balance = (await Call("GET", path + $"/memberships/{GuidFor(4)}", admin)).Json!["membership"]!["balance"]!.ToJsonString();
+        foreach (var years in new[] { 0, 2 })
+        {
+            var result = await Call("PATCH", path, admin, new { carryoverEnabled = true, carryoverYears = years });
+            Assert.That(result.Status, Is.EqualTo(200));
+            Assert.That(result.Json!["settings"]!["carryoverYears"]!.GetValue<int>(), Is.EqualTo(years));
+            Assert.That((await Call("GET", path + $"/memberships/{GuidFor(4)}", admin)).Json!["membership"]!["balance"]!.ToJsonString(), Is.EqualTo(balance));
+        }
+        foreach (var body in new object[] { new { carryoverYears = -1 }, new { carryoverYears = 1.5 }, new { carryoverEnabled = (bool?)null }, new { requireVacationApproval = (bool?)null } })
+        {
+            Assert.That((await Call("PATCH", path, admin, body)).Status, Is.EqualTo(400));
+        }
+        Assert.That((await Call("GET", path, admin)).Json!["settings"]!["carryoverYears"]!.GetValue<int>(), Is.EqualTo(2));
+        var employee = await Login("maya");
+        Assert.That((await Call("PATCH", path, employee, new { carryoverEnabled = true })).Status, Is.EqualTo(404));
+    }
+
+    [Test]
     public async Task all_seed_accounts_and_aliases_authenticate_but_local_person_headers_do_not()
     {
         foreach (var alias in new[] { "leah", "ravi", "noah", "maya", "theo", "iris", "ella", "owen", "zoe", "daria", "nora", "sam", "user", "admin" })

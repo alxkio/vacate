@@ -91,7 +91,15 @@ public static class Endpoint
         }
     }
 
-    public static Change<T> Field<T>(JsonObject body, string key) => body.ContainsKey(key) ? new(true, body[key] is null ? default! : body[key]!.Deserialize<T>(Json)!) : default;
+    public static Change<T> Field<T>(JsonObject body, string key)
+    {
+        if (body.ContainsKey(key) && body[key] is null && typeof(T).IsValueType && Nullable.GetUnderlyingType(typeof(T)) is null)
+        {
+            throw new RequestException(400, $"{key} cannot be null.");
+        }
+
+        return body.ContainsKey(key) ? new(true, body[key] is null ? default! : body[key]!.Deserialize<T>(Json)!) : default;
+    }
 
     public static T Required<T>(JsonObject body, string key) => Field<T>(body, key) is { IsSpecified: true, Value: { } value } ? value : throw new RequestException(400, $"Enter {key}.");
 

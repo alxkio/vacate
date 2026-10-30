@@ -101,6 +101,21 @@ export class OrganizationSettings implements OnChanges {
   error = '';
   message = '';
   busy = false;
+  settingsDraft = {
+    requireVacationApproval: true,
+    departmentLeadSettingsEnabled: false,
+    teamLeadSettingsEnabled: false,
+    carryoverEnabled: false,
+    carryoverYears: 0,
+  };
+
+  async savePolicies() {
+    if (this.busy) return;
+    this.busy = true;
+    const result = await this.data.api.updateOrganizationSettings(this.actorId, this.settingsDraft);
+    this.busy = false;
+    this.finish(result);
+  }
   get department() {
     return this.record?.departments.find((item) => item.id === this.departmentId);
   }
@@ -140,6 +155,7 @@ export class OrganizationSettings implements OnChanges {
       return;
     }
     this.record = this.data.organization.read(this.companyId);
+    this.settingsDraft = { ...this.settingsDraft, ...this.data.api.organizationSettings };
     if (this.record)
       this.draft = { name: this.record.name, workWeekDays: this.record.workWeekDays };
     this.nodeName = this.team?.name || this.department?.name || '';

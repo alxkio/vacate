@@ -15,7 +15,10 @@
   min-width: 0;
 }
 .display-preferences-card {
-  grid-column: 2;
+  grid-column: 1;
+}
+.settings-layout.system-settings {
+  grid-template-columns: minmax(0, 1fr);
 }
 .settings-card-heading {
   display: flex;

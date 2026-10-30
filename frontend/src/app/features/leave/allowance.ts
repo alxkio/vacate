@@ -87,7 +87,7 @@ export class Allowance {
         ></span>
         <span
           class="bar-pending"
-          [style.width.%]="(balance.pending / balance.allocation) * 100"
+          [style.width.%]="(pendingReserved / balance.allocation) * 100"
           aria-hidden="true"
         ></span>
         <span
@@ -103,4 +103,11 @@ export class BalanceBar {
   @Input({ required: true }) balance!: Balance;
   @Input() label = 'Annual leave';
   @Input() unit = 'working days';
+
+  get pendingReserved() {
+    return Math.min(
+      this.balance.pending,
+      Math.max(0, this.balance.allocation - this.balance.used - this.balance.available),
+    );
+  }
 }
