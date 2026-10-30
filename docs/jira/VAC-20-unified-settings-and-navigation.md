@@ -23,6 +23,10 @@ Reuse API services and existing editors. Preserve employee/admin authorization a
 
 Approval Requests remains explicitly unavailable by the product lead's reply on 2026-10-29. There is no request API or assignment logic to reuse. Do not infer approval rights from team-lead titles, manager references, or public fictional pending requests.
 
+### Small follow-up · 2026-10-30
+
+The product lead requested one advertised sign-in option per review persona: Employee (Maya), Team lead (Leah), Department lead (Ella) and Organization admin (Nora). The product lead explicitly clarified: retain all test data, limit only login options, and keep existing permissions; distinct team/department lead permissions belong to later work. All twelve accounts, credentials, fixture records and automated scenarios remain available. This is chooser presentation, not an authentication allowlist.
+
 ## Dependencies
 
 None. Existing implementations verified by inspection: [VAC-13](VAC-13-api-backed-settings.md) supplies resource clients, company-scoped membership access and editors; [VAC-19](VAC-19-calendar-display-preferences-and-balances.md) supplies display preferences/personal balances. These are related work, not new implementation prerequisites.
@@ -36,6 +40,7 @@ None. Existing implementations verified by inspection: [VAC-13](VAC-13-api-backe
 - [x] People supplies the authorized directory and admin membership editor; My Leave supplies personal request history and the existing personal balances view.
 - [x] The top bar omits the demo company marker; sign-out is in the profile dropdown.
 - [x] Own-team rosters include the actor, follow API membership reassignment, exclude other teams/tenants and omit private account/family/balance fields. Membership does not imply management rights.
+- [x] The sign-in chooser and advertised credentials show exactly four representative personas, autofill their existing credentials, retain all twelve fixture people and preserve lead/tenant permissions.
 - [x] Frontend tests, backend tests, production build and applicable browser checks pass, or remaining verification gaps are explicitly recorded.
 
 ## Subtasks and responsibilities
@@ -60,16 +65,22 @@ C2 · 2026-10-29 · Assistant: reopened after product lead supplied CI failures 
 
 C3 · 2026-10-30 · Assistant: full-run diagnostics showed the selected November calendar entry absent under synthetic clicks; enabling CDP user-gesture activation for UI clicks and awaiting the expected restored state corrected the complete functional run. Added valid/foreign-team router history tests; 38 frontend tests pass. See the appended verification record for local native-input limits and hosted CI follow-up.
 
+C4 · 2026-10-30 · Assistant: implemented the requested four-option chooser as a frontend-only follow-up; server authentication, aliases, data and permission rules are unaffected. The Department lead option selects Ella’s existing non-admin lead account.
+
 ## Decisions
 
 D1 · 2026-10-29 · Product lead: keep unavailable approval inbox in this change; no new approval workflow.
 D2 · 2026-10-29 · Assistant implementation choice: default high-balance viewing threshold is 75% of known allocation; adjustable locally and explicitly not a policy rule. Keep provisional allocation separate from remaining balance.
+
+D3 · 2026-10-30 · Product lead: retain all test data and existing permissions; limit only advertised login options to one representative per review persona. No new authorization role or access scope is approved.
 
 ## Work log
 
 W1 · 2026-10-29 · Assistant recorded · Inspection, implementation and verification · Duration: Unknown (not measured). Evidence: changed source and verification below. Human actual: Unknown; no estimated or reconstructed hours.
 
 W2 · 2026-10-29–30 · Assistant recorded · Investigate reported CI failures, add history regression coverage and verify correction · Duration: Unknown (not measured). Human actual: Unknown. Evidence: history regression notes in the verification record.
+
+W3 · 2026-10-30 · Assistant recorded · Curate sign-in options, preserve fixtures and permissions, add UI checks and verification · Duration: Unknown (not measured); human actual: Unknown.
 
 ## History
 
@@ -81,10 +92,14 @@ H3 · 2026-10-29 · Assistant · Reopened In progress to fix the CI history regr
 
 H4 · 2026-10-30 · Assistant · Returned to QA after the full functional browser regression and 38 frontend tests passed; hosted CI and independent acceptance remain pending.
 
+H5 · 2026-10-30 · Assistant · Reopened In progress for the explicitly requested small persona-chooser follow-up.
+
+H6 · 2026-10-30 · Assistant · Returned to QA after 43 frontend tests, production build, real-HTTP twelve-account verification and navigation/browser persona checks passed.
+
 ## Verification and release
 
 [Verification evidence](media/VAC-20/verification.md): 36 Angular tests, 15 integration tests and 7 domain/unit tests passed; production build passed with the existing organization stylesheet warning. Navigation and existing organization functional browser checks passed against the actual Functions API. Reference fixture/schema/privacy checks and issue/link audit passed. No deployment, commit, release approval or independent security review claimed.
 
 ## Open questions and follow-up
 
-Existing request assignment, self-approval and decision rules remain outside this change, as explicitly confirmed. API balances remain unresolved until a trusted policy/ledger exists; display does not authorize new policy calculations.
+Distinct team/department lead permissions are explicitly deferred; no future issue was created by this small follow-up. Existing request assignment, self-approval and decision rules remain outside this change, as explicitly confirmed. API balances remain unresolved until a trusted policy/ledger exists; display does not authorize new policy calculations.

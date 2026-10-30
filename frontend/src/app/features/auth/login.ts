@@ -5,6 +5,12 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 export class Login implements OnDestroy {
   readonly data = inject(WorkspaceDataService);
   readonly detector = inject(ChangeDetectorRef);
+  readonly personas = [
+    { id: 'maya', label: 'Employee', name: 'Maya' },
+    { id: 'leah', label: 'Team lead', name: 'Leah' },
+    { id: 'ella', label: 'Department lead', name: 'Ella' },
+    { id: 'nora', label: 'Organization admin', name: 'Nora' },
+  ];
   error = this.data.api.error;
   busy = false;
 
@@ -23,10 +29,11 @@ export class Login implements OnDestroy {
     password: HTMLInputElement,
     description: HTMLElement,
   ) {
+    const persona = this.personas.find((option) => option.id === id);
     const person = this.data.fixtures.person(id);
-    if (!person) return;
+    if (!persona || !person) return;
     username.value = password.value = person.username;
-    description.textContent = `${person.team} · ${person.role} · ${person.username}`;
+    description.textContent = `${persona.label} · ${person.team} · ${person.username}`;
     this.error = '';
   }
 

@@ -23,22 +23,20 @@
   <section class="login-card" aria-labelledby="login-title">
     <span class="eyebrow">VACATE DEMO</span>
     <h2 id="login-title">Welcome back.</h2>
-    <p>Explore 12 fictional colleagues at Northstar Example.</p>
-    <label for="demo-account">Choose a fictional person</label
+    <p>Choose one of four test personas. Explore all 12 fictional colleagues.</p>
+    <label for="demo-account">Choose a test persona</label
     ><select
       id="demo-account"
       #account
       (change)="choose(account.value, username, password, description)"
     >
       <option value="">Choose a persona…</option>
-      @for (person of data.fixtures.people; track person.id) {
-        <option [value]="person.id">
-          {{ person.name }} · {{ person.title }} · {{ person.role }}
-        </option>
+      @for (persona of personas; track persona.id) {
+        <option [value]="persona.id">{{ persona.label }} · {{ persona.name }}</option>
       }
     </select>
     <p id="persona-description" #description class="login-note">
-      Select a person to fill their public demo credentials.
+      Select a persona to fill their public demo credentials.
     </p>
     <form id="login-form" (submit)="submit($event, username, password)">
       <label for="username">Username</label
@@ -67,10 +65,13 @@
     </form>
     <div class="demo-credentials">
       <strong>Public demo access</strong>
-      <p>For example: <code>maya / maya</code> or <code>nora / nora</code></p>
-      <p>Every person: <code>firstname / firstname</code></p>
-      <p><span>Maya shortcut</span><code>user / user</code></p>
-      <p><span>Nora shortcut</span><code>admin / admin</code></p>
+      @for (persona of personas; track persona.id) {
+        <p>
+          <span>{{ persona.label }}</span
+          ><code>{{ persona.id }} / {{ persona.id }}</code>
+        </p>
+      }
+      <p>The two lead personas currently have the same access.</p>
     </div>
     <p class="login-note">
       Public browser simulation. All fixture data is downloadable. No secure authentication or real

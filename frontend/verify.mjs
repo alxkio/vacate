@@ -345,6 +345,36 @@ try {
     'Login overflows on mobile',
   );
   await viewport(1600, 1250);
+  const loginPersonas = [
+    ['maya', 'Employee'],
+    ['leah', 'Team lead'],
+    ['ella', 'Department lead'],
+    ['nora', 'Organization admin'],
+  ];
+  assert.deepEqual(
+    await evaluate(
+      'Array.from(document.querySelectorAll("#demo-account option")).filter(option=>option.value).map(option=>option.value)',
+    ),
+    loginPersonas.map(([id]) => id),
+    'Exactly one advertised login per review persona',
+  );
+  for (const [id, label] of loginPersonas) {
+    await evaluate(
+      `document.querySelector('#demo-account').value=${JSON.stringify(id)};document.querySelector('#demo-account').dispatchEvent(new Event('change'))`,
+    );
+    assert.equal(await evaluate('document.querySelector("#username").value'), id);
+    assert.equal(await evaluate('document.querySelector("#password").value'), id);
+    assert.ok(
+      (await evaluate('document.querySelector("#persona-description").textContent')).includes(
+        label,
+      ),
+    );
+  }
+  assert.equal(
+    await evaluate('window.VacateFixtures.people.length'),
+    12,
+    'Retain the full fictional roster',
+  );
   const signIn = async (username, password) => {
     await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');
     await evaluate(

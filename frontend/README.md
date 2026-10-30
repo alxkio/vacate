@@ -98,3 +98,7 @@ Approval Requests is explicitly unavailable by product lead confirmation until a
 ### History regression checks
 
 `MOCK_HISTORY_ONLY=1 node verify.mjs` runs account-switch history guards and the Calendar → My Leave → Balances Back/Forward/reload journey with a populated browser history. The same page-history check runs in the complete suite and `MOCK_NAVIGATION_ONLY=1`. Synthetic UI clicks set the CDP user-gesture flag; history restoration waits for the expected page, scope, date, view and rendered period. `MOCK_FUNCTIONAL_ONLY=1` runs the complete functional journey without native-keyboard checks for local hosts with unreliable input delivery. CI runs the default complete suite, including native keyboard checks.
+
+### Four advertised test personas · 2026-10-30
+
+The sign-in chooser and credential hints now show Maya (Employee), Leah (Team lead), Ella (Department lead), and Nora (Organization admin), each using the existing firstname/firstname credential. The two lead labels identify review scenarios with the same existing access. This only curates the chooser: all twelve fictional people, leave data, memberships, development credentials/aliases and automated tests remain intact. Separate lead permissions are deferred by explicit product lead instruction. API behavior and contracts are unchanged.
