@@ -4,7 +4,7 @@ type: story
 summary: Unify settings and clarify leave, people and approval navigation
 status: qa
 created: 2026-10-29
-updated: 2026-10-29
+updated: 2026-10-30
 parent: null
 depends_on: []
 ---
@@ -56,6 +56,10 @@ None. Existing implementations verified by inspection: [VAC-13](VAC-13-api-backe
 
 C1 · 2026-10-29 · Assistant: inspection found live membership balance values may be unresolved; reference ledgers are separate public fictional examples and must not substitute for missing API totals.
 
+C2 · 2026-10-29 · Assistant: reopened after product lead supplied CI failures during history restoration: a transient default October period and a missing calendar element. Earlier bounded browser evidence did not cover the full history journey. Investigating browser synchronization; npm installation/audit warnings are not the reported assertion failure.
+
+C3 · 2026-10-30 · Assistant: full-run diagnostics showed the selected November calendar entry absent under synthetic clicks; enabling CDP user-gesture activation for UI clicks and awaiting the expected restored state corrected the complete functional run. Added valid/foreign-team router history tests; 38 frontend tests pass. See the appended verification record for local native-input limits and hosted CI follow-up.
+
 ## Decisions
 
 D1 · 2026-10-29 · Product lead: keep unavailable approval inbox in this change; no new approval workflow.
@@ -65,11 +69,17 @@ D2 · 2026-10-29 · Assistant implementation choice: default high-balance viewin
 
 W1 · 2026-10-29 · Assistant recorded · Inspection, implementation and verification · Duration: Unknown (not measured). Evidence: changed source and verification below. Human actual: Unknown; no estimated or reconstructed hours.
 
+W2 · 2026-10-29–30 · Assistant recorded · Investigate reported CI failures, add history regression coverage and verify correction · Duration: Unknown (not measured). Human actual: Unknown. Evidence: history regression notes in the verification record.
+
 ## History
 
 H1 · 2026-10-29 · Assistant · Created In progress for the authorized implementation.
 
 H2 · 2026-10-29 · Assistant · Moved to QA after paired frontend/backend and browser verification; independent product/security review remains pending.
+
+H3 · 2026-10-29 · Assistant · Reopened In progress to fix the CI history regression reported after commit 54beec9.
+
+H4 · 2026-10-30 · Assistant · Returned to QA after the full functional browser regression and 38 frontend tests passed; hosted CI and independent acceptance remain pending.
 
 ## Verification and release
 

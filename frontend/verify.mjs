@@ -174,7 +174,7 @@ try {
       });
       socket.send(JSON.stringify({ id, method, params }));
     });
-  const evaluate = async (expression) => {
+  const evaluate = async (expression, userGesture = false) => {
     // Angular schedules template updates. Model distinct user changes across rendered frames.
     if (expression.includes('.dispatchEvent(new Event(')) {
       expression =
@@ -191,6 +191,7 @@ try {
         expression,
         returnByValue: true,
         awaitPromise: true,
+        userGesture,
       });
     } catch (error) {
       throw Error(error.message + '; expression: ' + expression.slice(0, 180));
@@ -198,11 +199,13 @@ try {
     if (result.exceptionDetails) throw Error(JSON.stringify(result.exceptionDetails));
     return result.result.value;
   };
+  // Synthetic UI clicks need the same activation context as real user input.
   const click = (selector) =>
     selector.includes('logout')
-      ? evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`)
+      ? evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`, true)
       : evaluate(
           `(async()=>{document.querySelector(${JSON.stringify(selector)}).click();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));})()`,
+          true,
         );
   const keyboardClick = async (selector) => {
     await call('Page.bringToFront');
@@ -628,7 +631,177 @@ try {
       'PASS: VAC-2 organization settings, company/week edits, cancel/validation, department/team renames, sanitized members, unchanged ledgers, mobile, foreign IDs, retained edits, admin membership HTTP save/reload and mobile.',
     );
   };
-  if (process.env.MOCK_NAVIGATION_ONLY === '1') {
+  const accountHistoryAcceptance = async () => {
+    await signIn('user', 'user');
+    await ready();
+    await navigate(baseUrl);
+    await ready();
+    // Real browser Back/Forward traversal, including BFCache where Chrome chooses it.
+    // Separate document loads keep untouched private pages in history while logout replaces only its target.
+    for (const name of ['maya-one', 'maya-two', 'logout-target']) {
+      await load('?history=' + name);
+      await click('[data-scope="team"]');
+      await click('[data-action="request"]');
+      await evaluate('document.querySelector("#request-amount").value="41"');
+    }
+    await signOut();
+    await historyTo({ name: 'maya-two' }, 'Back after logout');
+    await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');
+    assert.equal(
+      await evaluate('window.VacateSession.currentUser()'),
+      null,
+      'Back after logout restored identity',
+    );
+    assert.equal(
+      await evaluate('!!document.querySelector("#request-form")'),
+      false,
+      'Back after logout restored private draft',
+    );
+    await historyTo({ delta: 1 }, 'Forward after logout');
+    await waitFor('document.readyState === "complete" && !!document.querySelector("#login-form")');
+    assert.equal(
+      await evaluate('window.VacateSession.currentUser()'),
+      null,
+      'Forward after logout restored identity',
+    );
+    await signIn('nora', 'nora');
+    await ready();
+    await historyTo({ name: 'maya-one' }, 'Back after account switch');
+    await waitFor('document.querySelector("#demo-person")?.textContent === "Nora Example"');
+    await ready();
+    assert.equal(
+      await evaluate('window.VacateSession.currentUser().id'),
+      'nora',
+      'History restored prior account after switch',
+    );
+    assert.equal(
+      await evaluate('document.querySelector("#demo-person").textContent'),
+      'Nora Example',
+    );
+    assert.equal(
+      await evaluate('document.querySelector("#dialog").open'),
+      false,
+      'History restored prior dialog after switch',
+    );
+    assert.equal(
+      await evaluate('document.querySelector("[data-scope=org]").getAttribute("aria-pressed")'),
+      'true',
+      'History retained prior account scope',
+    );
+    await click('[data-action="request"]');
+    assert.equal(
+      await evaluate('document.querySelector("#request-amount").value'),
+      '3',
+      'History restored draft after switch',
+    );
+    await closeDialog();
+    console.log('PASS: logout and account-switch Back/Forward navigation');
+    await signOut();
+  };
+  const historyAcceptance = async () => {
+    await signIn('user', 'user');
+    await ready();
+    await load('?scope=team&view=week&date=2026-11-05');
+    const retainedPeriod = '2 Nov – 8 Nov 2026';
+    const waitForRetainedPeriod = (page) =>
+      waitFor(
+        `(()=>{
+        const state = window.VacateMock?.state;
+        return document.readyState === 'complete'
+          && state?.page === ${JSON.stringify(page)}
+          && state.scope === 'team'
+          && state.view === 'week'
+          && state.date.getFullYear() === 2026
+          && state.date.getMonth() === 10
+          && state.date.getDate() === 5
+          && document.querySelector('#period')?.textContent === ${JSON.stringify(retainedPeriod)};
+      })()`,
+      );
+    // Browser history events can precede Angular bootstrap and its first render.
+    // Require the expected state and rendered period, including after full-document restoration.
+    await waitForRetainedPeriod('calendar');
+    const calendarHistory = await call('Page.getNavigationHistory');
+    await click('[data-nav=leave]');
+    await waitForRetainedPeriod('leave');
+    await click('.navigation-card [data-nav=balances]');
+    await waitForRetainedPeriod('balances');
+    assert.equal(await evaluate('new URLSearchParams(location.search).get("page")'), 'balances');
+    assert.equal(await evaluate('document.querySelector("#calendar-page").hidden'), true);
+    assert.equal(
+      await evaluate('document.activeElement.id'),
+      'main',
+      'Page navigation focuses main',
+    );
+    await historyTo({ delta: -1 }, 'Back from balances to My Leave');
+    await waitForRetainedPeriod('leave');
+    const beforeCalendarBack = await call('Page.getNavigationHistory');
+    await historyTo({ delta: -1 }, 'Back from My Leave to calendar');
+    try {
+      await waitForRetainedPeriod('calendar');
+    } catch (error) {
+      throw Error(
+        error.message +
+          '; calendarHistory=' +
+          JSON.stringify({
+            currentIndex: calendarHistory.currentIndex,
+            entries: calendarHistory.entries.slice(-8),
+          }) +
+          '; beforeBack=' +
+          JSON.stringify({
+            currentIndex: beforeCalendarBack.currentIndex,
+            entries: beforeCalendarBack.entries.slice(-8),
+          }) +
+          '; afterBack=' +
+          JSON.stringify(await call('Page.getNavigationHistory')) +
+          '; workspace=' +
+          JSON.stringify(
+            await evaluate(
+              '({url:location.href,historyState:history.state,state:window.VacateMock?.state,period:document.querySelector("#period")?.textContent})',
+            ),
+          ),
+      );
+    }
+    assert.equal(await evaluate('document.querySelector("#calendar-page").hidden'), false);
+    assert.equal(
+      await evaluate('document.querySelector("#period").textContent'),
+      retainedPeriod,
+      'Back retains calendar period',
+    );
+    assert.equal(await evaluate('window.VacateMock.state.layout'), 'calendar');
+    await historyTo({ delta: 1 }, 'Forward to My Leave');
+    await waitForRetainedPeriod('leave');
+    await historyTo({ delta: 1 }, 'Forward to balances');
+    await waitForRetainedPeriod('balances');
+    assert.equal(await evaluate('document.querySelector("#balances-page").hidden'), false);
+    await navigate(await evaluate('location.href'));
+    await waitForRetainedPeriod('balances');
+    assert.equal(
+      await evaluate('document.querySelector("#balances-page").hidden'),
+      false,
+      'Refresh must keep balances page',
+    );
+    assert.equal(
+      await evaluate('document.querySelector("#period").textContent'),
+      retainedPeriod,
+      'Refresh retains calendar period',
+    );
+    await click('[data-nav=calendar]');
+    await waitForRetainedPeriod('calendar');
+    assert.equal(
+      await evaluate('document.querySelector("#period").textContent'),
+      retainedPeriod,
+      'Calendar return retains period',
+    );
+  };
+  if (process.env.MOCK_HISTORY_ONLY === '1') {
+    await evaluate(
+      'for(let index=0; index<60; index++) history.pushState(null, "", location.href)',
+    );
+    await accountHistoryAcceptance();
+    await historyAcceptance();
+    assert.deepEqual(errors, [], 'Unexpected history browser exceptions');
+    console.log('PASS: Calendar / My Leave / Balances Back, Forward, refresh and calendar period.');
+  } else if (process.env.MOCK_NAVIGATION_ONLY === '1') {
     await signIn('nora', 'nora');
     await ready();
     assert.equal(
@@ -729,6 +902,8 @@ try {
       await evaluate('!!document.querySelector("#account-dropdown [data-action=logout]")'),
       true,
     );
+    await signOut();
+    await historyAcceptance();
     assert.deepEqual(errors, [], 'Unexpected navigation browser exceptions');
     console.log(
       'PASS: VAC-20 unified settings, own team, People membership editor/directory, personal leave, admin balance search, employee denials, explicit unavailable approvals, topbar cleanup and desktop/mobile layouts.',
@@ -1027,7 +1202,7 @@ try {
       await keyboardClick('[data-nav=calendar]');
       console.log('PASS: trusted keyboard avatar dropdown, settings entry and Escape focus return');
     };
-    await nativeAcceptance();
+    if (process.env.MOCK_FUNCTIONAL_ONLY !== '1') await nativeAcceptance();
     if (process.env.MOCK_NATIVE_ONLY !== '1') {
       await signOut();
       await navigate(baseUrl);
@@ -1383,121 +1558,8 @@ try {
       await navigate(baseUrl);
       await waitFor('!!document.querySelector("#login-form")');
       assert.equal(await evaluate('window.VacateSession.currentUser()'), null);
-      await signIn('user', 'user');
-      await ready();
-      await navigate(baseUrl);
-      await ready();
-      // Real browser Back/Forward traversal, including BFCache where Chrome chooses it.
-      // Separate document loads keep untouched private pages in history while logout replaces only its target.
-      for (const name of ['maya-one', 'maya-two', 'logout-target']) {
-        await load('?history=' + name);
-        await click('[data-scope="team"]');
-        await click('[data-action="request"]');
-        await evaluate('document.querySelector("#request-amount").value="41"');
-      }
-      await signOut();
-      await historyTo({ name: 'maya-two' }, 'Back after logout');
-      await waitFor(
-        'document.readyState === "complete" && !!document.querySelector("#login-form")',
-      );
-      assert.equal(
-        await evaluate('window.VacateSession.currentUser()'),
-        null,
-        'Back after logout restored identity',
-      );
-      assert.equal(
-        await evaluate('!!document.querySelector("#request-form")'),
-        false,
-        'Back after logout restored private draft',
-      );
-      await historyTo({ delta: 1 }, 'Forward after logout');
-      await waitFor(
-        'document.readyState === "complete" && !!document.querySelector("#login-form")',
-      );
-      assert.equal(
-        await evaluate('window.VacateSession.currentUser()'),
-        null,
-        'Forward after logout restored identity',
-      );
-      await signIn('nora', 'nora');
-      await ready();
-      await historyTo({ name: 'maya-one' }, 'Back after account switch');
-      await waitFor('document.querySelector("#demo-person")?.textContent === "Nora Example"');
-      await ready();
-      assert.equal(
-        await evaluate('window.VacateSession.currentUser().id'),
-        'nora',
-        'History restored prior account after switch',
-      );
-      assert.equal(
-        await evaluate('document.querySelector("#demo-person").textContent'),
-        'Nora Example',
-      );
-      assert.equal(
-        await evaluate('document.querySelector("#dialog").open'),
-        false,
-        'History restored prior dialog after switch',
-      );
-      assert.equal(
-        await evaluate('document.querySelector("[data-scope=org]").getAttribute("aria-pressed")'),
-        'true',
-        'History retained prior account scope',
-      );
-      await click('[data-action="request"]');
-      assert.equal(
-        await evaluate('document.querySelector("#request-amount").value'),
-        '3',
-        'History restored draft after switch',
-      );
-      await closeDialog();
-      console.log('PASS: logout and account-switch Back/Forward navigation');
-      await signOut();
-      await signIn('user', 'user');
-      await ready();
-      await load('?scope=team&view=week&date=2026-11-05');
-      const retainedPeriod = await evaluate('document.querySelector("#period").textContent');
-      await click('[data-nav=leave]');
-      await click('.navigation-card [data-nav=balances]');
-      assert.equal(await evaluate('new URLSearchParams(location.search).get("page")'), 'balances');
-      assert.equal(await evaluate('document.querySelector("#calendar-page").hidden'), true);
-      assert.equal(
-        await evaluate('document.activeElement.id'),
-        'main',
-        'Page navigation focuses main',
-      );
-      await historyTo({ delta: -1 }, 'Back from balances to My Leave');
-      await waitFor('window.VacateMock.state.page === "leave"');
-      await historyTo({ delta: -1 }, 'Back from My Leave to calendar');
-      await waitFor('!document.querySelector("#calendar-page").hidden');
-      assert.equal(
-        await evaluate('document.querySelector("#period").textContent'),
-        retainedPeriod,
-        'Back retains calendar period',
-      );
-      assert.equal(await evaluate('window.VacateMock.state.scope'), 'team');
-      assert.equal(await evaluate('window.VacateMock.state.layout'), 'calendar');
-      await historyTo({ delta: 1 }, 'Forward to My Leave');
-      await waitFor('window.VacateMock.state.page === "leave"');
-      await historyTo({ delta: 1 }, 'Forward to balances');
-      await waitFor('!document.querySelector("#balances-page").hidden');
-      await navigate(await evaluate('location.href'));
-      await ready();
-      assert.equal(
-        await evaluate('document.querySelector("#balances-page").hidden'),
-        false,
-        'Refresh must keep balances page',
-      );
-      assert.equal(
-        await evaluate('document.querySelector("#period").textContent'),
-        retainedPeriod,
-        'Refresh retains calendar period',
-      );
-      await click('[data-nav=calendar]');
-      assert.equal(
-        await evaluate('document.querySelector("#period").textContent'),
-        retainedPeriod,
-        'Calendar return retains period',
-      );
+      await accountHistoryAcceptance();
+      await historyAcceptance();
       await load('?scope=self&view=month');
       assert.equal(await evaluate('window.VacateLeave.types.length'), 30);
       assert.equal(await evaluate('window.VacateLeave.workWeekDays'), 5);
@@ -2036,7 +2098,10 @@ try {
       await organizationAcceptance();
       assert.deepEqual(errors, [], 'Unexpected browser exceptions');
       console.log(
-        'PASS: all 12 accounts and aliases; independent team/department/org rosters and denied IDs; own records and shared privacy; account resets and Back/Forward; shared 12-type country shortlist with independently expected visible profile subsets, grouped ordering, native keyboard toggles, preserved drafts and pinned uncommon choices/examples; all 30 reference types / 29 catalogue request types with unavailable actions guarded; sick unknown quota and child-only scope; balance units/percentages and projections; all scope/views; calendar-first annual rail, dedicated balances route, mobile balances/requests, own profile/admin organization journeys and responsive screenshots.',
+        (process.env.MOCK_FUNCTIONAL_ONLY === '1'
+          ? 'PASS: functional mode (native keyboard checks excluded); '
+          : 'PASS: ') +
+          'all 12 accounts and aliases; independent team/department/org rosters and denied IDs; own records and shared privacy; account resets and Back/Forward; shared 12-type country shortlist with independently expected visible profile subsets, grouped ordering, preserved drafts and pinned uncommon choices/examples; all 30 reference types / 29 catalogue request types with unavailable actions guarded; sick unknown quota and child-only scope; balance units/percentages and projections; all scope/views; calendar-first annual rail, dedicated balances route, mobile balances/requests, own profile/admin organization journeys and responsive screenshots.',
       );
     } else {
       assert.deepEqual(errors, [], 'Unexpected browser exceptions');

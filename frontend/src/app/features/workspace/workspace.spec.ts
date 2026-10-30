@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Location } from '@angular/common';
+import { provideLocationMocks } from '@angular/common/testing';
+import { firstValueFrom, filter } from 'rxjs';
+import { NavigationEnd, Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
@@ -12,6 +15,7 @@ describe('Workspace navigation', () => {
       imports: [Workspace],
       providers: [
         fixtureWorkspaceProvider,
+        provideLocationMocks(),
         provideRouter([
           { path: 'index.html', component: Workspace },
           { path: 'people', component: Workspace },
@@ -67,4 +71,45 @@ describe('Workspace navigation', () => {
     expect(element.querySelector('.navigation-card [data-nav="balances"]')).not.toBeNull();
     expect(element.querySelector('vacate-organization')).toBeNull();
   });
+
+  it.each(['applications', 'foreign-team'])(
+    'retains the calendar period and authorized group through My Leave, balances and history (%s)',
+    async (group) => {
+      const { page } = await setup(
+        `/index.html?scope=team&group=${group}&view=week&date=2026-11-05`,
+        'maya',
+      );
+      const router = TestBed.inject(Router);
+      router.setUpLocationChangeListener();
+      const location = TestBed.inject(Location);
+      const assertPeriod = (expectedPage: string) => {
+        expect(page.state.page).toBe(expectedPage);
+        expect(page.period).toBe('2 Nov – 8 Nov 2026');
+        expect(page.state.scope).toBe('team');
+        expect(page.state.groupId).toBe(group);
+        expect(page.visiblePeople.length).toBe(group === 'applications' ? 3 : 0);
+        expect(new URLSearchParams(router.url.split('?')[1]).get('date')).toBe('2026-11-05');
+      };
+      const traverse = async (direction: 'back' | 'forward') => {
+        const finished = firstValueFrom(
+          router.events.pipe(filter((event) => event instanceof NavigationEnd)),
+        );
+        location[direction]();
+        await finished;
+      };
+      assertPeriod('calendar');
+      await page.navigatePage('leave');
+      assertPeriod('leave');
+      await page.navigatePage('balances');
+      assertPeriod('balances');
+      await traverse('back');
+      assertPeriod('leave');
+      await traverse('back');
+      assertPeriod('calendar');
+      await traverse('forward');
+      assertPeriod('leave');
+      await traverse('forward');
+      assertPeriod('balances');
+    },
+  );
 });

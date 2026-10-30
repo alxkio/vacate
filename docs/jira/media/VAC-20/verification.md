@@ -41,3 +41,13 @@ No independent security/release sign-off, full calendar/native-keyboard regressi
 - [Settings mobile](unified-settings-mobile.png)
 - [Admin balances desktop](admin-balances-desktop.png)
 - [Admin balances mobile](admin-balances-mobile.png)
+
+## CI history correction · 2026-10-30
+
+The product lead reported failures in [CI run 40960541385](https://github.com/alxkio/vacate/actions/runs/40960541385) and the subsequent manually requested [deployment workflow 40960803040](https://github.com/alxkio/vacate/actions/runs/40960803040), both at commit 54beec9. Failures were a default October period instead of the requested November week, or reading `.hidden` before the restored calendar element existed. The npm installation/audit warnings were not the failing assertion.
+
+The isolated page journey and the account-switch journey passed, but the complete synthetic run reproduced a missing November calendar entry in Chrome's long session history; the second Back reached an older October entry. Marking synthetic UI clicks with CDP's `userGesture` flag resolved that behavior in the complete functional run. The browser check also now waits for the expected page, scope, date, view and rendered period after each traversal and refresh, with null-safe DOM access and history diagnostics on failure. Assertions retain the exact November week; no history clearing, catch-and-ignore, arbitrary sleep, policy change or application navigation change was introduced.
+
+Coverage now includes the shared history journey in the complete and navigation-only suites, a dedicated history-only mode with populated history and account switching, and two Angular router scenarios for valid and foreign-team groups. **38 Angular tests passed.** The complete functional browser suite passed against the actual Functions API, including all twelve personas, account history, the corrected period round trip, display preferences, profiles, organization/membership HTTP saves and mobile views. The local native-keyboard run intermittently failed input delivery before reaching this scenario; the optional functional-only mode excludes those checks locally while default CI retains them. Hosted CI verification follows the correction push.
+
+Only test harness, test coverage and documentation changed. API contracts, authorization, tenant filtering, lifecycle timestamps and application behavior are unaffected. Existing application build/backend evidence above remains applicable; no production build inputs changed in this correction.
