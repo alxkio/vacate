@@ -12,6 +12,7 @@ Vacate is an absence-management system, initially for the founder's company, wit
 4. [Repository review](docs/review-2026-10-20.md) — findings, simplifications, and next steps.
 5. [Cloud deployment](infra/README.md) — first release configuration, publishing and verification.
 6. [Documentation map](docs/README.md) — domain, evidence, privacy, and decisions.
+7. [AI context and Codex setup](docs/ai-context.md) — root instructions, scoped Markdown role profiles and review findings.
 
 The frontend is an interactive Angular prototype with fictional logins, calendar alternatives, personal balances and provisional leave eligibility. The API now supports fictional account, membership and organization CRUD through typed domain/application services and in-memory repositories. Production OpenID identity, durable persistence and leave submission remain open. Validate the company workflow before implementing those features. Existing market research and the original domain material are exploratory references, not implementation requirements.
 

@@ -1,0 +1,53 @@
+# AI context and Codex setup
+
+Reviewed 2026-10-30 against the repository at `bb489b5` plus the user's pending move of role profiles to `.github/agents/`. This is a repository context review, not a product decision or release approval. [VAC-21](jira/VAC-21-codex-agent-context.md) tracks repository context engineering and re-engineering: reviewing, fixing and adding instructions, role profiles, skills, prompts and supporting context documentation. The findings below retain their dated inspection baseline; the story records subsequent work and remaining findings.
+
+For context-only changes, follow the branch convention in [root AGENTS.md](../AGENTS.md). The current VAC-21 work uses `VAC-21-repository-context-engineering`. Keep each iteration bounded by its recorded findings, requested additions and acceptance evidence; the story does not authorize unrelated product or application changes.
+
+## What loads and when
+
+| Artifact | Role | How it is used |
+|---|---|---|
+| [Root AGENTS.md](../AGENTS.md) | Shared rules, source precedence, role routing and issue workflow | Codex discovers it through directory ancestry; it covers this repository |
+| Nested `AGENTS.md` / `AGENTS.override.md` | Directory-specific instructions, if added | Codex's documented instruction chain; none found in this repository during this review |
+| [.github/agents/](../.github/agents/README.md) | Canonical readable role profiles | Explicit reading through the root path/glob table or a user request; YAML metadata alone does not activate a Codex role |
+| [vacate-issues skill](../.github/skills/vacate-issues/SKILL.md) | File-based issue workflow | Root instructions explicitly require reading/applying it; skill-picker discovery depends on the client's supported skill locations |
+| [.github/prompts/](../.github/prompts/) | Manually invoked research/review prompts | Read only for a matching user task; these files do not supply global instructions |
+| [ADRs](adr/README.md), [charter](product/product-charter.md), [policy sources](compliance/policy-sources.md) | Product/architecture/policy authority | Read on demand in the root source-of-truth order |
+| [Issue backlog](jira/Product-Backlog.md) and issue evidence | Task status, decisions and dated verification | Read the relevant issue; historical release evidence does not prove current HEAD |
+| [CI](../.github/workflows/ci.yml) and [manual deployment](../.github/workflows/azure-infrastructure.yml) | Executable verification/deployment inputs | Inspect actual jobs/inputs; an agent description is not build or release evidence |
+
+Root `AGENTS.md` is intentionally plain Markdown. Its path table is an instruction to consult matching profiles; it is not a hidden glob feature. Profile `applyTo` lists are retained as readable scope metadata in the reference format. Do not add undocumented frontmatter to make Codex load more files. The Markdown profiles own role behavior; the root table tells Codex when to read them. Per the product lead's preference, this repository needs no `.codex` directory or TOML definitions.
+
+All role guidance runs within the current task and inherited session settings. No provider, model, sandbox override, external service or automatic delegation policy is installed here. This setup does not register separately named native custom agents; you can ask Codex to use a Markdown profile directly.
+
+## Repo/code alignment findings
+
+| Finding at inspection | Resolution / evidence |
+|---|---|
+| Several role files kept their body under YAML `instructions:`, used `mode: extended`, or indented Markdown headings | All seven profiles now share `name`, `description`, `applyTo`, a closed YAML header and a normal Markdown body |
+| No root-to-profile routing; profile metadata was assumed to activate roles | Added explicit root glob routing to the seven Markdown profiles. Optional native TOML definitions were removed at the product lead's request; they are not needed for instruction-based role guidance |
+| Enterprise reference scoped `infrastructure/**`; UI scoped a nonexistent `design-system/`; QA scoped top-level `tests/**` and nonexistent documentation | Scope lists and root routes use `infra/`, `api/tests/`, Angular specs/verification scripts and existing design/contract folders |
+| Active role text prescribed App Service, Terraform, GraphQL, queues, IdentityServer and speculative SLA/cost targets | Replaced with bounded role guidance based on ADR-0002/0003 and actual Functions/Bicep/resource-service structure. Database and production identity remain open |
+| QA described xUnit/Jasmine and assumed transactional leave/approvals | Current code uses NUnit, Vitest/jsdom and Chrome/CDP. Approval configuration is implemented; submission/decision APIs are not. Carryover is configuration only |
+| Branding profile was empty and had a different filename convention | Added a bounded branding role and renamed it `branding-specialist.agent.md` |
+| Context evaluator asserted APM packages, install transforms and Claude/Copilot infrastructure without evidence | Replaced with an inspect-first manual review prompt; no such installation/configuration was found in the inspected repository |
+| Docs index omitted ADR-0003 and active AI context routing | Updated the documentation map and linked this guide from the repository README |
+
+The public API/in-memory adapters, Angular resource clients/state, fictional reference data, four advertised/all twelve retained accounts, delegated settings and current navigation agree with the revised profiles. No account/authorization behavior, API contract, schema, runtime setting or lifecycle code changes in this task; tenant-isolation regression execution is not applicable to these documentation/configuration edits.
+
+## Remaining boundaries
+
+- **UNVERIFIED:** a fresh session reading the updated root instructions and following profile routing. Static checks establish valid files/mappings, not future model behavior. No separate model session or subagent was launched. Native custom-agent registration is deliberately outside this Markdown-only setup.
+- The issue skill remains in its existing `.github/skills/` location. Root instructions make it usable by explicit file reading; this change does not claim registration in every client's skill picker or install a second copy.
+- `docs/archive/`, `domain.md`, the market report, manual market-research prompt and older review/release records retain historical/proposed material. Their source status is intentional; they must not override accepted decisions. The review did not validate their market/legal claims.
+- SQL/EF and some Angular scaffold files exist alongside the active adapters/features. Their presence does not establish runtime use. No application scaffold removal or persistence migration was authorized here.
+- No user-global Codex, editor, MCP or memory configuration was audited. Repository inspection cannot establish those settings, and this change does not alter them.
+
+## Validate and use
+
+Start a new Codex session at this repository after changing discovery files. Ask it to identify the instruction sources and applicable role for `api/src/Vacate.Api/Functions/OrganizationFunctions.cs`, then for `frontend/src/app/features/settings/settings.ts`. Expected root routing includes architecture/backend for the first path and frontend/UI for the second. For an explicit role request, ask “Use `.github/agents/enterprise-architect.agent.md` to review the API,” or reference any other profile by path. This uses role guidance in the current task and does not require delegation.
+
+Static verification checks all seven role headers/bodies, matching scopes against existing paths, root/profile scope parity, Markdown links, issue/backlog metadata and dependency cycles, and confirms the optional configuration directory is absent. No application build/browser run is needed because application sources, build inputs and dependencies are unchanged. Runtime discovery remains the separately stated limitation above.
+
+Official sources checked 2026-10-30: [Codex AGENTS.md discovery](https://learn.chatgpt.com/docs/agent-configuration/agents-md) and [Codex custom agents](https://learn.chatgpt.com/docs/agent-configuration/subagents). The AGENTS.md guide supports directory-based instructions. Native custom agents are a separate optional mechanism; this repository uses explicit Markdown profile reading instead. Neither mechanism makes profile `applyTo` an automatic loader.
