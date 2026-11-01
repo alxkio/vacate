@@ -25,3 +25,12 @@ Do not copy the existing country defaults from `domain.md` into product behaviou
 | [DYPA maternity-protection guidance](https://prosvasis.dypa.gov.gr/prostasia-tis-erghazomenis-miteras) | Checked 2026-10-24; page references KYA 19794/2026 effective 2026-07-24 and transition arrangements; full effect UNVERIFIED | Identifies designated-parent/transfer pathways. Adoption and special-maternity gender exclusions remain unimplemented pending reviewed interpretation. The earlier 2024 reference is not a complete current-eligibility baseline. |
 | [Labour Code, PD 62/2025, Gazette A121](https://www.hli.gov.gr/wp-content/uploads/2025/12/%CE%A0%CE%9462_2025-%CE%9A%CE%A9%CE%94%CE%99%CE%9A%CE%91%CE%A3-%CE%95%CE%A1%CE%93%CE%91%CE%A4%CE%99%CE%9A%CE%9F%CE%A5-%CE%94%CE%99%CE%9A%CE%91%CE%99%CE%9F%CE%A5-%CE%A6%CE%95%CE%9A-121_%CE%91_2025.pdf) | Gazette publication 2025-07-11; checked 2026-10-22 | Primary dated baseline: arts. 221 (annual entitlement), 242 (screening), 246 (bereaved parents). Later amendments and provision-specific effective dates require review before implementation. PDF downloaded/text-inspected because browser fetch returned 502. |
 
+
+
+## Annual leave research — 2026-11-01
+
+| Jurisdiction / topic | Official source | Effective-date evidence | Review status / limits |
+|---|---|---|---|
+| GR annual entitlement, experience and deadline | [Ministry working-time guidance, annual-leave section](https://ypergasias.gov.gr/ergasiakes-scheseis/atomikes-ergasiakes-sxeseis/chronika-oria-ergasias/), checked 2026-11-01 | Guidance cites Law 4808/2021 art. 61 for next-year first-quarter deadline; references 2008 agreement for experience tiers. Exact commencement, later amendments and applicability remain UNVERIFIED. | Official guidance supports annual leave being granted by 31 March of the following year and describes employer payment consequences if not granted. It does not support silently deleting an employee's entitlement at that date. Policy interpretation, jurisdiction applicability and any organization override require review; no statutory defaults approved. |
+
+[Founder product requirements](../product/product-charter.md#founder-clarification--membership-annual-balance-and-policy-defaults--2026-11-01) select GR as the MVP policy jurisdiction and future NO/SE/FI/DK support. They do not establish a reviewed legal-policy pack. Do not apply Greek allocation-period/carryover rules to other countries without research. Record cutoff as a reviewed policy constraint/default plus permitted configuration only after applicability is resolved.
