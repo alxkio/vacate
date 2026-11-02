@@ -89,6 +89,8 @@ const chrome = spawn(
   process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   [
     ...(process.env.MOCK_HEADFUL === '1' ? [] : ['--headless']),
+    // Suppress browser-owned prompts, including password-save UI after fixture sign-in.
+    '--enable-automation',
     '--allow-pre-commit-input',
     '--disable-gpu',
     '--disable-background-networking',
@@ -216,7 +218,11 @@ try {
         );
   };
 
-  const prepareNativeFocus = async ({ dispatch = call, timeoutMs = 5000 } = {}) => {
+  const prepareNativeFocus = async ({
+    dispatch = call,
+    timeoutMs = 5000,
+    captureFailure = true,
+  } = {}) => {
     const started = Date.now();
     let attempts = 0;
     try {
@@ -294,14 +300,37 @@ try {
         // Only inert readiness probes repeat. The subsequent application action runs once.
         await pause(100);
       } while (Date.now() - started < timeoutMs);
-      throw Error(
-        'Native input readiness failed: ' +
-          JSON.stringify({
-            attempts,
-            ...(await evaluate(`({focused:document.hasFocus(), visibility:document.visibilityState,
+      const diagnostics = {
+        attempts,
+        elapsedMs: Date.now() - started,
+        browser: browserVersion.product,
+        node: process.version,
+        platform: process.platform,
+        headful: process.env.MOCK_HEADFUL === '1',
+        ...(await evaluate(`({focused:document.hasFocus(), visibility:document.visibilityState,
               active:document.activeElement?.tagName, ...window.__nativeFocus})`)),
-          }),
-      );
+      };
+      // Capture the failed state before closing Chrome; intentional rejection tests opt out.
+      if (captureFailure) {
+        try {
+          const image = await call('Page.captureScreenshot', { format: 'png' });
+          await writeFile(
+            join(output, 'native-input-failure.png'),
+            Buffer.from(image.data, 'base64'),
+          );
+        } catch (error) {
+          diagnostics.screenshotError = error.message;
+        }
+        try {
+          await writeFile(
+            join(output, 'native-input-failure.json'),
+            JSON.stringify(diagnostics, null, 2),
+          );
+        } catch (error) {
+          diagnostics.artifactError = error.message;
+        }
+      }
+      throw Error('Native input readiness failed: ' + JSON.stringify(diagnostics));
     } finally {
       await evaluate('window.__nativeFocusObserver?.abort()');
     }
@@ -325,6 +354,7 @@ try {
       await assert.rejects(
         prepareNativeFocus({
           timeoutMs: 250,
+          captureFailure: delivery === 'none',
           dispatch: async (method, params) => {
             if (!method.startsWith('Input.')) return call(method, params);
             if (delivery === 'pointer' && method === 'Input.dispatchMouseEvent')
@@ -360,6 +390,20 @@ try {
         },
         `Incomplete or untrusted ${delivery} delivery must not pass readiness`,
       );
+      if (delivery === 'none') {
+        const evidence = JSON.parse(
+          await readFile(join(output, 'native-input-failure.json'), 'utf8'),
+        );
+        assert.equal(evidence.browser, browserVersion.product);
+        assert.equal(evidence.node, process.version);
+        assert.equal(evidence.pointer, false);
+        assert.equal(evidence.keyDown, false);
+        assert.equal(evidence.keyUp, false);
+        const image = await readFile(join(output, 'native-input-failure.png'));
+        assert.equal(image.subarray(1, 4).toString(), 'PNG');
+        await rm(join(output, 'native-input-failure.json'));
+        await rm(join(output, 'native-input-failure.png'));
+      }
     }
 
     // An overlay must block preparation rather than receive a misplaced click.
@@ -374,6 +418,7 @@ try {
       await assert.rejects(
         prepareNativeFocus({
           timeoutMs: 250,
+          captureFailure: false,
           dispatch: async (method, params) => {
             if (method.startsWith('Input.')) blockedInput++;
             return call(method, params);
@@ -547,7 +592,10 @@ try {
   await call('Page.addScriptToEvaluateOnNewDocument', {
     source: `window.__vacateAcceptanceApiBase = ${JSON.stringify(runtimeConfig.apiBaseUrl.replace(/\/+$/, ''))}`,
   });
-  console.log('Browser acceptance: ' + (await call('Browser.getVersion')).product);
+  const browserVersion = await call('Browser.getVersion');
+  console.log(
+    `Browser acceptance: ${browserVersion.product}; Node ${process.version}; ${process.platform}`,
+  );
   if (process.env.MOCK_CPU_THROTTLE) {
     const rate = Number(process.env.MOCK_CPU_THROTTLE);
     assert.ok(Number.isFinite(rate) && rate >= 1, 'MOCK_CPU_THROTTLE must be at least 1');

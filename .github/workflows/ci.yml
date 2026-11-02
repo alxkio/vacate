@@ -134,3 +134,12 @@ jobs:
       - name: Paired host diagnostics
         if: failure()
         run: cat "$RUNNER_TEMP/functions-paired.log" 2>/dev/null || true
+      - name: Native input failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-input-failure
+          path: |
+            ${{ runner.temp }}/vacate-api-browser-previews/native-input-failure.json
+            ${{ runner.temp }}/vacate-api-browser-previews/native-input-failure.png
+          if-no-files-found: ignore
