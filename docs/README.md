@@ -9,7 +9,7 @@ For review: [iteration plan](product/iteration-plan.md) — draft personas, user
 | product/ | Company-first intent, scope, personas, evidence and measures | Charter distinguishes confirmed intent from proposals; other material is draft |
 | domain/ | Glossary, scenarios and policy boundaries | Proposed; broader models do not expand MVP |
 | compliance/ | Data map, retention and policy-source register | Draft; decisions and source review outstanding |
-| adr/ | Durable accepted decisions | ADR-0001 records product direction; ADR-0002 records Azure hosting |
+| adr/ | Durable accepted decisions | ADR-0001 records product direction; ADR-0002 records Azure hosting; ADR-0003 records domain/application and frontend resource boundaries |
 | jira/ | File-based issues, product backlog, decisions and work logs | One retrospective released story; fictional example excluded from the backlog |
 | reference/ | Conventions observed in another codebase, to inform the layout | Reference only; not a decision |
 | archive/ | Superseded technology proposal | Historical reference only |
@@ -28,3 +28,5 @@ Source precedence follows AGENTS.md. Use accepted ADRs first, then accepted prod
 
 - [Angular frontend conversion](jira/VAC-10-consolidate-angular-frontend.md) — one active frontend workspace, component conversion and linked acceptance/release evidence.
 - [VAC-10 Angular release](release-2026-10-25-vac-10-angular.md) — frontend folder consolidation, direct Angular publishing, production CI and complete live acceptance.
+
+- [AI context and Codex setup](ai-context.md) — instruction discovery, scoped Markdown role profiles, code alignment findings and client verification limits.

@@ -2,7 +2,7 @@
 
 **Status:** Confirmed intent plus proposed pilot scope
 **Owner:** Product lead / founder  
-**Last updated:** 2026-10-26
+**Last updated:** 2026-11-01
 
 ## Confirmed intent
 
@@ -130,3 +130,102 @@ Additional organization setting requested in the same session: allow or disable 
 Final menu-label feedback in this session: the avatar/user-icon menu entry must be **Settings**, matching the main navigation, rather than **Profile settings**. It opens the unified settings destination with the actor's permitted sections.
 
 Implementation boundary: scoped settings assignments are server-owned membership roles, separate from employee/admin system roles and display job titles. Leah and Ella have explicit team/department lead assignments; Nora and Daria represent owner/HR. No public role-assignment editor or new approval workflow is introduced. The API enforces delegation and tenant/node scope, and filters the permitted settings lists. Personal reference balances remain labelled fictional; API balances with unknown trusted policy stay unresolved.
+
+
+### Founder clarification — invitation registration and membership · 2026-11-01
+
+Source: product lead's database-schema discussion, tracked in [VAC-22](../jira/VAC-22-relational-database-schema.md).
+
+An authorized administrator adds an invitee and sends an invitation to their company. The recipient registers as a Vacate user through that invitation; the account and membership in the inviting administrator's company are created together at registration/acceptance, rather than creating the membership when the invitation is issued. The default membership system role is employee. Invitation issuance alone grants no company access.
+
+A future Invite User form belongs under Settings → Organization. Users will usually register with their company email. Subsequent founder confirmation, 2026-11-01: registration must use the email address that received the invitation; a different registration email is rejected. Matching uses the existing username normalization rather than introducing a new email policy. The existing globally unique company-email username and at-most-one-membership boundaries remain in force. Existing-account invitations, recipient verification and any non-default role selection still need decisions. Invitation expiry/revocation/replay rules are resolved by the subsequent clarification below. First-admin provisioning is resolved by the subsequent manual-bootstrap clarification below.
+
+This confirms invitation-based onboarding, not a separate operational employee record without an account. Whether such personnel records are required remains OPEN QUESTION. The form/delivery/registration behavior is future work; this clarification changes specifications only and does not implement it.
+
+Follow-up founder confirmation, 2026-11-01: invited-email binding is accepted. This resolves that question only; identity-provider/recipient-verification mechanisms and existing-account handling remain open. See the [invitation contract](../contracts/user.md#invitation-based-membership-assignment).
+
+
+### Founder clarification — organization onboarding and MVP boundary · 2026-11-01
+
+Source: subsequent founder discussion in [VAC-22](../jira/VAC-22-relational-database-schema.md). A user can typically belong to many organizations in the intended product. Future independent registration should ask the user to create an organization, rather than complete onboarding as an orphan account. Organization selection and the leave/vacation calculations and balances for multiple organization memberships are outside MVP scope. This reaffirms the future model; it does not lift the current one-assigned-membership MVP boundary or authorize company switching.
+
+**CONFIRMED MVP boundary · 2026-11-01:** onboard ordinary users only through an authorized administrator invitation. No public independent-registration/organization-creation flow in this iteration. Registration through an invitation still creates account and membership together, uses the invited email and defaults the system role to employee. Do not create a user registration route that intentionally leaves the new user without an organization.
+
+Founder confirmation, 2026-11-01: manually provision the initial organization and its first administrator, then onboard other users through administrator invitations. The manual bootstrap must create the first administrator membership; it is a controlled setup operation, not public signup. The exact operational procedure and authentication setup remain to design. Existing unassigned/removed-account states remain valid representations, not a promise of public orphan-account signup. Existing-account invitation handling and whether separate non-login personnel are needed remain open. No runtime/API/UI changes or new implementation stories are authorized by this clarification.
+
+
+### Founder clarification — invitation lifecycle and backoffice provisioning · 2026-11-01
+
+Source: founder confirmation in [VAC-22](../jira/VAC-22-relational-database-schema.md).
+
+Invitations expire after seven days, are single-use, can be revoked and can be resent. Resending invalidates the previous invitation link; the replacement receives a new seven-day validity period. Expired, revoked, already-used and replaced links cannot create account/membership access. These are future implementation requirements.
+
+Vacate needs a platform backoffice role able to add organizations and their administrators. This refines the earlier manual provisioning decision: authorized backoffice operations support organization/admin setup, distinct from public registration and ordinary company administration. Backoffice permission is separate from membership employee/admin roles, job titles and delegated settings roles. A company administrator does not gain platform provisioning rights.
+
+**OPEN QUESTIONS:** What exact operational procedure implements the confirmed manual first-operator setup, and which authentication mechanism is used? Does backoffice need any access beyond organization/admin provisioning? No access to employee profiles, family facts, leave requests or balances, impersonation, deletion or arbitrary tenant operations is granted by this requirement. Backoffice authentication, exact provisioning flow and auditing/operational procedure need design. MVP one-company membership and deferred multi-organization operations remain unchanged. No role, account, infrastructure or external message is created by this specification update.
+
+
+Follow-up founder confirmation, 2026-11-01: backoffice creates the organization and sends its first administrator an invitation with an explicit, server-authorized admin assignment. The recipient registers using the invited email through the same seven-day, single-use invitation flow; account and admin membership are created together on acceptance. Organization creation alone does not create that administrator account or membership. This resolves the direct-versus-invited admin question and refines the earlier manual-bootstrap wording. Ordinary member invitations still default to employee; accepting an admin invitation does not grant platform backoffice privileges. First backoffice operator provisioning and role-grant/revocation authority are resolved by the subsequent clarification below. An organization can therefore await first-admin acceptance; expiry, revocation or resend must not fabricate an active administrator.
+
+
+Follow-up founder confirmation, 2026-11-01: provision the first backoffice operator through a controlled manual setup. After that initial bootstrap, only existing backoffice operators may grant or revoke the platform backoffice role. Organization administrators and employees cannot assign that role to themselves or others. This is platform authorization, separate from organization memberships; it does not grant additional employee/leave-data access. Exact bootstrap tooling, authentication, audit and recovery procedures remain to design. This confirms product/authorization rules only; no account or role assignment is executed now.
+
+
+### Founder clarification — request granularity and future hourly leave · 2026-11-01
+
+Source: founder response during [VAC-22](../jira/VAC-22-relational-database-schema.md) schema review. MVP employees request leave in whole days, with one day as the minimum granularity. Half-day/hourly submissions are outside current scope. The database must anticipate future hourly leave; the founder identified school-attendance leave and parts of maternity-related leave as use cases. These are future product requirements, not verified statutory rules or approved legal quotas.
+
+Preserve explicit quantity units and sufficient precision in the schema rather than hard-coding every entitlement/transaction as an integer annual-day balance. Exact hourly eligibility, quota, conversion, scheduling and time-of-day rules remain open. Whole-day request granularity does not determine whether allocation/accrual/adjustments may be fractional or which balance periods apply. No assumption that one day is eight hours is approved. This changes specifications only; request submission/hourly calculation is not implemented.
+
+
+### Founder clarification — membership annual balance and policy defaults · 2026-11-01
+
+Source: founder database-schema discussion in [VAC-22](../jira/VAC-22-relational-database-schema.md).
+
+The founder requests a persisted balance column on Membership, retaining hire date and prior working years. Country-specific policies determine the default annual leave entitlement; Greece (GR) is the MVP jurisdiction, with Norway, Sweden, Finland and Denmark anticipated later. Country alone is not enough to infer an applicable rule: employer/workweek, hire/experience facts and the reviewed policy version must be explicit. Unknown policy inputs remain unresolved.
+
+An organization has a default vacation-day setting. Authorized employer administrators/HR may increase individual allocation, never below the applicable policy minimum. This extends annual-allocation editing authority to explicitly authorized company HR, not every employee or job title labelled HR. Exact role mapping remains to design. Founder subsequently confirmed an explicit individual allowance below the organization default must warn the administrator and be rejected, even when it meets the policy minimum. Organization-default precedence and whether individual values are absolute overrides or additional days also need confirmation.
+
+Annual leave uses calendar years, with a new allocation on each 1 January. Unused previous-year annual leave may be carried through the end of March of the following year; the precise cutoff belongs in configuration. Example: 2026 entitlement may still be usable through 2027-03-31. This is a new processing requirement for future design; it does not implement or retroactively approve carryover processing in VAC-20. The previous CarryoverYears/unlimited-years configuration is insufficient to represent this deadline; migration/compatibility and country-policy versus organization override boundaries remain OPEN QUESTION.
+
+Subsequent founder clarification, 2026-11-01: the requested Membership balance column means annual allowance before leave is taken, not remaining available days. The column is nullable: null uses the applicable policy allowance; a non-null value is the employee annual allowance override, not extra days. Its value must meet the policy minimum. Taking leave does not decrement this allowance column. Distinguish effective allocation, remaining days and carried days; per-year history mapping remains proposed. A January renewal must not overwrite prior-year history. Consumption order, policy changes, first-year prorating, effective timezone and post-cutoff treatment need decisions.
+
+Whether the cutoff should be part of the country-specific policy is OPEN QUESTION raised by the founder. PROPOSED: versioned jurisdiction policy supplies reviewed defaults/constraints and organization configuration stores permitted overrides; do not treat a legal deadline as an unrestricted organization preference. See the [policy-source register](../compliance/policy-sources.md#annual-leave-research--2026-11-01). No production statutory policy, expiry/write-off, payroll rule, schema migration or runtime behavior is approved by this clarification.
+
+
+Follow-up founder clarification, 2026-11-01: the nullable membership allowance is an override, not a cached remaining balance. PROPOSED physical name AnnualAllowanceDays (or AnnualAllowanceOverrideDays), subject to naming review. Effective annual allowance uses the stored override when non-null, otherwise the reviewed applicable policy result; if required policy inputs are unknown, the effective allowance remains unresolved. Zero is an explicit value subject to the policy floor, not inheritance. The existing nested membership.balance API object is not silently changed to a scalar by this schema discussion. Subsequent founder confirmation, 2026-11-01: organization default prefills the membership annual allowance when the employee joins; an explicitly null value continues to use policy. Do not silently substitute the organization default for null or assume max(policy, organization) is accepted. Current-year grants/history and policy recalculation remain separate design decisions.
+
+
+Follow-up founder confirmation, 2026-11-01: prefill AnnualAllowanceDays from the organization's default vacation days at joining/membership setup, storing it as an explicit employee allowance. An authorized explicit null selection is preserved and resolves from policy; it is not replaced by the organization default. If no organization default is configured, null retains policy inheritance. Every prefilled/non-null allowance must meet the applicable policy minimum; reject a below-minimum candidate rather than silently treating the organization default as sufficient or bypassing validation. Unknown policy inputs remain unresolved. This is a setup default, not a live fallback for null memberships. Changes to organization defaults do not implicitly rewrite stored employee values; any bulk update/recalculation behavior needs a separate decision. Founder subsequently confirmed admins cannot save an explicit individual allowance below the organization default; show a warning and reject the lower value.
+
+
+Follow-up founder decision, 2026-11-01: warn the administrator and block saving an explicit annual allowance below the organization default. Combined with the existing policy floor, a non-null allowance must be at least max(applicable policy minimum, configured organization default). If no organization default exists, the policy floor applies. Enforce server-side as well as in the future form; reject atomically rather than silently clamping. Example: policy minimum 22 and organization default 25 means an explicit 23 is rejected. HR exercising the same allowance-edit permission follows the same rule. These floors apply to annual allowance, not remaining days after taking leave.
+
+CONFIRMED follow-up — null/floor interaction, 2026-11-01: clearing the allowance to null is allowed even when the applicable policy allowance is below organization default. Null intentionally selects policy; the organization floor applies only to explicit non-null values. Example: policy 22/org 25/null resolves to 22; explicit 23 is warned/rejected. Preserve existing authorization: only authorized company admin/HR may change allowance. Unknown policy stays unresolved, and null is not zero. Later increases in organization defaults and already stored lower explicit values still need an effective-dating/revalidation decision.
+
+
+Follow-up founder rationale, 2026-11-01: null is intended to keep allowance linked dynamically to the applicable policy as employment tenure/experience changes, rather than freezing a calculated starting value in Membership. The founder described an illustrative GR five-day progression of 20 → 21 → 22 and the total-experience threshold. These figures are discussion inputs, not approval of a complete statutory algorithm: calendar-year/prorating rules, completed tenure, five/six-day weeks and experience thresholds require reviewed policy interpretation. Preserve null on policy evaluation; record evaluated results/version/inputs in period history rather than writing them back as overrides. A non-null allowance remains an explicit employer override, subject to applicable floors and future revalidation. Handling an existing override that becomes below a later policy floor remains open. Organization prefill intentionally creates an override; it does not retain dynamic policy inheritance.
+
+
+### Founder agreement — allowance override and yearly history · 2026-11-01
+
+Source: founder agreement to the enterprise-architect refinements in [VAC-22](../jira/VAC-22-relational-database-schema.md).
+
+Use nullable Memberships.AnnualAllowanceOverrideDays, alongside HireDate, PriorServiceYears and LeavePolicyId. Null means dynamic policy inheritance; non-null means an absolute employer annual allowance subject to the previously agreed explicit-value floors. Never write a computed policy result back into the override or decrement it when leave is taken.
+
+Keep AnnualLeaveEntitlements history per membership/year with the policy version, calculated policy allowance, applied allowance, carryover deadline and calculation timestamp. Preserve evaluated inputs/provenance and historic results; current policy changes do not silently rewrite past years. The precise revision/uniqueness strategy and treatment of mid-year milestones remain to design. Consumption, pending and remaining quantities are separate accounting/request projections.
+
+The future authorized allowance editor distinguishes Use policy from Custom allowance. The organization default is suggested/prefilled for the custom option; choosing Use policy stores null, even if policy is below org default. This refines earlier blanket joining-prefill wording: do not silently turn the Use policy choice into a stored number. Which mode is initially selected on the future form is not decided here. The allowance-edit role remains authorized company admin/HR, not ordinary employees.
+
+OPEN QUESTION: an explicit custom allowance can later fall below a changed policy minimum; automatic adjustment versus required employer review remains undecided. Complete GR statutory calculations, effective dating, country applicability and carryover processing remain subject to policy review. This agreement confirms design direction, not schema migration, UI, API or engine implementation.
+
+
+### Founder decision — existing override below a later policy minimum · 2026-11-01
+
+Source: founder response to allowance-change options in [VAC-22](../jira/VAC-22-relational-database-schema.md).
+
+If a previously saved custom allowance becomes lower than the policy minimum after tenure/policy changes, leave that allowance as it is. Do not change the stored override or automatically raise the effective allowance, and do not introduce a required review/approval workflow. This supersedes the earlier open adjustment-versus-review question and the architect's automatic-effective-increase recommendation.
+
+Later, the authorized administrator should receive a notification and see a warning on the employee membership edit page identifying the allowance shortfall. Warning/notification must not claim the stale allowance meets the current policy minimum. The condition does not itself create a review task or approval gate. New or explicitly changed numeric allowances still follow agreed policy/org floor validation; null still dynamically inherits policy and is unaffected by this decision. Historic entitlement records are not rewritten.
+
+Notification delivery channel, timing, deduplication and exact warning presentation remain to design. This is a product behavior decision for an existing-value transition, not legal approval of a below-minimum entitlement or implementation of notifications. Country-policy applicability and production policy review remain required separately. No notification is sent or runtime changed now.

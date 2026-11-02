@@ -1,0 +1,85 @@
+{
+  "status": "Succeeded",
+  "changes": [
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/microsoft.alertsmanagement/smartDetectorAlertRules/Failure Anomalies - vacate-dev-wv5pdctnrzamu-insights"
+    },
+    {
+      "changeType": "Create",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Insights/components/vacate-dev-sc-wv5pdctnrzamu-insights"
+    },
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Insights/components/vacate-dev-wv5pdctnrzamu-insights"
+    },
+    {
+      "changeType": "Create",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/vacate-dev-sc-wv5pdctnrzamu-api"
+    },
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/vacate-dev-wv5pdctnrzamu-api"
+    },
+    {
+      "changeType": "Create",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.OperationalInsights/workspaces/vacate-dev-sc-wv5pdctnrzamu-logs"
+    },
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.OperationalInsights/workspaces/vacate-dev-wv5pdctnrzamu-logs"
+    },
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv"
+    },
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/master"
+    },
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db"
+    },
+    {
+      "changeType": "Create",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Storage/storageAccounts/vacatedevscwv5pdctn"
+    },
+    {
+      "changeType": "Create",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Storage/storageAccounts/vacatedevscwv5pdctn/blobServices/default"
+    },
+    {
+      "changeType": "Create",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Storage/storageAccounts/vacatedevscwv5pdctn/blobServices/default/containers/deployments"
+    },
+    {
+      "changeType": "Create",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Storage/storageAccounts/vacatedevscwv5pdctn/providers/Microsoft.Authorization/roleAssignments/a89c8195-f878-518d-833a-b1b43765366b"
+    },
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Storage/storageAccounts/vacatedevwv5pdctnrz"
+    },
+    {
+      "changeType": "Create",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/serverfarms/vacate-dev-sc-wv5pdctnrzamu-plan"
+    },
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/serverFarms/vacate-dev-wv5pdctnrzamu-plan"
+    },
+    {
+      "changeType": "Create",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/sites/vacate-dev-sc-wv5pdctnrzamu-api"
+    },
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/sites/vacate-dev-wv5pdctnrzamu-api"
+    },
+    {
+      "changeType": "Ignore",
+      "resourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/staticSites/vacate-dev-wv5pdctnrzamu-web"
+    }
+  ]
+}

@@ -30,6 +30,8 @@ Owner: name/role
 
 - [ADR-0003: Domain model and application services](0003-domain-and-application-services.md) — ACCEPTED, 2026-10-27.
 
+- [ADR-0004: Relational resource persistence through Infrastructure adapters](0004-relational-persistence.md) — ACCEPTED, 2026-11-02 (proposed 2026-11-01); implementation/cutover gates remain mandatory.
+
 ## ADRs to create after clarification
 
 1. Initial beachhead market and customer segment.

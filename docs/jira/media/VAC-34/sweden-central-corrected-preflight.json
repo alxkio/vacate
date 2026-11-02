@@ -1,0 +1,200 @@
+{
+  "reason": "LongTermRetentionMissingWeekOfYear in initial apply; add required weekOfYear1 with all retention PT0S",
+  "validation": "Succeeded",
+  "whatIf": "Succeeded",
+  "creates": 0,
+  "deletes": 0,
+  "changes": [
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/microsoft.alertsmanagement/smartDetectorAlertRules/Failure Anomalies - vacate-dev-wv5pdctnrzamu-insights",
+      "type": "Ignore",
+      "delta": null
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Insights/components/vacate-dev-wv5pdctnrzamu-insights",
+      "type": "Ignore",
+      "delta": null
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/vacate-dev-wv5pdctnrzamu-api",
+      "type": "Ignore",
+      "delta": null
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.OperationalInsights/workspaces/vacate-dev-wv5pdctnrzamu-logs",
+      "type": "Ignore",
+      "delta": null
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv",
+      "type": "NoChange",
+      "delta": [
+        {
+          "after": "12.0",
+          "before": null,
+          "children": null,
+          "path": "properties.version",
+          "propertyChangeType": "NoEffect"
+        }
+      ]
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/auditingSettings/default",
+      "type": "Modify",
+      "delta": [
+        {
+          "after": null,
+          "before": false,
+          "children": null,
+          "path": "properties.isManagedIdentityInUse",
+          "propertyChangeType": "Delete"
+        },
+        {
+          "after": null,
+          "before": false,
+          "children": null,
+          "path": "properties.isStorageSecondaryKeyInUse",
+          "propertyChangeType": "Delete"
+        },
+        {
+          "after": null,
+          "before": 0,
+          "children": null,
+          "path": "properties.retentionDays",
+          "propertyChangeType": "Delete"
+        },
+        {
+          "after": null,
+          "before": "00000000-0000-0000-0000-000000000000",
+          "children": null,
+          "path": "properties.storageAccountSubscriptionId",
+          "propertyChangeType": "Delete"
+        }
+      ]
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/master",
+      "type": "Ignore",
+      "delta": null
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db",
+      "type": "Modify",
+      "delta": [
+        {
+          "after": "Default",
+          "before": null,
+          "children": null,
+          "path": "properties.createMode",
+          "propertyChangeType": "Create"
+        },
+        {
+          "after": 0.5,
+          "before": null,
+          "children": null,
+          "path": "properties.minCapacity",
+          "propertyChangeType": "NoEffect"
+        },
+        {
+          "after": 2,
+          "before": null,
+          "children": null,
+          "path": "sku.capacity",
+          "propertyChangeType": "NoEffect"
+        },
+        {
+          "after": "GeneralPurpose",
+          "before": null,
+          "children": null,
+          "path": "sku.tier",
+          "propertyChangeType": "NoEffect"
+        }
+      ]
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db/backupLongTermRetentionPolicies/default",
+      "type": "Modify",
+      "delta": [
+        {
+          "after": null,
+          "before": "Hot",
+          "children": null,
+          "path": "properties.backupStorageAccessTier",
+          "propertyChangeType": "Delete"
+        },
+        {
+          "after": null,
+          "before": false,
+          "children": null,
+          "path": "properties.makeBackupsImmutable",
+          "propertyChangeType": "Delete"
+        },
+        {
+          "after": 1,
+          "before": 0,
+          "children": null,
+          "path": "properties.weekOfYear",
+          "propertyChangeType": "Modify"
+        }
+      ]
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db/backupShortTermRetentionPolicies/default",
+      "type": "Modify",
+      "delta": [
+        {
+          "after": null,
+          "before": 12,
+          "children": null,
+          "path": "properties.diffBackupIntervalInHours",
+          "propertyChangeType": "Delete"
+        }
+      ]
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/securityAlertPolicies/Default",
+      "type": "Modify",
+      "delta": [
+        {
+          "after": null,
+          "before": [
+            ""
+          ],
+          "children": null,
+          "path": "properties.disabledAlerts",
+          "propertyChangeType": "Delete"
+        },
+        {
+          "after": null,
+          "before": [
+            ""
+          ],
+          "children": null,
+          "path": "properties.emailAddresses",
+          "propertyChangeType": "Delete"
+        }
+      ]
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Storage/storageAccounts/vacatedevwv5pdctnrz",
+      "type": "Ignore",
+      "delta": null
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/serverFarms/vacate-dev-wv5pdctnrzamu-plan",
+      "type": "Ignore",
+      "delta": null
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/sites/vacate-dev-wv5pdctnrzamu-api",
+      "type": "Ignore",
+      "delta": null
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/staticSites/vacate-dev-wv5pdctnrzamu-web",
+      "type": "Ignore",
+      "delta": null
+    }
+  ],
+  "compiledArmSha256": "32458c08bf47d0e60f7e716f6a7f40d38ac430d5803bf8322f425059bf21bd76"
+}

@@ -1,0 +1,93 @@
+{
+  "checkedDate": "2026-11-02",
+  "aggregation": "Maximum",
+  "requestedWindow": "24 hours",
+  "requestedInterval": "P1D",
+  "note": "Platform metric daily maxima in the returned window, not current remaining allowance. No paid sink or diagnostic setting enabled.",
+  "metrics": [
+    {
+      "name": "storage",
+      "unit": "Bytes",
+      "data": [
+        {
+          "maximum": 26214400.0,
+          "timeStamp": "2026-11-01T19:35:00Z"
+        }
+      ]
+    },
+    {
+      "name": "allocated_data_storage",
+      "unit": "Bytes",
+      "data": [
+        {
+          "maximum": 33554432.0,
+          "timeStamp": "2026-11-01T19:35:00Z"
+        }
+      ]
+    },
+    {
+      "name": "full_backup_size_bytes",
+      "unit": "Bytes",
+      "data": [
+        {
+          "maximum": 1048576.0,
+          "timeStamp": "2026-11-01T19:35:00Z"
+        }
+      ]
+    },
+    {
+      "name": "diff_backup_size_bytes",
+      "unit": "Bytes",
+      "data": [
+        {
+          "maximum": 1048576.0,
+          "timeStamp": "2026-11-01T19:35:00Z"
+        }
+      ]
+    },
+    {
+      "name": "log_backup_size_bytes",
+      "unit": "Bytes",
+      "data": [
+        {
+          "maximum": 9437184.0,
+          "timeStamp": "2026-11-01T19:35:00Z"
+        }
+      ]
+    },
+    {
+      "name": "free_amount_remaining",
+      "unit": "Count",
+      "data": [
+        {
+          "maximum": 99993.0,
+          "timeStamp": "2026-11-01T19:35:00Z"
+        }
+      ]
+    },
+    {
+      "name": "free_amount_consumed",
+      "unit": "Count",
+      "data": [
+        {
+          "maximum": 5933.0,
+          "timeStamp": "2026-11-01T19:35:00Z"
+        }
+      ]
+    }
+  ],
+  "defenderPlans": [
+    {
+      "name": "SqlServers",
+      "pricingTier": "Free"
+    },
+    {
+      "name": "AppServices",
+      "pricingTier": "Free"
+    },
+    {
+      "name": "StorageAccounts",
+      "pricingTier": "Free"
+    }
+  ]
+}

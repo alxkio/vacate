@@ -6,6 +6,14 @@ public sealed class Department(int id, Guid guid, string name, DateTimeOffset no
 {
     public bool? RequireVacationApproval { get; private set; }
 
+    public static Department Restore(int id, Guid guid, string name, bool? approval, EntityLifecycle lifecycle)
+    {
+        var department = new Department(id, guid, name, lifecycle.CreatedAt);
+        department.SetApproval(approval, lifecycle.UpdatedAt);
+        department.RestoreLifecycle(lifecycle);
+        return department;
+    }
+
     internal void SetApproval(bool? required, DateTimeOffset now)
     {
         Touch(now);
@@ -29,6 +37,14 @@ public sealed class Department(int id, Guid guid, string name, DateTimeOffset no
 public sealed class Team(int id, Guid guid, string name, int? departmentId, DateTimeOffset now) : Entity(id, guid, now)
 {
     public bool? RequireVacationApproval { get; private set; }
+
+    public static Team Restore(int id, Guid guid, string name, int? departmentId, bool? approval, EntityLifecycle lifecycle)
+    {
+        var team = new Team(id, guid, name, departmentId, lifecycle.CreatedAt);
+        team.SetApproval(approval, lifecycle.UpdatedAt);
+        team.RestoreLifecycle(lifecycle);
+        return team;
+    }
 
     internal void SetApproval(bool? required, DateTimeOffset now)
     {
@@ -66,6 +82,17 @@ public sealed class Organization : AggregateRoot
     {
         Name = DomainValue.Name(name, "organization name");
         WorkWeekDays = ValidateWeek(workWeekDays);
+    }
+
+    public static Organization Restore(int id, Guid guid, string name, int workWeekDays, VacationSettings settings,
+        IEnumerable<Department> departments, IEnumerable<Team> teams, EntityLifecycle lifecycle)
+    {
+        var organization = new Organization(id, guid, name, workWeekDays, lifecycle.CreatedAt);
+        organization.Settings = settings;
+        organization.departments.AddRange(departments);
+        organization.teams.AddRange(teams);
+        organization.RestoreLifecycle(lifecycle);
+        return organization;
     }
 
     private static int ValidateWeek(int days) => days is 5 or 6 ? days : throw new DomainValidationException("Choose five or six working days.");

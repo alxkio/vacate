@@ -58,6 +58,15 @@ public sealed class User : AggregateRoot
         Family = family;
     }
 
+    public static User Restore(int id, Guid guid, string username, PersonName name, string gender,
+        FamilyInformation family, string status, EntityLifecycle lifecycle)
+    {
+        var user = new User(id, guid, username, name, gender, family, lifecycle.CreatedAt);
+        user.UpdateAccount(username, status, lifecycle.UpdatedAt);
+        user.RestoreLifecycle(lifecycle);
+        return user;
+    }
+
     public static string NormalizeUsername(string username)
     {
         var value = DomainValue.Name(username, "email username").ToLowerInvariant();

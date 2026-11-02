@@ -89,6 +89,8 @@ const chrome = spawn(
   process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   [
     ...(process.env.MOCK_HEADFUL === '1' ? [] : ['--headless']),
+    // Suppress browser-owned prompts, including password-save UI after fixture sign-in.
+    '--enable-automation',
     '--allow-pre-commit-input',
     '--disable-gpu',
     '--disable-background-networking',
@@ -112,14 +114,19 @@ let socket,
 const waiting = new Map(),
   errors = [];
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const suiteTimeoutMs = Number(process.env.MOCK_SUITE_TIMEOUT_MS || 300000);
+assert.ok(
+  Number.isSafeInteger(suiteTimeoutMs) && suiteTimeoutMs >= 300000 && suiteTimeoutMs <= 1800000,
+  'MOCK_SUITE_TIMEOUT_MS must be between five and thirty minutes',
+);
 const deadline = setTimeout(() => {
   for (const pending of waiting.values())
-    pending.reject(Error('Browser suite exceeded five minutes'));
+    pending.reject(Error('Browser suite exceeded its configured deadline'));
   waiting.clear();
   chrome.kill('SIGKILL');
   server?.close();
   process.exitCode = 1;
-}, 300000);
+}, suiteTimeoutMs);
 try {
   const endpoint = await new Promise((resolve, reject) => {
     let log = '';
@@ -211,7 +218,11 @@ try {
         );
   };
 
-  const prepareNativeFocus = async ({ dispatch = call, timeoutMs = 5000 } = {}) => {
+  const prepareNativeFocus = async ({
+    dispatch = call,
+    timeoutMs = 5000,
+    captureFailure = true,
+  } = {}) => {
     const started = Date.now();
     let attempts = 0;
     try {
@@ -289,14 +300,37 @@ try {
         // Only inert readiness probes repeat. The subsequent application action runs once.
         await pause(100);
       } while (Date.now() - started < timeoutMs);
-      throw Error(
-        'Native input readiness failed: ' +
-          JSON.stringify({
-            attempts,
-            ...(await evaluate(`({focused:document.hasFocus(), visibility:document.visibilityState,
+      const diagnostics = {
+        attempts,
+        elapsedMs: Date.now() - started,
+        browser: browserVersion.product,
+        node: process.version,
+        platform: process.platform,
+        headful: process.env.MOCK_HEADFUL === '1',
+        ...(await evaluate(`({focused:document.hasFocus(), visibility:document.visibilityState,
               active:document.activeElement?.tagName, ...window.__nativeFocus})`)),
-          }),
-      );
+      };
+      // Capture the failed state before closing Chrome; intentional rejection tests opt out.
+      if (captureFailure) {
+        try {
+          const image = await call('Page.captureScreenshot', { format: 'png' });
+          await writeFile(
+            join(output, 'native-input-failure.png'),
+            Buffer.from(image.data, 'base64'),
+          );
+        } catch (error) {
+          diagnostics.screenshotError = error.message;
+        }
+        try {
+          await writeFile(
+            join(output, 'native-input-failure.json'),
+            JSON.stringify(diagnostics, null, 2),
+          );
+        } catch (error) {
+          diagnostics.artifactError = error.message;
+        }
+      }
+      throw Error('Native input readiness failed: ' + JSON.stringify(diagnostics));
     } finally {
       await evaluate('window.__nativeFocusObserver?.abort()');
     }
@@ -320,6 +354,7 @@ try {
       await assert.rejects(
         prepareNativeFocus({
           timeoutMs: 250,
+          captureFailure: delivery === 'none',
           dispatch: async (method, params) => {
             if (!method.startsWith('Input.')) return call(method, params);
             if (delivery === 'pointer' && method === 'Input.dispatchMouseEvent')
@@ -355,6 +390,20 @@ try {
         },
         `Incomplete or untrusted ${delivery} delivery must not pass readiness`,
       );
+      if (delivery === 'none') {
+        const evidence = JSON.parse(
+          await readFile(join(output, 'native-input-failure.json'), 'utf8'),
+        );
+        assert.equal(evidence.browser, browserVersion.product);
+        assert.equal(evidence.node, process.version);
+        assert.equal(evidence.pointer, false);
+        assert.equal(evidence.keyDown, false);
+        assert.equal(evidence.keyUp, false);
+        const image = await readFile(join(output, 'native-input-failure.png'));
+        assert.equal(image.subarray(1, 4).toString(), 'PNG');
+        await rm(join(output, 'native-input-failure.json'));
+        await rm(join(output, 'native-input-failure.png'));
+      }
     }
 
     // An overlay must block preparation rather than receive a misplaced click.
@@ -369,6 +418,7 @@ try {
       await assert.rejects(
         prepareNativeFocus({
           timeoutMs: 250,
+          captureFailure: false,
           dispatch: async (method, params) => {
             if (method.startsWith('Input.')) blockedInput++;
             return call(method, params);
@@ -537,7 +587,15 @@ try {
   };
   await call('Runtime.enable');
   await call('Page.enable');
-  console.log('Browser acceptance: ' + (await call('Browser.getVersion')).product);
+  const runtimeConfig = await (await fetch(new URL('/config.json', baseUrl))).json();
+  assert.equal(typeof runtimeConfig.apiBaseUrl, 'string');
+  await call('Page.addScriptToEvaluateOnNewDocument', {
+    source: `window.__vacateAcceptanceApiBase = ${JSON.stringify(runtimeConfig.apiBaseUrl.replace(/\/+$/, ''))}`,
+  });
+  const browserVersion = await call('Browser.getVersion');
+  console.log(
+    `Browser acceptance: ${browserVersion.product}; Node ${process.version}; ${process.platform}`,
+  );
   if (process.env.MOCK_CPU_THROTTLE) {
     const rate = Number(process.env.MOCK_CPU_THROTTLE);
     assert.ok(Number.isFinite(rate) && rate >= 1, 'MOCK_CPU_THROTTLE must be at least 1');
@@ -857,7 +915,7 @@ try {
     await viewport(1600, 1250);
 
     await evaluate(
-      '(async()=>{const headers={"Content-Type":"application/json",Authorization:"Bearer "+sessionStorage.getItem("vacate.session.token")};for(const [path,body] of [["",{name:"Northstar Example",workWeekDays:5}],["/departments/20000000-0000-4000-8000-000000000300",{name:"Technology"}],["/teams/20000000-0000-4000-8000-000000000400",{name:"Platform"}],["/memberships/20000000-0000-4000-8000-000000000004",{priorService:null}]]){const response=await fetch("/api/organizations/20000000-0000-4000-8000-000000000100"+path,{method:"PATCH",headers,body:JSON.stringify(body)});if(!response.ok)throw Error("Restore failed");}})()',
+      '(async()=>{const headers={"Content-Type":"application/json",Authorization:"Bearer "+sessionStorage.getItem("vacate.session.token")};for(const [path,body] of [["",{name:"Northstar Example",workWeekDays:5}],["/departments/20000000-0000-4000-8000-000000000300",{name:"Technology"}],["/teams/20000000-0000-4000-8000-000000000400",{name:"Platform"}],["/memberships/20000000-0000-4000-8000-000000000004",{priorService:null}]]){const response=await fetch(window.__vacateAcceptanceApiBase+"/organizations/20000000-0000-4000-8000-000000000100"+path,{method:"PATCH",headers,body:JSON.stringify(body)});if(!response.ok)throw Error("Restore failed");}})()',
     );
     await signOut();
     await signIn('maya', 'maya');
@@ -1061,7 +1119,7 @@ try {
     };
     const patch = async (path, body) =>
       evaluate(
-        `fetch('/api/organizations/20000000-0000-4000-8000-000000000100'+${JSON.stringify(path)},{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')},body:JSON.stringify(${JSON.stringify(body)})}).then(response=>response.status)`,
+        `fetch(window.__vacateAcceptanceApiBase+'/organizations/20000000-0000-4000-8000-000000000100'+${JSON.stringify(path)},{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')},body:JSON.stringify(${JSON.stringify(body)})}).then(response=>response.status)`,
       );
     try {
       await login('maya');
@@ -2566,7 +2624,7 @@ try {
       );
       // Restore the seeded profile through the API for repeatable later checks.
       await evaluate(
-        'window.VacateSession.currentUser() && fetch("/api/users/20000000-0000-4000-8000-000000000004",{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"Bearer "+sessionStorage.getItem("vacate.session.token")},body:JSON.stringify({firstName:"Maya",gender:"woman",married:true,dependentChildren:2,soleCare:false})})',
+        'window.VacateSession.currentUser() && fetch(window.__vacateAcceptanceApiBase+"/users/20000000-0000-4000-8000-000000000004",{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"Bearer "+sessionStorage.getItem("vacate.session.token")},body:JSON.stringify({firstName:"Maya",gender:"woman",married:true,dependentChildren:2,soleCare:false})})',
       );
       console.log(
         'PASS: VAC-12 sidebar/avatar settings, family validation, save/cancel, name/eligibility refresh, read-only membership, keyboard/Escape, mobile, direct entry, account isolation and API persistence.',

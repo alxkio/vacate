@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-02",
+  "reason": "User-authorized post-cutover cleanup; extra default anomaly alerts removed for minimum monitoring",
+  "removedResourceIds": [
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/sites/vacate-dev-wv5pdctnrzamu-api",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/serverFarms/vacate-dev-wv5pdctnrzamu-plan",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/vacate-dev-wv5pdctnrzamu-api",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Storage/storageAccounts/vacatedevwv5pdctnrz",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/microsoft.alertsmanagement/smartDetectorAlertRules/Failure Anomalies - vacate-dev-wv5pdctnrzamu-insights",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/microsoft.alertsmanagement/smartDetectorAlertRules/Failure Anomalies - vacate-dev-sc-wv5pdctnrzamu-insights",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Insights/components/vacate-dev-wv5pdctnrzamu-insights",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.OperationalInsights/workspaces/vacate-dev-wv5pdctnrzamu-logs"
+  ]
+}

@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Vacate.Infrastructure.Persistence;
 using Vacate.Infrastructure.Identity;
+using Vacate.Infrastructure.Persistence.Sql;
 using Vacate.Application.Abstractions;
 
 namespace Vacate.Infrastructure;
@@ -25,11 +27,44 @@ public static class DependencyInjection
         return services;
     }
 
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<VacateDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("Vacate")));
+        var provider = configuration["Persistence:Provider"] ?? "InMemory";
+        if (provider == "InMemory")
+        {
+            return services.AddInMemoryPersistence();
+        }
 
+        if (provider != "SqlServer")
+        {
+            throw new InvalidOperationException("Choose InMemory or SqlServer persistence.");
+        }
+
+        var connection = configuration.GetConnectionString("Vacate");
+        if (string.IsNullOrWhiteSpace(connection))
+        {
+            throw new InvalidOperationException("SQL persistence requires ConnectionStrings:Vacate.");
+        }
+
+        var sql = new SqlConnectionStringBuilder(connection);
+        if (sql.TrustServerCertificate || sql.Encrypt == SqlConnectionEncryptOption.Optional)
+        {
+            throw new InvalidOperationException("SQL persistence requires encryption and certificate validation.");
+        }
+
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton(_ => new InMemoryDatabase(bool.TryParse(configuration["SeedData:Enabled"], out var seed) && seed));
+        services.AddSingleton<ISessionStore, InMemorySessionStore>();
+        services.AddSingleton<IUserPresentationCatalog, UserPresentationCatalog>();
+        services.AddScoped<ICredentialValidator, DevelopmentCredentials>();
+        services.AddDbContext<VacateDbContext>(options => options.UseSqlServer(connection));
+        services.AddScoped<SqlSession>();
+        services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<SqlSession>());
+        services.AddScoped<IUserRepository, SqlUsers>();
+        services.AddScoped<IMembershipRepository, SqlMemberships>();
+        services.AddScoped<IOrganizationRepository, SqlOrganizations>();
+        services.AddScoped<IRoleCatalog, SqlRoles>();
+        services.AddScoped<IProvisioningAccess, SqlDevelopmentAccess>();
         return services;
     }
 }

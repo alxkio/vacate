@@ -1,0 +1,100 @@
+{
+  "date": "2026-11-02",
+  "resources": [
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/staticSites/vacate-dev-wv5pdctnrzamu-web",
+      "location": "westeurope",
+      "name": "vacate-dev-wv5pdctnrzamu-web",
+      "type": "Microsoft.Web/staticSites"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv",
+      "location": "swedencentral",
+      "name": "vacate-dev-srv",
+      "type": "Microsoft.Sql/servers"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/master",
+      "location": "swedencentral",
+      "name": "vacate-dev-srv/master",
+      "type": "Microsoft.Sql/servers/databases"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db",
+      "location": "swedencentral",
+      "name": "vacate-dev-srv/vacate-dev-db",
+      "type": "Microsoft.Sql/servers/databases"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.OperationalInsights/workspaces/vacate-dev-sc-wv5pdctnrzamu-logs",
+      "location": "swedencentral",
+      "name": "vacate-dev-sc-wv5pdctnrzamu-logs",
+      "type": "Microsoft.OperationalInsights/workspaces"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Insights/components/vacate-dev-sc-wv5pdctnrzamu-insights",
+      "location": "swedencentral",
+      "name": "vacate-dev-sc-wv5pdctnrzamu-insights",
+      "type": "Microsoft.Insights/components"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/vacate-dev-sc-wv5pdctnrzamu-api",
+      "location": "swedencentral",
+      "name": "vacate-dev-sc-wv5pdctnrzamu-api",
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/serverFarms/vacate-dev-sc-wv5pdctnrzamu-plan",
+      "location": "swedencentral",
+      "name": "vacate-dev-sc-wv5pdctnrzamu-plan",
+      "type": "Microsoft.Web/serverFarms"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Storage/storageAccounts/vacatedevscwv5pdctn",
+      "location": "swedencentral",
+      "name": "vacatedevscwv5pdctn",
+      "type": "Microsoft.Storage/storageAccounts"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/sites/vacate-dev-sc-wv5pdctnrzamu-api",
+      "location": "swedencentral",
+      "name": "vacate-dev-sc-wv5pdctnrzamu-api",
+      "type": "Microsoft.Web/sites"
+    }
+  ],
+  "server": {
+    "azureADOnlyAuthentication": true,
+    "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv",
+    "location": "swedencentral",
+    "minimalTlsVersion": "1.2",
+    "publicNetworkAccess": "Enabled",
+    "authenticationReadbackResourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/azureADOnlyAuthentications/Default"
+  },
+  "database": {
+    "autoPauseDelay": 60,
+    "collation": "Latin1_General_100_CI_AS_SC_UTF8",
+    "currentBackupStorageRedundancy": "Local",
+    "freeLimitExhaustionBehavior": "AutoPause",
+    "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db",
+    "location": "swedencentral",
+    "maxSizeBytes": 34359738368,
+    "minCapacity": 0.5,
+    "sku": {
+      "capacity": 2,
+      "family": "Gen5",
+      "name": "GP_S_Gen5",
+      "size": null,
+      "tier": "GeneralPurpose"
+    },
+    "status": "Online",
+    "useFreeLimit": true
+  },
+  "firewallRules": [
+    {
+      "endIpAddress": "255.255.255.255",
+      "name": "vacate-dev-open-ipv4",
+      "startIpAddress": "0.0.0.0"
+    }
+  ],
+  "networkException": "Explicit user instruction: initial development, VS Code and portal access; Entra-only and free limits unchanged"
+}

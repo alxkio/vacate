@@ -1,0 +1,64 @@
+{
+  "deploymentId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Resources/deployments/vacate-dev-sql-utf8-20261101",
+  "deploymentName": "vacate-dev-sql-utf8-20261101",
+  "deploymentState": "Succeeded",
+  "applyDuration": "PT1M32.2187624S",
+  "compiledArmSha256": "2e8d572d0793260177274fddebef0b741dc51d404aa1a0056bb3f31bd964b1be",
+  "server": {
+    "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv",
+    "name": "vacate-dev-srv",
+    "location": "swedencentral",
+    "state": "Ready",
+    "minimalTlsVersion": "1.2",
+    "publicNetworkAccess": "Disabled",
+    "fullyQualifiedDomainName": "vacate-dev-srv.database.windows.net"
+  },
+  "database": {
+    "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db",
+    "name": "vacate-dev-db",
+    "location": "swedencentral",
+    "status": "Online",
+    "collation": "Latin1_General_100_CI_AS_SC_UTF8",
+    "sku": {
+      "capacity": 2,
+      "family": "Gen5",
+      "name": "GP_S_Gen5",
+      "size": null,
+      "tier": "GeneralPurpose"
+    },
+    "useFreeLimit": true,
+    "freeLimitExhaustionBehavior": "AutoPause",
+    "maxSizeBytes": 34359738368,
+    "minCapacity": 0.5,
+    "autoPauseDelay": 60,
+    "currentBackupStorageRedundancy": "Local",
+    "requestedBackupStorageRedundancy": "Local",
+    "zoneRedundant": false,
+    "readScale": "Disabled"
+  },
+  "entraOnly": true,
+  "advancedThreatProtection": "Disabled",
+  "auditing": "Disabled",
+  "shortTermRetention": {
+    "diffBackupIntervalInHours": 12,
+    "retentionDays": 7
+  },
+  "longTermRetention": {
+    "backupStorageAccessTier": "Hot",
+    "makeBackupsImmutable": false,
+    "monthlyRetention": "PT0S",
+    "weekOfYear": 0,
+    "weeklyRetention": "PT0S",
+    "yearlyRetention": "PT0S"
+  },
+  "diagnosticSettings": 0,
+  "schemaMigrationsApplied": 0,
+  "applicationDatabaseUsersCreatedByTask": 0,
+  "freeQuotaAfter": {
+    "currentValue": 1.0,
+    "displayName": "Count of free databases in this subscription across all Azure regions.",
+    "limit": 1.0,
+    "unit": "Count"
+  },
+  "allDeploymentOperationsSucceeded": true
+}

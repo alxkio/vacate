@@ -69,9 +69,18 @@ From C, maybe we can keep the colour scheme as a setting also. with default bein
 Converted to the accepted mock scope in [VAC-19](jira/VAC-19-calendar-display-preferences-and-balances.md); the prior A/B/C screenshots remain historical references.
 
 
+
+
+## 2026-11-02
+
+ - add country specific holidays (bank holidays) 
+ - add organization closed dates 
+ 
+
 ## next
     ASVS - OWASP -> Agents/tests? 
     WCAG
 
     Unify ui into 2? and create UX 
     
+

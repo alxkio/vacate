@@ -27,7 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           api_framework=$(sed -n 's/.*<TargetFramework>net\([^<]*\)<\/TargetFramework>.*/\1/p' api/Directory.Build.props)
-          functions_runtime=$(sed -n "s/.*runtime: { name: 'dotnet-isolated', version: '\([^']*\)' }.*/\1/p" infra/main.bicep)
+          functions_runtime=$(sed -n "s/.*runtime: { name: 'dotnet-isolated', version: '\([^']*\)' }.*/\1/p" infra/modules/functions-backend.bicep)
           if [[ -z "$api_framework" || "$api_framework" != "$functions_runtime" ]]; then
             echo "API target net${api_framework:-<missing>} does not match Functions runtime ${functions_runtime:-<missing>}" >&2
             exit 1
@@ -134,3 +134,12 @@ jobs:
       - name: Paired host diagnostics
         if: failure()
         run: cat "$RUNNER_TEMP/functions-paired.log" 2>/dev/null || true
+      - name: Native input failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-input-failure
+          path: |
+            ${{ runner.temp }}/vacate-api-browser-previews/native-input-failure.json
+            ${{ runner.temp }}/vacate-api-browser-previews/native-input-failure.png
+          if-no-files-found: ignore

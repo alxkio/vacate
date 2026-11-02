@@ -109,6 +109,14 @@ public sealed class Membership : AggregateRoot
         SettingsRole = settingsRole;
     }
 
+    public static Membership Restore(int id, Guid guid, int userId, int companyId,
+        MembershipConfiguration configuration, AnnualBalance balance, SettingsRole settingsRole, EntityLifecycle lifecycle)
+    {
+        var membership = new Membership(id, guid, userId, companyId, configuration, balance, lifecycle.CreatedAt, settingsRole);
+        membership.RestoreLifecycle(lifecycle);
+        return membership;
+    }
+
     public void Update(MembershipConfiguration configuration, decimal? customAllocation, DateTimeOffset now)
     {
         configuration.Validate();

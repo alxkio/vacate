@@ -1,5 +1,7 @@
 {
   "subscriptionId": "07d79495-1f4f-40fd-9fdf-84605214e5e6",
   "resourceGroup": "rg-vacate-dev",
-  "location": "westeurope"
+  "location": "swedencentral",
+  "sqlLocation": "swedencentral",
+  "sqlRuntimeNetworkMode": "DevelopmentOpen"
 }

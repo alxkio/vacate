@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-02",
+  "server": {
+    "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv",
+    "minimalTlsVersion": "1.2",
+    "publicNetworkAccess": "Disabled"
+  },
+  "firewallRules": [],
+  "database": {
+    "collation": "Latin1_General_100_CI_AS_SC_UTF8",
+    "currentBackupStorageRedundancy": "Local",
+    "freeLimitExhaustionBehavior": "AutoPause",
+    "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db",
+    "maxSizeBytes": 34359738368,
+    "sku": {
+      "capacity": 2,
+      "family": "Gen5",
+      "name": "GP_S_Gen5",
+      "size": null,
+      "tier": "GeneralPurpose"
+    },
+    "status": "Online",
+    "useFreeLimit": true
+  }
+}
