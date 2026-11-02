@@ -2,7 +2,7 @@
 id: VAC-23
 type: task
 summary: Model the database ERD and table catalogue
-status: todo
+status: done
 created: 2026-11-01
 updated: 2026-11-01
 parent: VAC-22
@@ -11,7 +11,7 @@ depends_on: []
 
 # VAC-23 — Model the database ERD and table catalogue
 
-![Task](badges/task.svg) **🟢 Open / ready for action** · Owner: Unassigned
+![Task](badges/task.svg) **✅ Done** · Owner: Unassigned
 
 ## Description
 
@@ -33,10 +33,10 @@ Parent relationship is coordination/completion grouping, not a dependency on VAC
 
 ## Acceptance scenarios
 
-- [ ] Given current domain and accepted decisions, an ERD and column catalogue document keys, relationships, cardinality, nullability, quantities/units and proposed precision.
-- [ ] Use policy preserves null; custom-mode org default suggestion, explicit floors and unchanged stale overrides are correctly represented; yearly policy provenance is distinct from configuration and usage.
-- [ ] Company-owned relationships are identified; cross-company FK risks and required validation are recorded. This design-only task does not execute runtime isolation tests.
-- [ ] Unknown identity/policy/request/carryover behavior is shown as an option or open boundary, not invented implementation.
+- [x] Given current domain and accepted decisions, an ERD and column catalogue document keys, relationships, cardinality, nullability, quantities/units and proposed precision.
+- [x] Use policy preserves null; custom-mode org default suggestion, explicit floors and unchanged stale overrides are correctly represented; yearly policy provenance is distinct from configuration and usage.
+- [x] Company-owned relationships are identified; cross-company FK risks and required validation are recorded. This design-only task does not execute runtime isolation tests.
+- [x] Unknown identity/policy/request/carryover behavior is shown as an option or open boundary, not invented implementation.
 
 ## Subtasks and responsibilities
 
@@ -55,15 +55,20 @@ Accepted canonical sources override issue notes. No unreviewed statutory default
 
 - C-1 · 2026-11-01 · Codex: Created by splitting current design and future work from VAC-22; no implementation or release evidence yet.
 
+- C-2 · 2026-11-01 · Codex / Software Engineer: Delivered and self-reviewed the bounded design artifact, in VAC-23 → VAC-24 → VAC-25 order. [Canonical output](../database/schema-catalogue.md). Independent product/privacy review and proposed ADR acceptance remain separate; no runtime evidence is claimed.
+
 ## Decisions
 
 - D-1 · 2026-11-01 · Founder request: Split current work and future scope into separate tracked items. Existing product decisions remain in linked canonical documents; no open choice is silently resolved.
+
+- D-2 · 2026-11-01 · Codex / engineering proposal: Physical mapping, constraints and migration options are PROPOSED. Accepted behavior is traced to ADRs/charter; policy/identity/retention choices remain explicit in the output.
 
 ## Work log
 
 | Entry | Date | Actor / category | Activity | Duration | Basis and evidence |
 |---|---|---|---|---|---|
 | W-1 | 2026-11-01 | Codex / shared work reference | Create split issue and metadata | Not separately recorded | Shared split activity is recorded once in VAC-22 W-19; do not add duplicate time here. |
+| W-2 | 2026-11-01 | Codex / assistant work | Draft and self-review linked design deliverable | Unknown | Duration not measured; no human or automation time inferred. |
 
 Human actual: Unknown. Assistant duration: Unknown; shared work referenced only. Automation elapsed: not recorded. No estimate recorded. No implementation time recorded.
 
@@ -71,9 +76,11 @@ Human actual: Unknown. Assistant duration: Unknown; shared work referenced only.
 
 - H-1 · 2026-11-01 · Codex: Created as todo; bounded design work is actionable, subject to listed prerequisites.
 
+- H-2 · 2026-11-01 · Codex: todo → done for design delivery after source/constraint/mapping self-review and documentation checks. No implementation or ADR acceptance is implied.
+
 ## Verification and release
 
-Documentation metadata, links, parent/dependency graph and backlog consistency are checked during the split. Acceptance scenarios are pending; no runtime test, migration, provisioning, external messaging, commit, push or deployment is claimed.
+Documentation metadata, links, parent/dependency graph and backlog consistency are checked during the split. Acceptance evidence is the linked design output and its Review findings/Design review section, plus the [package verification record](media/VAC-34/verification-2026-11-01.md). Relative links, metadata and dependency graph checked; SQL tests are a future verification plan, not executed results. No runtime test, migration, provisioning or deployment is claimed by this design task.
 
 ## Open questions and follow-up
 

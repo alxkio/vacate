@@ -4,6 +4,10 @@ param environmentName = 'dev'
 param location = loadJsonContent('../targets/dev.json').location
 param staticSiteLocation = 'westeurope'
 param namePrefix = 'vacate'
+param regionalNameSuffix = 'sc'
+param enableSqlPersistence = true
+param sqlServerName = 'vacate-dev-srv'
+param sqlDatabaseName = 'vacate-dev-db'
 param staticSiteSku = 'Free'
 param maximumInstanceCount = 40
 

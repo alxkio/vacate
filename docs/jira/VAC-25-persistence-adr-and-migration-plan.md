@@ -2,16 +2,16 @@
 id: VAC-25
 type: task
 summary: Prepare the persistence ADR and migration plan
-status: todo
+status: done
 created: 2026-11-01
-updated: 2026-11-01
+updated: 2026-11-02
 parent: VAC-22
 depends_on: [VAC-24]
 ---
 
 # VAC-25 — Prepare the persistence ADR and migration plan
 
-![Task](badges/task.svg) **🟢 Open / ready for action** · Owner: Unassigned
+![Task](badges/task.svg) **✅ Done** · Owner: Unassigned
 
 ## Description
 
@@ -33,10 +33,10 @@ Parent relationship is coordination/completion grouping, not a dependency on VAC
 
 ## Acceptance scenarios
 
-- [ ] The proposed ADR and mapping preserve ADR-0003 layer boundaries, private projections, numeric/internal versus GUID/public identity and server-owned timestamps.
-- [ ] Migration options cover existing in-memory data/fictional seeds, yearly policy provenance, allowance override mapping, and legacy CarryoverYears without silently changing product meaning.
-- [ ] Verification and recovery plans reference the integrity matrix; future infrastructure prerequisites, backup/restore, policy approvals and unresolved runtime choices are explicit.
-- [ ] Design review findings are recorded and linked; drafts are not marked ACCEPTED without the product lead's decision. No runtime tenant-test or release claim is made.
+- [x] The proposed ADR and mapping preserve ADR-0003 layer boundaries, private projections, numeric/internal versus GUID/public identity and server-owned timestamps.
+- [x] Migration options cover existing in-memory data/fictional seeds, yearly policy provenance, allowance override mapping, and legacy CarryoverYears without silently changing product meaning.
+- [x] Verification and recovery plans reference the integrity matrix; future infrastructure prerequisites, backup/restore, policy approvals and unresolved runtime choices are explicit.
+- [x] Design review findings are recorded and linked; drafts are not marked ACCEPTED without the product lead's decision. No runtime tenant-test or release claim is made.
 
 ## Subtasks and responsibilities
 
@@ -55,15 +55,24 @@ Accepted canonical sources override issue notes. No unreviewed statutory default
 
 - C-1 · 2026-11-01 · Codex: Created by splitting current design and future work from VAC-22; no implementation or release evidence yet.
 
+- C-2 · 2026-11-01 · Codex / Software Engineer: Delivered and self-reviewed the bounded design artifact, in VAC-23 → VAC-24 → VAC-25 order. [Canonical output](../database/persistence-migration-plan.md). Independent product/privacy review and proposed ADR acceptance remain separate; no runtime evidence is claimed.
+
+- C-3 · 2026-11-02 · Codex: Recorded explicit product lead acceptance in [ADR-0004](../adr/0004-relational-persistence.md#product-lead-acceptance--2026-11-02) and its index. No runtime or Azure changes made.
+
 ## Decisions
 
 - D-1 · 2026-11-01 · Founder request: Split current work and future scope into separate tracked items. Existing product decisions remain in linked canonical documents; no open choice is silently resolved.
+
+- D-2 · 2026-11-01 · Codex / engineering proposal: Physical mapping, constraints and migration options are PROPOSED. Accepted behavior is traced to ADRs/charter; policy/identity/retention choices remain explicit in the output.
+
+- D-3 · 2026-11-02 · Founder instruction: Founder accepted delivered ADR-0004 and staged plan; proposed alternatives/unresolved mapping and runtime gates remain separate. Source: [ADR-0004 acceptance](../adr/0004-relational-persistence.md#product-lead-acceptance--2026-11-02).
 
 ## Work log
 
 | Entry | Date | Actor / category | Activity | Duration | Basis and evidence |
 |---|---|---|---|---|---|
 | W-1 | 2026-11-01 | Codex / shared work reference | Create split issue and metadata | Not separately recorded | Shared split activity is recorded once in VAC-22 W-19; do not add duplicate time here. |
+| W-2 | 2026-11-01 | Codex / assistant work | Draft and self-review linked design deliverable | Unknown | Duration not measured; no human or automation time inferred. |
 
 Human actual: Unknown. Assistant duration: Unknown; shared work referenced only. Automation elapsed: not recorded. No estimate recorded. No implementation time recorded.
 
@@ -71,10 +80,14 @@ Human actual: Unknown. Assistant duration: Unknown; shared work referenced only.
 
 - H-1 · 2026-11-01 · Codex: Created as todo; bounded design work is actionable, subject to listed prerequisites.
 
+- H-2 · 2026-11-01 · Codex: todo → done for design delivery after source/constraint/mapping self-review and documentation checks. No implementation or ADR acceptance is implied.
+
+- H-3 · 2026-11-02 · Codex: Remains Done for design delivery; product acceptance now recorded separately from earlier design self-review, with no runtime evidence implied.
+
 ## Verification and release
 
-Documentation metadata, links, parent/dependency graph and backlog consistency are checked during the split. Acceptance scenarios are pending; no runtime test, migration, provisioning, external messaging, commit, push or deployment is claimed.
+Documentation metadata, links, parent/dependency graph and backlog consistency are checked during the split. Acceptance evidence is the linked design output and its Review findings/Design review section, plus the [package verification record](media/VAC-34/verification-2026-11-01.md). Relative links, metadata and dependency graph checked; SQL tests are a future verification plan, not executed results. No runtime test, migration, provisioning or deployment is claimed by this design task.
 
 ## Open questions and follow-up
 
-ADR acceptance and any physical implementation remain separate from drafting. Provisioning/production identity/legal-policy/retention behavior must be resolved before dependent runtime work.
+ADR-0004 was accepted by the product lead on 2026-11-02; physical implementation and runtime gates remain separate from completed design delivery. Provisioning/production identity/legal-policy/retention behavior must be resolved before dependent runtime work.

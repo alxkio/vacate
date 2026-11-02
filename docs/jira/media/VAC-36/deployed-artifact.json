@@ -1,0 +1,9 @@
+{
+  "revision": "vac36-derived-20261102",
+  "source": "Authorized working tree on VAC-22-database-schema-design; commit/push follows final review. No merge.",
+  "apiArtifactSha256": "8636af764bb4526043d4ca6b1178f63130d40c735a66328d10b9be19999c67d9",
+  "apiBaseUrl": "https://vacate-dev-sc-wv5pdctnrzamu-api.azurewebsites.net/api",
+  "webBaseUrl": "https://lemon-beach-02f7a7103.4.azurestaticapps.net",
+  "databaseResourceId": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db",
+  "migration": "20261102193840_DerivedLeaveBalances"
+}

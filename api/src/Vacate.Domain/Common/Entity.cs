@@ -10,6 +10,21 @@ public abstract class Entity(int id, Guid guid, DateTimeOffset createdAt)
     public DateTimeOffset? DeletedAt { get; private set; }
     public bool IsDeleted => DeletedAt is not null;
 
+    protected void RestoreLifecycle(EntityLifecycle lifecycle)
+    {
+        if (lifecycle.CreatedAt.ToUniversalTime() != CreatedAt || lifecycle.UpdatedAt < CreatedAt
+            || lifecycle.DeleteRequestedAt < CreatedAt || lifecycle.DeleteRequestedAt > lifecycle.UpdatedAt
+            || lifecycle.DeletedAt is not null && (lifecycle.DeleteRequestedAt is null
+                || lifecycle.DeletedAt < lifecycle.DeleteRequestedAt || lifecycle.DeletedAt > lifecycle.UpdatedAt))
+        {
+            throw new DomainValidationException("Invalid entity lifecycle.");
+        }
+
+        UpdatedAt = lifecycle.UpdatedAt.ToUniversalTime();
+        DeleteRequestedAt = lifecycle.DeleteRequestedAt?.ToUniversalTime();
+        DeletedAt = lifecycle.DeletedAt?.ToUniversalTime();
+    }
+
     protected void Touch(DateTimeOffset now)
     {
         if (IsDeleted)
@@ -32,6 +47,9 @@ public abstract class Entity(int id, Guid guid, DateTimeOffset createdAt)
         DeletedAt = now.ToUniversalTime();
     }
 }
+
+public sealed record EntityLifecycle(DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt,
+    DateTimeOffset? DeleteRequestedAt = null, DateTimeOffset? DeletedAt = null);
 
 public abstract class AggregateRoot(int id, Guid guid, DateTimeOffset createdAt) : Entity(id, guid, createdAt)
 {

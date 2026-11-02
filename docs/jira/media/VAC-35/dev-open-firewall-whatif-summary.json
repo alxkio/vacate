@@ -1,0 +1,9 @@
+{
+  "status": "Succeeded",
+  "changes": [
+    {
+      "changeType": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-open-ipv4"
+    }
+  ]
+}

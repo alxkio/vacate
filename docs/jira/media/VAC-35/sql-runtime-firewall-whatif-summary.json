@@ -1,0 +1,57 @@
+{
+  "status": "Succeeded",
+  "changes": [
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-192-27"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-194-230"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-195-243"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-197-167"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-197-169"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-197-174"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-197-246"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-197-249"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-197-252"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-198-17"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-198-28"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-4-225-198-7"
+    },
+    {
+      "type": "Create",
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/firewallRules/vacate-dev-api-51-12-31-6"
+    }
+  ]
+}

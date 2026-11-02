@@ -1,6 +1,6 @@
 # Vacate API
 
-The .NET 10 API uses the Azure Functions isolated worker with ASP.NET Core HTTP types. The always-available public endpoint is `GET /api/health`, returning liveness and an assembly build version. It does not check database availability. Persistence projects remain in the solution; the host does not register a database connection until that infrastructure and the application authentication design are agreed.
+The .NET 10 API uses the Azure Functions isolated worker with ASP.NET Core HTTP types. The always-available public endpoint is `GET /api/health`, returning liveness and an assembly build version. It does not check database availability. Resource persistence defaults to InMemory. Accepted ADR-0004 adds explicit SqlServer mode through Infrastructure adapters; migrations run only through the separate operator tool, never at host startup. Development sign-in remains separately opt-in and is not production identity.
 
 ## Development
 
@@ -27,7 +27,7 @@ For interactive examples, import the [Postman collection](../docs/contracts/vaca
 
 - `Vacate.Domain`: typed entities, value objects and invariants. Every entity has numeric `Id` plus immutable `Guid`; no storage/HTTP dependency.
 - `Vacate.Application`: user, membership and organization services, use-case records (`CreateUser`, `UpdateUser`, etc.), repository ports and authorized read projections.
-- `Vacate.Infrastructure`: in-memory repositories, sessions, optional development credentials and fictional seeding. `Persistence/Seeds/fictional-users.json` supplies twelve accounts. Database registration remains undecided.
+- `Vacate.Infrastructure`: in-memory repositories, sessions, optional development credentials and fictional seeding. `Persistence/Seeds/fictional-users.json` supplies twelve accounts. SqlServer resource adapters are opt-in; migration and fictional import are explicit operator commands.
 - `Vacate.Api`: thin feature Functions, payload parsing and composition. Public routes/references use GUIDs; internal relationships use numeric keys.
 
 See [ADR-0003](../docs/adr/0003-domain-and-application-services.md) and the [API contract](../docs/contracts/api.md).
@@ -36,6 +36,16 @@ See [ADR-0003](../docs/adr/0003-domain-and-application-services.md) and the [API
 
 ## API-backed fictional settings · VAC-13
 
-See the [endpoint and access contract](../docs/contracts/api.md). Copy local.settings.example.json to ignored local.settings.json to enable `DevelopmentAuthentication__Enabled=true SeedData__Enabled=true` locally. Development credentials and seed data default off; resource endpoints use the same application services in every environment. The twelve test users and role/structure references are embedded in `Persistence/Seeds/fictional-users.json` in Infrastructure. In-memory adapters hold edits/sessions and reset on host restart. Run one local worker; no multi-instance or real-data claim. No cloud enablement or deployment is included.
+See the [endpoint and access contract](../docs/contracts/api.md). Copy local.settings.example.json to ignored local.settings.json to enable `DevelopmentAuthentication__Enabled=true SeedData__Enabled=true` locally. Development credentials and seed data default off; resource endpoints use the same application services in every environment. The twelve test users and role/structure references are embedded in `Persistence/Seeds/fictional-users.json` in Infrastructure. In-memory adapters hold edits/sessions and reset on host restart. Run one local worker; no multi-instance or real-data claim. Current development cloud enablement and SQL cutover are documented in VAC-26/VAC-35; this is not production identity or readiness.
 
 Run the Angular dev server against the Functions host on port 7071. Profile, membership and organization edits require the running API; there is no browser-only fallback. Read/update flows are available in the web, and create/delete endpoints are API-only. Example: `POST /api/auth/sessions` with `{"username":"nora","password":"nora"}`; use its opaque accessToken as a bearer credential.
+
+## SQL persistence · VAC-26
+
+See the [Stage A implementation and migration runbook](../docs/database/implementation-stage-a.md). Set Persistence__Provider=SqlServer and ConnectionStrings__Vacate explicitly for that host process. Keep encryption/certificate validation enabled. Default InMemory behavior and public resource schemas/routes remain compatible; sessions are still process-local and development-only in either resource mode.
+
+The operator tool under api/tools/Vacate.Database generates reviewed idempotent SQL, inspects schema counts, applies forward migrations and supports an explicit empty-only fictional import. Do not run startup migrations or seed real employee data. The exact baseline script is versioned under docs/database/migrations/. Actual SQL tests require VACATE_SQL_TEST_CONNECTION and an explicitly authorized migrated test target; without it they are reported skipped, not passed. Existing Functions/API/browser checks still apply to a repository swap.
+
+Generating a migration does not apply it. The user-authorized development cutover uses the existing free SQL database, explicit fictional import and a resolved managed identity with limited table/sequence permissions. SQL free-limit/AutoPause remain mandatory; minimum-cost replacement runtime storage and diagnostics were separately approved. The user later selected initial-development open IPv4 access while retaining Entra-only/TLS, for app/VS Code/portal use. See the development-access and relocation evidence; production recovery/identity/policy/onboarding remain separate.
+
+VAC-36 replaces the initial snapshot table with MembershipEntitlements and Leaves; consumption and remaining values are derived on each membership read, with runtime Leaves access restricted to SELECT. See [mapping and guarded fixture migration](../docs/database/derived-leave-balances.md) and [current verification gaps](../docs/jira/media/VAC-36/verification-2026-11-02.md). No public leave-writing workflow is added.

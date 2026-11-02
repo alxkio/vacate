@@ -112,14 +112,19 @@ let socket,
 const waiting = new Map(),
   errors = [];
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const suiteTimeoutMs = Number(process.env.MOCK_SUITE_TIMEOUT_MS || 300000);
+assert.ok(
+  Number.isSafeInteger(suiteTimeoutMs) && suiteTimeoutMs >= 300000 && suiteTimeoutMs <= 1800000,
+  'MOCK_SUITE_TIMEOUT_MS must be between five and thirty minutes',
+);
 const deadline = setTimeout(() => {
   for (const pending of waiting.values())
-    pending.reject(Error('Browser suite exceeded five minutes'));
+    pending.reject(Error('Browser suite exceeded its configured deadline'));
   waiting.clear();
   chrome.kill('SIGKILL');
   server?.close();
   process.exitCode = 1;
-}, 300000);
+}, suiteTimeoutMs);
 try {
   const endpoint = await new Promise((resolve, reject) => {
     let log = '';
@@ -537,6 +542,11 @@ try {
   };
   await call('Runtime.enable');
   await call('Page.enable');
+  const runtimeConfig = await (await fetch(new URL('/config.json', baseUrl))).json();
+  assert.equal(typeof runtimeConfig.apiBaseUrl, 'string');
+  await call('Page.addScriptToEvaluateOnNewDocument', {
+    source: `window.__vacateAcceptanceApiBase = ${JSON.stringify(runtimeConfig.apiBaseUrl.replace(/\/+$/, ''))}`,
+  });
   console.log('Browser acceptance: ' + (await call('Browser.getVersion')).product);
   if (process.env.MOCK_CPU_THROTTLE) {
     const rate = Number(process.env.MOCK_CPU_THROTTLE);
@@ -857,7 +867,7 @@ try {
     await viewport(1600, 1250);
 
     await evaluate(
-      '(async()=>{const headers={"Content-Type":"application/json",Authorization:"Bearer "+sessionStorage.getItem("vacate.session.token")};for(const [path,body] of [["",{name:"Northstar Example",workWeekDays:5}],["/departments/20000000-0000-4000-8000-000000000300",{name:"Technology"}],["/teams/20000000-0000-4000-8000-000000000400",{name:"Platform"}],["/memberships/20000000-0000-4000-8000-000000000004",{priorService:null}]]){const response=await fetch("/api/organizations/20000000-0000-4000-8000-000000000100"+path,{method:"PATCH",headers,body:JSON.stringify(body)});if(!response.ok)throw Error("Restore failed");}})()',
+      '(async()=>{const headers={"Content-Type":"application/json",Authorization:"Bearer "+sessionStorage.getItem("vacate.session.token")};for(const [path,body] of [["",{name:"Northstar Example",workWeekDays:5}],["/departments/20000000-0000-4000-8000-000000000300",{name:"Technology"}],["/teams/20000000-0000-4000-8000-000000000400",{name:"Platform"}],["/memberships/20000000-0000-4000-8000-000000000004",{priorService:null}]]){const response=await fetch(window.__vacateAcceptanceApiBase+"/organizations/20000000-0000-4000-8000-000000000100"+path,{method:"PATCH",headers,body:JSON.stringify(body)});if(!response.ok)throw Error("Restore failed");}})()',
     );
     await signOut();
     await signIn('maya', 'maya');
@@ -1061,7 +1071,7 @@ try {
     };
     const patch = async (path, body) =>
       evaluate(
-        `fetch('/api/organizations/20000000-0000-4000-8000-000000000100'+${JSON.stringify(path)},{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')},body:JSON.stringify(${JSON.stringify(body)})}).then(response=>response.status)`,
+        `fetch(window.__vacateAcceptanceApiBase+'/organizations/20000000-0000-4000-8000-000000000100'+${JSON.stringify(path)},{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')},body:JSON.stringify(${JSON.stringify(body)})}).then(response=>response.status)`,
       );
     try {
       await login('maya');
@@ -2566,7 +2576,7 @@ try {
       );
       // Restore the seeded profile through the API for repeatable later checks.
       await evaluate(
-        'window.VacateSession.currentUser() && fetch("/api/users/20000000-0000-4000-8000-000000000004",{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"Bearer "+sessionStorage.getItem("vacate.session.token")},body:JSON.stringify({firstName:"Maya",gender:"woman",married:true,dependentChildren:2,soleCare:false})})',
+        'window.VacateSession.currentUser() && fetch(window.__vacateAcceptanceApiBase+"/users/20000000-0000-4000-8000-000000000004",{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"Bearer "+sessionStorage.getItem("vacate.session.token")},body:JSON.stringify({firstName:"Maya",gender:"woman",married:true,dependentChildren:2,soleCare:false})})',
       );
       console.log(
         'PASS: VAC-12 sidebar/avatar settings, family validation, save/cancel, name/eligibility refresh, read-only membership, keyboard/Escape, mobile, direct entry, account isolation and API persistence.',

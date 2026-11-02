@@ -4,7 +4,7 @@ type: bug
 summary: Stabilize trusted keyboard browser acceptance
 status: qa
 created: 2026-10-28
-updated: 2026-10-30
+updated: 2026-11-02
 parent: null
 depends_on: []
 ---
@@ -93,6 +93,8 @@ C-7 · 2026-10-30 · Codex: removed focus emulation, enabled standard renderer/b
 C-8 · 2026-10-30 · Codex: correction C-7 passed standalone CI twice at 6ff8c24, but [Deploy Azure 41031274200](https://github.com/alxkio/vacate/actions/runs/41031274200) failed waiting for its single pointer focus probe. Reopened for bounded inert preparation, trusted pointer and modifier-key delivery checks, and deterministic dropped/missing/untrusted input and overlay regression scenarios. User requested extensive local verification before committing. Application actions remain single-attempt; product/API/authorization behavior is unaffected.
 
 C-9 · 2026-10-30 · Codex: follow-up correction passed six fresh-browser native journeys (including 4× and 8× CPU slowdown), two complete default suites (normal/4×), and focused unified navigation/admin balances/history acceptance. All six preparation fault scenarios ran in every native/full journey. Existing frontend/backend tests, production frontend build, real HTTP/schema, TypeScript and fixture checks passed. Hosted execution of this correction and independent release acceptance remain separate from this local evidence.
+
+C-10 · 2026-11-02 · Codex: During VAC-35 hosted SQL cutover checks, one diagnostic run passed native readiness, trusted Escape, shortlist and account-menu checks before a separate hardcoded same-origin test cleanup failed. Subsequent headless and visible Chrome 150 runs failed native readiness with focused/visible document but no trusted pointer/key events. Native assertions were retained; functional-only results are reported separately, never as a complete default pass. Existing QA gap remains open; no product runtime/native-helper change made. Shared effort belongs to VAC-35, not duplicated here.
 
 ## Decisions
 

@@ -2,16 +2,16 @@
 id: VAC-22
 type: story
 summary: Define the relational database schema and persistence boundaries for Vacate
-status: todo
+status: done
 created: 2026-11-01
-updated: 2026-11-01
+updated: 2026-11-02
 parent: null
 depends_on: []
 ---
 
 # VAC-22 — Define the relational database schema and persistence boundaries for Vacate
 
-![Story](badges/story.svg) **🟢 Open / ready for action** · Owner: Unassigned
+![Story](badges/story.svg) **✅ Done** · Owner: Unassigned
 
 ## Description
 
@@ -27,11 +27,11 @@ Ready for database design work: deliver an ERD, table/column catalogue, proposed
 
 | Subtask | Deliverable | Status | Direct prerequisite |
 |---|---|---|---|
-| [VAC-23](VAC-23-database-erd-and-catalogue.md) | Model the database ERD and table catalogue | Open / ready for action | None |
-| [VAC-24](VAC-24-database-integrity-and-verification-design.md) | Design database integrity constraints and verification scenarios | Open / ready for action | [VAC-23](VAC-23-database-erd-and-catalogue.md) |
-| [VAC-25](VAC-25-persistence-adr-and-migration-plan.md) | Prepare the persistence ADR and migration plan | Open / ready for action | [VAC-24](VAC-24-database-integrity-and-verification-design.md) |
+| [VAC-23](VAC-23-database-erd-and-catalogue.md) | Model the database ERD and table catalogue | Done (design delivery) | None |
+| [VAC-24](VAC-24-database-integrity-and-verification-design.md) | Design database integrity constraints and verification scenarios | Done (design delivery) | [VAC-23](VAC-23-database-erd-and-catalogue.md) |
+| [VAC-25](VAC-25-persistence-adr-and-migration-plan.md) | Prepare the persistence ADR and migration plan | Done (design delivery) | [VAC-24](VAC-24-database-integrity-and-verification-design.md) |
 
-VAC-23 can start now. VAC-24 follows its model; VAC-25 follows the integrity/verification design. All three have parent VAC-22 and ready design scopes. VAC-22 is complete when their outputs and its design review pass; parent membership is not an implementation dependency or a duplicate work log.
+VAC-23, VAC-24 and VAC-25 design outputs were delivered and self-reviewed in order on 2026-11-01; their canonical artifacts are linked from each task. All three have parent VAC-22 and ready design scopes. VAC-22 is complete when their outputs and its design review pass; parent membership is not an implementation dependency or a duplicate work log.
 
 ### Deliverables and readiness boundary
 
@@ -116,11 +116,11 @@ Coordination/source links, not direct prerequisites: [VAC-11](VAC-11-draft-user-
 
 ## Acceptance scenarios
 
-- [ ] [VAC-23](VAC-23-database-erd-and-catalogue.md) delivers an ERD and table/column catalogue mapping current entities and accepted changes, with company ownership, identity, nullability, units, lifecycle and relationship cardinalities explicit.
-- [ ] Allowance design preserves AnnualAllowanceOverrideDays null inheritance, explicit-value floors, allowed policy-below-org null, custom-mode suggestion, separate yearly entitlements and unchanged existing overrides overtaken by policy, with deferred notification/warning boundaries.
-- [ ] [VAC-24](VAC-24-database-integrity-and-verification-design.md) delivers proposed constraints/transactions and a verification plan covering cross-company references/reads/writes, global username/active-membership uniqueness, last-admin concurrency, invitation single use and platform-versus-company privileges. Runtime tests are not claimed as executed.
-- [ ] [VAC-25](VAC-25-persistence-adr-and-migration-plan.md) delivers reviewable EF/repository mapping, draft persistence ADR and migration/compatibility plan; unsupported policy/identity/request/carryover/notification behavior is not implemented. Decisions needed before later runtime work are explicit.
-- [ ] Local artifact links/metadata and any draft DDL consistency are checked; design review findings are recorded. No provisioning, migrations, deployment or statutory-policy approval is claimed.
+- [x] [VAC-23](VAC-23-database-erd-and-catalogue.md) delivers an ERD and table/column catalogue mapping current entities and accepted changes, with company ownership, identity, nullability, units, lifecycle and relationship cardinalities explicit.
+- [x] Allowance design preserves AnnualAllowanceOverrideDays null inheritance, explicit-value floors, allowed policy-below-org null, custom-mode suggestion, separate yearly entitlements and unchanged existing overrides overtaken by policy, with deferred notification/warning boundaries.
+- [x] [VAC-24](VAC-24-database-integrity-and-verification-design.md) delivers proposed constraints/transactions and a verification plan covering cross-company references/reads/writes, global username/active-membership uniqueness, last-admin concurrency, invitation single use and platform-versus-company privileges. Runtime tests are not claimed as executed.
+- [x] [VAC-25](VAC-25-persistence-adr-and-migration-plan.md) delivers reviewable EF/repository mapping, draft persistence ADR and migration/compatibility plan; unsupported policy/identity/request/carryover/notification behavior is not implemented. Decisions needed before later runtime work are explicit.
+- [x] Local artifact links/metadata and any draft DDL consistency are checked; design review findings are recorded. No provisioning, migrations, deployment or statutory-policy approval is claimed.
 
 ## Future work — separate follow-ups, not design completion gates
 
@@ -203,6 +203,8 @@ Future hourly submission, additional country packs, public independent signup/or
 
 - C-21 · 2026-11-01 · Codex: Founder requested moving all VAC-22-related documents/issues from VAC-21 to dedicated branch VAC-22-database-schema-design and committing the current specification package. Preserve unrelated VAC-21/context/infrastructure edits separately. Engineer handoff: VAC-23–VAC-25 own current design outputs; VAC-26 tracks database infrastructure/persistence implementation with its existing readiness gates. No Azure resources are provisioned by this branch/commit task.
 
+- C-22 · 2026-11-02 · Codex: Recorded explicit product lead acceptance in [ADR-0004](../adr/0004-relational-persistence.md#product-lead-acceptance--2026-11-02) and its index. No runtime or Azure changes made.
+
 ## Decisions
 
 - D-1 · 2026-11-01 · Founder instruction: Create this story and discuss open questions; no schema implementation/provisioning requested.
@@ -249,6 +251,10 @@ Future hourly submission, additional country packs, public independent signup/or
 - D-24 · 2026-11-01 · Founder request: Split current and future work into separately tracked items. VAC-22 stays the design parent, without changing to an implementation epic. VAC-23–VAC-25 are its current subtasks; VAC-26–VAC-33 are linked future outcomes with their own unresolved questions/direct dependencies. No policy, permission, implementation or deployment decision is added by decomposition.
 
 - D-25 · 2026-11-01 · Founder instruction: Isolate and commit the VAC-22 package on its own branch from the current VAC-21 HEAD for software-engineer handoff. This authorizes the local branch/commit, not a push or Azure deployment; existing future-story gates remain in force.
+
+- D-26 · 2026-11-01 · User instruction: Separate [VAC-34](VAC-34-empty-azure-sql-free-offer.md), empty free-offer SQL infrastructure, from VAC-26. VAC-34 has no schema-design dependency and does not gate this design package. VAC-26 depends on VAC-25 plus VAC-34 for later cloud integration. Provisioning is authorized only after verified zero cost in the existing dev target; regional restriction currently blocks apply.
+
+- D-27 · 2026-11-02 · Founder instruction: Founder accepted ADR-0004 shared-table architecture and mapping/cutover gates. Design remains Done; VAC-26 retains unsatisfied implementation gates. Source: [ADR-0004 acceptance](../adr/0004-relational-persistence.md#product-lead-acceptance--2026-11-02).
 
 ## Work log
 
@@ -338,9 +344,13 @@ Human actual: Unknown. Assistant duration: Unknown. Automation elapsed: not reco
 
 - H-20 · 2026-11-01 · Codex: Remains Open for design; founder-authorized branch/commit handoff prepared. No application code, Azure provisioning or deployment in this change.
 
+- H-21 · 2026-11-01 · Codex: todo → done for bounded design delivery. No statutory algorithm, production identity, schema migration or application persistence was implemented. Parent adds no duplicate time; task work is recorded in VAC-23–VAC-25, durations unknown.
+
+- H-22 · 2026-11-02 · Codex: Remains Done for bounded design; ADR-0004 acceptance recorded without approving paid Azure use, runtime cutover or future features.
+
 ## Verification and release
 
-Documentation checks cover allocated ID, issue/backlog consistency, dependencies/cycles, local links and whitespace. Runtime acceptance scenarios are planned gates, not executed evidence. No migrations, application changes or deployment. Current status is Open for the design deliverables; earlier Specification history remains recorded.
+Documentation checks cover allocated ID, issue/backlog consistency, dependencies/cycles, local links and whitespace. Runtime acceptance scenarios are planned gates, not executed evidence. No migrations, application changes or deployment. Current status is Done for the delivered/self-reviewed design package; canonical outputs and remaining acceptance/runtime gates are linked below. Earlier Specification/Open history remains recorded.
 
 ## Open questions and follow-up
 
@@ -362,3 +372,7 @@ Readiness assessment, 2026-11-01: the questions below are retained for design op
 | Q9 | Which schedule/calendar/service precision and history are needed for calculations? | Do not infer weekdays from five/six-day counts or round prior service silently. Agree effective dates and missing-data behavior before charging leave. |
 
 Platform bootstrap and role-grant authority are confirmed. Employee request units are confirmed as whole days for MVP, with future hourly schema capability. Membership nullable annual allowance semantics are confirmed. Organization default custom-option prefill is agreed; Use policy preserves null. Explicit employee allowances below org default are blocked (confirmed). Null → policy is allowed even below org default (confirmed). Existing custom allowances overtaken by policy remain unchanged, with future admin notification/membership-edit warning and no review (confirmed). Next clarify carryover processing (Q6/Q12); authentication and operational procedures remain open design work. First organization administrators register through admin invitations (confirmed). Invitation lifecycle is confirmed; recipient verification and operational procedure remain open. Existing-account handling remains open; there is no new public orphan-account signup requirement. The new-invitee flow is confirmed; separate personnel-without-login support remains unresolved rather than assumed. Resolve only decisions necessary for the selected persistence iteration; later workflow questions can remain explicitly excluded. Future follow-ups are now tracked as VAC-26–VAC-33; they remain Specification and do not gate design completion.
+
+## Design package completion · 2026-11-01
+
+Codex / Software Engineer: [ERD/catalogue](../database/schema-catalogue.md), [integrity and verification matrix](../database/integrity-and-verification.md), [EF/migration plan](../database/persistence-migration-plan.md) and [ADR-0004](../adr/0004-relational-persistence.md) delivered in prerequisite order. ADR-0004 was accepted by the product lead on 2026-11-02; runtime gates remain open. Design self-review findings and runtime gates are explicit; no independent release approval is claimed. Metadata/links/dependencies and cost-template verification are recorded in the [verification report](media/VAC-34/verification-2026-11-01.md).

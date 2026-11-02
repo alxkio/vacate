@@ -15,7 +15,7 @@ If sources conflict, do not silently select one. Record an `OPEN QUESTION` in th
 
 ## Codex discovery and scoped role guidance
 
-This root `AGENTS.md` covers the entire repository (`**/*`, including root files and hidden configuration). Codex discovers it by directory ancestry; it does not need YAML `applyTo` or `glob` frontmatter. Read any applicable nested `AGENTS.md`/`AGENTS.override.md` when present. Start a new session after changing instruction/configuration files to reload discovery.
+This root `AGENTS.md` covers the entire repository (`**/*`, including root files and hidden configuration). Read any applicable nested `AGENTS.md`/`AGENTS.override.md` when present. Start a new session after changing instruction/configuration files to reload discovery.
 
 Before reviewing or editing a path, read the relevant role profiles from this table. Patterns are relative to the repository root; `**` includes nested paths. Multiple rows may apply. These are explicit reading instructions, not a Codex glob-loader setting. Read only relevant profiles; selecting a role does not require spawning another agent or grant additional permissions.
 

@@ -1,0 +1,11 @@
+{
+  "source": "SQL connection-denied exception from replacement app diagnostics",
+  "ip": "74.241.139.246",
+  "azureServiceTag": "AzureCloud.swedencentral",
+  "serviceTagChangeNumber": 424,
+  "file": "ServiceTags_Public_20261026.json",
+  "matchedPrefixes": [
+    "74.241.128.0/17"
+  ],
+  "action": "Region verified; no observed-IP rule applied. User subsequently requested development-only removal of IP filtering."
+}

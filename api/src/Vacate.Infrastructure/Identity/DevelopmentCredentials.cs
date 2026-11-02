@@ -5,7 +5,7 @@ using Vacate.Infrastructure.Persistence;
 namespace Vacate.Infrastructure.Identity;
 
 // Explicit development adapter for seeded fictional accounts; not a production identity provider.
-public sealed class DevelopmentCredentials(InMemoryDatabase database, IConfiguration configuration) : ICredentialValidator
+public sealed class DevelopmentCredentials(InMemoryDatabase database, IConfiguration configuration, IUserRepository users) : ICredentialValidator
 {
     public bool Enabled => bool.TryParse(configuration["DevelopmentAuthentication:Enabled"], out var enabled) && enabled;
 
@@ -30,9 +30,11 @@ public sealed class DevelopmentCredentials(InMemoryDatabase database, IConfigura
         };
         if (database.CredentialAliases.TryGetValue(alias, out var id))
         {
-            return id;
+            var expected = database.Users[id];
+            return users.FindByGuid(expected.Guid)?.Id;
         }
 
-        return database.Users.Values.FirstOrDefault(u => u.Username == normalized && database.CredentialAliases.ContainsValue(u.Id))?.Id;
+        var expectedGuids = database.Users.Values.Where(u => database.CredentialAliases.ContainsValue(u.Id)).Select(u => u.Guid).ToHashSet();
+        return users.All().FirstOrDefault(u => u.Username == normalized && expectedGuids.Contains(u.Guid))?.Id;
     }
 }

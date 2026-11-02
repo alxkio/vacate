@@ -1,0 +1,35 @@
+{
+  "target": {
+    "subscriptionId": "07d79495-1f4f-40fd-9fdf-84605214e5e6",
+    "resourceGroup": "rg-vacate-dev",
+    "location": "westeurope",
+    "sqlLocation": "swedencentral"
+  },
+  "serverName": "vacate-dev-srv",
+  "databaseName": "vacate-dev-db",
+  "regionStatus": "Available",
+  "serverStatus": "Default",
+  "skuStatus": "Available",
+  "freeQuota": {
+    "currentValue": 0.0,
+    "displayName": "Count of free databases in this subscription across all Azure regions.",
+    "limit": 1.0,
+    "unit": "Count"
+  },
+  "nameAvailable": true,
+  "paidDefenderPlanEnabled": false,
+  "inheritedPoliciesReturned": 0,
+  "validation": "Succeeded",
+  "whatIf": "Succeeded",
+  "creates": [
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/auditingSettings/default",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db/backupLongTermRetentionPolicies/default",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db/backupShortTermRetentionPolicies/default",
+    "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/securityAlertPolicies/Default"
+  ],
+  "ignored": 8,
+  "compiledArmSha256": "94df0e273ce25f7e44c8a5fcfe7a9d199b1ffa91d5589a35b60471069eeee641",
+  "guardNegativeChecks": 8
+}

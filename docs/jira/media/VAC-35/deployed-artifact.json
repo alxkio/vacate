@@ -1,0 +1,7 @@
+{
+  "revision": "vac35-clean-20261102",
+  "apiZipSha256": "8a1c879ef8150fefc3893f5cb25225f9f378a50879f76f6c18219948b6c18ed4",
+  "apiUrl": "https://vacate-dev-sc-wv5pdctnrzamu-api.azurewebsites.net",
+  "webUrl": "https://lemon-beach-02f7a7103.4.azurestaticapps.net",
+  "buildSource": "Authorized local working tree; commit/push follows post-cleanup architect review"
+}

@@ -1,0 +1,73 @@
+{
+  "collation": "Latin1_General_100_CI_AS_SC_UTF8",
+  "caseInsensitive": true,
+  "accentSensitive": true,
+  "unicodeSupport": "Nordic and Greek text; UTF-8 for varchar and supplementary Unicode",
+  "approvedDeletion": "vacate-dev-db only; server retained",
+  "validation": "Succeeded",
+  "whatIf": "Succeeded",
+  "compiledArmSha256": "2e8d572d0793260177274fddebef0b741dc51d404aa1a0056bb3f31bd964b1be",
+  "changes": [
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/microsoft.alertsmanagement/smartDetectorAlertRules/Failure Anomalies - vacate-dev-wv5pdctnrzamu-insights",
+      "type": "Ignore"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Insights/components/vacate-dev-wv5pdctnrzamu-insights",
+      "type": "Ignore"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.ManagedIdentity/userAssignedIdentities/vacate-dev-wv5pdctnrzamu-api",
+      "type": "Ignore"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.OperationalInsights/workspaces/vacate-dev-wv5pdctnrzamu-logs",
+      "type": "Ignore"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv",
+      "type": "NoChange"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/auditingSettings/default",
+      "type": "Modify"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/master",
+      "type": "Ignore"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db",
+      "type": "Create"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db/backupLongTermRetentionPolicies/default",
+      "type": "Create"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/databases/vacate-dev-db/backupShortTermRetentionPolicies/default",
+      "type": "Create"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Sql/servers/vacate-dev-srv/securityAlertPolicies/Default",
+      "type": "Modify"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Storage/storageAccounts/vacatedevwv5pdctnrz",
+      "type": "Ignore"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/serverFarms/vacate-dev-wv5pdctnrzamu-plan",
+      "type": "Ignore"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/sites/vacate-dev-wv5pdctnrzamu-api",
+      "type": "Ignore"
+    },
+    {
+      "id": "/subscriptions/07d79495-1f4f-40fd-9fdf-84605214e5e6/resourceGroups/rg-vacate-dev/providers/Microsoft.Web/staticSites/vacate-dev-wv5pdctnrzamu-web",
+      "type": "Ignore"
+    }
+  ],
+  "quotaGate": "Wait for actual FreeLimitQuota remaining >=1; no paid fallback"
+}
