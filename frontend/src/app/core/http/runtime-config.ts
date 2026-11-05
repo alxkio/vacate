@@ -1,6 +1,6 @@
 import { InjectionToken } from '@angular/core';
 
-export interface RuntimeConfig {
+export type RuntimeConfig = {
   apiBaseUrl: string;
   revision: string;
 }
@@ -32,6 +32,6 @@ export function parseRuntimeConfig(value: unknown): RuntimeConfig {
 
 export async function loadRuntimeConfig(): Promise<RuntimeConfig> {
   const response = await fetch('/config.json', { cache: 'no-store' });
-  if (!response.ok) throw new Error('Application configuration unavailable');
+  if (!response.ok) {throw new Error('Application configuration unavailable');}
   return parseRuntimeConfig(await response.json());
 }

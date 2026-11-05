@@ -1,7 +1,15 @@
 import { TestBed } from '@angular/core/testing';
+import { Person } from '../models/workspace.models';
 import { WorkspaceApiService } from './workspace-api.service';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
 import { WorkspaceDataService } from './workspace-data.service';
+
+type WorkspaceApiTestDouble = Pick<WorkspaceApiService, 'profiles' | 'currentUser' | 'logout'> & {
+  organization: ReturnType<typeof fixtureWorkspaceProvider.useFactory>['organization'];
+  login: ReturnType<
+    typeof fixtureWorkspaceProvider.useFactory
+  >['environment']['VacateSession']['login'];
+};
 
 describe('Angular demo data boundary', () => {
   let data: WorkspaceDataService;
@@ -12,7 +20,7 @@ describe('Angular demo data boundary', () => {
       providers: [
         {
           provide: WorkspaceApiService,
-          useFactory: () => {
+          useFactory: (): WorkspaceApiTestDouble => {
             const fixture = fixtureWorkspaceProvider.useFactory();
             return {
               profiles: fixture.profiles,
@@ -68,9 +76,23 @@ describe('Angular demo data boundary', () => {
   it('does not return another account’s allocation from a forged company context', () => {
     const maya = data.fixtures.person('maya')!;
     data.environment.VacateSession = {
-      currentUser: () => ({ ...maya, companyId: 'foreign-company' }),
-      login: () => false,
-      logout: () => {},
+      currentUser: (): {
+        companyId: string;
+        id: string;
+        personId: string;
+        name: string;
+        title: string;
+        teamId: string;
+        departmentId: string;
+        team: string;
+        capability: string;
+        role: string;
+        initials: string;
+        username: string;
+        email: string;
+      } => ({ ...maya, companyId: 'foreign-company' }),
+      login: (): false => false,
+      logout: (): void => {},
     };
     expect(data.eligibility.getResponse()).toBeNull();
     expect(data.balance('annual')).toBeNull();

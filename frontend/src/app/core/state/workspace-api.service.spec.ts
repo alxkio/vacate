@@ -7,9 +7,10 @@ import { createFixtures } from '../reference-data/fixtures.js';
 import { createProfiles } from '../../../../testing/fixtures/profiles.js';
 import { OwnProfile, Person } from '../models/workspace.models';
 
-const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 describe('API-backed demo state', () => {
-  let http: HttpTestingController, api: WorkspaceApiService;
+  let http: HttpTestingController;
+  let api: WorkspaceApiService;
   beforeEach(() => {
     sessionStorage.clear();
     TestBed.configureTestingModule({
@@ -26,7 +27,7 @@ describe('API-backed demo state', () => {
     http.verify();
     sessionStorage.clear();
   });
-  function own(id = 'maya') {
+  function own(id = 'maya'): { profile: OwnProfile; person: Person } {
     const f = createFixtures();
     const person = f.person(id)!;
     const profile = createProfiles({
@@ -35,7 +36,7 @@ describe('API-backed demo state', () => {
     }).read() as OwnProfile;
     return { profile, person: { ...person, companyId: profile.membership!.companyId } as Person };
   }
-  async function signIn() {
+  async function signIn(): Promise<void> {
     const result = api.login('maya', 'maya');
     http.expectOne('/api/auth/sessions').flush({ accessToken: 'server-token' });
     await tick();

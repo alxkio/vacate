@@ -18,15 +18,15 @@
     Preview a request for {{ data.currentUser()?.name }} using fictional data. Nothing is submitted
     or saved.
   </p>
-  <form id="request-form" #form (submit)="submit($event, form, endInput)">
+  <form #form id="request-form" (submit)="submit($event, form, endInput)">
     <label for="leave-type">Leave type</label
     ><select
+      #typeSelect
       id="leave-type"
       name="type"
-      #typeSelect
+      aria-describedby="request-type-status request-eligibility"
       [value]="typeId"
       (change)="setType(typeSelect.value)"
-      aria-describedby="request-type-status request-eligibility"
     >
       @for (group of groups; track group.name) {
         <optgroup [label]="group.name">
@@ -48,8 +48,8 @@
       class="inline-link type-toggle"
       id="request-type-toggle"
       type="button"
-      [attr.aria-expanded]="showAll"
       aria-controls="leave-type"
+      [attr.aria-expanded]="showAll"
       (click)="toggleTypes(form)"
     >
       {{ showAll ? 'Show shortlisted types' : 'Show all leave types' }}
@@ -72,10 +72,10 @@
     </p>
     <p id="request-allowance" class="request-allowance">{{ type?.allowance }} · {{ type?.pay }}</p>
     <details
+      #rules
       id="request-rules"
       class="request-rules"
       [open]="rulesOpen"
-      #rules
       (toggle)="rulesOpen = rules.open"
     >
       <summary>Allowance and rules</summary>
@@ -92,21 +92,21 @@
           id="start-date"
           name="start"
           type="date"
+          required
           [value]="start"
           (input)="input(form, endInput)"
-          required
         />
       </div>
       <div>
         <label for="end-date">To</label
         ><input
+          #endInput
           id="end-date"
           name="end"
-          #endInput
           type="date"
+          required
           [value]="end"
           (input)="input(form, endInput)"
-          required
         />
       </div>
     </div>
@@ -119,14 +119,14 @@
           type="number"
           min="1"
           step="1"
+          required
           [value]="amount"
           (input)="capture(form)"
-          required
         />
       </div>
       <div>
         <label for="request-unit">Unit</label
-        ><select id="request-unit" name="unit" #unitSelect [value]="unit" (input)="capture(form)">
+        ><select #unitSelect id="request-unit" name="unit" [value]="unit" (input)="capture(form)">
           @for (choice of units; track choice) {
             <option [value]="choice" [selected]="choice === unit">{{ choice }}</option>
           }
@@ -140,8 +140,8 @@
     <p
       id="request-balance"
       class="request-balance"
-      [class.over-allowance]="projection.excess"
       aria-live="polite"
+      [class.over-allowance]="projection.excess"
     >
       {{ projection.text }}
     </p>

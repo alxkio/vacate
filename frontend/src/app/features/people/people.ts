@@ -42,8 +42,8 @@ export class People implements OnInit {
   loading = false;
   error = '';
 
-  async ngOnInit() {
-    if (this.data.currentUser()?.capability === 'admin') return;
+  async ngOnInit(): Promise<void> {
+    if (this.data.currentUser()?.capability === 'admin') {return;}
     this.loading = true;
     try {
       this.people = await this.data.api.directory();

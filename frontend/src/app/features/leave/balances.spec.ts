@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { Balances } from './balances';
@@ -18,7 +18,7 @@ describe('Leave balance ordering', () => {
     localStorage.clear();
   });
 
-  function setup(account: string) {
+  function setup(account: string): { data: WorkspaceDataService; fixture: ComponentFixture<Balances>; page: Balances; } {
     const data = TestBed.inject(WorkspaceDataService);
     data.environment.VacateSession.login(account, account);
     const fixture = TestBed.createComponent(Balances);

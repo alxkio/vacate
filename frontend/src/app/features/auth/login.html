@@ -26,8 +26,8 @@
     <p>Choose one of four test personas. Explore all 12 fictional colleagues.</p>
     <label for="demo-account">Choose a test persona</label
     ><select
-      id="demo-account"
       #account
+      id="demo-account"
       (change)="choose(account.value, username, password, description)"
     >
       <option value="">Choose a persona…</option>
@@ -35,14 +35,14 @@
         <option [value]="persona.id">{{ persona.label }} · {{ persona.name }}</option>
       }
     </select>
-    <p id="persona-description" #description class="login-note">
+    <p #description id="persona-description" class="login-note">
       Select a persona to fill their public demo credentials.
     </p>
     <form id="login-form" (submit)="submit($event, username, password)">
       <label for="username">Username</label
       ><input
-        id="username"
         #username
+        id="username"
         name="username"
         autocomplete="username"
         autocapitalize="none"
@@ -51,8 +51,8 @@
       />
       <label for="password">Password</label
       ><input
-        id="password"
         #password
+        id="password"
         name="password"
         type="password"
         autocomplete="current-password"

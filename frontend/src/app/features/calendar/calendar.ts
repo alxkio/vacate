@@ -4,12 +4,12 @@ import {
   addDays,
   dateFromKey,
   dateKey,
-  WorkspaceDataService,
-  REFERENCE_TODAY,
   fullDate,
   monthName,
+  REFERENCE_TODAY,
   shortDate,
   weekStart,
+  WorkspaceDataService,
 } from '../../core/state/workspace-data.service';
 import { CalendarState, Entry, Person } from '../../core/models/workspace.models';
 
@@ -30,21 +30,29 @@ export class Calendar {
   shortDate = shortDate;
   weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   today = dateKey(REFERENCE_TODAY);
-  get people() {
+  get people(): Person[] {
     return this.state.denied
       ? []
       : this.data.fixtures.peopleFor(this.user, this.state.scope, this.state.groupId);
   }
-  get entries() {
-    if (this.state.denied || !this.people.length) return [];
+  get entries(): Entry[] {
+    if (this.state.denied || !this.people.length) {
+      return [];
+    }
     return this.state.scope === 'self'
       ? this.data.fixtures.ownEntries(this.user)
       : this.data.fixtures.availabilityFor(this.user, this.state.scope, this.state.groupId);
   }
-  get scopeName() {
-    if (this.state.denied) return 'Unavailable scope';
-    if (this.state.scope === 'self') return 'My calendar';
-    if (this.state.scope === 'org') return this.data.companyName;
+  get scopeName(): string {
+    if (this.state.denied) {
+      return 'Unavailable scope';
+    }
+    if (this.state.scope === 'self') {
+      return 'My calendar';
+    }
+    if (this.state.scope === 'org') {
+      return this.data.companyName;
+    }
     const team = this.state.scope === 'team';
     const groups = team ? this.data.fixtures.teams : this.data.fixtures.departments;
     const id = this.state.groupId || (team ? this.user.teamId : this.user.departmentId);
@@ -55,33 +63,43 @@ export class Calendar {
       team ? 'team' : 'department',
     ].join(' ');
   }
-  get period() {
+  get period(): string {
     const date = this.state.date;
-    if (this.state.view === 'year') return String(date.getFullYear());
-    if (this.state.view === 'month') return `${monthName(date)} ${date.getFullYear()}`;
-    if (this.state.view === 'day') return shortDate(dateKey(date)) + ' ' + date.getFullYear();
-    const first = weekStart(date),
-      last = addDays(first, 6);
+    if (this.state.view === 'year') {
+      return String(date.getFullYear());
+    }
+    if (this.state.view === 'month') {
+      return `${monthName(date)} ${date.getFullYear()}`;
+    }
+    if (this.state.view === 'day') {
+      return shortDate(dateKey(date)) + ' ' + date.getFullYear();
+    }
+    const first = weekStart(date);
+    const last = addDays(first, 6);
     return `${first.getDate()} ${monthName(first, 'short')} – ${last.getDate()} ${monthName(last, 'short')} ${last.getFullYear()}`;
   }
-  get dates() {
-    if (this.state.view === 'day') return [this.state.date];
-    if (this.state.view === 'week')
+  get dates(): Date[] {
+    if (this.state.view === 'day') {
+      return [this.state.date];
+    }
+    if (this.state.view === 'week') {
       return Array.from({ length: 7 }, (_, i) => addDays(weekStart(this.state.date), i));
-    const year = this.state.date.getFullYear(),
-      month = this.state.view === 'year' ? 0 : this.state.date.getMonth();
+    }
+    const year = this.state.date.getFullYear();
+    const month = this.state.view === 'year' ? 0 : this.state.date.getMonth();
     const end = new Date(year, this.state.view === 'year' ? 12 : month + 1, 0);
     const dates: Date[] = [];
-    for (let date = new Date(year, month, 1); date <= end; date = addDays(date, 1))
+    for (let date = new Date(year, month, 1); date <= end; date = addDays(date, 1)) {
       dates.push(date);
+    }
     return dates;
   }
-  get agendaDates() {
+  get agendaDates(): Date[] {
     return ['day', 'week'].includes(this.state.view)
       ? this.dates
       : this.dates.filter((date) => this.onDate(date).length);
   }
-  get weeks() {
+  get weeks(): Date[][] {
     const first = new Date(this.state.date.getFullYear(), this.state.date.getMonth(), 1);
     const start = weekStart(first);
     const count = Math.ceil(
@@ -89,69 +107,69 @@ export class Calendar {
         new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()) /
         7,
     );
-    return Array.from({ length: count }, (_, week) =>
-      Array.from({ length: 7 }, (_, day) => addDays(start, week * 7 + day)),
+    return Array.from({ length: count }, (_unusedWeek, weekIndex) =>
+      Array.from({ length: 7 }, (_unusedDay, dayIndex) => addDays(start, weekIndex * 7 + dayIndex)),
     );
   }
-  get months() {
-    return Array.from({ length: 12 }, (_, month) => {
-      const first = new Date(this.state.date.getFullYear(), month, 1);
-      const offset = (first.getDay() + 6) % 7,
-        count = new Date(first.getFullYear(), month + 1, 0).getDate();
+  get months(): { index: number; name: string; blanks: number[]; days: Date[]; total: number }[] {
+    return Array.from({ length: 12 }, (_unusedMonth, monthIndex) => {
+      const first = new Date(this.state.date.getFullYear(), monthIndex, 1);
+      const offset = (first.getDay() + 6) % 7;
+      const count = new Date(first.getFullYear(), monthIndex + 1, 0).getDate();
       return {
-        index: month,
+        index: monthIndex,
         name: monthName(first),
-        blanks: Array.from({ length: offset }, (_, i) => i),
+        blanks: Array.from({ length: offset }, (_unusedBlank, blankIndex) => blankIndex),
         days: Array.from(
           { length: count },
-          (_, day) => new Date(first.getFullYear(), month, day + 1),
+          (_unusedDay, dayIndex) => new Date(first.getFullYear(), monthIndex, dayIndex + 1),
         ),
         total: this.entries.filter(
           (entry) =>
             dateFromKey(entry.start).getFullYear() === first.getFullYear() &&
-            dateFromKey(entry.start).getMonth() === month,
+            dateFromKey(entry.start).getMonth() === monthIndex,
         ).length,
       };
     });
   }
-  get plannerDates() {
+  get plannerDates(): Date[] {
     return this.state.view === 'month'
       ? this.dates
       : Array.from({ length: 7 }, (_, i) => addDays(weekStart(this.state.date), i));
   }
 
-  onDate(date: Date) {
+  onDate(date: Date): Entry[] {
     const key = dateKey(date);
     return this.entries.filter((entry) => key >= entry.start && key <= entry.end);
   }
 
-  personName(entry: Entry) {
+  personName(entry: Entry): string {
     return this.data.fixtures.person(entry.person)?.name || 'Colleague';
   }
 
-  label(entry: Entry) {
+  label(entry: Entry): string {
     return this.state.scope === 'self'
       ? `${this.data.typeName(entry.type)} · ${entry.status}`
       : `${this.personName(entry)} · Away`;
   }
 
-  eventClass(entry: Entry) {
+  eventClass(entry: Entry): string {
     return this.state.scope === 'self' ? entry.status?.toLowerCase() || '' : 'away';
   }
 
-  isWeekend(date: Date) {
+  isWeekend(date: Date): boolean {
     return [0, 6].includes(date.getDay());
   }
 
-  dateClick(date: Date, event: Event) {
+  dateClick(date: Date, event: Event): void {
     this.selectedDate.emit({ date, trigger: event.currentTarget as HTMLElement });
   }
 
-  eventClick(entry: Entry, event: Event) {
+  eventClick(entry: Entry, event: Event): void {
     this.selectedEvent.emit({ id: entry.id, trigger: event.currentTarget as HTMLElement });
   }
 
-  miniClass(date: Date) {
+  miniClass(date: Date): '' | 'has-away' | 'has-pending' | 'has-event' {
     const entries = this.onDate(date);
     return !entries.length
       ? ''
@@ -162,7 +180,7 @@ export class Calendar {
           : 'has-event';
   }
 
-  personEntry(person: Person, date: Date) {
+  personEntry(person: Person, date: Date): Entry | undefined {
     return this.onDate(date).find((entry) => entry.person === person.id);
   }
 }

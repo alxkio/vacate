@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular
 import { FormsModule } from '@angular/forms';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { apiId } from '../../core/state/workspace-api.service';
+import { ApiDepartment } from '../../core/http/contracts';
 
 @Component({
   selector: 'vacate-scope-settings',
@@ -75,30 +76,30 @@ export class ScopeSettings implements OnChanges {
   error = '';
   busy = false;
 
-  get nodes() {
+  get nodes(): ApiDepartment[] {
     return this.data.api.settingsAccess?.[this.kind] || [];
   }
 
-  get ownTeam() {
+  get ownTeam(): string {
     return apiId(this.data.currentUser()?.teamId || '');
   }
 
-  ngOnChanges() {
+  ngOnChanges(): void {
     const own =
       this.kind === 'teams' ? this.ownTeam : apiId(this.data.currentUser()?.departmentId || '');
     this.selectedId = this.nodes.find((n) => n.guid === own)?.guid || this.nodes[0]?.guid || '';
     this.reset();
   }
 
-  reset() {
+  reset(): void {
     this.required =
       this.nodes.find((n) => n.guid === this.selectedId)?.requireVacationApproval ?? null;
     this.message = '';
     this.error = '';
   }
 
-  async save() {
-    if (this.busy) return;
+  async save(): Promise<void> {
+    if (this.busy) {return;}
     if (
       this.companyId !== this.data.currentUser()?.companyId ||
       !this.nodes.some((n) => n.guid === this.selectedId)

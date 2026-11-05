@@ -4,7 +4,7 @@ type: story
 summary: Engineer and maintain repository AI context
 status: in-progress
 created: 2026-10-30
-updated: 2026-10-31
+updated: 2026-11-05
 parent: null
 depends_on: []
 ---
@@ -121,3 +121,16 @@ Final Markdown-only validation passed: all seven YAML headers parse; normal Mark
 ## Open questions and follow-up
 
 Current iteration still needs a disposition for the review findings on API-skill validation guidance versus ADR-0003 and the loading routes for the three added skills. These are recorded findings, not completed fixes. Fresh-session routing and automatic skill discovery remain UNVERIFIED; after reloading, check the applicable Markdown profiles for representative backend/frontend paths. No follow-up issue created and no additional product decision is made by this story rewrite.
+
+
+## Frontend guidance correction · 2026-11-05
+
+C6 · 2026-11-05 · Product lead / assistant: use the requested skill-builder profile to correct frontend-engineer guidance before reviewing the frontend again. The skill-builder profile is consulted as Markdown guidance under root source precedence; its generic runtime/metadata claims are not installed or adopted. Revised the frontend profile to separate observed paths from architectural constraints, remove ADR-0003 as frontend layout authority, require status-aware use of the dedicated [frontend ADR](../adr/0005-frontend-capability-architecture.md), and evaluate capability-owned routes/state/models/clients. Existing pending profile and application changes were preserved. Current branch `VAC-21-frontend-agent-guidance` follows the story-key/short-description convention.
+
+D6 · 2026-11-05 · Product lead direction: ADR-0003 is backend targeted and must not constrain the renewed frontend architecture review. A dedicated frontend ADR is needed. The assistant drafts ADR-0005 as PROPOSED under [VAC-37](VAC-37-frontend-architecture-review.md); no architecture acceptance or application refactor is inferred.
+
+W5 · 2026-11-05 · Assistant recorded · Read skill-builder/context/issue guidance, revise the frontend-engineer profile, explicitly reread it for the requested review and validate links/metadata · Duration: Unknown (not measured); human actual: Unknown. Architecture review/draft work is recorded only in VAC-37, not counted twice.
+
+H6 · 2026-11-05 · Assistant · Remains In progress; this bounded profile correction is delivered with static checks, while existing story-wide unresolved findings and product lead review remain open. Backlog summary/type/status/dependencies unchanged.
+
+Verification: profile/root `applyTo` scopes remain aligned; relative references and Markdown formatting checked. The profile was explicitly reread in this session to perform the review; automatic instruction discovery in a fresh session remains UNVERIFIED. Root guidance says to start a new session after instruction changes; this session's explicit reread does not claim to test discovery. No application changes or runtime tests in this iteration.

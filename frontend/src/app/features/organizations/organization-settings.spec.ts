@@ -1,5 +1,5 @@
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { OrganizationSettings } from './organization-settings';
 
@@ -12,7 +12,7 @@ describe('OrganizationSettings administration', async () => {
     });
   });
   afterEach(() => sessionStorage.clear());
-  function setup(id = 'nora') {
+  function setup(id = 'nora'): { data: WorkspaceDataService; fixture: ComponentFixture<OrganizationSettings>; page: OrganizationSettings; } {
     const data = TestBed.inject(WorkspaceDataService);
     data.environment.VacateSession.login(id, id);
     const fixture = TestBed.createComponent(OrganizationSettings);

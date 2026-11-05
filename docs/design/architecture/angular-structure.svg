@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="1260" viewBox="0 0 1560 1260" role="img" aria-labelledby="title desc">
+<title id="title">Angular structure &amp; dependency direction</title><desc id="desc">Accepted target Angular tree with Core, Features and Shared. Arrows show composition depending on feature APIs, pages depending on owned data access and presentation, and data access depending on generic HTTP. PrimeNG is not adopted.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#12675e"/></marker></defs>
+<rect x="0" y="0" width="1560" height="1260" rx="0" fill="#f4f7f7" stroke="#f4f7f7" stroke-width="2"/>
+<text xml:space="preserve" x="48" y="48" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700" fill="#12675e">vacate. / ARCHITECTURE</text>
+<rect x="1230" y="22" width="282" height="38" rx="19" fill="#fff4df" stroke="#e2c894" stroke-width="2"/>
+<text xml:space="preserve" x="1250" y="47" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="700" fill="#805615">ACCEPTED · 05 NOV 2026</text>
+<text xml:space="preserve" x="48" y="105" font-family="Inter,Arial,sans-serif" font-size="38" font-weight="700" fill="#1d3038">Angular structure &amp; dependency direction</text>
+<text xml:space="preserve" x="48" y="145" font-family="Inter,Arial,sans-serif" font-size="21" font-weight="400" fill="#61717b">One standalone application · capability ownership · explicit public APIs · no mandatory NgModules or libraries</text>
+<rect x="48" y="185" width="674" height="959" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="76" y="227" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700" fill="#12675e">TARGET SOURCE TREE</text>
+<text xml:space="preserve" x="76" y="271" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">src/app/</text>
+<text xml:space="preserve" x="76" y="304" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">  app.config.ts</text>
+<text xml:space="preserve" x="76" y="337" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">  app.routes.ts</text>
+<text xml:space="preserve" x="76" y="370" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">  core/</text>
+<text xml:space="preserve" x="76" y="403" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    http/</text>
+<text xml:space="preserve" x="76" y="436" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    session/</text>
+<text xml:space="preserve" x="76" y="469" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">  features/</text>
+<text xml:space="preserve" x="76" y="502" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    workspace/   # layout + outlet</text>
+<text xml:space="preserve" x="76" y="535" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    auth/</text>
+<text xml:space="preserve" x="76" y="568" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    profile/</text>
+<text xml:space="preserve" x="76" y="601" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    organizations/</text>
+<text xml:space="preserve" x="76" y="634" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    people/</text>
+<text xml:space="preserve" x="76" y="667" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    leave/</text>
+<text xml:space="preserve" x="76" y="700" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">      leave.routes.ts</text>
+<text xml:space="preserve" x="76" y="733" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">      requests/</text>
+<text xml:space="preserve" x="76" y="766" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">      balances/</text>
+<text xml:space="preserve" x="76" y="799" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">      approval-settings/</text>
+<text xml:space="preserve" x="76" y="832" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">      data-access/</text>
+<text xml:space="preserve" x="76" y="865" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    calendar/    # projection + UI</text>
+<text xml:space="preserve" x="76" y="898" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    settings/    # composition</text>
+<text xml:space="preserve" x="76" y="931" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">  shared/</text>
+<text xml:space="preserve" x="76" y="964" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    ui/</text>
+<text xml:space="preserve" x="76" y="997" font-family="Menlo,Consolas,monospace" font-size="20" font-weight="400" fill="#1d3038">    date/</text>
+<text xml:space="preserve" x="76" y="1084" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Illustrative target; small features stay flat.</text>
+<text xml:space="preserve" x="76" y="1117" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">No parallel top-level capability folders.</text>
+<text xml:space="preserve" x="766" y="213" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700" fill="#12675e">ARROWS MEAN “DEPENDS ON”</text>
+<rect x="766" y="238" width="746" height="95" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="788" y="275" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">App / Workspace composition</text>
+<text xml:space="preserve" x="788" y="316" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Consumes public route and panel entry points</text>
+<path d="M1139,333 L1139,370" fill="none" stroke="#12675e" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="766" y="373" width="746" height="95" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="788" y="410" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">Capability public API</text>
+<text xml:space="preserve" x="788" y="451" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Only deliberate routes, panels, facades and projections</text>
+<path d="M1139,468 L1139,505" fill="none" stroke="#12675e" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="766" y="508" width="746" height="95" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="788" y="545" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">Owned journey / page</text>
+<text xml:space="preserve" x="788" y="586" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Coordinates state, mutations and presentation</text>
+<path d="M1000,603 L960,643" fill="none" stroke="#12675e" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M1280,603 L1320,643" fill="none" stroke="#12675e" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="766" y="646" width="361" height="135" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="788" y="683" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">Owned data access</text>
+<text xml:space="preserve" x="788" y="724" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Signals/services + RxJS</text>
+<text xml:space="preserve" x="788" y="754" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">DTOs, models, mappings</text>
+<rect x="1151" y="646" width="361" height="135" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="1173" y="683" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">Presentation</text>
+<text xml:space="preserve" x="1173" y="724" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Owned or shared UI</text>
+<text xml:space="preserve" x="1173" y="754" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Inputs / outputs only</text>
+<path d="M946,781 L946,824" fill="none" stroke="#12675e" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M1331,781 L1331,824" fill="none" stroke="#12675e" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="766" y="827" width="361" height="135" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="788" y="864" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">Core infrastructure</text>
+<text xml:space="preserve" x="788" y="905" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Generic HTTP + context</text>
+<text xml:space="preserve" x="788" y="935" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">State reset on actor change</text>
+<rect x="1151" y="827" width="361" height="135" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="1173" y="864" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">UI foundations</text>
+<text xml:space="preserve" x="1173" y="905" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Tokens + existing controls</text>
+<text xml:space="preserve" x="1173" y="935" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">PrimeNG / CDK: evaluate</text>
+<rect x="766" y="994" width="746" height="150" rx="16" fill="#fff4df" stroke="#e2c894" stroke-width="2"/>
+<text xml:space="preserve" x="791" y="1030" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#805615">Core / Shared never import features.</text>
+<text xml:space="preserve" x="791" y="1059" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#805615">Cross-feature dependencies use public APIs; no cycles.</text>
+<text xml:space="preserve" x="791" y="1088" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#805615">Server owns authorization and business rules.</text>
+<text xml:space="preserve" x="791" y="1117" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#805615">Folder moves do not change API contracts.</text>
+<text xml:space="preserve" x="48" y="1193" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Current source still needs the state/routing extraction. The duplicate unused scaffold has already been removed.</text>
+<text xml:space="preserve" x="48" y="1220" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="400" fill="#61717b">Source: ADR-0005 · VAC-37 | Accepted target structure; future capabilities remain candidates.</text>
+</svg>

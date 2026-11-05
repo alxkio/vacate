@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { Location } from '@angular/common';
 import { provideLocationMocks } from '@angular/common/testing';
-import { firstValueFrom, filter } from 'rxjs';
-import { NavigationEnd, Router, provideRouter } from '@angular/router';
+import { filter, firstValueFrom } from 'rxjs';
+import { NavigationEnd, provideRouter, Router } from '@angular/router';
 import { routes } from '../../app.routes';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
@@ -20,7 +20,10 @@ describe('Workspace navigation', () => {
 
   afterEach(() => sessionStorage.clear());
 
-  async function setup(url: string, account = 'nora') {
+  async function setup(
+    url: string,
+    account = 'nora',
+  ): Promise<{ page: Workspace; harness: RouterTestingHarness; element: HTMLElement }> {
     const data = TestBed.inject(WorkspaceDataService);
     data.environment.VacateSession.login(account, account);
     const harness = await RouterTestingHarness.create();
@@ -131,6 +134,38 @@ describe('Workspace navigation', () => {
     expect(element.querySelector('vacate-organization')).toBeNull();
   });
 
+  it('opens request details and selected-date details in the dialog and restores focus on close', async () => {
+    const { page, harness, element } = await setup('/index.html', 'maya');
+    const dialog = element.querySelector<HTMLDialogElement>('#dialog')!;
+    Object.defineProperty(dialog, 'showModal', {
+      configurable: true,
+      value: () => dialog.setAttribute('open', ''),
+    });
+    Object.defineProperty(dialog, 'close', {
+      configurable: true,
+      value: () => {
+        dialog.removeAttribute('open');
+        dialog.dispatchEvent(new Event('close'));
+      },
+    });
+    const trigger = element.querySelector<HTMLButtonElement>('.upcoming-event')!;
+
+    trigger.click();
+    harness.detectChanges();
+    expect(dialog.open).toBe(true);
+    expect(dialog.textContent).toContain('YOUR REQUEST');
+    expect(dialog.textContent).toContain('Autumn leave');
+
+    page.workspaceDialog.showDate(new Date(2026, 9, 26), trigger);
+    harness.detectChanges();
+    expect(page.selectedDate).toEqual(new Date(2026, 9, 26));
+    expect(dialog.textContent).toContain('26 October 2026');
+    expect(dialog.textContent).toContain('Annual leave · Pending');
+
+    page.workspaceDialog.close();
+    expect(document.activeElement).toBe(trigger);
+  });
+
   it.each(['applications', 'foreign-team'])(
     'retains the calendar period and authorized group through My Leave, balances and history (%s)',
     async (group) => {
@@ -141,7 +176,7 @@ describe('Workspace navigation', () => {
       const router = TestBed.inject(Router);
       router.setUpLocationChangeListener();
       const location = TestBed.inject(Location);
-      const assertPeriod = (expectedPage: string) => {
+      const assertPeriod = (expectedPage: string): void => {
         expect(page.state.page).toBe(expectedPage);
         expect(page.period).toBe('2 Nov – 8 Nov 2026');
         expect(page.state.scope).toBe('team');
@@ -149,7 +184,7 @@ describe('Workspace navigation', () => {
         expect(page.visiblePeople.length).toBe(group === 'applications' ? 3 : 0);
         expect(new URLSearchParams(router.url.split('?')[1]).get('date')).toBe('2026-11-05');
       };
-      const traverse = async (direction: 'back' | 'forward') => {
+      const traverse = async (direction: 'back' | 'forward'): Promise<void> => {
         const finished = firstValueFrom(
           router.events.pipe(filter((event) => event instanceof NavigationEnd)),
         );

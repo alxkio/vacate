@@ -2,6 +2,8 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { apiId } from '../../core/state/workspace-api.service';
+import { MemberRecord } from '../../core/http/contracts';
+import { OrganizationRecord } from '../../core/models/workspace.models';
 
 @Component({
   selector: 'vacate-admin-balances',
@@ -25,7 +27,7 @@ import { apiId } from '../../core/state/workspace-api.service';
             </select></label
           >
           <label
-            >Employee<input type="search" [(ngModel)]="search" placeholder="Search by name"
+            >Employee<input type="search" placeholder="Search by name" [(ngModel)]="search"
           /></label>
           <label
             >Sort by<select [(ngModel)]="sort">
@@ -117,18 +119,18 @@ export class AdminBalances {
   sort = 'remaining';
   threshold = 75;
 
-  get organization() {
+  get organization(): OrganizationRecord | null {
     const actor = this.data.currentUser();
     return actor?.capability === 'admin' ? this.data.organization.read(actor.companyId) : null;
   }
 
-  get validThreshold() {
+  get validThreshold(): number {
     return this.threshold === null || !Number.isFinite(this.threshold)
       ? 75
       : Math.min(100, Math.max(0, this.threshold));
   }
 
-  isHigh(balance: { allocation: number | null; available: number | null }) {
+  isHigh(balance: { allocation: number | null; available: number | null }): boolean {
     return (
       balance.allocation !== null &&
       balance.allocation > 0 &&
@@ -137,13 +139,13 @@ export class AdminBalances {
     );
   }
 
-  teamName(id: string | null) {
+  teamName(id: string | null): string {
     return this.organization?.teams.find((team) => apiId(team.id) === id)?.name || 'No team';
   }
 
-  get rows() {
+  get rows(): MemberRecord[] {
     const actor = this.data.currentUser();
-    if (!this.organization || !actor) return [];
+    if (!this.organization || !actor) {return [];}
     return this.data.api.members
       .filter(
         (member) =>

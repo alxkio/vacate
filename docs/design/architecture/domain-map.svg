@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="1220" viewBox="0 0 1560 1220" role="img" aria-labelledby="title desc">
+<title id="title">Domain &amp; subdomain map</title><desc id="desc">Candidate Vacate domain map: leave, people, organization and personal account capabilities; composition surfaces and future time-related candidates are separate. Leave transactions and future products are not implemented.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#12675e"/></marker></defs>
+<rect x="0" y="0" width="1560" height="1220" rx="0" fill="#f4f7f7" stroke="#f4f7f7" stroke-width="2"/>
+<text xml:space="preserve" x="48" y="48" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700" fill="#12675e">vacate. / ARCHITECTURE</text>
+<rect x="1230" y="22" width="282" height="38" rx="19" fill="#fff4df" stroke="#e2c894" stroke-width="2"/>
+<text xml:space="preserve" x="1250" y="47" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="700" fill="#805615">ACCEPTED · 05 NOV 2026</text>
+<text xml:space="preserve" x="48" y="105" font-family="Inter,Arial,sans-serif" font-size="38" font-weight="700" fill="#1d3038">Domain &amp; subdomain map</text>
+<text xml:space="preserve" x="48" y="145" font-family="Inter,Arial,sans-serif" font-size="21" font-weight="400" fill="#61717b">Problem space → candidate software ownership. Screens and API resources do not define bounded contexts.</text>
+<rect x="48" y="185" width="1464" height="82" rx="16" fill="#12675e" stroke="#12675e" stroke-width="2"/>
+<text xml:space="preserve" x="76" y="220" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="700" fill="white">VACATE / Workforce coordination</text>
+<text xml:space="preserve" x="76" y="249" font-family="Inter,Arial,sans-serif" font-size="19" font-weight="400" fill="#d8eee8">Candidate business domain framing · exact bounded contexts remain subject to workflow evidence</text>
+<text xml:space="preserve" x="48" y="310" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700" fill="#12675e">01  CAPABILITIES WITH EXISTING IMPLEMENTATIONS</text>
+<rect x="48" y="332" width="354" height="285" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="70" y="369" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">Leave</text>
+<text xml:space="preserve" x="70" y="410" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Requests &amp; history previews</text>
+<text xml:space="preserve" x="70" y="440" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Balances &amp; eligibility views</text>
+<text xml:space="preserve" x="70" y="470" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Approval configuration</text>
+<text xml:space="preserve" x="70" y="500" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Transactions / decisions:</text>
+<text xml:space="preserve" x="70" y="530" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">not implemented</text>
+<rect x="418" y="332" width="354" height="285" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="440" y="369" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">People</text>
+<text xml:space="preserve" x="440" y="410" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Organization directory</text>
+<text xml:space="preserve" x="440" y="440" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Membership administration</text>
+<text xml:space="preserve" x="440" y="470" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Owns membership editing</text>
+<text xml:space="preserve" x="440" y="500" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Target: extract editor</text>
+<text xml:space="preserve" x="440" y="530" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">from Organizations</text>
+<rect x="788" y="332" width="354" height="285" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="810" y="369" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">Organization</text>
+<text xml:space="preserve" x="810" y="410" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Organization configuration</text>
+<text xml:space="preserve" x="810" y="440" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Departments &amp; teams</text>
+<text xml:space="preserve" x="810" y="470" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Structure administration</text>
+<text xml:space="preserve" x="810" y="500" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Leave-specific settings</text>
+<text xml:space="preserve" x="810" y="530" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">remain owned by Leave</text>
+<rect x="1158" y="332" width="354" height="285" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="1180" y="369" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#12675e">Personal account</text>
+<text xml:space="preserve" x="1180" y="410" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Own profile</text>
+<text xml:space="preserve" x="1180" y="440" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Display preferences</text>
+<text xml:space="preserve" x="1180" y="470" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Target owner: profile/</text>
+<text xml:space="preserve" x="1180" y="500" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Session lifecycle belongs</text>
+<text xml:space="preserve" x="1180" y="530" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">to technical Core</text>
+<text xml:space="preserve" x="48" y="666" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700" fill="#12675e">02  COMPOSITION SURFACES · NOT UNIVERSAL BUSINESS OWNERS</text>
+<rect x="48" y="687" width="1464" height="115" rx="16" fill="#e8f4ef" stroke="#b7d8ca" stroke-width="2"/>
+<text xml:space="preserve" x="74" y="728" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700" fill="#12675e">Calendar / availability</text>
+<text xml:space="preserve" x="74" y="767" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#1d3038">Composes permitted projections</text>
+<text xml:space="preserve" x="620" y="728" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700" fill="#12675e">Settings</text>
+<text xml:space="preserve" x="620" y="767" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#1d3038">Composes owner-provided panels</text>
+<text xml:space="preserve" x="1120" y="728" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700" fill="#12675e">Workspace</text>
+<text xml:space="preserve" x="1120" y="767" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#1d3038">Shell &amp; navigation</text>
+<text xml:space="preserve" x="48" y="854" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700" fill="#805615">03  FUTURE CANDIDATES · NOT APPROVED IMPLEMENTATION</text>
+<rect x="48" y="877" width="475" height="199" rx="16" fill="#fffaf0" stroke="#d4b77e" stroke-width="2" stroke-dasharray="8 6"/>
+<text xml:space="preserve" x="70" y="914" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#805615">Time tracking / time sheets</text>
+<text xml:space="preserve" x="70" y="955" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Recorded work and period workflows</text>
+<text xml:space="preserve" x="70" y="985" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Units, correction and approval</text>
+<text xml:space="preserve" x="70" y="1015" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">semantics still need agreement</text>
+<rect x="542" y="877" width="475" height="199" rx="16" fill="#fffaf0" stroke="#d4b77e" stroke-width="2" stroke-dasharray="8 6"/>
+<text xml:space="preserve" x="564" y="914" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#805615">Attendance / presence</text>
+<text xml:space="preserve" x="564" y="955" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Meaning remains OPEN QUESTION:</text>
+<text xml:space="preserve" x="564" y="985" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">planned presence or actual records?</text>
+<text xml:space="preserve" x="564" y="1015" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">No leave ≠ proof of presence</text>
+<rect x="1036" y="877" width="476" height="199" rx="16" fill="#fffaf0" stroke="#d4b77e" stroke-width="2" stroke-dasharray="8 6"/>
+<text xml:space="preserve" x="1058" y="914" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="#805615">Work locations</text>
+<text xml:space="preserve" x="1058" y="955" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Planned or recorded location</text>
+<text xml:space="preserve" x="1058" y="985" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Office / remote / other</text>
+<text xml:space="preserve" x="1058" y="1015" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="400" fill="#61717b">Workflow and scope still open</text>
+<text xml:space="preserve" x="48" y="1127" font-family="Inter,Arial,sans-serif" font-size="21" font-weight="400" fill="#1d3038">Auth UI + Core session/HTTP support every capability. Business authorization stays on the server.</text>
+<text xml:space="preserve" x="48" y="1180" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="400" fill="#61717b">Source: ADR-0005 · VAC-37 | Accepted target structure; future capabilities remain candidates.</text>
+</svg>

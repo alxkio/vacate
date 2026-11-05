@@ -19,7 +19,7 @@ export class Login implements OnDestroy {
     document.title = 'Sign in · Vacate demo';
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     document.body.classList.remove('login-page');
   }
 
@@ -28,18 +28,18 @@ export class Login implements OnDestroy {
     username: HTMLInputElement,
     password: HTMLInputElement,
     description: HTMLElement,
-  ) {
+  ): void {
     const persona = this.personas.find((option) => option.id === id);
     const person = this.data.fixtures.person(id);
-    if (!persona || !person) return;
+    if (!persona || !person) {return;}
     username.value = password.value = person.username;
     description.textContent = `${persona.label} · ${person.team} · ${person.username}`;
     this.error = '';
   }
 
-  async submit(event: Event, username: HTMLInputElement, password: HTMLInputElement) {
+  async submit(event: Event, username: HTMLInputElement, password: HTMLInputElement): Promise<void> {
     event.preventDefault();
-    if (this.busy) return;
+    if (this.busy) {return;}
     this.busy = true;
     try {
       if (await this.data.environment.VacateSession.login(username.value.trim(), password.value)) {

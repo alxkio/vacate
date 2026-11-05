@@ -10,7 +10,7 @@ import { RouterOutlet } from '@angular/router';
 export class App {
   // Re-run route/session guards when Chrome restores any route from BFCache.
   @HostListener('window:pageshow', ['$event'])
-  restore(event: PageTransitionEvent) {
-    if (event.persisted) location.reload();
+  restore(event: PageTransitionEvent): void {
+    if (event.persisted) {location.reload();}
   }
 }

@@ -60,7 +60,7 @@ describe('Test persona chooser', () => {
         [],
       );
       if (capability === 'lead')
-        expect(data.fixtures.allowedScopes(data.fixtures.person(id)!)).toContain('department');
+        {expect(data.fixtures.allowedScopes(data.fixtures.person(id)!)).toContain('department');}
     },
   );
 });

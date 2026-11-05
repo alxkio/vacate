@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { BalanceBar } from './allowance';
+import { BalanceBar } from './balance-bar';
 import {
   REFERENCE_TODAY,
   shortDate,
   WorkspaceDataService,
 } from '../../core/state/workspace-data.service';
+import { Entry, LeaveType } from '../../core/models/workspace.models';
 
 @Component({
   selector: 'vacate-my-leave',
@@ -74,18 +75,18 @@ export class MyLeave {
   readonly year = REFERENCE_TODAY.getFullYear();
   readonly shortDate = shortDate;
 
-  get approvalRequired() {
+  get approvalRequired(): boolean {
     return this.data.api.settingsAccess?.effectiveVacationApproval === true;
   }
 
-  get entries() {
+  get entries(): Entry[] {
     return [...this.data.fixtures.ownEntries(this.data.currentUser()!)].sort(
       (a, b) =>
         b.start.localeCompare(a.start) || b.end.localeCompare(a.end) || a.id.localeCompare(b.id),
     );
   }
 
-  get usedTypes() {
+  get usedTypes(): LeaveType[] {
     const ids = new Set(
       this.entries
         .filter(

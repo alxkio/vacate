@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="1150" viewBox="0 0 1560 1150" role="img" aria-labelledby="title desc">
+<title id="title">Angular architecture matrix</title><desc id="desc">Accepted target matrix of Leave, People, Organization and Profile capabilities with journey, presentation, data access and utility responsibilities. Composition uses public APIs, Core and Shared do not depend on features.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#12675e"/></marker></defs>
+<rect x="0" y="0" width="1560" height="1150" rx="0" fill="#f4f7f7" stroke="#f4f7f7" stroke-width="2"/>
+<text xml:space="preserve" x="48" y="48" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700" fill="#12675e">vacate. / ARCHITECTURE</text>
+<rect x="1230" y="22" width="282" height="38" rx="19" fill="#fff4df" stroke="#e2c894" stroke-width="2"/>
+<text xml:space="preserve" x="1250" y="47" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="700" fill="#805615">ACCEPTED · 05 NOV 2026</text>
+<text xml:space="preserve" x="48" y="105" font-family="Inter,Arial,sans-serif" font-size="38" font-weight="700" fill="#1d3038">Angular architecture matrix</text>
+<text xml:space="preserve" x="48" y="145" font-family="Inter,Arial,sans-serif" font-size="21" font-weight="400" fill="#61717b">Each capability owns its journeys, presentation and data. Shared code stays deliberately small.</text>
+<rect x="48" y="183" width="1464" height="80" rx="16" fill="#e8f4ef" stroke="#b7d8ca" stroke-width="2"/>
+<text xml:space="preserve" x="73" y="218" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700" fill="#12675e">APP COMPOSITION</text>
+<text xml:space="preserve" x="73" y="246" font-family="Inter,Arial,sans-serif" font-size="21" font-weight="400" fill="#1d3038">app.routes.ts + Workspace outlet · Settings panels · Calendar projections · deliberate public APIs</text>
+<rect x="278" y="296" width="294" height="63" rx="16" fill="#12675e" stroke="#12675e" stroke-width="2"/>
+<text xml:space="preserve" x="298" y="337" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="white">Leave</text>
+<rect x="588" y="296" width="294" height="63" rx="16" fill="#12675e" stroke="#12675e" stroke-width="2"/>
+<text xml:space="preserve" x="608" y="337" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="white">People</text>
+<rect x="898" y="296" width="294" height="63" rx="16" fill="#12675e" stroke="#12675e" stroke-width="2"/>
+<text xml:space="preserve" x="918" y="337" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="white">Organization</text>
+<rect x="1208" y="296" width="294" height="63" rx="16" fill="#12675e" stroke="#12675e" stroke-width="2"/>
+<text xml:space="preserve" x="1228" y="337" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700" fill="white">Profile</text>
+<text xml:space="preserve" x="48" y="415" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#12675e">JOURNEYS</text>
+<text xml:space="preserve" x="48" y="447" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="400" fill="#61717b">Pages</text>
+<text xml:space="preserve" x="48" y="472" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="400" fill="#61717b">orchestration</text>
+<rect x="278" y="379" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="295" y="416" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Request previews</text>
+<text xml:space="preserve" x="295" y="445" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Balance overview</text>
+<text xml:space="preserve" x="295" y="474" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Leave settings</text>
+<rect x="588" y="379" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="605" y="416" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Directory</text>
+<text xml:space="preserve" x="605" y="445" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Membership editor</text>
+<text xml:space="preserve" x="605" y="474" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Scoped interactions</text>
+<rect x="898" y="379" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="915" y="416" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Organization settings</text>
+<text xml:space="preserve" x="915" y="445" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Department / team edits</text>
+<text xml:space="preserve" x="915" y="474" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Structure browsing</text>
+<rect x="1208" y="379" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="1225" y="416" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Own profile editing</text>
+<text xml:space="preserve" x="1225" y="445" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Display preferences</text>
+<text xml:space="preserve" x="1225" y="474" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Save / cancel flow</text>
+<text xml:space="preserve" x="48" y="565" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#12675e">PRESENTATION</text>
+<text xml:space="preserve" x="48" y="597" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="400" fill="#61717b">Owned UI</text>
+<rect x="278" y="529" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="295" y="566" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Balance displays</text>
+<text xml:space="preserve" x="295" y="595" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Request fields</text>
+<text xml:space="preserve" x="295" y="624" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">No HTTP / store access</text>
+<rect x="588" y="529" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="605" y="566" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Directory rows</text>
+<text xml:space="preserve" x="605" y="595" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Membership fields</text>
+<text xml:space="preserve" x="605" y="624" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Inputs / outputs</text>
+<rect x="898" y="529" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="915" y="566" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Structure views</text>
+<text xml:space="preserve" x="915" y="595" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Configuration fields</text>
+<text xml:space="preserve" x="915" y="624" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Inputs / outputs</text>
+<rect x="1208" y="529" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="1225" y="566" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Profile fields</text>
+<text xml:space="preserve" x="1225" y="595" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Preference controls</text>
+<text xml:space="preserve" x="1225" y="624" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Inputs / outputs</text>
+<text xml:space="preserve" x="48" y="715" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#12675e">DATA ACCESS</text>
+<text xml:space="preserve" x="48" y="747" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="400" fill="#61717b">State</text>
+<text xml:space="preserve" x="48" y="772" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="400" fill="#61717b">models</text>
+<text xml:space="preserve" x="48" y="797" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="400" fill="#61717b">mapping</text>
+<rect x="278" y="679" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="295" y="716" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Facade + read models</text>
+<text xml:space="preserve" x="295" y="745" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Explicit reference adapter</text>
+<text xml:space="preserve" x="295" y="774" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Future commands separate</text>
+<rect x="588" y="679" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="605" y="716" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Membership queries</text>
+<text xml:space="preserve" x="605" y="745" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Directory projections</text>
+<text xml:space="preserve" x="605" y="774" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">DTO → view mappings</text>
+<rect x="898" y="679" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="915" y="716" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Structure queries</text>
+<text xml:space="preserve" x="915" y="745" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Scoped mutations</text>
+<text xml:space="preserve" x="915" y="774" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">DTO → view mappings</text>
+<rect x="1208" y="679" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="1225" y="716" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Profile query / mutation</text>
+<text xml:space="preserve" x="1225" y="745" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Preference persistence</text>
+<text xml:space="preserve" x="1225" y="774" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Actor-scoped state</text>
+<text xml:space="preserve" x="48" y="865" font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700" fill="#12675e">UTILITIES</text>
+<text xml:space="preserve" x="48" y="897" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="400" fill="#61717b">Only where needed</text>
+<rect x="278" y="829" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="295" y="866" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Leave-specific formatting</text>
+<text xml:space="preserve" x="295" y="895" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">No universal time model</text>
+<rect x="588" y="829" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="605" y="866" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Owned helpers</text>
+<text xml:space="preserve" x="605" y="895" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">No feature-screen imports</text>
+<rect x="898" y="829" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="915" y="866" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Owned helpers</text>
+<text xml:space="preserve" x="915" y="895" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">No feature-screen imports</text>
+<rect x="1208" y="829" width="294" height="132" rx="16" fill="white" stroke="#dce4e6" stroke-width="2"/>
+<text xml:space="preserve" x="1225" y="866" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">Owned helpers</text>
+<text xml:space="preserve" x="1225" y="895" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="400" fill="#61717b">No feature-screen imports</text>
+<rect x="48" y="996" width="1464" height="77" rx="16" fill="#e8edf5" stroke="#c7d2e5" stroke-width="2"/>
+<text xml:space="preserve" x="73" y="1028" font-family="Inter,Arial,sans-serif" font-size="21" font-weight="700" fill="#315bb9">CORE: session/context + generic HTTP</text>
+<text xml:space="preserve" x="790" y="1028" font-family="Inter,Arial,sans-serif" font-size="21" font-weight="700" fill="#315bb9">SHARED: reusable UI + date utilities</text>
+<text xml:space="preserve" x="73" y="1057" font-family="Inter,Arial,sans-serif" font-size="19" font-weight="400" fill="#1d3038">Features consume these foundations. Neither foundation imports features. PrimeNG/CDK are evaluation candidates.</text>
+<text xml:space="preserve" x="48" y="1110" font-family="Inter,Arial,sans-serif" font-size="17" font-weight="400" fill="#61717b">Source: ADR-0005 · VAC-37 | Accepted target structure; future capabilities remain candidates.</text>
+</svg>

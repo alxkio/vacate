@@ -1,5 +1,5 @@
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { ProfileSettings } from './profile-settings';
 
@@ -16,7 +16,7 @@ describe('Own profile settings', async () => {
     sessionStorage.clear();
     localStorage.clear();
   });
-  function setup(id = 'maya') {
+  function setup(id = 'maya'): { data: WorkspaceDataService; fixture: ComponentFixture<ProfileSettings>; page: ProfileSettings; } {
     const data = TestBed.inject(WorkspaceDataService);
     data.environment.VacateSession.login(id, id);
     const fixture = TestBed.createComponent(ProfileSettings);
