@@ -183,10 +183,14 @@
               }
             </span>
           </div>
+          @if (leave.error()) {
+            <p role="alert">{{ leave.error() }}</p>
+          }
           <div id="calendar-content">
             <vacate-calendar
               [user]="user"
               [state]="state"
+              [projectedEntries]="view.visibleEntries"
               (selectedDate)="workspaceDialog.showDate($event.date, $event.trigger)"
               (selectedEvent)="workspaceDialog.showEvent($event.id, $event.trigger)"
               (selectedMonth)="chooseMonth($event)"
@@ -323,7 +327,7 @@
       </section>
     }
     @if (state.page === 'leave') {
-      <vacate-my-leave />
+      <vacate-my-leave [savedRequests]="leave.requests" [savedError]="leave.error()" />
     }
     @if (state.page === 'balances') {
       <vacate-balances

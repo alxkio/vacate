@@ -4,7 +4,7 @@ type: story
 summary: Renew annual entitlements and process configured carryover
 status: specification
 created: 2026-11-01
-updated: 2026-11-01
+updated: 2026-11-05
 parent: null
 depends_on: [VAC-31]
 ---
@@ -21,7 +21,7 @@ Future follow-up coordinated from [VAC-22](VAC-22-relational-database-schema.md)
 
 ## Scope
 
-Future January renewal/carryover processing using yearly entitlement and accounting records. Proposed GR end-March next-year cutoff is configurable within reviewed policy. Preserve history, avoid duplicate grants/transfers and explicitly migrate legacy CarryoverYears semantics; no automatic forfeiture/payroll/legal consequence is inferred.
+Future January renewal/carryover processing using yearly entitlement and accounting records. Founder confirmed on 2026-11-05 that the GR annual-leave carryover use deadline is 31 March of the following year, inclusive, displayed read-only in organization settings and not editable through UI/API. This supersedes the earlier configurable-GR-cutoff proposal. Cross-year requests are allowed; consume eligible previous-year leftovers first, then the leave date year's allowance, retaining per-year attribution and no negative balances. Preserve history, avoid duplicate grants/transfers and explicitly migrate legacy CarryoverYears semantics; no automatic forfeiture/payroll/legal consequence is inferred.
 
 Future work remains Specification. Resolve the open questions and verify prerequisite outputs before marking ready or implementing.
 
@@ -37,6 +37,10 @@ VAC-22 supplies rationale and accepted-decision links. Completion of this future
 - [ ] Current-year versus previous-year amounts and concrete cutoff/provenance remain distinguishable; carryover is not counted twice.
 - [ ] Accepted consumption order, cutoff timezone, configuration changes and cancellation-after-cutoff behavior are specified and verified before processing.
 - [ ] Legacy carryover years/unlimited setting migration is explicit; tenant-isolated API/UI projections explain periods and errors. Post-cutoff handling follows reviewed policy, not silent deletion.
+
+- [ ] Given eligible previous-year annual carryover and a January–March request, consume that carryover before the leave date year's allowance; split charges across entitlement years without double-counting.
+- [ ] Given leave on 31 March versus 1 April, apply the inclusive previous-year use deadline by leave date; preserve unspent history without automatic forfeiture/payment. Confirm business timezone before runtime.
+- [ ] Given a Greek administrator, show the deadline read-only; reject attempted deadline overrides at the API boundary and explicitly migrate superseded CarryoverYears/disable/unlimited controls. No tenant setting may contradict the selected GR deadline silently.
 
 ## Subtasks and responsibilities
 
@@ -59,11 +63,14 @@ Accepted canonical sources override issue notes. No unreviewed statutory default
 
 - D-1 · 2026-11-01 · Founder request: Split current work and future scope into separate tracked items. Existing product decisions remain in linked canonical documents; no open choice is silently resolved.
 
+- D-2 · 2026-11-05 · Founder: GR annual carryover through 31 March inclusive, read-only organization policy display; cross-year requests allowed and eligible previous-year annual leftovers consumed first. Supersedes the configurable deadline proposal only. [Product direction](../product/product-charter.md#founder-decisions--submission-boundaries-and-yearly-charges--2026-11-05), [official-source check](../compliance/policy-sources.md#annual-leave-deadline-check--2026-11-05). No automatic entitlement deletion/payroll/legal guarantee.
+
 ## Work log
 
 | Entry | Date | Actor / category | Activity | Duration | Basis and evidence |
 |---|---|---|---|---|---|
 | W-1 | 2026-11-01 | Codex / shared work reference | Create split issue and metadata | Not separately recorded | Shared split activity is recorded once in VAC-22 W-19; do not add duplicate time here. |
+| W-2 | 2026-11-05 | Codex / shared work reference | Align carryover direction with request-form decisions | Not separately recorded | Shared unmeasured specification activity recorded once in VAC-31 W-7. |
 
 Human actual: Unknown. Assistant duration: Unknown; shared work referenced only. Automation elapsed: not recorded. No estimate recorded. No implementation time recorded.
 
@@ -71,10 +78,12 @@ Human actual: Unknown. Assistant duration: Unknown; shared work referenced only.
 
 - H-1 · 2026-11-01 · Codex: Created as specification; future decisions/prerequisites remain open; no implementation started.
 
+- H-2 · 2026-11-05 · Codex: Remains Specification; deadline editability and consumption order resolved, with timezone/correction/cancellation/migration questions retained.
+
 ## Verification and release
 
 Documentation metadata, links, parent/dependency graph and backlog consistency are checked during the split. Acceptance scenarios are pending; no runtime test, migration, provisioning, external messaging, commit, push or deployment is claimed.
 
 ## Open questions and follow-up
 
-Policy-constrained override rights, carryover cap/order/expiry consequences, deadline timezone, rehires, cancellations and legacy config migration. VAC-20's saved configuration alone does not authorize this processing.
+GR deadline is fixed/read-only and eligible previous-year-first consumption is selected. Deadline business timezone, retroactive charge allocation, post-cutoff consequences, rehires, cancellations and legacy config migration remain open. VAC-20's saved configuration alone does not authorize this processing.

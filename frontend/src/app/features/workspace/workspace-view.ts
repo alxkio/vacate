@@ -9,6 +9,7 @@ import {
   weekStart,
   WorkspaceDataService,
 } from '../../core/state/workspace-data.service';
+import { composeOwnCalendar } from '../leave/data-access/calendar-projection';
 import { workspacePageTitle, workspaceSubtitle } from './workspace-page-copy';
 
 type WorkspaceViewContext = {
@@ -47,7 +48,19 @@ export class WorkspaceView {
     if (this.state.scope === 'self') {
       return this.visiblePeople.length ? this.context.entries() : [];
     }
-    return this.data.fixtures.availabilityFor(this.user, this.state.scope, this.state.groupId);
+    const references = this.data.fixtures.availabilityFor(
+      this.user,
+      this.state.scope,
+      this.state.groupId,
+    );
+    const canShowSelf = this.visiblePeople.some((person) => person.id === this.user.id);
+    const saved = canShowSelf
+      ? this.context.entries().filter((entry) => entry.id.startsWith('saved:'))
+      : [];
+    return composeOwnCalendar(
+      references.filter((entry) => entry.person === this.user.id),
+      saved.map(({ id, person, companyId, start, end }) => ({ id, person, companyId, start, end })),
+    ).concat(references.filter((entry) => entry.person !== this.user.id));
   }
 
   get groups(): { name: string; id: string; companyId: string; departmentId?: string }[] {

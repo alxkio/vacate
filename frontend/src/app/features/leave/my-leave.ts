@@ -1,5 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { BalanceBar } from './balance-bar';
+import { SavedRequest } from './data-access/leave-requests';
 import {
   REFERENCE_TODAY,
   shortDate,
@@ -42,7 +43,30 @@ import { Entry, LeaveType } from '../../core/models/workspace.models';
     </section>
     <section class="navigation-card" aria-labelledby="my-leave-requests">
       <h2 id="my-leave-requests">My requests</h2>
-      <p>Your fictional request history. Requests are not saved or sent.</p>
+      <h3>Saved requests</h3>
+      @if (savedError) {
+        <p role="alert">{{ savedError }}</p>
+      }
+      <ul class="dialog-list" id="saved-leave-requests">
+        @for (request of savedRequests; track request.guid) {
+          <li [attr.data-saved-request]="request.guid">
+            <strong>{{ data.typeName(request.leaveTypeId) }}</strong>
+            @for (day of request.dates; track day.date) {
+              <small
+                >{{ day.date }} · {{ day.status === 'Pending' ? 'Pending approval' : day.status }} ·
+                Entitlement {{ day.entitlementYear }}</small
+              >
+            }
+          </li>
+        } @empty {
+          <li>No saved requests.</li>
+        }
+      </ul>
+      <h3>Fictional reference history</h3>
+      <p>
+        The reference examples below are separate from saved requests and are not submitted or
+        charged.
+      </p>
       <ul class="dialog-list">
         @for (entry of entries; track entry.id) {
           <li [attr.data-request-start]="entry.start" [attr.data-request-id]="entry.id">
@@ -71,6 +95,8 @@ import { Entry, LeaveType } from '../../core/models/workspace.models';
   `,
 })
 export class MyLeave {
+  @Input() savedRequests: SavedRequest[] = [];
+  @Input() savedError = '';
   readonly data = inject(WorkspaceDataService);
   readonly year = REFERENCE_TODAY.getFullYear();
   readonly shortDate = shortDate;

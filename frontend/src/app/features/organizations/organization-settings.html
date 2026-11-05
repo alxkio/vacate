@@ -23,9 +23,7 @@
           <span aria-hidden="true">/</span><span aria-current="page">{{ selected.name }}</span>
         }
       </nav>
-      <div class="org-notice">
-        Fictional demo · Changes are stored by the demo API and reset when the API restarts.
-      </div>
+      <div class="org-notice">Fictional development data · Changes are saved through the API.</div>
       @if (!department && !team && data.api.organizationSettings) {
         <form
           #policyForm="ngForm"
@@ -72,6 +70,7 @@
             <select
               name="carryoverEnabled"
               id="carryover-enabled"
+              [disabled]="org.settings?.countryCode === 'GR'"
               [(ngModel)]="settingsDraft.carryoverEnabled"
             >
               <option [ngValue]="false">Disabled</option>
@@ -82,6 +81,7 @@
             >Carryover years (0 = unlimited)
             <input
               id="carryover-years"
+              [disabled]="org.settings?.countryCode === 'GR'"
               name="carryoverYears"
               type="number"
               min="0"
@@ -91,7 +91,12 @@
             />
           </label>
           <p class="org-hint">
-            Carryover is saved configuration only; it does not change days or balances.
+            @if (org.settings?.countryCode === 'GR') {
+              Previous-year annual leave can be used through 31 March of the following year. This
+              policy is read-only; the legacy carryover controls do not override it.
+            } @else {
+              Carryover is saved configuration only; it does not change days or balances.
+            }
           </p>
           <div class="org-actions">
             <button class="primary" [disabled]="policyForm.invalid || busy">
@@ -181,6 +186,37 @@
                 required
                 [(ngModel)]="draft.name"
             /></label>
+            <label
+              >Organization timezone<input
+                id="organization-timezone"
+                name="timeZone"
+                required
+                [(ngModel)]="draft.timeZone"
+                placeholder="UTC"
+            /></label>
+            <p class="org-hint">
+              Use a timezone identifier such as UTC or Europe/Athens. This determines whether a
+              requested date is in the past; display dates remain unchanged.
+            </p>
+            <label
+              >Country code<input
+                id="organization-country-code"
+                name="countryCode"
+                maxlength="2"
+                pattern="[A-Za-z]{2}"
+                [(ngModel)]="draft.countryCode"
+                placeholder="For example GR"
+            /></label>
+            <p class="org-hint">
+              Public holidays use this country when calendar data is available. Otherwise only the
+              working schedule is used.
+            </p>
+            @if (org.settings?.countryCode === 'GR') {
+              <p id="greek-carryover-policy" class="org-policy-note">
+                Previous-year annual leave can be used through 31 March of the following year. This
+                policy deadline is read-only.
+              </p>
+            }
             <fieldset>
               <legend>Working days per week</legend>
               <div class="org-week-options">
@@ -191,7 +227,7 @@
                     name="workWeekDays"
                     [value]="5"
                     [(ngModel)]="draft.workWeekDays"
-                  /><span><strong>5 days</strong><small>Five-day working week</small></span></label
+                  /><span><strong>5 days</strong><small>Monday–Friday</small></span></label
                 >
                 <label
                   ><input
@@ -200,13 +236,13 @@
                     name="workWeekDays"
                     [value]="6"
                     [(ngModel)]="draft.workWeekDays"
-                  /><span><strong>6 days</strong><small>Six-day working week</small></span></label
+                  /><span><strong>6 days</strong><small>Monday–Saturday</small></span></label
                 >
               </div>
             </fieldset>
             <p class="org-policy-note">
-              This changes the organization’s demo setting. Leave allowances and calculations still
-              use the five-day reference examples.
+              Saved requests use this working schedule. Reference allowance examples remain
+              separately labelled.
             </p>
             <div class="org-actions">
               <button type="submit" class="primary" [disabled]="companyForm.invalid || busy">

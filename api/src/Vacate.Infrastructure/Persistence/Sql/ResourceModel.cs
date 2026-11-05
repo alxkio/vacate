@@ -40,6 +40,8 @@ internal static class ResourceModel
         var organizations = Entity<OrganizationRow>(model, "Organizations");
         organizations.Property(x => x.Name).HasMaxLength(200);
         organizations.Property(x => x.IsDemo).HasDefaultValue(false);
+        organizations.Property(x => x.TimeZone).HasMaxLength(100).HasDefaultValue("UTC");
+        organizations.Property(x => x.CountryCode).HasMaxLength(2);
         organizations.ToTable(t =>
         {
             t.HasCheckConstraint("CK_Organizations_Settings", "[WorkWeekDays] IN (5, 6) AND [CarryoverYears] >= 0 AND LEN([Name]) > 0");
@@ -128,6 +130,7 @@ internal static class ResourceModel
         leaves.Property(x => x.EntryKind).HasMaxLength(24).UseCollation("Latin1_General_100_BIN2");
         leaves.Property(x => x.Status).HasMaxLength(16).UseCollation("Latin1_General_100_BIN2");
         leaves.Property(x => x.Source).HasMaxLength(200);
+        leaves.Property(x => x.LeaveTypeId).HasMaxLength(80).HasDefaultValue("annual");
         leaves.Property(x => x.QuantityDays).HasPrecision(12, 4);
         leaves.Property(x => x.RowVersion).IsRowVersion();
         leaves.HasIndex(x => new { x.CompanyId, x.MembershipId, x.Status });
@@ -137,6 +140,44 @@ internal static class ResourceModel
             .HasPrincipalKey(x => new { x.CompanyId, x.Id }).OnDelete(DeleteBehavior.NoAction);
         leaves.HasOne<MembershipEntitlementRow>().WithMany().HasForeignKey(x => new { x.CompanyId, x.MembershipId })
             .HasPrincipalKey(x => new { x.CompanyId, x.MembershipId }).OnDelete(DeleteBehavior.NoAction);
+
+        var requests = model.Entity<LeaveRequestRow>();
+        requests.ToTable("LeaveRequests");
+        requests.HasKey(x => x.Id);
+        requests.Property(x => x.Id).UseIdentityColumn();
+        requests.HasIndex(x => x.Guid).IsUnique();
+        requests.HasAlternateKey(x => new { x.CompanyId, x.MembershipId, x.Id });
+        requests.HasIndex(x => new { x.CompanyId, x.MembershipId, x.IdempotencyKey }).IsUnique();
+        requests.Property(x => x.Fingerprint).HasMaxLength(64);
+        requests.Property(x => x.LeaveTypeId).HasMaxLength(80);
+        requests.HasOne<MembershipRow>().WithMany().HasForeignKey(x => new { x.CompanyId, x.MembershipId })
+            .HasPrincipalKey(x => new { x.CompanyId, x.Id }).OnDelete(DeleteBehavior.NoAction);
+        leaves.HasOne(x => x.Request).WithMany().HasForeignKey(x => new { x.CompanyId, x.MembershipId, x.RequestId })
+            .HasPrincipalKey(x => new { x.CompanyId, x.MembershipId, x.Id }).OnDelete(DeleteBehavior.NoAction);
+        leaves.HasIndex(x => new { x.CompanyId, x.MembershipId, x.StartDate }).IsUnique()
+            .HasFilter("[RequestId] IS NOT NULL AND [Status] IN (N'Used', N'Pending')");
+        leaves.ToTable(t => t.HasCheckConstraint("CK_Leaves_RequestDate", "[RequestId] IS NULL OR ([EntryKind] = N'RecordedLeave' AND [StartDate] = [EndDate] AND [QuantityDays] = 1 AND [EntitlementYear] BETWEEN 1 AND 9999)"));
+
+        var history = model.Entity<LeaveEntitlementRow>();
+        history.ToTable("LeaveEntitlementPeriods", t => t.HasCheckConstraint("CK_LeaveEntitlementPeriods_Allocation", "[Allocation] >= 0 AND [Year] BETWEEN 1 AND 9999"));
+        history.HasKey(x => new { x.CompanyId, x.MembershipId, x.LeaveTypeId, x.Year });
+        history.Property(x => x.LeaveTypeId).HasMaxLength(80);
+        history.Property(x => x.Allocation).HasPrecision(12, 4);
+        history.HasOne<MembershipRow>().WithMany().HasForeignKey(x => new { x.CompanyId, x.MembershipId })
+            .HasPrincipalKey(x => new { x.CompanyId, x.Id }).OnDelete(DeleteBehavior.NoAction);
+
+        var receipts = model.Entity<CoveredSubmissionRow>();
+        receipts.ToTable("CoveredLeaveSubmissions");
+        receipts.HasKey(x => new { x.CompanyId, x.MembershipId, x.IdempotencyKey });
+        receipts.Property(x => x.Fingerprint).HasMaxLength(64);
+        receipts.HasOne<MembershipRow>().WithMany().HasForeignKey(x => new { x.CompanyId, x.MembershipId })
+            .HasPrincipalKey(x => new { x.CompanyId, x.Id }).OnDelete(DeleteBehavior.NoAction);
+
+        var holidays = model.Entity<PublicHolidayRow>();
+        holidays.ToTable("PublicHolidays");
+        holidays.HasKey(x => new { x.CountryCode, x.Date });
+        holidays.Property(x => x.CountryCode).HasMaxLength(2);
+        holidays.Property(x => x.Name).HasMaxLength(300);
 
         var access = model.Entity<DevelopmentAccessRow>();
         access.ToTable("DevelopmentProvisioningAccess");

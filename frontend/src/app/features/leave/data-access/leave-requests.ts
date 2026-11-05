@@ -1,0 +1,139 @@
+import { inject, Injectable, signal } from '@angular/core';
+import { Entry } from '../../../core/models/workspace.models';
+import { apiId } from '../../../core/state/workspace-api.service';
+import { WorkspaceDataService } from '../../../core/state/workspace-data.service';
+
+export type LeaveDraft = {
+  leaveTypeId: string;
+  unit: 'days' | 'hours';
+  mode: 'duration' | 'range';
+  startDate: string;
+  endDate?: string;
+  duration?: number;
+};
+export type LeavePreview = {
+  startDate: string;
+  endDate: string;
+  workingDates: string[];
+  excludedDates: { date: string; reason: string }[];
+  coveredDates: string[];
+  newDates: string[];
+  amount: number;
+  balances: {
+    leaveTypeId: string;
+    year: number;
+    allocation: number;
+    used: number;
+    pending: number;
+    available: number;
+    requested: number;
+    projected: number;
+  }[];
+  warnings: string[];
+  errors: string[];
+  canSubmit: boolean;
+  fingerprint?: string;
+};
+export type SavedRequest = {
+  guid: string;
+  leaveTypeId: string;
+  createdAt: string;
+  dates: { date: string; status: 'Approved' | 'Pending'; entitlementYear: number }[];
+};
+export type SubmitResult = {
+  outcome: 'created' | 'already-covered';
+  request: SavedRequest | null;
+  preview: LeavePreview;
+};
+
+@Injectable({ providedIn: 'root' })
+export class LeaveRequests {
+  private readonly data = inject(WorkspaceDataService);
+  private readonly records = signal<{
+    owner: string;
+    entries: Entry[];
+    requests: SavedRequest[];
+  } | null>(null);
+  readonly error = signal('');
+
+  get entries(): Entry[] {
+    return this.records()?.owner === this.owner ? this.records()!.entries : [];
+  }
+
+  get requests(): SavedRequest[] {
+    return this.records()?.owner === this.owner ? this.records()!.requests : [];
+  }
+
+  private get owner(): string {
+    const actor = this.data.currentUser();
+    return actor ? `${actor.companyId}:${actor.id}:${this.data.api?.sessionGeneration ?? 0}` : '';
+  }
+
+  private request<T>(method: string, resource: string, body?: unknown): Promise<T> {
+    const actor = this.data.currentUser();
+    if (!actor || !this.data.api.authenticatedRequest) {
+      return Promise.reject(Error('The leave API is unavailable. Your draft has not been saved.'));
+    }
+    return this.data.api.authenticatedRequest<T>(
+      actor.id,
+      method,
+      `organizations/${apiId(actor.companyId)}/leave/${resource}`,
+      body,
+    );
+  }
+
+  preview(draft: LeaveDraft): Promise<LeavePreview> {
+    return this.request('POST', 'preview', draft);
+  }
+
+  submit(
+    draft: LeaveDraft,
+    idempotencyKey: string,
+    previewFingerprint?: string,
+  ): Promise<SubmitResult> {
+    return this.request('POST', 'requests', { ...draft, idempotencyKey, previewFingerprint });
+  }
+
+  async refresh(): Promise<void> {
+    const owner = this.owner;
+    const actor = this.data.currentUser();
+    if (!actor || !this.data.api.authenticatedRequest) {
+      return;
+    }
+    try {
+      const [requests, dates] = await Promise.all([
+        this.request<SavedRequest[]>('GET', 'requests'),
+        this.request<{ requestGuid: string; leaveTypeId: string; date: string; status: string }[]>(
+          'GET',
+          'calendar',
+        ),
+      ]);
+      if (owner !== this.owner) {
+        return;
+      }
+      this.records.set({
+        owner,
+        requests,
+        entries: dates.map((date) => ({
+          id: `saved:${date.requestGuid}:${date.date}`,
+          person: actor.id,
+          companyId: actor.companyId,
+          start: date.date,
+          end: date.date,
+          type: date.leaveTypeId,
+          title: this.data.typeName(date.leaveTypeId),
+          status: date.status,
+          amount: 1,
+          unit: 'working days',
+        })),
+      });
+      this.error.set('');
+    } catch {
+      if (owner === this.owner) {
+        this.error.set(
+          'Saved leave could not be refreshed. Try again before relying on this calendar.',
+        );
+      }
+    }
+  }
+}

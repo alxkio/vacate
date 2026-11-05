@@ -3,6 +3,7 @@ export function createOrganization(environment) {
   const fixtures = environment.VacateFixtures;
   let name = fixtures.company.name;
   let workWeekDays = 5;
+  let settings = { timeZone: 'UTC', countryCode: null };
   const departmentNames = new Map(),
     teamNames = new Map();
   function person() {
@@ -49,6 +50,7 @@ export function createOrganization(environment) {
       companyId,
       name,
       workWeekDays,
+      settings: { ...settings },
       departments: fixtures.departments
         .filter((item) => item.companyId === companyId)
         .map((item) => ({ id: item.id, name: groupName('department', item.id) })),
@@ -76,7 +78,9 @@ export function createOrganization(environment) {
       !patch ||
       typeof patch !== 'object' ||
       Array.isArray(patch) ||
-      Object.keys(patch).some((key) => !['name', 'workWeekDays'].includes(key))
+      Object.keys(patch).some(
+        (key) => !['name', 'workWeekDays', 'timeZone', 'countryCode'].includes(key),
+      )
     )
       return { ok: false, error: 'Only company name and working days can be changed here.' };
     const candidate = { ...{ name, workWeekDays }, ...patch };
@@ -84,6 +88,25 @@ export function createOrganization(environment) {
       return { ok: false, error: 'Enter an organization name.' };
     if (![5, 6].includes(candidate.workWeekDays))
       return { ok: false, error: 'Choose five or six working days.' };
+    if (candidate.timeZone !== undefined) {
+      try {
+        new Intl.DateTimeFormat('en', { timeZone: candidate.timeZone });
+      } catch {
+        return { ok: false, error: 'Choose a valid timezone.' };
+      }
+    }
+    if (
+      candidate.countryCode !== undefined &&
+      candidate.countryCode !== null &&
+      !/^[A-Z]{2}$/.test(candidate.countryCode)
+    ) {
+      return { ok: false, error: 'Choose a two-letter country code.' };
+    }
+    settings = {
+      ...settings,
+      ...(candidate.timeZone !== undefined ? { timeZone: candidate.timeZone } : {}),
+      ...(candidate.countryCode !== undefined ? { countryCode: candidate.countryCode } : {}),
+    };
     name = candidate.name.trim();
     workWeekDays = candidate.workWeekDays;
     return { ok: true };
@@ -103,6 +126,7 @@ export function createOrganization(environment) {
   function clear() {
     name = fixtures.company.name;
     workWeekDays = 5;
+    settings = { timeZone: 'UTC', countryCode: null };
     departmentNames.clear();
     teamNames.clear();
   }

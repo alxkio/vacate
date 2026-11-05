@@ -61,3 +61,28 @@ The frontend chooser advertises Maya (Employee), Leah (Team lead), Ella (Departm
 ## SQL resource compatibility boundary · 2026-11-02
 
 The Stage A migration preserves current profile/membership/organization payloads, GUID addressing, private projection allowlists, authorization and lifecycle semantics. No Angular resource-call/view change is required. SQL relationship/uniqueness/rowversion conflicts use the existing409 error contract; malformed or unrepresentable quantities fail atomically. SQL storage supports up to eight fractional places for priorService and four for snapshot quantities; values that cannot be represented exactly are rejected rather than rounded. Current calendar/policy references remain null/unconfigured; no statutory evaluation, annual entitlement-history migration or carryover processing is added. App SQL mode and fictional import require explicit configuration/operator execution; no persistence or credential fallback runs silently.
+
+## Leave request creation · VAC-31
+
+Implementation scope: own-member whole-day preview/submission/history only, plus organization `timeZone` (default `UTC`) and nullable `countryCode`. The organization timezone determines the server's current calendar date for past-date classification; it does not change frontend date display or date-only values. Department/team/organization approval precedence is unchanged. Future-date approval decisions, cancellation permissions, automatic policy grants and client timezone conversion are deferred.
+
+Own-member routes (the organization GUID must be the authenticated actor's active company; no employee/membership target can be supplied):
+
+| Method | Path | Result |
+|---|---|---|
+| POST | `/organizations/{organizationId}/leave/preview` | Authoritative date/charge/balance preview, warnings and validation errors |
+| POST | `/organizations/{organizationId}/leave/requests` | Create only uncovered working dates, or acknowledge already-covered selection; idempotency key required |
+| GET | `/organizations/{organizationId}/leave/requests` | Own saved request history with actual UTC creation timestamp and included date states |
+| GET | `/organizations/{organizationId}/leave/calendar` | Own saved per-date projection; no new colleague leave-detail access |
+
+Preview input contains `leaveTypeId`, `unit` (`days` or unsupported `hours`), `mode` (`duration` or `range`), `startDate` (ISO date-only), and either positive integer `duration` or inclusive `endDate`. Submission also supplies an `idempotencyKey` UUID and may send the preceding preview's `fingerprint` as `previewFingerprint`. A changed authoritative preview returns 409 so the client refreshes it for review/reconfirmation. Unsupported/server-owned identity/state/charge fields are rejected. No client-calculated amount is authoritative.
+
+The preview reports included working dates, excluded dates/reasons, already-covered dates, newly chargeable dates, per-type/year balances, warnings/errors and whether submission is allowed. Only the selected type's finite configured period balances may fund leave. Missing type/year allocation is a configuration error, never zero/unlimited or an automatically synthesized statutory grant. Existing current-period annual inputs do not become grants for every year.
+
+Working dates use Monday–Friday or Monday–Saturday according to organization workweek; applicable stored country public holidays are excluded. Missing holiday coverage falls back to the working schedule/weekends with an explanatory warning. Excluded dates are not persisted as leave occurrences. Duration derives an end date by counting working dates inclusively; overlaps do not extend the range to replace dates.
+
+Past dates (strictly before today in the organization's configured timezone) warn and bypass approval. Today/future dates follow the effective approval setting. Pending dates remain distinct from remaining balance and do not consume it while approval is required. Every new charged date uses eligible previous-year annual leftovers first through 31 March inclusive for Greece, then its leave-year allowance; no borrowing from later years. Reject a negative result for any applicable period. Existing used/pending totals remain derived; membership allowance is not decremented.
+
+Pending/approved existing leave covers a date regardless of selected type; cancelled/rejected leave does not. Warn, preserve original type/status, and create only uncovered dates. Fully covered selections return an already-covered acknowledgement without new request/occurrence/charge rows; zero working-date selections are invalid. Retries and concurrent submissions cannot double-charge a day. Idempotency keys are scoped to actor/company and may not be reused for a different payload. Revoke access/tenant mismatch is checked before reads, previews, mutations or replay responses.
+
+Organization settings retain the existing admin/delegation authorization boundaries. `countryCode` is optional ISO country configuration (unknown does not default every organization to Greece); `timeZone` is a validated timezone identifier, default UTC, with existing records backfilled. For GR, the annual carryover use deadline is read-only policy information; attempts to override it are rejected rather than changing the policy. The setting does not authorize automatic entitlement expiry/payroll settlement. Organization modifications retain server-owned UTC lifecycle timestamps.

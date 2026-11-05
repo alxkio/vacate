@@ -22,6 +22,7 @@ export class Calendar {
   readonly data = inject(WorkspaceDataService);
   @Input({ required: true }) user!: Person;
   @Input({ required: true }) state!: CalendarState;
+  @Input() projectedEntries: Entry[] | null = null;
   @Output() selectedDate = new EventEmitter<{ date: Date; trigger: HTMLElement }>();
   @Output() selectedEvent = new EventEmitter<{ id: string; trigger: HTMLElement }>();
   @Output() selectedMonth = new EventEmitter<number>();
@@ -38,6 +39,9 @@ export class Calendar {
   get entries(): Entry[] {
     if (this.state.denied || !this.people.length) {
       return [];
+    }
+    if (this.projectedEntries) {
+      return this.projectedEntries;
     }
     return this.state.scope === 'self'
       ? this.data.fixtures.ownEntries(this.user)

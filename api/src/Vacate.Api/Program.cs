@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Vacate.Application.Common;
 using Vacate.Application.Identity;
+using Vacate.Application.Leave;
 using Vacate.Application.Memberships;
 using Vacate.Application.Organizations;
 using Vacate.Application.Users;
@@ -18,6 +19,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<MembershipService>();
 builder.Services.AddScoped<OrganizationService>();
 builder.Services.AddScoped<AuthenticationService>();
+builder.Services.AddScoped<LeaveService>();
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
 // Worker logs use the Functions host pipeline and its host.json filters.

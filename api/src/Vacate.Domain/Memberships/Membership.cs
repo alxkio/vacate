@@ -117,6 +117,12 @@ public sealed class Membership : AggregateRoot
         return membership;
     }
 
+    public void AddLeaveConsumption(decimal used, decimal pending)
+    {
+        Balance = new(Balance.PeriodStart, Balance.PeriodEnd, Balance.AsOf, Balance.PolicyVersion,
+            Balance.PolicyMinimum, Balance.CustomAllocation, Balance.Used + used, Balance.Pending + pending);
+    }
+
     public void Update(MembershipConfiguration configuration, decimal? customAllocation, DateTimeOffset now)
     {
         configuration.Validate();

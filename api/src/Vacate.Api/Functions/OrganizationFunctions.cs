@@ -40,10 +40,10 @@ public sealed class OrganizationFunctions(
     public Task<IActionResult> Update([HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "organizations/{companyId}")] HttpRequest request, string companyId) =>
         WithActor(request, (body, actor) =>
         {
-            Allow(body, "name", "workWeekDays", "requireVacationApproval", "departmentLeadSettingsEnabled", "teamLeadSettingsEnabled", "carryoverEnabled", "carryoverYears");
+            Allow(body, "name", "workWeekDays", "requireVacationApproval", "departmentLeadSettingsEnabled", "teamLeadSettingsEnabled", "carryoverEnabled", "carryoverYears", "timeZone", "countryCode");
             return Ok(organizations.Update(actor, new UpdateOrganization(Id(companyId), Field<string>(body, "name"), Field<int>(body, "workWeekDays"),
                 Field<bool>(body, "requireVacationApproval"), Field<bool>(body, "departmentLeadSettingsEnabled"), Field<bool>(body, "teamLeadSettingsEnabled"),
-                Field<bool>(body, "carryoverEnabled"), Field<int>(body, "carryoverYears"))));
+                Field<bool>(body, "carryoverEnabled"), Field<int>(body, "carryoverYears"), Field<string>(body, "timeZone"), Field<string?>(body, "countryCode"))));
         });
 
     [Function("DeleteOrganization")]

@@ -6,6 +6,7 @@ using Vacate.Infrastructure.Persistence;
 using Vacate.Infrastructure.Identity;
 using Vacate.Infrastructure.Persistence.Sql;
 using Vacate.Application.Abstractions;
+using Vacate.Application.Leave;
 
 namespace Vacate.Infrastructure;
 
@@ -16,6 +17,7 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton(provider => new InMemoryDatabase(bool.TryParse(provider.GetRequiredService<IConfiguration>()["SeedData:Enabled"], out var seed) && seed));
         services.AddSingleton<IUnitOfWork, InMemoryUnitOfWork>();
+        services.AddSingleton<ILeaveRepository, InMemoryLeaves>();
         services.AddSingleton<IUserRepository, UserRepository>();
         services.AddSingleton<IMembershipRepository, MembershipRepository>();
         services.AddSingleton<IOrganizationRepository, OrganizationRepository>();
@@ -59,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<ICredentialValidator, DevelopmentCredentials>();
         services.AddDbContext<VacateDbContext>(options => options.UseSqlServer(connection));
         services.AddScoped<SqlSession>();
+        services.AddScoped<ILeaveRepository, SqlLeaves>();
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<SqlSession>());
         services.AddScoped<IUserRepository, SqlUsers>();
         services.AddScoped<IMembershipRepository, SqlMemberships>();

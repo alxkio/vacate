@@ -120,9 +120,7 @@
           "name": "Check API liveness",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/health",
             "description": "Check API liveness.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -210,9 +208,7 @@
           "name": "Get the current session profile",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/auth/sessions/current",
             "description": "Get the current session profile.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -254,9 +250,7 @@
           "name": "List users visible to the current account",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/users",
             "description": "List users visible to the current account.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -350,9 +344,7 @@
           "name": "Get an own profile or an authorized colleague projection",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/users/{{userId}}",
             "description": "Get an own profile or an authorized colleague projection.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -547,9 +539,7 @@
           "name": "List organizations visible to the current account",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations",
             "description": "List organizations visible to the current account.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -643,9 +633,7 @@
           "name": "Get an organization",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}",
             "description": "Get an organization.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -784,9 +772,7 @@
           "name": "List the authorized organization directory",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/directory",
             "description": "List the authorized organization directory.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -823,9 +809,7 @@
           "name": "List organization role references",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/roles",
             "description": "List organization role references.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -862,9 +846,7 @@
           "name": "Get the current member's organization summary",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/summary",
             "description": "Get the current member's organization summary.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -906,9 +888,7 @@
           "name": "List organization memberships",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/memberships",
             "description": "List organization memberships.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -945,9 +925,7 @@
           "name": "Get a membership",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/memberships/{{memberUserId}}",
             "description": "Get a membership.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -1142,9 +1120,7 @@
           "name": "List organization teams",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/teams",
             "description": "List organization teams.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -1238,9 +1214,7 @@
           "name": "Get a team",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/teams/{{teamId}}",
             "description": "Get a team.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -1384,9 +1358,7 @@
           "name": "List organization departments",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/departments",
             "description": "List organization departments.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -1480,9 +1452,7 @@
           "name": "Get a department",
           "request": {
             "method": "GET",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/departments/{{departmentId}}",
             "description": "Get a department.\n\nExpected success status: 200. Review generated IDs and permissions before sending.",
             "auth": {
@@ -1626,9 +1596,7 @@
           "name": "Soft-delete an empty organization",
           "request": {
             "method": "DELETE",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{createdOrganizationId}}",
             "description": "Soft-delete an empty organization.\n\nExpected success status: 204. Review generated IDs and permissions before sending.\n\nDestructive: this can soft-delete the selected resource. Collection variables target a newly created example where possible; inspect the URL before sending.",
             "auth": {
@@ -1663,9 +1631,7 @@
           "name": "Soft-delete an unreferenced department",
           "request": {
             "method": "DELETE",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/departments/{{newDepartmentId}}",
             "description": "Soft-delete an unreferenced department.\n\nExpected success status: 204. Review generated IDs and permissions before sending.\n\nDestructive: this can soft-delete the selected resource. Collection variables target a newly created example where possible; inspect the URL before sending.",
             "auth": {
@@ -1700,9 +1666,7 @@
           "name": "Soft-delete a membership",
           "request": {
             "method": "DELETE",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/memberships/{{newUserId}}",
             "description": "Soft-delete a membership.\n\nExpected success status: 204. Review generated IDs and permissions before sending.\n\nDestructive: this can soft-delete the selected resource. Collection variables target a newly created example where possible; inspect the URL before sending.",
             "auth": {
@@ -1737,9 +1701,7 @@
           "name": "Soft-delete an unreferenced team",
           "request": {
             "method": "DELETE",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/organizations/{{organizationId}}/teams/{{newTeamId}}",
             "description": "Soft-delete an unreferenced team.\n\nExpected success status: 204. Review generated IDs and permissions before sending.\n\nDestructive: this can soft-delete the selected resource. Collection variables target a newly created example where possible; inspect the URL before sending.",
             "auth": {
@@ -1774,9 +1736,7 @@
           "name": "Soft-delete an account",
           "request": {
             "method": "DELETE",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/users/{{newUserId}}",
             "description": "Soft-delete an account.\n\nExpected success status: 204. Review generated IDs and permissions before sending.\n\nDestructive: this can soft-delete the selected resource. Collection variables target a newly created example where possible; inspect the URL before sending.",
             "auth": {
@@ -1816,9 +1776,7 @@
           "name": "Revoke the current session",
           "request": {
             "method": "DELETE",
-            "header": [
-
-            ],
+            "header": [],
             "url": "{{baseUrl}}/auth/sessions/current",
             "description": "Revoke the current session.\n\nExpected success status: 204. Review generated IDs and permissions before sending.",
             "auth": {
@@ -1851,6 +1809,75 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Leave requests",
+      "item": [
+        {
+          "name": "Preview own leave",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/leave/preview",
+            "description": "Own-member VAC-31 operation. Finite configured type/year balance required. Submission mutates only selected uncovered working dates; inspect the target before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"leaveTypeId\": \"annual\",\n  \"unit\": \"days\",\n  \"mode\": \"duration\",\n  \"startDate\": \"2026-12-07\",\n  \"duration\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Submit own leave",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/leave/requests",
+            "description": "Own-member VAC-31 operation. Finite configured type/year balance required. Submission mutates only selected uncovered working dates; inspect the target before sending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"leaveTypeId\": \"annual\",\n  \"unit\": \"days\",\n  \"mode\": \"duration\",\n  \"startDate\": \"2026-12-07\",\n  \"duration\": 1,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Own leave history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/leave/requests",
+            "description": "Own-member VAC-31 operation. Finite configured type/year balance required. Submission mutates only selected uncovered working dates; inspect the target before sending."
+          }
+        },
+        {
+          "name": "Own leave calendar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/organizations/{{organizationId}}/leave/calendar",
+            "description": "Own-member VAC-31 operation. Finite configured type/year balance required. Submission mutates only selected uncovered working dates; inspect the target before sending."
+          }
         }
       ]
     }

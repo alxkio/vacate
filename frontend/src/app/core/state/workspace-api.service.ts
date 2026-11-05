@@ -20,6 +20,7 @@ import { UserApiService } from '../http/user-api.service';
 import { MembershipApiService } from '../http/membership-api.service';
 import { OrganizationApiService } from '../http/organization-api.service';
 import { SessionApiService } from '../http/session-api.service';
+import { ApiClient } from '../http/api-client';
 
 const aliases = new Map<string, string>(
   [
@@ -42,12 +43,18 @@ export const apiId = (id: string): string =>
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceApiService {
+  private readonly client = inject(ApiClient);
   private readonly users = inject(UserApiService);
   private readonly memberships = inject(MembershipApiService);
   private readonly organizations = inject(OrganizationApiService);
   private readonly sessions = inject(SessionApiService);
   private token = sessionStorage.getItem('vacate.session.token') || '';
   private initialized = false;
+  private generation = 0;
+
+  get sessionGeneration(): number {
+    return this.generation;
+  }
   private actor: Person | null = null;
   private profile: OwnProfile | null = null;
   private org: OrganizationRecord | null = null;
@@ -104,6 +111,7 @@ export class WorkspaceApiService {
   }
 
   private clear(): void {
+    this.generation++;
     this.token = '';
     this.actor = null;
     this.profile = null;
@@ -113,6 +121,23 @@ export class WorkspaceApiService {
     this.roles = { systemRoles: [], jobRoles: [], workSchedules: [] };
     sessionStorage.removeItem('vacate.session.token');
     sessionStorage.removeItem('vacate.demo.account.v2');
+  }
+
+  async authenticatedRequest<T>(
+    actorId: string,
+    method: string,
+    path: string,
+    body?: unknown,
+  ): Promise<T> {
+    const token = this.token;
+    if (!this.currentUser() || this.actor?.id !== actorId) {
+      throw Error('Your account changed. Reopen the page.');
+    }
+    const result = await firstValueFrom(this.client.request<T>(method, path, token, body));
+    if (token !== this.token || this.currentUser()?.id !== actorId) {
+      throw Error('Your account changed. Reopen the page.');
+    }
+    return result;
   }
 
   async directory(): Promise<DirectoryUser[]> {

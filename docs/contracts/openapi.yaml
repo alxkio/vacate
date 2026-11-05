@@ -16,6 +16,7 @@ tags:
   - name: Memberships
   - name: Teams
   - name: Departments
+  - name: Leave
 paths:
   /health:
     get:
@@ -857,6 +858,107 @@ paths:
           $ref: '#/components/responses/PayloadTooLarge'
         '415':
           $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/leave/preview:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    post:
+      operationId: previewLeaveRequest
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: previewLeaveRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveDraft'
+      responses:
+        '200':
+          description: Authorized own-member result; preview may contain domain validation errors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeavePreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/leave/requests:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: listOwnLeaveRequests
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: listOwnLeaveRequests
+      responses:
+        '200':
+          description: Authorized own-member result; preview may contain domain validation errors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequestList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    post:
+      operationId: submitLeaveRequest
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: submitLeaveRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveSubmission'
+      responses:
+        '200':
+          description: Authorized own-member result; preview may contain domain validation errors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveSubmissionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/leave/calendar:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: listOwnLeaveCalendar
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: listOwnLeaveCalendar
+      responses:
+        '200':
+          description: Authorized own-member result; preview may contain domain validation errors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveCalendarList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 components:
   securitySchemes:
     bearerAuth:
@@ -1136,6 +1238,14 @@ components:
       properties:
         name:
           type: string
+        timeZone:
+          type: string
+          default: UTC
+          description: Organization timezone for server today/past decisions; display conversion is unchanged.
+        countryCode:
+          type: string
+          nullable: true
+          pattern: '^[A-Z]{2}$'
         workWeekDays:
           type: integer
           enum: [5, 6]
@@ -1195,3 +1305,151 @@ components:
           type: boolean
           nullable: true
           description: Null inherits; team overrides department, then organization. Delegated leads may change only this field.
+
+    LeaveDraft:
+      type: object
+      additionalProperties: false
+      required: [leaveTypeId, unit, mode, startDate]
+      properties:
+        leaveTypeId:
+          type: string
+        unit:
+          type: string
+          enum: [days, hours]
+          description: Hours are rejected for submission in this release.
+        mode:
+          type: string
+          enum: [duration, range]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+          nullable: true
+        duration:
+          type: integer
+          minimum: 1
+          nullable: true
+    LeaveSubmission:
+      type: object
+      additionalProperties: false
+      required: [leaveTypeId, unit, mode, startDate, idempotencyKey]
+      properties:
+        leaveTypeId:
+          type: string
+        unit:
+          type: string
+          enum: [days, hours]
+        mode:
+          type: string
+          enum: [duration, range]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+          nullable: true
+        duration:
+          type: integer
+          minimum: 1
+          nullable: true
+        previewFingerprint:
+          type: string
+          description: Previous preview digest; stale values return 409 for reconfirmation.
+        idempotencyKey:
+          type: string
+          format: uuid
+    LeavePreview:
+      type: object
+      required: [workingDates, excludedDates, coveredDates, newDates, amount, balances, warnings, errors, canSubmit, fingerprint]
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        workingDates:
+          type: array
+          items: {type: string, format: date}
+        excludedDates:
+          type: array
+          items:
+            type: object
+            required: [date, reason]
+            properties:
+              date: {type: string, format: date}
+              reason: {type: string}
+        coveredDates:
+          type: array
+          items: {type: string, format: date}
+        newDates:
+          type: array
+          items: {type: string, format: date}
+        amount: {type: integer, minimum: 0}
+        balances:
+          type: array
+          items:
+            type: object
+            required: [leaveTypeId, year, allocation, used, pending, available, requested, projected]
+            properties:
+              leaveTypeId: {type: string}
+              year: {type: integer}
+              allocation: {type: number}
+              used: {type: number}
+              pending: {type: number}
+              available: {type: number}
+              requested: {type: number}
+              projected: {type: number}
+        warnings:
+          type: array
+          items: {type: string}
+        errors:
+          type: array
+          items: {type: string}
+        canSubmit: {type: boolean}
+        fingerprint: {type: string}
+    LeaveRequest:
+      type: object
+      required: [guid, leaveTypeId, createdAt, dates]
+      properties:
+        guid: {type: string, format: uuid}
+        leaveTypeId: {type: string}
+        createdAt: {type: string, format: date-time}
+        dates:
+          type: array
+          items:
+            type: object
+            required: [date, status, entitlementYear]
+            properties:
+              date: {type: string, format: date}
+              status: {type: string, enum: [Approved, Pending]}
+              entitlementYear: {type: integer}
+    LeaveRequestList:
+      type: array
+      items:
+        $ref: '#/components/schemas/LeaveRequest'
+    LeaveSubmissionResult:
+      type: object
+      required: [outcome, request, preview]
+      properties:
+        outcome: {type: string, enum: [created, already-covered]}
+        request:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/LeaveRequest'
+        preview:
+          $ref: '#/components/schemas/LeavePreview'
+
+    LeaveCalendarList:
+      type: array
+      items:
+        type: object
+        required: [requestGuid, leaveTypeId, date, status]
+        properties:
+          requestGuid: {type: string, format: uuid}
+          leaveTypeId: {type: string}
+          date: {type: string, format: date}
+          status: {type: string, enum: [Approved, Pending]}

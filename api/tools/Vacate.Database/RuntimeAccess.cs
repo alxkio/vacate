@@ -33,9 +33,14 @@ internal static partial class RuntimeAccess
             Execute(context, $"GRANT SELECT, INSERT, UPDATE ON OBJECT::[dbo].[{table}] TO [vacate_resource_runtime]");
         }
 
-        foreach (var table in new[] { "SystemRoles", "WorkSchedules", "Leaves" })
+        foreach (var table in new[] { "SystemRoles", "WorkSchedules", "LeaveEntitlementPeriods", "PublicHolidays" })
         {
             Execute(context, $"GRANT SELECT ON OBJECT::[dbo].[{table}] TO [vacate_resource_runtime]");
+        }
+
+        foreach (var table in new[] { "Leaves", "LeaveRequests", "CoveredLeaveSubmissions" })
+        {
+            Execute(context, $"GRANT SELECT, INSERT ON OBJECT::[dbo].[{table}] TO [vacate_resource_runtime]");
         }
 
         foreach (var sequence in new[] { "UserIds", "MembershipIds", "OrganizationIds", "DepartmentIds", "TeamIds", "JobRoleIds" })
@@ -62,14 +67,14 @@ internal static partial class RuntimeAccess
         {
             if (!reader.Read() || reader.GetInt32(0) != 0 || reader.GetInt32(1) != 0 || reader.GetInt32(2) != 1
                 || reader.GetInt32(3) != 0 || reader.GetInt32(4) != 0 || reader.GetInt32(5) != 1
-                || reader.GetInt32(6) != 0 || reader.GetInt32(7) != 0 || reader.GetInt32(8) != 0)
+                || reader.GetInt32(6) != 1 || reader.GetInt32(7) != 0 || reader.GetInt32(8) != 0)
             {
                 throw new InvalidOperationException("Runtime permission boundary failed; grants rolled back.");
             }
         }
 
         transaction.Commit();
-        Console.WriteLine("Resolved Entra principal granted resource DML/sequence access; db_owner, DDL, DELETE and migration writes and Leaves INSERT/UPDATE/DELETE denied.");
+        Console.WriteLine("Resolved Entra principal granted resource DML/sequence access; db_owner, DDL, DELETE and migration writes and Leaves UPDATE/DELETE denied; request/leave inserts permitted.");
     }
 
     private static void Execute(VacateDbContext context, string sql)

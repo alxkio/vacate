@@ -35,6 +35,8 @@ internal sealed class OrganizationRow : EntityRow
 {
     public string Name { get; set; } = "";
     public bool IsDemo { get; set; }
+    public string TimeZone { get; set; } = "UTC";
+    public string? CountryCode { get; set; }
     public int WorkWeekDays { get; set; }
     public bool RequireVacationApproval { get; set; }
     public bool DepartmentLeadSettingsEnabled { get; set; }
@@ -105,6 +107,10 @@ internal sealed class LeaveRow
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
     public string Source { get; set; } = "";
+    public string LeaveTypeId { get; set; } = "annual";
+    public int? EntitlementYear { get; set; }
+    public int? RequestId { get; set; }
+    public LeaveRequestRow? Request { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public byte[] RowVersion { get; set; } = [];
@@ -133,4 +139,41 @@ internal sealed class DevelopmentAccessRow
     public int CompanyId { get; set; }
     public bool Invited { get; set; }
     public bool CanProvision { get; set; }
+}
+
+internal sealed class LeaveRequestRow
+{
+    public int Id { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public Guid Guid { get; set; }
+    public int CompanyId { get; set; }
+    public int MembershipId { get; set; }
+    public Guid IdempotencyKey { get; set; }
+    public string Fingerprint { get; set; } = "";
+    public string LeaveTypeId { get; set; } = "";
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+internal sealed class LeaveEntitlementRow
+{
+    public int CompanyId { get; set; }
+    public int MembershipId { get; set; }
+    public string LeaveTypeId { get; set; } = "";
+    public int Year { get; set; }
+    public decimal Allocation { get; set; }
+}
+
+internal sealed class PublicHolidayRow
+{
+    public string CountryCode { get; set; } = "";
+    public DateOnly Date { get; set; }
+    public string Name { get; set; } = "";
+}
+
+internal sealed class CoveredSubmissionRow
+{
+    public int CompanyId { get; set; }
+    public int MembershipId { get; set; }
+    public Guid IdempotencyKey { get; set; }
+    public string Fingerprint { get; set; } = "";
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Vacate.Application.Abstractions;
 using Vacate.Application.Common;
+using Vacate.Application.Leave;
 using Vacate.Application.Memberships;
 using Vacate.Application.Memberships.Commands;
 using Vacate.Application.Organizations;
@@ -49,6 +50,7 @@ public sealed class SqlPersistenceTests
         services.AddScoped<UserService>();
         services.AddScoped<MembershipService>();
         services.AddScoped<OrganizationService>();
+        services.AddScoped<LeaveService>();
         provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         a = CreateTenant();
         b = CreateTenant();
@@ -71,6 +73,9 @@ public sealed class SqlPersistenceTests
             .Concat(context.Set<DevelopmentAccessRow>().Where(x => companyIds.Contains(x.CompanyId)).Select(x => x.UserId)).Distinct().ToArray();
         context.Set<DevelopmentAccessRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<LeaveRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
+        context.Set<CoveredSubmissionRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
+        context.Set<LeaveRequestRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
+        context.Set<LeaveEntitlementRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<MembershipEntitlementRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<MembershipRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<TeamRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
@@ -415,6 +420,24 @@ public sealed class SqlPersistenceTests
         using var scope = provider.CreateScope();
         var services = scope.ServiceProvider;
         return services.GetRequiredService<IUnitOfWork>().Execute(() => action(services));
+    }
+
+    [Test]
+    public void Request_dates_are_durable_authorized_and_concurrent_overlap_is_charged_once()
+    {
+        var draft = new LeaveDraft("annual", "days", "range", new(2026, 1, 4), new(2026, 1, 6), null);
+        var submissions = Enumerable.Range(0, 2).AsParallel().Select(_ => Use(s =>
+            s.GetRequiredService<LeaveService>().Submit(a.MemberId, a.CompanyGuid, draft, Guid.NewGuid()))).ToArray();
+        Assert.That(submissions.Select(x => x.Outcome), Is.EquivalentTo(new[] { "created", "already-covered" }));
+        var requests = Use(s => s.GetRequiredService<LeaveService>().Requests(a.MemberId, a.CompanyGuid));
+        Assert.That(requests, Has.Count.EqualTo(1));
+        Assert.That(requests.Single().Dates.Select(d => d.Date), Is.EqualTo(new[] { new DateOnly(2026, 1, 5), new DateOnly(2026, 1, 6) }));
+        Assert.That(Use(s => s.GetRequiredService<IMembershipRepository>().Current(a.MemberId)!.Balance.Used), Is.EqualTo(2));
+        Assert.Throws<ServiceException>(() => Use(s => s.GetRequiredService<LeaveService>().Requests(b.MemberId, a.CompanyGuid)));
+        using var scope = provider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<VacateDbContext>();
+        Assert.That(context.Set<LeaveRow>().Count(x => x.CompanyId == a.CompanyId), Is.EqualTo(2));
+        Assert.That(context.Set<LeaveRow>().Where(x => x.CompanyId == a.CompanyId).All(x => x.StartDate == x.EndDate && x.QuantityDays == 1 && x.RequestId != null), Is.True);
     }
 
     private Tenant CreateTenant() => Use(s =>

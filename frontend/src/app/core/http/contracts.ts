@@ -4,26 +4,26 @@ export type MemberRecord = {
   userGuid: string;
   person: Person;
   membership: NonNullable<OwnProfile['membership']>;
-}
+};
 export type ReferenceRecord = {
   id: number;
   guid: string;
   name: string;
-}
+};
 export type Roles = {
   systemRoles: ReferenceRecord[];
   jobRoles: ReferenceRecord[];
   workSchedules: ReferenceRecord[];
-}
+};
 export type CurrentSession = {
   person: Person;
   profile: OwnProfile;
-}
+};
 export type SignInResult = {
   accessToken: string;
   expiresAt: string;
   person: Person;
-}
+};
 export type OrganizationSummary = {
   id: number;
   guid: string;
@@ -33,30 +33,32 @@ export type OrganizationSummary = {
   teamName: string | null;
   teamMembers: DirectoryUser[];
   settingsAccess?: SettingsAccess;
-}
+};
 export type VacationSettings = {
+  timeZone?: string;
+  countryCode?: string | null;
   requireVacationApproval: boolean;
   departmentLeadSettingsEnabled: boolean;
   teamLeadSettingsEnabled: boolean;
   carryoverEnabled: boolean;
   carryoverYears: number;
-}
+};
 export type SettingsAccess = {
   role: string;
   organization: boolean;
   effectiveVacationApproval: boolean;
   departments: ApiDepartment[];
   teams: ApiTeam[];
-}
+};
 export type ApiDepartment = {
   id: number;
   guid: string;
   name: string;
   requireVacationApproval?: boolean | null;
-} & Lifecycle
+} & Lifecycle;
 export type ApiTeam = {
   departmentId: string | null;
-} & ApiDepartment
+} & ApiDepartment;
 export type OrganizationResponse = {
   id: number;
   guid: string;
@@ -65,7 +67,7 @@ export type OrganizationResponse = {
   departments: ApiDepartment[];
   teams: ApiTeam[];
   settings?: VacationSettings;
-} & Lifecycle
+} & Lifecycle;
 
 export type DirectoryUser = {
   username: string;
@@ -76,4 +78,4 @@ export type DirectoryUser = {
   gender: string;
   jobTitle: string | null;
   systemRole: string | null;
-}
+};

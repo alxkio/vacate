@@ -18,6 +18,8 @@ import { resolveSettingsSection } from '../settings/settings-navigation';
 import { People } from '../people/people';
 import { AdminBalances } from '../leave/admin-balances';
 import { MyLeave } from '../leave/my-leave';
+import { LeaveRequests } from '../leave/data-access/leave-requests';
+import { composeOwnCalendar } from '../leave/data-access/calendar-projection';
 import {
   dateFromKey,
   dateKey,
@@ -58,6 +60,7 @@ import { WorkspaceView } from './workspace-view';
 })
 export class Workspace implements OnInit, OnDestroy {
   readonly data = inject(WorkspaceDataService);
+  readonly leave = inject(LeaveRequests);
   readonly router = inject(Router);
   readonly route = inject(ActivatedRoute);
   readonly changeDetector = inject(ChangeDetectorRef);
@@ -69,7 +72,7 @@ export class Workspace implements OnInit, OnDestroy {
 
   readonly displayPreferences = this.data.displayPreferences(this.user);
   get entries(): Entry[] {
-    return this.data.fixtures.ownEntries(this.user);
+    return composeOwnCalendar(this.data.fixtures.ownEntries(this.user), this.leave.entries);
   }
 
   get scopes(): string[] {
@@ -150,6 +153,7 @@ export class Workspace implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    void this.leave.refresh().then(() => this.changeDetector.markForCheck());
     this.subscription = this.route.queryParamMap.subscribe((params) => {
       if (!this.ensureSession()) {
         return;

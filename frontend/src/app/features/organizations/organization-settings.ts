@@ -12,7 +12,11 @@ import { FormsModule } from '@angular/forms';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { apiId } from '../../core/state/workspace-api.service';
 import { MemberRecord, Roles } from '../../core/http/contracts';
-import { OrganizationNode, OrganizationRecord, OrganizationTeam } from '../../core/models/workspace.models';
+import {
+  OrganizationNode,
+  OrganizationRecord,
+  OrganizationTeam,
+} from '../../core/models/workspace.models';
 
 @Component({
   selector: 'vacate-organization',
@@ -71,7 +75,9 @@ export class OrganizationSettings implements OnChanges {
   }
 
   async saveMember(): Promise<void> {
-    if (!this.selectedMember || this.busy) {return;}
+    if (!this.selectedMember || this.busy) {
+      return;
+    }
     this.busy = true;
     const patch = {
       ...this.memberDraft,
@@ -83,7 +89,9 @@ export class OrganizationSettings implements OnChanges {
       this.selectedMember.userGuid,
       patch,
     );
-    if (result.ok) {this.selectedMember = null;}
+    if (result.ok) {
+      this.selectedMember = null;
+    }
     this.finish(result);
   }
 
@@ -94,7 +102,12 @@ export class OrganizationSettings implements OnChanges {
   readonly actorId = this.data.currentUser()?.id || '';
   @ViewChild('viewHeading') viewHeading?: ElementRef<HTMLElement>;
   record: OrganizationRecord | null = null;
-  draft = { name: '', workWeekDays: 5 };
+  draft: { name: string; workWeekDays: number; timeZone?: string; countryCode?: string } = {
+    name: '',
+    workWeekDays: 5,
+    timeZone: 'UTC',
+    countryCode: '',
+  };
   departmentId: string | null = null;
   teamId: string | null = null;
   nodeName = '';
@@ -110,7 +123,9 @@ export class OrganizationSettings implements OnChanges {
   };
 
   async savePolicies(): Promise<void> {
-    if (this.busy) {return;}
+    if (this.busy) {
+      return;
+    }
     this.busy = true;
     const result = await this.data.api.updateOrganizationSettings(this.actorId, this.settingsDraft);
     this.busy = false;
@@ -131,7 +146,7 @@ export class OrganizationSettings implements OnChanges {
   get directTeams(): OrganizationTeam[] {
     return this.record?.teams.filter((item) => !item.departmentId) || [];
   }
-  get directMembers(): { id: string; name: string; jobTitle: string; systemRole: string; }[] {
+  get directMembers(): { id: string; name: string; jobTitle: string; systemRole: string }[] {
     return (
       this.record?.members.filter(
         (member) =>
@@ -156,8 +171,14 @@ export class OrganizationSettings implements OnChanges {
     }
     this.record = this.data.organization.read(this.companyId);
     this.settingsDraft = { ...this.settingsDraft, ...this.data.api.organizationSettings };
-    if (this.record)
-      {this.draft = { name: this.record.name, workWeekDays: this.record.workWeekDays };}
+    if (this.record) {
+      this.draft = {
+        name: this.record.name,
+        workWeekDays: this.record.workWeekDays,
+        timeZone: this.record.settings?.timeZone || 'UTC',
+        countryCode: this.record.settings?.countryCode || '',
+      };
+    }
     this.nodeName = this.team?.name || this.department?.name || '';
     this.message = '';
     this.error = '';
@@ -171,7 +192,9 @@ export class OrganizationSettings implements OnChanges {
   }
 
   openDepartment(id: string): void {
-    if (!this.record?.departments.some((item) => item.id === id)) {return;}
+    if (!this.record?.departments.some((item) => item.id === id)) {
+      return;
+    }
     this.departmentId = id;
     this.teamId = null;
     this.reset();
@@ -181,8 +204,9 @@ export class OrganizationSettings implements OnChanges {
   openTeam(departmentId: string | null, teamId: string): void {
     if (
       !this.record?.teams.some((item) => item.id === teamId && item.departmentId === departmentId)
-    )
-      {return;}
+    ) {
+      return;
+    }
     this.departmentId = departmentId;
     this.teamId = teamId;
     this.reset();
@@ -194,14 +218,21 @@ export class OrganizationSettings implements OnChanges {
   }
 
   async save(): Promise<void> {
-    if (this.busy) {return;}
+    if (this.busy) {
+      return;
+    }
     this.busy = true;
-    const result = await this.data.organization.update(this.companyId, this.actorId, this.draft);
+    const result = await this.data.organization.update(this.companyId, this.actorId, {
+      ...this.draft,
+      countryCode: this.draft.countryCode?.trim().toUpperCase() || null,
+    });
     this.finish(result);
   }
 
   async rename(): Promise<void> {
-    if (this.busy) {return;}
+    if (this.busy) {
+      return;
+    }
     this.busy = true;
     const result = await this.data.organization.rename(
       this.companyId,

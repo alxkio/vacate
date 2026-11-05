@@ -14,7 +14,7 @@ internal static class RowMapper
         new(row.PrivateProfile.Married, row.PrivateProfile.DependentChildren, row.PrivateProfile.SoleCare), row.Status, Lifecycle(row));
 
     public static Organization Read(OrganizationRow row) => Organization.Restore(row.Id, row.Guid, row.Name, row.WorkWeekDays,
-        new(row.RequireVacationApproval, row.DepartmentLeadSettingsEnabled, row.TeamLeadSettingsEnabled, row.CarryoverEnabled, row.CarryoverYears),
+        new(row.RequireVacationApproval, row.DepartmentLeadSettingsEnabled, row.TeamLeadSettingsEnabled, row.CarryoverEnabled, row.CarryoverYears, row.TimeZone, row.CountryCode),
         row.Departments.Select(d => Department.Restore(d.Id, d.Guid, d.Name, d.RequireVacationApproval, Lifecycle(d))),
         row.Teams.Select(t => Team.Restore(t.Id, t.Guid, t.Name, t.DepartmentId, t.RequireVacationApproval, Lifecycle(t))), Lifecycle(row));
 
@@ -25,8 +25,8 @@ internal static class RowMapper
             new(row.SystemRoleId, row.JobRoleId, row.DepartmentId, row.TeamId, row.ManagerUserId, row.HireDate,
                 row.EmploymentEndDate, row.PriorServiceYears, row.WorkScheduleId, row.HolidayCalendarId, row.LeavePolicyId),
             new(b.PeriodStart, b.PeriodEnd, b.AsOf, b.PolicyVersion, b.PolicyMinimum, b.CustomAllocation,
-                row.Leaves.Where(x => x.Status == "Used").Sum(x => x.QuantityDays),
-                row.Leaves.Where(x => x.Status == "Pending").Sum(x => x.QuantityDays)),
+                row.Leaves.Where(x => x.LeaveTypeId == "annual" && (x.EntitlementYear == null || x.EntitlementYear == b.PeriodStart.Year) && x.Status == "Used").Sum(x => x.QuantityDays),
+                row.Leaves.Where(x => x.LeaveTypeId == "annual" && (x.EntitlementYear == null || x.EntitlementYear == b.PeriodStart.Year) && x.Status == "Pending").Sum(x => x.QuantityDays)),
             Enum.Parse<SettingsRole>(row.SettingsRole), Lifecycle(row));
     }
 
@@ -49,6 +49,8 @@ internal static class RowMapper
     {
         WriteLifecycle(organization, row);
         row.Name = organization.Name;
+        row.TimeZone = organization.Settings.TimeZone;
+        row.CountryCode = organization.Settings.CountryCode;
         row.WorkWeekDays = organization.WorkWeekDays;
         row.RequireVacationApproval = organization.Settings.RequireVacationApproval;
         row.DepartmentLeadSettingsEnabled = organization.Settings.DepartmentLeadSettingsEnabled;

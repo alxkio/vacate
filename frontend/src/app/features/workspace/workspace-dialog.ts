@@ -105,7 +105,9 @@ export class WorkspaceDialog {
           own
             ? `${this.data.typeName(entry.type)} · ${entry.status}`
             : 'Availability in your demo company. Private request details are not shared.',
-          'Fictional sample · no changes can be made here.',
+          entry.id.startsWith('saved:')
+            ? 'Saved request · changes are not available here.'
+            : 'Fictional sample · no changes can be made here.',
         ],
       },
       trigger,

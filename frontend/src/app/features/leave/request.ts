@@ -5,20 +5,24 @@ import {
   inject,
   Input,
   OnInit,
+  OnDestroy,
   Output,
 } from '@angular/core';
 import { Allowance } from './allowance';
 import {
   dateFromKey,
+  dateKey,
   eligibilityLabel,
   formatAmount,
   shortDate,
   WorkspaceDataService,
 } from '../../core/state/workspace-data.service';
+import { LeaveDraft, LeavePreview, LeaveRequests } from './data-access/leave-requests';
 import { Decision, LeaveType, TypeGroup } from '../../core/models/workspace.models';
 
 @Component({ selector: 'vacate-request', imports: [Allowance], templateUrl: './request.html' })
-export class Request implements OnInit {
+export class Request implements OnInit, OnDestroy {
+  readonly requests = inject(LeaveRequests);
   readonly data = inject(WorkspaceDataService);
   readonly changeDetector = inject(ChangeDetectorRef);
   @Input() initialType = 'annual';
@@ -29,13 +33,22 @@ export class Request implements OnInit {
   private viewerId = this.data.currentUser()?.id;
   showAll = false;
   typeId = 'annual';
-  start = '2026-10-26';
-  end = '2026-10-28';
-  amount = '3';
+  start = dateKey(new Date());
+  end = this.start;
+  amount = '1';
   unit = 'working days';
   rulesOpen = false;
   submitted = false;
   message = '';
+  mode: 'duration' | 'range' = 'range';
+  preview: LeavePreview | null = null;
+  loading = false;
+  saving = false;
+  savedOutcome = '';
+  savedAmount = 0;
+  private sequence = 0;
+  private timer?: ReturnType<typeof setTimeout>;
+  private idempotencyKey = crypto.randomUUID();
   eligibilityLabel = eligibilityLabel;
   formatAmount = formatAmount;
   shortDate = shortDate;
@@ -64,13 +77,13 @@ export class Request implements OnInit {
   }
   get groups(): TypeGroup[] {
     const groups = this.data.catalogue.typeGroups(this.shown);
-    if (this.pinned) {groups.push({ name: 'Your selected type', types: [this.pinned] });}
+    if (this.pinned) {
+      groups.push({ name: 'Your selected type', types: [this.pinned] });
+    }
     return groups;
   }
   get units(): string[] {
-    return this.type?.id === 'school'
-      ? ['working days', 'hours']
-      : [this.type?.unit || 'working days'];
+    return ['working days', 'hours'];
   }
   get unavailable(): LeaveType[] {
     return this.showAll
@@ -90,12 +103,12 @@ export class Request implements OnInit {
     this.typeId = id;
     this.message = '';
     this.unit = this.type?.unit || 'working days';
-    this.amount = id === 'annual' ? '3' : '1';
+    this.queuePreview();
   }
 
   optionSuffix(id: string): string {
     const type = this.data.catalogue.getType(id);
-      const decision = this.data.decision(id);
+    const decision = this.data.decision(id);
     return type?.shape === 'supplement'
       ? ' — annual allocation adjustment'
       : decision.status === 'not-eligible'
@@ -105,12 +118,28 @@ export class Request implements OnInit {
           : '';
   }
 
+  ngOnDestroy(): void {
+    clearTimeout(this.timer);
+    this.sequence++;
+  }
+
+  get draft(): LeaveDraft {
+    return {
+      leaveTypeId: this.typeId,
+      unit: this.unit === 'hours' ? 'hours' : 'days',
+      mode: this.mode,
+      startDate: this.start,
+      ...(this.mode === 'range' ? { endDate: this.end } : { duration: Number(this.amount) }),
+    };
+  }
+
   capture(form: HTMLFormElement): void {
     const values = new FormData(form);
     this.start = String(values.get('start') || '');
-    this.end = String(values.get('end') || '');
-    this.amount = String(values.get('amount') || '');
-    this.unit = String(values.get('unit') || '');
+    this.end = String(values.get('end') || this.end);
+    this.amount = String(values.get('amount') || this.amount);
+    this.unit = String(values.get('unit') || 'working days');
+    this.queuePreview();
   }
 
   toggleTypes(form: HTMLFormElement): void {
@@ -118,73 +147,110 @@ export class Request implements OnInit {
     this.showAll = !this.showAll;
   }
 
-  input(form: HTMLFormElement, end: HTMLInputElement): void {
-    this.capture(form);
-    end.setCustomValidity('');
+  switchMode(mode: string): void {
+    if (mode === 'duration' && this.mode === 'range' && this.preview?.workingDates.length) {
+      this.amount = String(this.preview.workingDates.length);
+    }
+    this.mode = mode === 'duration' ? 'duration' : 'range';
+    this.queuePreview();
   }
 
-  get projection(): { text: string; excess: boolean; } {
-    const decision = this.decision;
-    if (decision.status === 'not-eligible')
-      {return { text: `Not eligible: ${decision.reason}`, excess: false };}
-    if (decision.status !== 'eligible')
-      {return {
-        text: 'Eligibility to confirm. Balance cannot be calculated in this demo for this amount, period or unit.',
-        excess: false,
-      };}
-    const type = this.type;
-      const balance = this.data.catalogue.balanceOf(this.typeId);
-      const amount = Number(this.amount);
-    const periodMatches =
-      !balance?.period.includes('2026') ||
-      [this.start, this.end].every((date) => date.startsWith('2026-'));
-    if (
-      !balance ||
-      !type ||
-      this.unit !== type.unit ||
-      !periodMatches ||
-      !Number.isFinite(amount) ||
-      amount <= 0
-    )
-      {return {
-        text: 'Balance cannot be calculated in this demo for this amount, period or unit.',
-        excess: false,
-      };}
-    const after = balance.available - amount;
-    return {
-      text:
-        after < 0
-          ? `Exceeds the illustrative available balance by ${Math.abs(after)} ${this.unit}. No request will be submitted.`
-          : `Demo preview: ${formatAmount(balance.available, this.unit)} available → ${formatAmount(after, this.unit)} after this request.`,
-      excess: after < 0,
-    };
+  queuePreview(): void {
+    clearTimeout(this.timer);
+    const sequence = ++this.sequence;
+    this.preview = null;
+    this.message = '';
+    this.idempotencyKey = crypto.randomUUID();
+    this.loading = false;
+    if (this.unit === 'hours') {
+      return;
+    }
+    if (!this.start || (this.mode === 'range' && (!this.end || this.end < this.start))) {
+      this.message = 'Choose an end date on or after the start date.';
+      return;
+    }
+    if (this.mode === 'duration' && (!Number.isInteger(+this.amount) || +this.amount <= 0)) {
+      this.message = 'Enter a positive whole-day duration.';
+      return;
+    }
+    this.loading = true;
+    this.timer = setTimeout(() => void this.loadPreview(sequence), 200);
   }
 
-  submit(event: Event, form: HTMLFormElement, end: HTMLInputElement): void {
+  private async loadPreview(sequence: number): Promise<void> {
+    try {
+      const preview = await this.requests.preview(this.draft);
+      if (sequence !== this.sequence || this.data.currentUser()?.id !== this.viewerId) {
+        return;
+      }
+      this.preview = preview;
+      if (this.mode === 'duration') {
+        this.end = preview.endDate;
+      }
+    } catch (error: any) {
+      if (sequence === this.sequence) {
+        this.message =
+          error.error?.error || error.message || 'The preview could not be calculated. Try again.';
+      }
+    } finally {
+      if (sequence === this.sequence) {
+        this.loading = false;
+        this.changeDetector.markForCheck();
+      }
+    }
+  }
+
+  get canSubmit(): boolean {
+    return (
+      !this.loading &&
+      !this.saving &&
+      this.unit !== 'hours' &&
+      this.type?.shape !== 'supplement' &&
+      this.decision.status !== 'not-eligible' &&
+      !!this.preview?.canSubmit
+    );
+  }
+
+  async submit(event: Event): Promise<void> {
     event.preventDefault();
     if (!this.viewerId || this.data.currentUser()?.id !== this.viewerId) {
       this.staleSession.emit();
       return;
     }
-    this.capture(form);
-    const selected = form.elements.namedItem('type') as HTMLSelectElement;
-    this.typeId = selected.value;
-    if (!this.type || this.type.shape === 'supplement') {
-      this.message = 'This type cannot be requested. Choose a requestable leave type.';
+    if (!this.canSubmit) {
       return;
     }
-    if (this.decision.status === 'not-eligible') {
-      this.message = `Not eligible: ${this.decision.reason}`;
-      return;
+    this.saving = true;
+    this.message = '';
+    const sequence = this.sequence;
+    try {
+      const result = await this.requests.submit(
+        this.draft,
+        this.idempotencyKey,
+        this.preview?.fingerprint,
+      );
+      if (sequence !== this.sequence || this.data.currentUser()?.id !== this.viewerId) {
+        return;
+      }
+      this.preview = result.preview;
+      this.savedOutcome = result.outcome;
+      this.savedAmount = result.request?.dates.length || 0;
+      this.submitted = true;
+      await this.requests.refresh();
+      this.changeDetector.detectChanges();
+      document.querySelector<HTMLButtonElement>('#finish-demo')?.focus();
+    } catch (error: any) {
+      if (error.status === 409) {
+        this.queuePreview();
+      }
+      this.message =
+        error.error?.error ||
+        error.message ||
+        'The request could not be saved. Your draft is preserved; try again.';
+      // Keep the key for an identical retry after a network failure.
+    } finally {
+      this.saving = false;
+      this.changeDetector.markForCheck();
     }
-    end.setCustomValidity('');
-    if (this.end < this.start) {
-      end.setCustomValidity('Choose an end date on or after the start date.');
-      end.reportValidity();
-      return;
-    }
-    this.submitted = true;
-    this.changeDetector.detectChanges();
-    document.querySelector<HTMLButtonElement>('#finish-demo')?.focus();
   }
 }

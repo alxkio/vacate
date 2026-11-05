@@ -37,6 +37,27 @@ namespace Vacate.Infrastructure.Persistence.Migrations
 
             modelBuilder.HasSequence<int>("WorkScheduleIds");
 
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CoveredSubmissionRow", b =>
+                {
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MembershipId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("IdempotencyKey")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("CompanyId", "MembershipId", "IdempotencyKey");
+
+                    b.ToTable("CoveredLeaveSubmissions", (string)null);
+                });
+
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.DepartmentRow", b =>
                 {
                     b.Property<int>("Id")
@@ -167,7 +188,34 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.LeaveRow", b =>
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.LeaveEntitlementRow", b =>
+                {
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MembershipId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LeaveTypeId")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Allocation")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("decimal(12,4)");
+
+                    b.HasKey("CompanyId", "MembershipId", "LeaveTypeId", "Year");
+
+                    b.ToTable("LeaveEntitlementPeriods", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_LeaveEntitlementPeriods_Allocation", "[Allocation] >= 0 AND [Year] BETWEEN 1 AND 9999");
+                        });
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.LeaveRequestRow", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -175,8 +223,52 @@ namespace Vacate.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<Guid>("Guid")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdempotencyKey")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LeaveTypeId")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<int>("MembershipId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Guid")
+                        .IsUnique();
+
+                    b.HasIndex("CompanyId", "MembershipId", "IdempotencyKey")
+                        .IsUnique();
+
+                    b.ToTable("LeaveRequests", (string)null);
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.LeaveRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
@@ -187,11 +279,24 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
 
+                    b.Property<int?>("EntitlementYear")
+                        .HasColumnType("int");
+
                     b.Property<string>("EntryKind")
                         .IsRequired()
                         .HasMaxLength(24)
                         .HasColumnType("nvarchar(24)")
                         .UseCollation("Latin1_General_100_BIN2");
+
+                    b.Property<Guid>("Guid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LeaveTypeId")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)")
+                        .HasDefaultValue("annual");
 
                     b.Property<int>("MembershipId")
                         .HasColumnType("int");
@@ -199,6 +304,9 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("QuantityDays")
                         .HasPrecision(12, 4)
                         .HasColumnType("decimal(12,4)");
+
+                    b.Property<int?>("RequestId")
+                        .HasColumnType("int");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -225,7 +333,14 @@ namespace Vacate.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Guid").IsUnique();
+                    b.HasIndex("Guid")
+                        .IsUnique();
+
+                    b.HasIndex("CompanyId", "MembershipId", "RequestId");
+
+                    b.HasIndex("CompanyId", "MembershipId", "StartDate")
+                        .IsUnique()
+                        .HasFilter("[RequestId] IS NOT NULL AND [Status] IN (N'Used', N'Pending')");
 
                     b.HasIndex("CompanyId", "MembershipId", "Status");
 
@@ -240,6 +355,8 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("CK_Leaves_Origin", "LEN([Source]) > 0 AND (([EntryKind] = N'ImportedOpening' AND [Status] IN (N'Used', N'Pending') AND [StartDate] IS NULL AND [EndDate] IS NULL) OR ([EntryKind] = N'RecordedLeave' AND [Status] IN (N'Used', N'Pending', N'Cancelled') AND [StartDate] IS NOT NULL AND [EndDate] IS NOT NULL AND [EndDate] >= [StartDate]))");
 
                             t.HasCheckConstraint("CK_Leaves_Quantity", "[QuantityDays] > 0");
+
+                            t.HasCheckConstraint("CK_Leaves_RequestDate", "[RequestId] IS NULL OR ([EntryKind] = N'RecordedLeave' AND [StartDate] = [EndDate] AND [QuantityDays] = 1 AND [EntitlementYear] BETWEEN 1 AND 9999)");
 
                             t.HasCheckConstraint("CK_Leaves_Utc", "[UpdatedAt] >= [CreatedAt] AND DATEPART(TZOFFSET, [CreatedAt]) = 0 AND DATEPART(TZOFFSET, [UpdatedAt]) = 0");
                         });
@@ -418,6 +535,10 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                     b.Property<int>("CarryoverYears")
                         .HasColumnType("int");
 
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -454,6 +575,13 @@ namespace Vacate.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("TeamLeadSettingsEnabled")
                         .HasColumnType("bit");
+
+                    b.Property<string>("TimeZone")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasDefaultValue("UTC");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
@@ -504,6 +632,25 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_Private_Family", "[DependentChildren] >= 0 AND NOT ([Married] = 1 AND [SoleCare] = 1)");
                         });
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.PublicHolidayRow", b =>
+                {
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("CountryCode", "Date");
+
+                    b.ToTable("PublicHolidays", (string)null);
                 });
 
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.SystemRoleRow", b =>
@@ -743,6 +890,16 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CoveredSubmissionRow", b =>
+                {
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.MembershipRow", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId", "MembershipId")
+                        .HasPrincipalKey("CompanyId", "Id")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.DepartmentRow", b =>
                 {
                     b.HasOne("Vacate.Infrastructure.Persistence.Sql.OrganizationRow", null)
@@ -776,6 +933,26 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.LeaveEntitlementRow", b =>
+                {
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.MembershipRow", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId", "MembershipId")
+                        .HasPrincipalKey("CompanyId", "Id")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.LeaveRequestRow", b =>
+                {
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.MembershipRow", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId", "MembershipId")
+                        .HasPrincipalKey("CompanyId", "Id")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.LeaveRow", b =>
                 {
                     b.HasOne("Vacate.Infrastructure.Persistence.Sql.MembershipRow", null)
@@ -791,6 +968,14 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                         .HasPrincipalKey("CompanyId", "MembershipId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.LeaveRequestRow", "Request")
+                        .WithMany()
+                        .HasForeignKey("CompanyId", "MembershipId", "RequestId")
+                        .HasPrincipalKey("CompanyId", "MembershipId", "Id")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Request");
                 });
 
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.MembershipEntitlementRow", b =>

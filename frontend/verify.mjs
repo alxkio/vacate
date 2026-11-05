@@ -769,6 +769,150 @@ try {
     evaluate(
       'Array.from(document.querySelectorAll("[data-balance]")).map(item=>item.dataset.balance)',
     );
+  const leaveRequestAcceptance = async () => {
+    await load('?scope=self&view=month');
+    await click('[data-action=request]');
+    await waitFor('!!document.querySelector("#request-form")');
+    const set = async (selector, value, event = 'input') => {
+      await evaluate(
+        `(async()=>{const input=document.querySelector(${JSON.stringify(selector)});input.value=${JSON.stringify(value)};input.dispatchEvent(new Event(${JSON.stringify(event)},{bubbles:true}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));})()`,
+      );
+    };
+    const previewReady = () =>
+      waitFor(
+        'document.querySelector("#request-preview")?.getAttribute("aria-busy") === "false" && !!document.querySelector("#request-amount-preview")',
+      );
+    await click('#request-type-toggle');
+    for (const deniedType of ['marriage', 'disability-supplement']) {
+      await set('#leave-type', deniedType, 'change');
+      await waitFor(
+        'document.querySelector("#request-preview")?.getAttribute("aria-busy") === "false"',
+      );
+      await evaluate(
+        'document.querySelector("#request-form button[type=submit]").disabled=false;document.querySelector("#request-form").requestSubmit()',
+      );
+      assert.equal(
+        await evaluate('!!document.querySelector("#request-form")'),
+        true,
+        'Forged unavailable selection must not submit',
+      );
+      assert.equal(await evaluate('!!document.querySelector("#finish-demo")'), false);
+    }
+    await set('#leave-type', 'annual', 'change');
+    await click('#request-type-toggle');
+    await set('#start-date', '2026-02-01');
+    await set('#end-date', '2026-02-03');
+    await previewReady();
+    assert.match(
+      await evaluate('document.querySelector("#request-amount-preview").textContent'),
+      /2 working days/,
+    );
+    assert.match(
+      await evaluate('document.querySelector("#request-preview").textContent'),
+      /Non-working/,
+    );
+    assert.match(await evaluate('document.querySelector("#request-balance").textContent'), /2026/);
+    assert.doesNotMatch(
+      await evaluate('document.querySelector("#request-balance").textContent'),
+      /Sick|Parental/,
+    );
+    await set('#request-mode', 'duration', 'change');
+    await set('#request-amount', '2');
+    await previewReady();
+    assert.match(
+      await evaluate('document.querySelector("#request-amount-preview").textContent'),
+      /2026-02-03/,
+    );
+    await set('#request-unit', 'hours', 'change');
+    assert.equal(await evaluate('!!document.querySelector("#end-date")'), false);
+    assert.equal(await evaluate('!!document.querySelector("#request-amount")'), false);
+    assert.equal(
+      await evaluate('document.querySelector("#request-form button[type=submit]").disabled'),
+      true,
+    );
+    assert.match(
+      await evaluate('document.querySelector("#request-hourly-notice").textContent'),
+      /not available/,
+    );
+    await set('#request-unit', 'working days', 'change');
+    await set('#request-amount', '100');
+    await previewReady();
+    assert.match(
+      await evaluate('document.querySelector("#request-preview").textContent'),
+      /negative balance/,
+    );
+    assert.equal(
+      await evaluate('document.querySelector("#request-form button[type=submit]").disabled'),
+      true,
+    );
+    await set('#request-amount', '2');
+    await set('#start-date', '2027-06-01');
+    await previewReady();
+    assert.match(
+      await evaluate('document.querySelector("#request-preview").textContent'),
+      /No finite|No configured/,
+    );
+    assert.equal(
+      await evaluate('document.querySelector("#request-form button[type=submit]").disabled'),
+      true,
+    );
+    await set('#start-date', '2026-02-01');
+    await set('#request-mode', 'range', 'change');
+    await set('#end-date', '2026-02-01');
+    await previewReady();
+    assert.equal(
+      await evaluate('document.querySelector("#request-form button[type=submit]").disabled'),
+      true,
+    );
+    await set('#end-date', '2026-02-03');
+    await previewReady();
+    await waitFor('!document.querySelector("#request-form button[type=submit]").disabled');
+    await click('#request-form button[type=submit]');
+    await waitFor('!!document.querySelector("#finish-demo")');
+    assert.match(
+      await evaluate('document.querySelector("#dialog-content").textContent'),
+      /saved|already covered/i,
+    );
+    await click('#finish-demo');
+    await click('[data-action=request]');
+    await set('#start-date', '2026-02-01');
+    await set('#end-date', '2026-02-03');
+    await previewReady();
+    assert.match(
+      await evaluate('document.querySelector("#request-preview").textContent'),
+      /All selected working days already/,
+    );
+    await click('#request-form button[type=submit]');
+    await waitFor('!!document.querySelector("#finish-demo")');
+    assert.match(
+      await evaluate('document.querySelector("#dialog-content").textContent'),
+      /No additional request/,
+    );
+    await click('#finish-demo');
+    await load('?scope=self&view=month&date=2026-02-01');
+    await waitFor('document.querySelectorAll(\'[data-event^="saved:"]\').length >= 2');
+    assert.equal(
+      await evaluate('!!document.querySelector(\'[data-event$=":2026-02-01"]\')'),
+      false,
+      'Excluded Sunday must not appear as saved leave',
+    );
+    assert.equal(await evaluate('!!document.querySelector(\'[data-event$=":2026-02-02"]\')'), true);
+    assert.equal(await evaluate('!!document.querySelector(\'[data-event$=":2026-02-03"]\')'), true);
+    await click('[data-nav=leave]');
+    await waitFor('!!document.querySelector("#saved-leave-requests [data-saved-request]")');
+    assert.match(
+      await evaluate('document.querySelector("#saved-leave-requests").textContent'),
+      /2026-02-02/,
+    );
+    assert.doesNotMatch(
+      await evaluate('document.querySelector("#saved-leave-requests").textContent'),
+      /2026-02-01/,
+    );
+    await load('?scope=self&view=month&date=2026-10-22');
+    console.log(
+      'PASS: real leave preview, inclusive dates, Sunday exclusion, duration, disabled hours, negative and unknown balances, zero days, save, persisted calendar/history and fully covered acknowledgement.',
+    );
+  };
   const organizationAcceptance = async () => {
     // VAC-2 organization configuration, renames, scoped access and reset.
     await signOut();
@@ -944,7 +1088,7 @@ try {
       await load('?history=' + name);
       await click('[data-scope="team"]');
       await click('[data-action="request"]');
-      await evaluate('document.querySelector("#request-amount").value="41"');
+      await evaluate('document.querySelector("#start-date").value="2026-11-01"');
     }
     await signOut();
     await historyTo({ name: 'maya-two' }, 'Back after logout');
@@ -994,8 +1138,10 @@ try {
     );
     await click('[data-action="request"]');
     assert.equal(
-      await evaluate('document.querySelector("#request-amount").value'),
-      '3',
+      await evaluate(
+        'document.querySelector("#end-date").value === document.querySelector("#start-date").value',
+      ),
+      true,
       'History restored draft after switch',
     );
     await closeDialog();
@@ -1256,7 +1402,12 @@ try {
       'PASS: feedback header/avatar label, My Leave used balances/pending/date order, owner/HR policy persistence, carryover configuration only, delegated lead scope/revocation and approval hierarchy.',
     );
   };
-  if (process.env.MOCK_FEEDBACK_ONLY === '1') {
+  if (process.env.MOCK_LEAVE_ONLY === '1') {
+    await signIn('maya', 'maya');
+    await ready();
+    await leaveRequestAcceptance();
+    assert.deepEqual(errors, [], 'Unexpected leave browser exceptions');
+  } else if (process.env.MOCK_FEEDBACK_ONLY === '1') {
     await feedbackAcceptance();
     assert.deepEqual(errors, [], 'Unexpected feedback acceptance browser exceptions');
   } else if (process.env.MOCK_HISTORY_ONLY === '1') {
@@ -1611,7 +1762,7 @@ try {
         'Show all explains unavailable reference types accessibly',
       );
       await evaluate(
-        'document.querySelector("#leave-type").value="carer";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-amount").value="2";document.querySelector("#request-amount").dispatchEvent(new Event("input"));document.querySelector("#start-date").value="2026-10-27";document.querySelector("#start-date").dispatchEvent(new Event("input"));document.querySelector("#end-date").value="2026-10-29";document.querySelector("#end-date").dispatchEvent(new Event("input"));document.querySelector("#request-rules").open=true',
+        'document.querySelector("#leave-type").value="carer";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#start-date").value="2026-10-27";document.querySelector("#start-date").dispatchEvent(new Event("input"));document.querySelector("#end-date").value="2026-10-29";document.querySelector("#end-date").dispatchEvent(new Event("input"));document.querySelector("#request-rules").open=true',
       );
       await call('Page.bringToFront');
       await evaluate(
@@ -1642,7 +1793,6 @@ try {
         'Uncommon selection must stay visible',
       );
       assert.equal(await evaluate('document.querySelector("#leave-type").value'), 'carer');
-      assert.equal(await evaluate('document.querySelector("#request-amount").value'), '2');
       assert.equal(await evaluate('document.querySelector("#start-date").value'), '2026-10-27');
       assert.equal(await evaluate('document.querySelector("#end-date").value'), '2026-10-29');
       assert.equal(await evaluate('document.querySelector("#request-rules").open'), true);
@@ -1659,7 +1809,7 @@ try {
         'Former uncommon selection should leave the short view',
       );
       await evaluate(
-        'document.querySelector("#leave-type").value="school";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-unit").value="hours";document.querySelector("#request-unit").dispatchEvent(new Event("input"));document.querySelector("#request-amount").value="4";document.querySelector("#request-amount").dispatchEvent(new Event("input"))',
+        'document.querySelector("#leave-type").value="school";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-unit").value="hours";document.querySelector("#request-unit").dispatchEvent(new Event("change"))',
       );
       await click('#request-type-toggle');
       await click('#request-type-toggle');
@@ -1669,14 +1819,13 @@ try {
         'hours',
         'School hours unit changed across shortlist toggle',
       );
-      assert.equal(await evaluate('document.querySelector("#request-amount").value'), '4');
+      assert.equal(await evaluate('!!document.querySelector("#request-amount")'), false);
       assert.equal(await evaluate('document.querySelector("#start-date").value'), '2026-10-27');
-      assert.equal(await evaluate('document.querySelector("#end-date").value'), '2026-10-29');
+      assert.equal(await evaluate('!!document.querySelector("#end-date")'), false);
       assert.equal(await evaluate('document.querySelector("#request-rules").open'), true);
       assert.match(
-        await evaluate('document.querySelector("#request-balance").textContent'),
-        /cannot be calculated/,
-        'Hours must not inherit the working-day balance',
+        await evaluate('document.querySelector("#request-hourly-notice").textContent'),
+        /not available/,
       );
       await keyboardClick('#dialog .dialog-close');
       await waitFor(
@@ -1768,9 +1917,11 @@ try {
         );
         await click('[data-action="request"]');
         assert.equal(
-          await evaluate('document.querySelector("#request-amount").value'),
-          '3',
-          id + ' stale form amount',
+          await evaluate(
+            'document.querySelector("#end-date").value === document.querySelector("#start-date").value',
+          ),
+          true,
+          id + ' stale form end date',
         );
         assert.deepEqual(
           await requestTypes(),
@@ -2074,7 +2225,7 @@ try {
         );
         await click('[data-action="request"]');
         await waitFor('document.querySelector("#dialog")?.open === true');
-        await evaluate('document.querySelector("#request-amount").value="41"');
+        await evaluate('document.querySelector("#start-date").value="2026-11-01"');
         await signOut();
         if (['noah', 'iris', 'zoe', 'sam'].includes(id))
           console.log('PASS: account/scope/eligibility regression through ' + id);
@@ -2211,19 +2362,15 @@ try {
       await closeDialog();
       await click('[data-example-type=parental]');
       assert.equal(await evaluate('document.querySelector("#leave-type").value'), 'parental');
-      assert.equal(await evaluate('document.querySelector("#request-unit").value'), 'months');
-      assert.match(
-        await evaluate('document.querySelector("#request-balance").textContent'),
-        /2 months available → 1 month/,
+      await waitFor(
+        'document.querySelector("#request-preview")?.getAttribute("aria-busy") === "false"',
+      );
+      assert.equal(
+        await evaluate('document.querySelector("#request-form button[type=submit]").disabled'),
+        true,
+        'Unknown parental entitlement cannot be submitted',
       );
       await click('#request-type-toggle');
-      assert.equal((await requestTypes()).length, 30);
-      assert.equal(
-        await evaluate(
-          'document.querySelector("#leave-type option[value=disability-supplement]").disabled',
-        ),
-        true,
-      );
       for (const id of await evaluate(
         'window.VacateLeave.types.filter(type=>type.shape!=="supplement").map(type=>type.id)',
       )) {
@@ -2232,106 +2379,14 @@ try {
         );
         assert.equal(
           await evaluate(
-            `document.querySelector('#request-allowance').textContent.includes(window.VacateLeave.getType(${JSON.stringify(id)}).allowance)`,
+            `document.querySelector('#request-rules').textContent.includes(window.VacateLeave.getType(${JSON.stringify(id)}).allowance)`,
           ),
           true,
-          `${id} allowance panel is stale`,
+          `${id} reference allowance panel is stale`,
         );
       }
-      await evaluate(
-        'document.querySelector("#leave-type").value="sick";document.querySelector("#leave-type").dispatchEvent(new Event("change"))',
-      );
-      assert.match(
-        await evaluate('document.querySelector("#request-balance").textContent'),
-        /cannot be calculated/,
-      );
-      assert.match(
-        await evaluate('document.querySelector("#request-rule-content").textContent'),
-        /No diagnoses or certificates/,
-      );
-      await evaluate(
-        'document.querySelector("#leave-type").value="dependent-illness";document.querySelector("#leave-type").dispatchEvent(new Event("change"))',
-      );
-      assert.match(
-        await evaluate('document.querySelector("#request-rule-content").textContent'),
-        /children only/,
-      );
-      await evaluate(
-        'document.querySelector("#leave-type").value="school";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-unit").value="hours";document.querySelector("#request-unit").dispatchEvent(new Event("input"))',
-      );
-      assert.match(
-        await evaluate('document.querySelector("#request-balance").textContent'),
-        /cannot be calculated/,
-      );
-      await evaluate(
-        'document.querySelector("#leave-type").value="annual";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-amount").value="100";document.querySelector("#request-amount").dispatchEvent(new Event("input"))',
-      );
-      assert.match(
-        await evaluate('document.querySelector("#request-balance").textContent'),
-        /Exceeds.*83 working days/,
-      );
-      assert.equal(await evaluate('window.VacateLeave.balanceOf("annual").available'), 17);
-      await evaluate(
-        'document.querySelector("#start-date").value="2026-10-29";document.querySelector("#start-date").dispatchEvent(new Event("input"));document.querySelector("#start-date").dispatchEvent(new Event("input"));document.querySelector("#request-form").requestSubmit()',
-      );
-      assert.equal(
-        await evaluate('document.querySelector("#end-date").validity.customError'),
-        true,
-        'Reversed dates must be rejected',
-      );
-      await evaluate(
-        'document.querySelector("#start-date").value="2026-10-26";document.querySelector("#start-date").dispatchEvent(new Event("input"));document.querySelector("#start-date").dispatchEvent(new Event("input"))',
-      );
-      assert.equal(
-        await evaluate('document.querySelector("#request-form").checkValidity()'),
-        true,
-        'Correcting the start date must clear the stale end-date error',
-      );
-      await evaluate('document.querySelector("#request-form").requestSubmit()');
-      assert.match(
-        await evaluate('document.querySelector("#dialog-content").textContent'),
-        /Annual leave · 100 working days/,
-      );
-      await click('#finish-demo');
-      await click('#balance-toggle');
-      await click('[data-nav=calendar]');
-      await click('[data-action=request]');
-      await click('#request-type-toggle');
-      const deniedType = 'marriage';
-      assert.equal(
-        await evaluate('window.VacateEligibility.decisionFor("marriage").status'),
-        'not-eligible',
-        'Maya married-profile restriction',
-      );
-      await evaluate(
-        `document.querySelector('#leave-type').value=${JSON.stringify(deniedType)};document.querySelector('#leave-type').dispatchEvent(new Event('change'));document.querySelector('#request-form button[type=submit]').disabled=false;document.querySelector('#request-form').requestSubmit()`,
-      );
-      assert.equal(
-        await evaluate('!!document.querySelector("#request-form")'),
-        true,
-        'Forged denied selection must not produce a preview',
-      );
-      assert.match(
-        await evaluate('document.querySelector("#request-eligibility").textContent'),
-        /Not eligible/,
-      );
-      await evaluate(
-        'document.querySelector("#leave-type").value="disability-supplement";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-form button[type=submit]").disabled=false;document.querySelector("#request-form").requestSubmit()',
-      );
-      assert.equal(
-        await evaluate('!!document.querySelector("#request-form")'),
-        true,
-        'Forged supplement must not become a second quota',
-      );
-      await evaluate(
-        'document.querySelector("#leave-type").value="sick";document.querySelector("#leave-type").dispatchEvent(new Event("change"));document.querySelector("#request-form").requestSubmit()',
-      );
-      assert.match(
-        await evaluate('document.querySelector("#dialog-content").textContent'),
-        /Eligibility to confirm/,
-        'Unknown eligibility remains explicit in preview',
-      );
-      await click('#finish-demo');
+      await closeDialog();
+      await leaveRequestAcceptance();
       for (const scope of ['self', 'team'])
         for (const view of ['year', 'month', 'week', 'day']) {
           await click(`[data-scope="${scope}"]`);
@@ -2397,12 +2452,8 @@ try {
       await click('[data-action="today"]');
       assert.equal(await evaluate('document.querySelector("#period").textContent'), '2026');
       await click('[data-action="request"]');
-      await evaluate('document.querySelector("#request-form").requestSubmit()');
-      assert.match(
-        await evaluate('document.querySelector("#dialog-content").textContent'),
-        /No request was sent or saved/,
-      );
-      await click('#finish-demo');
+      await waitFor('!!document.querySelector("#request-form")');
+      await closeDialog();
       const currentAccount = await evaluate(
         'window.VacateSession.currentUser().id || window.VacateSession.currentUser().personId',
       );
@@ -2506,7 +2557,7 @@ try {
       await load('?scope=self&view=month');
       await click('[data-action=request]');
       await evaluate(
-        'document.querySelector("#request-amount").value="41";document.querySelector("#request-amount").dispatchEvent(new Event("input"))',
+        'document.querySelector("#start-date").value="2026-11-01";document.querySelector("#start-date").dispatchEvent(new Event("input"))',
       );
       const stalePreview = await evaluate(
         '(async()=>{await window.VacateSession.login("nora","nora");document.querySelector("#request-form").requestSubmit();return !!document.querySelector("#finish-demo");})()',

@@ -70,7 +70,13 @@ public sealed class OrganizationService(IOrganizationRepository organizations, I
         var settings = org.Settings;
         var updatedSettings = new VacationSettings(command.RequireVacationApproval.Or(settings.RequireVacationApproval),
             command.DepartmentLeadSettingsEnabled.Or(settings.DepartmentLeadSettingsEnabled), command.TeamLeadSettingsEnabled.Or(settings.TeamLeadSettingsEnabled),
-            command.CarryoverEnabled.Or(settings.CarryoverEnabled), command.CarryoverYears.Or(settings.CarryoverYears));
+            command.CarryoverEnabled.Or(settings.CarryoverEnabled), command.CarryoverYears.Or(settings.CarryoverYears), command.TimeZone.Or(settings.TimeZone), command.CountryCode.Or(settings.CountryCode));
+        if (updatedSettings.CountryCode == "GR" && (updatedSettings.CarryoverEnabled != settings.CarryoverEnabled
+            || updatedSettings.CarryoverYears != settings.CarryoverYears))
+        {
+            throw new DomainValidationException("Greek annual carryover uses the read-only 31 March deadline; legacy carryover controls cannot override it.");
+        }
+
         org.Update(command.Name.Or(org.Name), command.WorkWeekDays.Or(org.WorkWeekDays), clock.GetUtcNow(), updatedSettings);
         return mapper.Organization(org);
     });
