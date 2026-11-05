@@ -10,5 +10,5 @@ loadRuntimeConfig()
   }))
   .catch(() => {
     const root = document.querySelector('app-root');
-    if (root) root.textContent = 'Vacate could not start. Please reload the page.';
+    if (root) {root.textContent = 'Vacate could not start. Please reload the page.';}
   });

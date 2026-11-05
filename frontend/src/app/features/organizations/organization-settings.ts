@@ -11,8 +11,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { apiId } from '../../core/state/workspace-api.service';
-import { MemberRecord } from '../../core/http/contracts';
-import { OrganizationRecord } from '../../core/models/workspace.models';
+import { MemberRecord, Roles } from '../../core/http/contracts';
+import { OrganizationNode, OrganizationRecord, OrganizationTeam } from '../../core/models/workspace.models';
 
 @Component({
   selector: 'vacate-organization',
@@ -39,14 +39,14 @@ export class OrganizationSettings implements OnChanges {
     priorService: null as number | null,
     customAllocation: null as number | null,
   };
-  get members() {
+  get members(): MemberRecord[] {
     return this.data.api.members;
   }
-  get roles() {
+  get roles(): Roles {
     return this.data.api.roles;
   }
 
-  editMember(member: MemberRecord) {
+  editMember(member: MemberRecord): void {
     this.selectedMember = member;
     const m = member.membership;
     this.memberDraft = {
@@ -70,8 +70,8 @@ export class OrganizationSettings implements OnChanges {
     });
   }
 
-  async saveMember() {
-    if (!this.selectedMember || this.busy) return;
+  async saveMember(): Promise<void> {
+    if (!this.selectedMember || this.busy) {return;}
     this.busy = true;
     const patch = {
       ...this.memberDraft,
@@ -83,7 +83,7 @@ export class OrganizationSettings implements OnChanges {
       this.selectedMember.userGuid,
       patch,
     );
-    if (result.ok) this.selectedMember = null;
+    if (result.ok) {this.selectedMember = null;}
     this.finish(result);
   }
 
@@ -109,29 +109,29 @@ export class OrganizationSettings implements OnChanges {
     carryoverYears: 0,
   };
 
-  async savePolicies() {
-    if (this.busy) return;
+  async savePolicies(): Promise<void> {
+    if (this.busy) {return;}
     this.busy = true;
     const result = await this.data.api.updateOrganizationSettings(this.actorId, this.settingsDraft);
     this.busy = false;
     this.finish(result);
   }
-  get department() {
+  get department(): OrganizationNode | undefined {
     return this.record?.departments.find((item) => item.id === this.departmentId);
   }
-  get team() {
+  get team(): OrganizationTeam | undefined {
     return this.record?.teams.find((item) => item.id === this.teamId);
   }
-  get memberCount() {
+  get memberCount(): number {
     return this.record?.members.length || 0;
   }
-  get teamCount() {
+  get teamCount(): number {
     return this.record?.teams.length || 0;
   }
-  get directTeams() {
+  get directTeams(): OrganizationTeam[] {
     return this.record?.teams.filter((item) => !item.departmentId) || [];
   }
-  get directMembers() {
+  get directMembers(): { id: string; name: string; jobTitle: string; systemRole: string; }[] {
     return (
       this.record?.members.filter(
         (member) =>
@@ -140,15 +140,15 @@ export class OrganizationSettings implements OnChanges {
     );
   }
 
-  teamsFor(departmentId: string) {
+  teamsFor(departmentId: string): OrganizationTeam[] {
     return this.record?.teams.filter((item) => item.departmentId === departmentId) || [];
   }
 
-  ngOnChanges() {
+  ngOnChanges(): void {
     this.reset();
   }
 
-  reset() {
+  reset(): void {
     if (this.data.currentUser()?.id !== this.actorId) {
       this.record = null;
       this.staleSession.emit();
@@ -157,51 +157,51 @@ export class OrganizationSettings implements OnChanges {
     this.record = this.data.organization.read(this.companyId);
     this.settingsDraft = { ...this.settingsDraft, ...this.data.api.organizationSettings };
     if (this.record)
-      this.draft = { name: this.record.name, workWeekDays: this.record.workWeekDays };
+      {this.draft = { name: this.record.name, workWeekDays: this.record.workWeekDays };}
     this.nodeName = this.team?.name || this.department?.name || '';
     this.message = '';
     this.error = '';
   }
 
-  home() {
+  home(): void {
     this.departmentId = null;
     this.teamId = null;
     this.reset();
     this.focusHeading();
   }
 
-  openDepartment(id: string) {
-    if (!this.record?.departments.some((item) => item.id === id)) return;
+  openDepartment(id: string): void {
+    if (!this.record?.departments.some((item) => item.id === id)) {return;}
     this.departmentId = id;
     this.teamId = null;
     this.reset();
     this.focusHeading();
   }
 
-  openTeam(departmentId: string | null, teamId: string) {
+  openTeam(departmentId: string | null, teamId: string): void {
     if (
       !this.record?.teams.some((item) => item.id === teamId && item.departmentId === departmentId)
     )
-      return;
+      {return;}
     this.departmentId = departmentId;
     this.teamId = teamId;
     this.reset();
     this.focusHeading();
   }
 
-  private focusHeading() {
+  private focusHeading(): void {
     setTimeout(() => this.viewHeading?.nativeElement.focus());
   }
 
-  async save() {
-    if (this.busy) return;
+  async save(): Promise<void> {
+    if (this.busy) {return;}
     this.busy = true;
     const result = await this.data.organization.update(this.companyId, this.actorId, this.draft);
     this.finish(result);
   }
 
-  async rename() {
-    if (this.busy) return;
+  async rename(): Promise<void> {
+    if (this.busy) {return;}
     this.busy = true;
     const result = await this.data.organization.rename(
       this.companyId,
@@ -213,7 +213,7 @@ export class OrganizationSettings implements OnChanges {
     this.finish(result);
   }
 
-  private finish(result: { ok: boolean; error?: string }) {
+  private finish(result: { ok: boolean; error?: string }): void {
     this.busy = false;
     this.error = result.error || '';
     this.detector.markForCheck();

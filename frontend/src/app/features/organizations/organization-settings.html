@@ -4,8 +4,8 @@
       <nav class="org-breadcrumb" aria-label="Organization location">
         <button
           type="button"
-          (click)="home()"
           [attr.aria-current]="!department && !team ? 'page' : null"
+          (click)="home()"
         >
           {{ org.name }}
         </button>
@@ -13,8 +13,8 @@
           <span aria-hidden="true">/</span
           ><button
             type="button"
-            (click)="openDepartment(dept.id)"
             [attr.aria-current]="!team ? 'page' : null"
+            (click)="openDepartment(dept.id)"
           >
             {{ dept.name }}
           </button>
@@ -28,10 +28,10 @@
       </div>
       @if (!department && !team && data.api.organizationSettings) {
         <form
+          #policyForm="ngForm"
           id="organization-policy-form"
           class="org-card"
           (ngSubmit)="savePolicies()"
-          #policyForm="ngForm"
         >
           <h2>Organization settings</h2>
           <label
@@ -105,13 +105,13 @@
           <div class="org-section-heading">
             <div>
               <span class="eyebrow">{{ team ? 'TEAM' : 'DEPARTMENT' }}</span>
-              <h2 id="org-view-heading" #viewHeading tabindex="-1">
+              <h2 #viewHeading id="org-view-heading" tabindex="-1">
                 {{ team?.name || department?.name }}
               </h2>
             </div>
             <span class="org-tag">Admin only</span>
           </div>
-          <form id="org-rename-form" (ngSubmit)="rename()" #renameForm="ngForm">
+          <form #renameForm="ngForm" id="org-rename-form" (ngSubmit)="rename()">
             <label
               >{{ team ? 'Team name' : 'Department name'
               }}<input id="org-node-name" name="nodeName" required [(ngModel)]="nodeName"
@@ -165,11 +165,11 @@
         </section>
       } @else {
         <div class="org-layout">
-          <form id="organization-form" class="org-card" (ngSubmit)="save()" #companyForm="ngForm">
+          <form #companyForm="ngForm" id="organization-form" class="org-card" (ngSubmit)="save()">
             <div class="org-section-heading">
               <div>
                 <span class="eyebrow">COMPANY WORKSPACE</span>
-                <h2 id="org-view-heading" #viewHeading tabindex="-1">Organization settings</h2>
+                <h2 #viewHeading id="org-view-heading" tabindex="-1">Organization settings</h2>
               </div>
               <span class="org-tag">Admin only</span>
             </div>
@@ -339,7 +339,7 @@
           }
         </div>
         @if (selectedMember; as member) {
-          <form id="membership-form" (ngSubmit)="saveMember()" #membershipForm="ngForm">
+          <form #membershipForm="ngForm" id="membership-form" (ngSubmit)="saveMember()">
             <h3 id="membership-editor-heading" tabindex="-1">{{ member.person.name }}</h3>
             <label
               >System role<select name="systemRoleId" [(ngModel)]="memberDraft.systemRoleId">

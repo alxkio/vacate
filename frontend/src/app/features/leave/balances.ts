@@ -1,6 +1,7 @@
 import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
-import { Allowance, BalanceBar } from './allowance';
-import { WorkspaceDataService, eligibilityLabel } from '../../core/state/workspace-data.service';
+import { Allowance } from './allowance';
+import { BalanceBar } from './balance-bar';
+import { eligibilityLabel, WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { LeaveType } from '../../core/models/workspace.models';
 
 @Component({
@@ -12,20 +13,20 @@ export class Balances {
   readonly data = inject(WorkspaceDataService);
   @Output() example = new EventEmitter<{ type: string; trigger: HTMLElement }>();
   @Input() viewState = { showAll: false, expanded: new Set<string>() };
-  get showAll() {
+  get showAll(): boolean {
     return this.viewState.showAll;
   }
   set showAll(value: boolean) {
     this.viewState.showAll = value;
   }
-  get expanded() {
+  get expanded(): Set<string> {
     return this.viewState.expanded;
   }
   eligibilityLabel = eligibilityLabel;
-  get shown() {
+  get shown(): readonly LeaveType[] {
     return this.showAll ? this.data.catalogue.types : this.data.visibleShortlist();
   }
-  get pinned() {
+  get pinned(): LeaveType[] {
     return this.data.catalogue.types.filter(
       (type) =>
         !this.data.catalogue.shortlistIds.includes(type.id) &&
@@ -33,7 +34,7 @@ export class Balances {
         this.data.decision(type.id).status !== 'not-eligible',
     );
   }
-  get groups() {
+  get groups(): { name: string; types: LeaveType[] }[] {
     const parent = (this.data.profiles.read()?.dependentChildren || 0) > 0;
     const promotedIds = ['annual', ...(parent ? ['school', 'childcare', 'parental'] : [])];
     const deferredIds = ['sick', 'maternity', 'paternity', 'voting', 'military'];
@@ -51,23 +52,32 @@ export class Balances {
       ...this.data.catalogue.typeGroups(regular),
       ...(deferred.length ? [{ name: 'Other leave types', types: deferred }] : []),
     ];
-    if (!this.showAll && this.pinned.length)
+    if (!this.showAll && this.pinned.length) {
       groups.push({ name: 'Expanded types', types: this.pinned });
+    }
     return groups;
   }
-  get status() {
+  get status(): string {
     return this.showAll
       ? `All ${this.data.catalogue.types.length} reference types shown; unavailable request actions are disabled.`
       : `${this.shown.length} shortlisted types shown for your profile.${this.pinned.length ? ` ${this.pinned.length} expanded types kept visible.` : ''} Known-unavailable types remain in Show all.`;
   }
 
-  quantity(type: LeaveType) {
-    const decision = this.data.decision(type.id),
-      balance = this.data.balance(type.id);
-    if (decision.status === 'not-eligible') return 'Not eligible';
-    if (balance) return `${balance.available} / ${balance.allocation} ${type.unit} available`;
-    if (type.id === 'sick') return 'Allowance and eligibility to confirm';
-    if (decision.status === 'to-confirm') return 'Eligibility to confirm';
+  quantity(type: LeaveType): string {
+    const decision = this.data.decision(type.id);
+    const balance = this.data.balance(type.id);
+    if (decision.status === 'not-eligible') {
+      return 'Not eligible';
+    }
+    if (balance) {
+      return `${balance.available} / ${balance.allocation} ${type.unit} available`;
+    }
+    if (type.id === 'sick') {
+      return 'Allowance and eligibility to confirm';
+    }
+    if (decision.status === 'to-confirm') {
+      return 'Eligibility to confirm';
+    }
     return (
       (
         {
@@ -80,11 +90,15 @@ export class Balances {
     );
   }
 
-  toggle(id: string, details: HTMLDetailsElement) {
-    details.open ? this.expanded.add(id) : this.expanded.delete(id);
+  toggle(id: string, details: HTMLDetailsElement): void {
+    if (details.open) {
+      this.expanded.add(id);
+    } else {
+      this.expanded.delete(id);
+    }
   }
 
-  preview(type: LeaveType, event: Event) {
+  preview(type: LeaveType, event: Event): void {
     this.example.emit({ type: type.id, trigger: event.currentTarget as HTMLElement });
   }
 }

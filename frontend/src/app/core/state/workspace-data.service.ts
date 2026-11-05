@@ -4,55 +4,61 @@ import { createCatalogue } from '../reference-data/catalogue.js';
 import { createEligibility } from '../reference-data/eligibility.js';
 import { WorkspaceApiService } from './workspace-api.service';
 import {
+  Allocation,
+  Balance,
   Catalogue,
   Decision,
-  WorkspaceEnvironment,
-  Eligibility,
-  Fixtures,
-  LeaveType,
   DisplayPreferences,
-  OwnProfiles,
+  Eligibility,
+  Entry,
+  Fixtures,
+  Group,
+  LeaveType,
   OrganizationStore,
+  OwnProfiles,
   Person,
+  WorkspaceEnvironment,
 } from '../models/workspace.models';
 
 export const REFERENCE_TODAY = new Date(2026, 9, 22);
-const displayPreferencesKey = (person: Person) =>
+const displayPreferencesKey = (person: Person): string =>
   `vacate.display-preferences.v1.${encodeURIComponent(person.companyId)}.${encodeURIComponent(person.id)}`;
 const defaultDisplayPreferences: DisplayPreferences = { layout: 'calendar', colorScheme: 'a' };
-export const dateKey = (date: Date) =>
+export const dateKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-export const dateFromKey = (key: string) => {
+export const dateFromKey = (key: string): Date => {
   const [y, m, d] = key.split('-').map(Number);
   return new Date(y, m - 1, d);
 };
-export const addDays = (date: Date, days: number) =>
+export const addDays = (date: Date, days: number): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
-export const weekStart = (date: Date) => addDays(date, -((date.getDay() + 6) % 7));
-export const monthName = (date: Date, style: 'long' | 'short' = 'long') =>
+export const weekStart = (date: Date): Date => addDays(date, -((date.getDay() + 6) % 7));
+export const monthName = (date: Date, style: 'long' | 'short' = 'long'): string =>
   date.toLocaleDateString('en-GB', { month: style });
-export const fullDate = (date: Date) =>
+export const fullDate = (date: Date): string =>
   date.toLocaleDateString('en-GB', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
-export const shortDate = (key: string) =>
+export const shortDate = (key: string): string =>
   dateFromKey(key).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-export const eligibilityLabel = (decision: Decision) =>
+export const eligibilityLabel = (
+  decision: Decision,
+): 'Eligible' | 'Not eligible' | 'Eligibility to confirm' =>
   decision.status === 'eligible'
     ? 'Eligible'
     : decision.status === 'not-eligible'
       ? 'Not eligible'
       : 'Eligibility to confirm';
-export const formatAmount = (amount: number, unit: string) =>
+export const formatAmount = (amount: number, unit: string): string =>
   `${amount} ${amount === 1 ? ({ 'working days': 'working day', days: 'day', months: 'month', weeks: 'week', hours: 'hour', 'hours per day': 'hour per day' } as Record<string, string>)[unit] || unit : unit}`;
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceDataService {
   readonly api = inject(WorkspaceApiService);
-  readonly initialize = () => this.api.initialize();
+  readonly initialize = (): Promise<void> => this.api.initialize();
   readonly environment: WorkspaceEnvironment;
   readonly profiles: OwnProfiles;
   readonly organization: OrganizationStore;
@@ -71,18 +77,19 @@ export class WorkspaceDataService {
     this.organization = this.api.organization;
     this.environment.VacateFixtures = {
       ...fixtures,
-      allowedScopes: (person) =>
+      allowedScopes: (person): string[] =>
         this.isCurrentActor(person)
           ? [...new Set([...fixtures.allowedScopes(person), 'self', 'team', 'org'])]
           : fixtures.allowedScopes(person),
-      allowedTeams: (person) => {
+      allowedTeams: (person): Group[] => {
         const teams = fixtures.allowedTeams(person);
         if (
           !this.isCurrentActor(person) ||
           !person.teamId ||
           teams.some((team) => team.id === person.teamId)
-        )
+        ) {
           return teams;
+        }
         return [
           ...teams,
           {
@@ -92,21 +99,28 @@ export class WorkspaceDataService {
           },
         ];
       },
-      ownEntries: (person) => fixtures.ownEntries(this.referencePerson(person)),
-      balancesFor: (person) => fixtures.balancesFor(person ? this.referencePerson(person) : null),
-      peopleFor: (person, scope, group) => {
-        if (this.isCurrentActor(person) && scope === 'self')
+      ownEntries: (person): Entry[] => fixtures.ownEntries(this.referencePerson(person)),
+      balancesFor: (person): Record<string, Allocation> | null =>
+        fixtures.balancesFor(person ? this.referencePerson(person) : null),
+      peopleFor: (person, scope, group): Person[] => {
+        if (this.isCurrentActor(person) && scope === 'self') {
           return group && group !== person.id ? [] : [person];
+        }
         if (
           this.isCurrentActor(person) &&
           scope === 'team' &&
           (!group || group === person.teamId) &&
           this.api.teamMembers
-        )
+        ) {
           return this.myTeamPeople;
+        }
         return fixtures.peopleFor(person, scope, group);
       },
-      availabilityFor: (person, scope, group) => {
+      availabilityFor: (
+        person,
+        scope,
+        group,
+      ): { id: string; person: string; companyId: string; start: string; end: string }[] => {
         if (
           this.isCurrentActor(person) &&
           scope === 'team' &&
@@ -116,9 +130,9 @@ export class WorkspaceDataService {
           const ids = new Set(this.myTeamPeople.map((member) => member.id));
           return fixtures.entries
             .filter((entry) => entry.companyId === person.companyId && ids.has(entry.person))
-            .map(({ id, person, companyId, start, end }) => ({
+            .map(({ id, person: personId, companyId, start, end }) => ({
               id,
-              person,
+              person: personId,
               companyId,
               start,
               end,
@@ -126,13 +140,17 @@ export class WorkspaceDataService {
         }
         return fixtures.availabilityFor(person, scope, group);
       },
-      eligibilityProfileFor: (person: import('../models/workspace.models').Person) => {
+      eligibilityProfileFor: (
+        person: import('../models/workspace.models').Person,
+      ): Record<string, unknown> | null => {
         const base = fixtures.eligibilityProfileFor(this.referencePerson(person)) as Record<
           string,
           unknown
         > | null;
         const own = this.profiles.read();
-        if (!base || !own || person.id !== this.currentUser()?.id) return base;
+        if (!base || !own || person.id !== this.currentUser()?.id) {
+          return base;
+        }
         return {
           ...base,
           gender: own.gender,
@@ -178,7 +196,7 @@ export class WorkspaceDataService {
     return this.isCurrentActor(person) && reference ? reference : person;
   }
 
-  private isCurrentActor(person: Person | null) {
+  private isCurrentActor(person: Person | null): boolean {
     const actor = this.api.currentUser();
     return (
       !!actor &&
@@ -192,9 +210,13 @@ export class WorkspaceDataService {
 
   get myTeamPeople(): Person[] {
     const actor = this.currentUser();
-    if (!actor?.teamId) return [];
+    if (!actor?.teamId) {
+      return [];
+    }
     const members = this.api.teamMembers;
-    if (!members) return this.fixtures.peopleFor(actor, 'team');
+    if (!members) {
+      return this.fixtures.peopleFor(actor, 'team');
+    }
     return members.map((member) => {
       const reference = this.fixtures.people.find((person) => person.email === member.email);
       return {
@@ -213,35 +235,39 @@ export class WorkspaceDataService {
     });
   }
 
-  get companyName() {
+  get companyName(): string {
     return this.organization.summary()?.name || this.fixtures.company.name;
   }
-  get companyWorkWeekDays() {
+  get companyWorkWeekDays(): number {
     return this.organization.summary()?.workWeekDays || 5;
   }
 
-  groupName(kind: string, id: string) {
+  groupName(kind: string, id: string): string | null {
     return this.organization.groupName(kind, id);
   }
 
-  get fixtures() {
+  get fixtures(): Fixtures {
     return this.environment.VacateFixtures;
   }
-  get catalogue() {
+  get catalogue(): Catalogue {
     return this.environment.VacateLeave;
   }
-  get eligibility() {
+  get eligibility(): Eligibility {
     return this.environment.VacateEligibility;
   }
 
-  currentUser() {
+  currentUser(): Person | null {
     return this.environment.VacateSession.currentUser();
   }
 
   displayPreferences(person: Person | null = this.currentUser()): DisplayPreferences {
-    if (!person) return { ...defaultDisplayPreferences };
+    if (!person) {
+      return { ...defaultDisplayPreferences };
+    }
     const stored = localStorage.getItem(displayPreferencesKey(person));
-    if (!stored) return { ...defaultDisplayPreferences };
+    if (!stored) {
+      return { ...defaultDisplayPreferences };
+    }
     const [layout, colorScheme] = stored.split('|');
     return {
       layout: layout === 'planner' ? 'planner' : 'calendar',
@@ -254,13 +280,15 @@ export class WorkspaceDataService {
     preferences: DisplayPreferences,
   ): { ok: boolean; error?: string } {
     const current = this.currentUser();
-    if (!current || current.id !== account.id || current.companyId !== account.companyId)
+    if (!current || current.id !== account.id || current.companyId !== account.companyId) {
       return { ok: false, error: 'Your account changed. Reopen settings before saving.' };
+    }
     if (
       !['calendar', 'planner'].includes(preferences.layout) ||
       !['a', 'c'].includes(preferences.colorScheme)
-    )
+    ) {
       return { ok: false, error: 'Choose a supported calendar layout and color scheme.' };
+    }
     try {
       localStorage.setItem(
         displayPreferencesKey(current),
@@ -276,30 +304,30 @@ export class WorkspaceDataService {
     return { ok: true };
   }
 
-  decision(id: string) {
+  decision(id: string): Decision {
     return this.eligibility.decisionFor(id);
   }
 
-  balance(id: string) {
+  balance(id: string): Balance | null {
     return this.decision(id).status === 'eligible' ? this.catalogue.balanceOf(id) : null;
   }
 
-  label(type: LeaveType) {
+  label(type: LeaveType): string {
     return this.catalogue.typeLabel(type);
   }
 
-  typeName(id?: string) {
+  typeName(id?: string): string {
     const type = id && this.catalogue.getType(id);
     return type ? this.label(type) : 'Leave';
   }
 
-  visibleShortlist() {
+  visibleShortlist(): LeaveType[] {
     return this.catalogue.shortlistIds
       .map((id) => this.catalogue.getType(id)!)
       .filter((type) => this.decision(type.id).status !== 'not-eligible');
   }
 
-  logout() {
+  logout(): void {
     this.environment.VacateSession.logout();
     location.replace('/login.html');
   }

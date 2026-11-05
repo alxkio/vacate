@@ -1,0 +1,39 @@
+<dialog #dialog id="dialog" (close)="closed()">
+  <form method="dialog"><button class="dialog-close" aria-label="Close dialog">×</button></form>
+  <div id="dialog-content">
+    @if (modal; as content) {
+      @if (content.kind === 'request') {
+        <vacate-request
+          [initialType]="content.type || 'annual'"
+          [example]="!!content.example"
+          [page]="page"
+          (finished)="close()"
+          (staleSession)="staleSession.emit()"
+        />
+      } @else {
+        @if (content.eyebrow) {
+          <span class="eyebrow">{{ content.eyebrow }}</span>
+        }
+        <h2>{{ content.title }}</h2>
+        @for (paragraph of content.paragraphs || []; track $index) {
+          <p>{{ paragraph }}</p>
+        }
+        @if (content.items?.length) {
+          <ul class="dialog-list">
+            @for (item of content.items; track $index) {
+              <li [attr.data-person]="item.id || null">
+                {{ item.text }}
+                @if (item.detail) {
+                  <small>{{ item.detail }}</small>
+                }
+              </li>
+            }
+          </ul>
+        }
+        @if (content.account) {
+          <button class="primary" data-action="logout">Sign out</button>
+        }
+      }
+    }
+  </div>
+</dialog>

@@ -32,6 +32,8 @@ Owner: name/role
 
 - [ADR-0004: Relational resource persistence through Infrastructure adapters](0004-relational-persistence.md) — ACCEPTED, 2026-11-02 (proposed 2026-11-01); implementation/cutover gates remain mandatory.
 
+- [ADR-0005: Frontend capability architecture](0005-frontend-capability-architecture.md) — ACCEPTED, 2026-11-05; frontend capability ownership, routing, state and data access; migration remains to implement.
+
 ## ADRs to create after clarification
 
 1. Initial beachhead market and customer segment.
@@ -39,4 +41,3 @@ Owner: name/role
 3. Legal-policy content strategy and review ownership.
 4. MVP deployment and identity-provider selection.
 5. Integration sequencing: Teams/calendar before or after core workflow validation.
-

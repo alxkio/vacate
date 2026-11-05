@@ -1,4 +1,4 @@
-export interface Person {
+export type Person = {
   id: string;
   personId: string;
   companyId: string;
@@ -13,13 +13,13 @@ export interface Person {
   username: string;
   email: string;
 }
-export interface Group {
+export type Group = {
   id: string;
   name: string;
   companyId: string;
   departmentId?: string;
 }
-export interface Entry {
+export type Entry = {
   id: string;
   person: string;
   companyId: string;
@@ -31,18 +31,18 @@ export interface Entry {
   amount?: number;
   unit?: string;
 }
-export interface Allocation {
+export type Allocation = {
   allocation: number;
   used: number;
   pending: number;
   period: string;
   note: string;
 }
-export interface Balance extends Allocation {
+export type Balance = {
   available: number;
   percentage: number | null;
-}
-export interface LeaveType {
+} & Allocation
+export type LeaveType = {
   id: string;
   name: string;
   requestName?: string;
@@ -57,18 +57,18 @@ export interface LeaveType {
   source: string;
   sourceUrl?: string;
 }
-export interface TypeGroup {
+export type TypeGroup = {
   name: string;
   types: LeaveType[];
 }
-export interface Decision {
+export type Decision = {
   typeId?: string;
   status: 'eligible' | 'not-eligible' | 'to-confirm';
   reasonCode: string;
   reason: string;
   policyVersion: string;
 }
-export interface EligibilityResponse {
+export type EligibilityResponse = {
   schemaVersion: string;
   companyId: string;
   employeeId: string;
@@ -78,7 +78,7 @@ export interface EligibilityResponse {
   policyVersion: string;
   decisions: readonly Decision[];
 }
-export interface Fixtures {
+export type Fixtures = {
   company: { id: string; name: string; countryCode: string };
   departments: readonly Group[];
   teams: readonly Group[];
@@ -94,12 +94,12 @@ export interface Fixtures {
   balancesFor(person: Person | null): Record<string, Allocation> | null;
   eligibilityProfileFor(person: Person): unknown;
 }
-export interface SessionState {
+export type SessionState = {
   currentUser(): Person | null;
   login(username: string, password: string): boolean | Promise<boolean>;
   logout(): void;
 }
-export interface Catalogue {
+export type Catalogue = {
   workWeekDays: number;
   types: readonly LeaveType[];
   shortlistIds: readonly string[];
@@ -108,11 +108,11 @@ export interface Catalogue {
   typeGroups(types: readonly LeaveType[]): TypeGroup[];
   balanceOf(id: string): Balance | null;
 }
-export interface Eligibility {
+export type Eligibility = {
   getResponse(): EligibilityResponse | null;
   decisionFor(id: string): Decision;
 }
-export interface WorkspaceEnvironment {
+export type WorkspaceEnvironment = {
   VacateFixtures: Fixtures;
   VacateSession: SessionState;
   VacateLeave: Catalogue;
@@ -120,11 +120,11 @@ export interface WorkspaceEnvironment {
 }
 export type CalendarLayout = 'calendar' | 'planner';
 export type ColorScheme = 'a' | 'c';
-export interface DisplayPreferences {
+export type DisplayPreferences = {
   layout: CalendarLayout;
   colorScheme: ColorScheme;
 }
-export interface CalendarState {
+export type CalendarState = {
   page:
     | 'calendar'
     | 'balances'
@@ -143,7 +143,7 @@ export interface CalendarState {
   date: Date;
 }
 
-export interface OwnProfileFields {
+export type OwnProfileFields = {
   firstName: string;
   middleName: string | null;
   lastName: string;
@@ -152,13 +152,13 @@ export interface OwnProfileFields {
   dependentChildren: number;
   soleCare: boolean;
 }
-export interface Lifecycle {
+export type Lifecycle = {
   createdAt: string;
   updatedAt: string;
   deleteRequestedAt: string | null;
   deletedAt: string | null;
 }
-export interface OwnProfile extends OwnProfileFields, Lifecycle {
+export type OwnProfile = {
   id: number;
   guid: string;
   username: string;
@@ -191,8 +191,8 @@ export interface OwnProfile extends OwnProfileFields, Lifecycle {
           periodEnd: string;
         };
       });
-}
-export interface OwnProfiles {
+} & OwnProfileFields & Lifecycle
+export type OwnProfiles = {
   read(): OwnProfile | null;
   update(
     targetId: string,
@@ -201,15 +201,15 @@ export interface OwnProfiles {
   clear(): void;
 }
 
-export interface OrganizationNode extends Lifecycle {
+export type OrganizationNode = {
   id: string;
   name: string;
-}
-export interface OrganizationTeam extends OrganizationNode {
+} & Lifecycle
+export type OrganizationTeam = {
   departmentId: string | null;
   members: { id: string; name: string; jobTitle: string; systemRole: string }[];
-}
-export interface OrganizationRecord extends Lifecycle {
+} & OrganizationNode
+export type OrganizationRecord = {
   settings?: import('../http/contracts').VacationSettings;
   companyId: string;
   name: string;
@@ -217,8 +217,8 @@ export interface OrganizationRecord extends Lifecycle {
   departments: OrganizationNode[];
   teams: OrganizationTeam[];
   members: OrganizationTeam['members'];
-}
-export interface OrganizationStore {
+} & Lifecycle
+export type OrganizationStore = {
   summary(): { name: string; workWeekDays: number } | null;
   groupName(kind: string, id: string): string | null;
   read(companyId: string): OrganizationRecord | null;

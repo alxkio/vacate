@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, inject, Input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
-import { DisplayPreferences, OwnProfileFields } from '../../core/models/workspace.models';
+import { DisplayPreferences, OwnProfileFields, Person } from '../../core/models/workspace.models';
 
 @Component({
   selector: 'vacate-settings',
@@ -27,16 +27,16 @@ export class ProfileSettings {
   displayPreferencesMessage = '';
   displayPreferencesError = '';
   busy = false;
-  get person() {
+  get person(): Person | null {
     return this.data.currentUser();
   }
-  get department() {
+  get department(): string | undefined {
     return (
       this.data.groupName('department', this.person?.departmentId || '') ||
       this.data.fixtures.departments.find((item) => item.id === this.person?.departmentId)?.name
     );
   }
-  get systemRole() {
+  get systemRole(): "Admin" | "Employee" {
     return this.person?.capability === 'admin' ? 'Admin' : 'Employee';
   }
 
@@ -53,7 +53,7 @@ export class ProfileSettings {
     };
   }
 
-  reset() {
+  reset(): void {
     if (this.data.currentUser()?.id !== this.accountId) {
       this.staleSession.emit();
       return;
@@ -64,8 +64,8 @@ export class ProfileSettings {
     this.message = 'Unsaved changes discarded.';
   }
 
-  async submit() {
-    if (this.busy) return;
+  async submit(): Promise<void> {
+    if (this.busy) {return;}
     this.message = '';
     if (this.data.currentUser()?.id !== this.accountId) {
       this.error = 'Your account changed. Reopen settings before saving.';
@@ -85,7 +85,7 @@ export class ProfileSettings {
     }
   }
 
-  saveDisplayPreferences() {
+  saveDisplayPreferences(): void {
     this.displayPreferencesMessage = '';
     this.displayPreferencesError = '';
     const current = this.data.currentUser();

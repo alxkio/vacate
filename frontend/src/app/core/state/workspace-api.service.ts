@@ -1,14 +1,21 @@
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
-  OwnProfile,
-  Person,
   OrganizationRecord,
   OrganizationStore,
+  OwnProfile,
   OwnProfiles,
+  Person,
 } from '../models/workspace.models';
 
-import { MemberRecord, Roles, OrganizationSummary } from '../http/contracts';
+import {
+  DirectoryUser,
+  MemberRecord,
+  OrganizationSummary,
+  Roles,
+  SettingsAccess,
+  VacationSettings,
+} from '../http/contracts';
 import { UserApiService } from '../http/user-api.service';
 import { MembershipApiService } from '../http/membership-api.service';
 import { OrganizationApiService } from '../http/organization-api.service';
@@ -28,8 +35,10 @@ const aliases = new Map<string, string>(
     String(alias),
   ]),
 );
-export const displayId = (id: string | null | undefined) => (id ? aliases.get(id) || id : '');
-export const apiId = (id: string) => [...aliases].find(([, alias]) => alias === id)?.[0] || id;
+export const displayId = (id: string | null | undefined): string =>
+  id ? aliases.get(id) || id : '';
+export const apiId = (id: string): string =>
+  [...aliases].find(([, alias]): boolean => alias === id)?.[0] || id;
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceApiService {
@@ -47,10 +56,14 @@ export class WorkspaceApiService {
   roles: Roles = { systemRoles: [], jobRoles: [], workSchedules: [] };
   error = '';
 
-  async initialize() {
-    if (this.initialized) return;
+  async initialize(): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
     this.initialized = true;
-    if (!this.token) return;
+    if (!this.token) {
+      return;
+    }
     try {
       await this.refresh();
     } catch {
@@ -59,13 +72,13 @@ export class WorkspaceApiService {
     }
   }
 
-  currentUser() {
+  currentUser(): Person | null {
     return this.token && sessionStorage.getItem('vacate.session.token') === this.token
       ? this.actor
       : null;
   }
 
-  async login(username: string, password: string) {
+  async login(username: string, password: string): Promise<boolean> {
     this.logout();
     try {
       const response = await firstValueFrom(this.sessions.signIn(username, password));
@@ -82,13 +95,15 @@ export class WorkspaceApiService {
     }
   }
 
-  logout() {
+  logout(): void {
     const token = this.token;
     this.clear();
-    if (token) void firstValueFrom(this.sessions.signOut(token)).catch(() => {});
+    if (token) {
+      void firstValueFrom(this.sessions.signOut(token)).catch(() => {});
+    }
   }
 
-  private clear() {
+  private clear(): void {
     this.token = '';
     this.actor = null;
     this.profile = null;
@@ -100,26 +115,31 @@ export class WorkspaceApiService {
     sessionStorage.removeItem('vacate.demo.account.v2');
   }
 
-  async directory() {
+  async directory(): Promise<DirectoryUser[]> {
     const token = this.token;
     const people = await firstValueFrom(this.users.list(token));
-    if (!token || token !== this.token) throw Error('Your account changed. Reopen People.');
+    if (!token || token !== this.token) {
+      throw Error('Your account changed. Reopen People.');
+    }
     return people;
   }
 
-  get teamMembers() {
+  get teamMembers(): DirectoryUser[] | undefined {
     return this.summaryRecord?.teamMembers;
   }
 
-  get settingsAccess() {
+  get settingsAccess(): SettingsAccess | undefined {
     return this.summaryRecord?.settingsAccess;
   }
 
-  get organizationSettings() {
+  get organizationSettings(): VacationSettings | undefined {
     return this.org?.settings;
   }
 
-  updateOrganizationSettings(actorId: string, patch: unknown) {
+  updateOrganizationSettings(
+    actorId: string,
+    patch: unknown,
+  ): Promise<{ ok: boolean; error?: undefined } | { ok: boolean; error: any }> {
     return this.writeOrganization(this.actor?.companyId || '', actorId, (token) =>
       firstValueFrom(this.organizations.update(apiId(this.actor!.companyId), patch, token)),
     );
@@ -130,7 +150,7 @@ export class WorkspaceApiService {
     kind: 'departments' | 'teams',
     nodeId: string,
     required: boolean | null,
-  ) {
+  ): Promise<{ ok: boolean; error?: undefined } | { ok: boolean; error: any }> {
     return this.write(actorId, (token) =>
       firstValueFrom(
         this.organizations.updateApproval(
@@ -144,7 +164,7 @@ export class WorkspaceApiService {
     );
   }
 
-  async refresh() {
+  async refresh(): Promise<void> {
     const token = this.token;
     const response = await firstValueFrom(this.sessions.current(token));
     const companyId = response.profile.membership?.companyId;
@@ -162,7 +182,9 @@ export class WorkspaceApiService {
       ]);
       members = memberRecords;
       roles = roleRecords;
-      const member = (item: MemberRecord) => ({
+      const member = (
+        item: MemberRecord,
+      ): { id: string; name: string; jobTitle: string; systemRole: string } => ({
         id: item.userGuid,
         name: item.person.name,
         jobTitle: item.person.title,
@@ -181,7 +203,9 @@ export class WorkspaceApiService {
         members: members.map(member),
       };
     }
-    if (token !== this.token) throw Error('Your account changed.');
+    if (token !== this.token) {
+      throw Error('Your account changed.');
+    }
     this.actor = {
       ...response.person,
       companyId: displayId(companyId),
@@ -195,18 +219,25 @@ export class WorkspaceApiService {
     this.roles = roles;
   }
 
-  private async write(actorId: string, save: (token: string) => Promise<unknown>) {
-    if (this.actor?.id !== actorId)
+  private async write(
+    actorId: string,
+    save: (token: string) => Promise<unknown>,
+  ): Promise<{ ok: boolean; error?: undefined } | { ok: boolean; error: any }> {
+    if (this.actor?.id !== actorId) {
       return { ok: false, error: 'Your account changed. Reopen the page before saving.' };
+    }
     const token = this.token;
     try {
       await save(token);
-      if (token !== this.token)
+      if (token !== this.token) {
         return { ok: false, error: 'Your account changed. Reopen the page.' };
+      }
       await this.refresh();
       return { ok: true };
     } catch (error: any) {
-      if (token === this.token && [401, 403, 404].includes(error.status)) this.clear();
+      if (token === this.token && [401, 403, 404].includes(error.status)) {
+        this.clear();
+      }
       return {
         ok: false,
         error:
@@ -215,7 +246,11 @@ export class WorkspaceApiService {
     }
   }
 
-  updateMembership(actorId: string, userGuid: string, patch: unknown) {
+  updateMembership(
+    actorId: string,
+    userGuid: string,
+    patch: unknown,
+  ): Promise<{ ok: boolean; error?: undefined } | { ok: boolean; error: any }> {
     return this.write(actorId, (token) =>
       firstValueFrom(
         this.memberships.update(this.profile?.membership?.companyId || '', userGuid, patch, token),
@@ -241,7 +276,9 @@ export class WorkspaceApiService {
       const group = (kind === 'department' ? this.org?.departments : this.org?.teams)?.find(
         (x) => x.id === id,
       );
-      if (group) return group.name;
+      if (group) {
+        return group.name;
+      }
       return id === (kind === 'department' ? this.actor?.departmentId : this.actor?.teamId)
         ? (kind === 'department'
             ? this.summaryRecord?.departmentName
@@ -267,9 +304,14 @@ export class WorkspaceApiService {
     clear: () => {},
   };
 
-  private writeOrganization(id: string, actor: string, save: (token: string) => Promise<unknown>) {
-    if (id !== this.actor?.companyId)
+  private writeOrganization(
+    id: string,
+    actor: string,
+    save: (token: string) => Promise<unknown>,
+  ): Promise<{ ok: boolean; error?: undefined } | { ok: boolean; error: any }> {
+    if (id !== this.actor?.companyId) {
       return Promise.resolve({ ok: false, error: 'Organization unavailable.' });
+    }
     return this.write(actor, save);
   }
 }

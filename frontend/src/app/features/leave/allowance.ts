@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Balance, LeaveType } from '../../core/models/workspace.models';
+import { LeaveType } from '../../core/models/workspace.models';
 
 @Component({
   selector: 'vacate-allowance',
@@ -46,7 +46,7 @@ import { Balance, LeaveType } from '../../core/models/workspace.models';
     }
     <p class="allowance-source">
       @if (type.sourceUrl) {
-        <a [href]="type.sourceUrl" target="_blank" rel="noopener noreferrer"
+        <a target="_blank" rel="noopener noreferrer" [href]="type.sourceUrl"
           >{{ type.source }} (opens a new tab)</a
         >
       } @else {
@@ -57,57 +57,4 @@ import { Balance, LeaveType } from '../../core/models/workspace.models';
 })
 export class Allowance {
   @Input({ required: true }) type!: LeaveType;
-}
-
-@Component({
-  selector: 'vacate-balance-bar',
-  template: `
-    @if (balance.allocation > 0) {
-      <div
-        class="type-bar"
-        role="group"
-        [attr.aria-label]="
-          label +
-          ': allocation ' +
-          balance.allocation +
-          ', used ' +
-          balance.used +
-          ', pending ' +
-          balance.pending +
-          ', available ' +
-          balance.available +
-          ' ' +
-          unit
-        "
-      >
-        <span
-          class="bar-used"
-          [style.width.%]="(balance.used / balance.allocation) * 100"
-          aria-hidden="true"
-        ></span>
-        <span
-          class="bar-pending"
-          [style.width.%]="(pendingReserved / balance.allocation) * 100"
-          aria-hidden="true"
-        ></span>
-        <span
-          class="bar-available"
-          [style.width.%]="(balance.available / balance.allocation) * 100"
-          aria-hidden="true"
-        ></span>
-      </div>
-    }
-  `,
-})
-export class BalanceBar {
-  @Input({ required: true }) balance!: Balance;
-  @Input() label = 'Annual leave';
-  @Input() unit = 'working days';
-
-  get pendingReserved() {
-    return Math.min(
-      this.balance.pending,
-      Math.max(0, this.balance.allocation - this.balance.used - this.balance.available),
-    );
-  }
 }

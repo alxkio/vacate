@@ -14,7 +14,7 @@ export type SettingsSection = (typeof sections)[number]['id'];
 export function settingsSections(
   person: Pick<Person, 'capability'> | null,
   access?: SettingsAccess,
-) {
+): ({ readonly id: "organization"; readonly name: "Organization"; readonly admin: true; } | { readonly id: "department"; readonly name: "Department"; readonly admin: true; } | { readonly id: "team"; readonly name: "Team"; readonly admin: true; } | { readonly id: "profile"; readonly name: "Profile"; readonly admin: false; } | { readonly id: "system"; readonly name: "System"; readonly admin: false; })[] {
   return sections.filter(
     (section) =>
       !section.admin ||

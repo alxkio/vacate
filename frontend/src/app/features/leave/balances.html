@@ -7,8 +7,8 @@
     <button
       class="inline-link"
       id="balance-toggle"
-      [attr.aria-expanded]="showAll"
       aria-controls="balance-types"
+      [attr.aria-expanded]="showAll"
       (click)="showAll = !showAll"
     >
       {{
@@ -25,11 +25,11 @@
           @for (type of group.types; track type.id) {
             @let decision = data.decision(type.id); @let balance = data.balance(type.id);
             <details
+              #details
               class="type-balance"
               [attr.data-balance]="type.id"
               [attr.data-eligibility]="decision.status"
               [open]="expanded.has(type.id)"
-              #details
               (toggle)="toggle(type.id, details)"
             >
               <summary [attr.aria-expanded]="details.open">
@@ -90,7 +90,7 @@
                   >
                     Preview {{ data.label(type).toLowerCase() }} example →
                   </button>
-                  <p [id]="'eligibility-' + type.id" class="example-eligibility">
+                  <p class="example-eligibility" [id]="'eligibility-' + type.id">
                     {{ decision.reason }}
                   </p>
                 }

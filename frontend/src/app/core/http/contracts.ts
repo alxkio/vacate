@@ -1,30 +1,30 @@
-import { OwnProfile, Person, OrganizationRecord, Lifecycle } from '../models/workspace.models';
-export interface MemberRecord {
+import { Lifecycle, OwnProfile, Person } from '../models/workspace.models';
+export type MemberRecord = {
   userId: number;
   userGuid: string;
   person: Person;
   membership: NonNullable<OwnProfile['membership']>;
 }
-export interface ReferenceRecord {
+export type ReferenceRecord = {
   id: number;
   guid: string;
   name: string;
 }
-export interface Roles {
+export type Roles = {
   systemRoles: ReferenceRecord[];
   jobRoles: ReferenceRecord[];
   workSchedules: ReferenceRecord[];
 }
-export interface CurrentSession {
+export type CurrentSession = {
   person: Person;
   profile: OwnProfile;
 }
-export interface SignInResult {
+export type SignInResult = {
   accessToken: string;
   expiresAt: string;
   person: Person;
 }
-export interface OrganizationSummary {
+export type OrganizationSummary = {
   id: number;
   guid: string;
   name: string;
@@ -34,30 +34,30 @@ export interface OrganizationSummary {
   teamMembers: DirectoryUser[];
   settingsAccess?: SettingsAccess;
 }
-export interface VacationSettings {
+export type VacationSettings = {
   requireVacationApproval: boolean;
   departmentLeadSettingsEnabled: boolean;
   teamLeadSettingsEnabled: boolean;
   carryoverEnabled: boolean;
   carryoverYears: number;
 }
-export interface SettingsAccess {
+export type SettingsAccess = {
   role: string;
   organization: boolean;
   effectiveVacationApproval: boolean;
   departments: ApiDepartment[];
   teams: ApiTeam[];
 }
-export interface ApiDepartment extends Lifecycle {
+export type ApiDepartment = {
   id: number;
   guid: string;
   name: string;
   requireVacationApproval?: boolean | null;
-}
-export interface ApiTeam extends ApiDepartment {
+} & Lifecycle
+export type ApiTeam = {
   departmentId: string | null;
-}
-export interface OrganizationResponse extends Lifecycle {
+} & ApiDepartment
+export type OrganizationResponse = {
   id: number;
   guid: string;
   name: string;
@@ -65,9 +65,9 @@ export interface OrganizationResponse extends Lifecycle {
   departments: ApiDepartment[];
   teams: ApiTeam[];
   settings?: VacationSettings;
-}
+} & Lifecycle
 
-export interface DirectoryUser {
+export type DirectoryUser = {
   username: string;
   email: string;
   firstName: string;

@@ -1,10 +1,9 @@
-<a class="skip" href="#main">Skip to {{ pageTitle }}</a>
+<a class="skip" href="#main">Skip to {{ view.pageTitle }}</a>
 <div
   class="app"
   [attr.data-layout]="state.layout"
   [attr.data-color-scheme]="state.colorScheme"
   [attr.data-page]="state.page"
-  (click)="handleClick($event)"
 >
   <header class="topbar">
     <div class="brand">
@@ -22,9 +21,9 @@
         <button
           class="account"
           data-action="account"
+          aria-controls="account-dropdown"
           [attr.aria-label]="profileName + ', account options'"
           [attr.aria-expanded]="accountOpen"
-          aria-controls="account-dropdown"
         >
           {{ profileInitials }}
         </button>
@@ -40,7 +39,7 @@
     </div>
   </header>
   <aside class="sidebar" aria-label="Main navigation">
-    <button class="mobile-menu" [attr.aria-expanded]="mobileOpen" aria-controls="navigation">
+    <button class="mobile-menu" aria-controls="navigation" [attr.aria-expanded]="mobileOpen">
       ☰ <span>Navigation</span>
     </button>
     <nav id="navigation" [class.open]="mobileOpen">
@@ -80,15 +79,15 @@
     </div>
     <div class="sidebar-bottom"><span class="status-dot"></span> Design proposal · v01</div>
   </aside>
-  <main id="main" #main tabindex="-1">
+  <main #main id="main" tabindex="-1">
     <div class="page-heading">
       <div>
         <div class="breadcrumb">
           Workspace <span>/</span>
-          {{ pageTitle }}
+          {{ view.pageTitle }}
         </div>
-        <h1>{{ pageTitle }}<span>.</span></h1>
-        <p id="subtitle">{{ subtitle }}</p>
+        <h1>{{ view.pageTitle }}<span>.</span></h1>
+        <p id="subtitle">{{ view.subtitle }}</p>
       </div>
       <button
         class="primary"
@@ -127,20 +126,23 @@
             Organization
           </button>
         </div>
-        <label id="scope-group-label" [hidden]="!groups.length"
+        <label id="scope-group-label" [hidden]="!view.groups.length"
           >Show
           <select
-            id="scope-group"
             #groupSelect
-            [value]="groupId"
+            id="scope-group"
+            [value]="view.groupId"
             (change)="chooseGroup(groupSelect.value)"
           >
-            @for (group of groups; track group.id) {
-              <option [value]="group.id" [selected]="group.id === groupId">{{ group.name }}</option>
+            @for (group of view.groups; track group.id) {
+              <option [value]="group.id" [selected]="group.id === view.groupId">
+                {{ group.name }}
+              </option>
             }
           </select></label
         ><span id="scope-count" class="scope-count"
-          >{{ visiblePeople.length }} {{ visiblePeople.length === 1 ? 'person' : 'people' }}</span
+          >{{ view.visiblePeople.length }}
+          {{ view.visiblePeople.length === 1 ? 'person' : 'people' }}</span
         ><span class="scope-note" id="scope-note">{{
           state.scope === 'self'
             ? 'Only your requests and balances'
@@ -154,7 +156,7 @@
               <button class="icon-button" data-action="previous" aria-label="Previous period">
                 ‹
               </button>
-              <h2 id="period">{{ period }}</h2>
+              <h2 id="period">{{ view.period }}</h2>
               <button class="icon-button" data-action="next" aria-label="Next period">›</button
               ><button class="today-button" data-action="today">Today</button>
             </div>
@@ -167,7 +169,7 @@
           </div>
           <div class="calendar-meta">
             <span id="calendar-caption"
-              >{{ scopeName
+              >{{ view.scopeName
               }}{{
                 state.scope === 'self' ? ' · Your leave requests' : ' · Permitted availability'
               }}</span
@@ -185,8 +187,8 @@
             <vacate-calendar
               [user]="user"
               [state]="state"
-              (selectedDate)="showDate($event.date, $event.trigger)"
-              (selectedEvent)="showEvent($event.id, $event.trigger)"
+              (selectedDate)="workspaceDialog.showDate($event.date, $event.trigger)"
+              (selectedEvent)="workspaceDialog.showEvent($event.id, $event.trigger)"
               (selectedMonth)="chooseMonth($event)"
             />
           </div>
@@ -211,7 +213,7 @@
               <h2>Annual leave</h2>
               <span>Your balance</span>
             </div>
-            @if (annual; as balance) {
+            @if (view.annual; as balance) {
               <p class="annual-available">
                 <strong>{{ balance.available }}</strong
                 >{{ ' ' }}<span>/ {{ balance.allocation }} working days available</span>
@@ -235,8 +237,8 @@
             }
             <a
               class="inline-link"
-              [href]="balanceUrl"
               data-page-link="balances"
+              [href]="view.balanceUrl"
               (click)="navigatePage('balances', $event)"
               >View all balances <span aria-hidden="true">→</span></a
             >
@@ -246,11 +248,11 @@
               <h2>Coming up for you</h2>
               <span>↗</span>
             </div>
-            @for (entry of upcoming; track entry.id) {
+            @for (entry of view.upcoming; track entry.id) {
               <button
                 class="upcoming-event"
                 [attr.data-event]="entry.id"
-                (click)="showEvent(entry.id, $any($event.currentTarget))"
+                (click)="workspaceDialog.showEvent(entry.id, $any($event.currentTarget))"
               >
                 <span class="date-tile"
                   ><small>{{ monthName(dateFromKey(entry.start), 'short').toUpperCase() }}</small
@@ -274,8 +276,8 @@
             <span class="eyebrow">{{ selectedDate ? 'SELECTED DATE' : 'A LITTLE CONTEXT' }}</span>
             <h2>{{ selectedDate ? shortDate(dateKey(selectedDate)) : 'Pick a day' }}</h2>
             @if (selectedDate) {
-              @for (entry of selectedEntries; track entry.id) {
-                <p>{{ label(entry) }}</p>
+              @for (entry of view.selectedEntries; track entry.id) {
+                <p>{{ view.label(entry) }}</p>
               } @empty {
                 <p>No leave shown for this date.</p>
               }
@@ -326,7 +328,7 @@
     @if (state.page === 'balances') {
       <vacate-balances
         [viewState]="balanceViewState"
-        (example)="request($event.type, $event.trigger, true)"
+        (example)="workspaceDialog.request($event.type, $event.trigger, true)"
       />
     } @else {
       <section id="balances-page" hidden></section>
@@ -338,44 +340,20 @@
   </main>
 </div>
 <div id="announcement" class="sr-only" role="status" aria-live="polite">
-  {{ state.page === 'calendar' ? scopeName + ', ' + state.view + ' view, ' + period : pageTitle }}
+  {{
+    state.page === 'calendar'
+      ? view.scopeName + ', ' + state.view + ' view, ' + view.period
+      : view.pageTitle
+  }}
 </div>
-<dialog id="dialog" #dialog (close)="closed()" (click)="handleClick($event)">
-  <form method="dialog"><button class="dialog-close" aria-label="Close dialog">×</button></form>
-  <div id="dialog-content">
-    @if (modal; as content) {
-      @if (content.kind === 'request') {
-        <vacate-request
-          [initialType]="content.type || 'annual'"
-          [example]="!!content.example"
-          [page]="state.page"
-          (finished)="close()"
-          (staleSession)="ensureSession()"
-        />
-      } @else {
-        @if (content.eyebrow) {
-          <span class="eyebrow">{{ content.eyebrow }}</span>
-        }
-        <h2>{{ content.title }}</h2>
-        @for (paragraph of content.paragraphs || []; track $index) {
-          <p>{{ paragraph }}</p>
-        }
-        @if (content.items?.length) {
-          <ul class="dialog-list">
-            @for (item of content.items; track $index) {
-              <li [attr.data-person]="item.id || null">
-                {{ item.text }}
-                @if (item.detail) {
-                  <small>{{ item.detail }}</small>
-                }
-              </li>
-            }
-          </ul>
-        }
-        @if (content.account) {
-          <button class="primary" data-action="logout">Sign out</button>
-        }
-      }
-    }
-  </div>
-</dialog>
+<vacate-workspace-dialog
+  [sessionUserId]="initialUser.id"
+  [page]="state.page"
+  [user]="user"
+  [scope]="state.scope"
+  [scopeName]="view.scopeName"
+  [entries]="entries"
+  [visibleEntries]="view.visibleEntries"
+  (selectedDateChange)="selectedDate = $event"
+  (staleSession)="ensureSession()"
+/>

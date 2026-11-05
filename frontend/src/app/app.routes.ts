@@ -1,11 +1,11 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router, Routes } from '@angular/router';
+import { CanActivateFn, Route, Router, Routes, UrlTree } from '@angular/router';
 import { WorkspaceDataService } from './core/state/workspace-data.service';
 import { resolveSettingsSection } from './features/settings/settings-navigation';
 
 const signedIn: CanActivateFn = async (route) => {
-  const data = inject(WorkspaceDataService),
-    router = inject(Router);
+  const data = inject(WorkspaceDataService);
+  const router = inject(Router);
   await data.initialize();
   const page = route.queryParamMap.get('page') || route.routeConfig?.path;
   if (
@@ -20,7 +20,9 @@ const signedIn: CanActivateFn = async (route) => {
     }
   }
   const person = data.currentUser();
-  if (!person) return router.parseUrl('/login.html');
+  if (!person) {
+    return router.parseUrl('/login.html');
+  }
   const legacyOrganization = page === 'organization' || page === 'organization-settings';
   if (page === 'settings' || legacyOrganization) {
     const section = legacyOrganization
@@ -35,13 +37,14 @@ const signedIn: CanActivateFn = async (route) => {
   }
   return true;
 };
-const signedOut: CanActivateFn = async () => {
-  const data = inject(WorkspaceDataService),
-    router = inject(Router);
+const signedOut: CanActivateFn = async (): Promise<boolean | UrlTree> => {
+  const data = inject(WorkspaceDataService);
+  const router = inject(Router);
   await data.initialize();
   return data.currentUser() ? router.parseUrl('/index.html') : true;
 };
-const workspace = () => import('./features/workspace/workspace').then((module) => module.Workspace);
+const workspace: NonNullable<Route['loadComponent']> = () =>
+  import('./features/workspace/workspace').then((module) => module.Workspace);
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'index.html' },

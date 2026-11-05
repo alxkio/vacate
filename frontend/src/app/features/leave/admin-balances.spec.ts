@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
 import { createProfiles } from '../../../../testing/fixtures/profiles.js';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
@@ -16,10 +16,10 @@ describe('Administrator leave balances', () => {
 
   afterEach(() => sessionStorage.clear());
 
-  function setup(account = 'nora') {
+  function setup(account = 'nora'): { data: WorkspaceDataService; fixture: ComponentFixture<AdminBalances>; page: AdminBalances; } {
     const data = TestBed.inject(WorkspaceDataService);
     data.environment.VacateSession.login(account, account);
-    const member = (id: string, remaining: number | null, companyId?: string) => {
+    const member = (id: string, remaining: number | null, companyId?: string): MemberRecord => {
       const person = data.fixtures.person(id)!;
       const profile = createProfiles({
         ...data.environment,

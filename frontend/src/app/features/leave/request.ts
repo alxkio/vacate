@@ -10,11 +10,12 @@ import {
 import { Allowance } from './allowance';
 import {
   dateFromKey,
-  WorkspaceDataService,
   eligibilityLabel,
   formatAmount,
   shortDate,
+  WorkspaceDataService,
 } from '../../core/state/workspace-data.service';
+import { Decision, LeaveType, TypeGroup } from '../../core/models/workspace.models';
 
 @Component({ selector: 'vacate-request', imports: [Allowance], templateUrl: './request.html' })
 export class Request implements OnInit {
@@ -40,38 +41,38 @@ export class Request implements OnInit {
   shortDate = shortDate;
   dateFromKey = dateFromKey;
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.setType(this.initialType);
     this.rulesOpen = this.example;
   }
 
-  get type() {
+  get type(): LeaveType | undefined {
     return this.data.catalogue.getType(this.typeId);
   }
-  get decision() {
+  get decision(): Decision {
     return this.data.decision(this.typeId);
   }
-  get shown() {
+  get shown(): readonly LeaveType[] {
     return this.showAll ? this.data.catalogue.types : this.data.visibleShortlist();
   }
-  get pinned() {
+  get pinned(): LeaveType | undefined {
     return !this.showAll &&
       !this.data.catalogue.shortlistIds.includes(this.typeId) &&
       this.decision.status !== 'not-eligible'
       ? this.type
       : undefined;
   }
-  get groups() {
+  get groups(): TypeGroup[] {
     const groups = this.data.catalogue.typeGroups(this.shown);
-    if (this.pinned) groups.push({ name: 'Your selected type', types: [this.pinned] });
+    if (this.pinned) {groups.push({ name: 'Your selected type', types: [this.pinned] });}
     return groups;
   }
-  get units() {
+  get units(): string[] {
     return this.type?.id === 'school'
       ? ['working days', 'hours']
       : [this.type?.unit || 'working days'];
   }
-  get unavailable() {
+  get unavailable(): LeaveType[] {
     return this.showAll
       ? this.data.catalogue.types.filter(
           (type) =>
@@ -79,22 +80,22 @@ export class Request implements OnInit {
         )
       : [];
   }
-  get typeStatus() {
+  get typeStatus(): string {
     return this.showAll
       ? `All ${this.data.catalogue.types.length} reference types shown; unavailable types and the annual allocation supplement cannot be requested.`
       : `${this.shown.length} shortlisted types shown for your profile.${this.pinned ? ` Your selected type, ${this.data.label(this.pinned)}, is also kept visible.` : ''} Known-unavailable types remain in Show all.`;
   }
 
-  setType(id: string) {
+  setType(id: string): void {
     this.typeId = id;
     this.message = '';
     this.unit = this.type?.unit || 'working days';
     this.amount = id === 'annual' ? '3' : '1';
   }
 
-  optionSuffix(id: string) {
-    const type = this.data.catalogue.getType(id),
-      decision = this.data.decision(id);
+  optionSuffix(id: string): string {
+    const type = this.data.catalogue.getType(id);
+      const decision = this.data.decision(id);
     return type?.shape === 'supplement'
       ? ' — annual allocation adjustment'
       : decision.status === 'not-eligible'
@@ -104,7 +105,7 @@ export class Request implements OnInit {
           : '';
   }
 
-  capture(form: HTMLFormElement) {
+  capture(form: HTMLFormElement): void {
     const values = new FormData(form);
     this.start = String(values.get('start') || '');
     this.end = String(values.get('end') || '');
@@ -112,28 +113,28 @@ export class Request implements OnInit {
     this.unit = String(values.get('unit') || '');
   }
 
-  toggleTypes(form: HTMLFormElement) {
+  toggleTypes(form: HTMLFormElement): void {
     this.capture(form);
     this.showAll = !this.showAll;
   }
 
-  input(form: HTMLFormElement, end: HTMLInputElement) {
+  input(form: HTMLFormElement, end: HTMLInputElement): void {
     this.capture(form);
     end.setCustomValidity('');
   }
 
-  get projection() {
+  get projection(): { text: string; excess: boolean; } {
     const decision = this.decision;
     if (decision.status === 'not-eligible')
-      return { text: `Not eligible: ${decision.reason}`, excess: false };
+      {return { text: `Not eligible: ${decision.reason}`, excess: false };}
     if (decision.status !== 'eligible')
-      return {
+      {return {
         text: 'Eligibility to confirm. Balance cannot be calculated in this demo for this amount, period or unit.',
         excess: false,
-      };
-    const type = this.type,
-      balance = this.data.catalogue.balanceOf(this.typeId),
-      amount = Number(this.amount);
+      };}
+    const type = this.type;
+      const balance = this.data.catalogue.balanceOf(this.typeId);
+      const amount = Number(this.amount);
     const periodMatches =
       !balance?.period.includes('2026') ||
       [this.start, this.end].every((date) => date.startsWith('2026-'));
@@ -145,10 +146,10 @@ export class Request implements OnInit {
       !Number.isFinite(amount) ||
       amount <= 0
     )
-      return {
+      {return {
         text: 'Balance cannot be calculated in this demo for this amount, period or unit.',
         excess: false,
-      };
+      };}
     const after = balance.available - amount;
     return {
       text:
@@ -159,7 +160,7 @@ export class Request implements OnInit {
     };
   }
 
-  submit(event: Event, form: HTMLFormElement, end: HTMLInputElement) {
+  submit(event: Event, form: HTMLFormElement, end: HTMLInputElement): void {
     event.preventDefault();
     if (!this.viewerId || this.data.currentUser()?.id !== this.viewerId) {
       this.staleSession.emit();

@@ -14,8 +14,8 @@ import { ScopeSettings } from './scope-settings';
       <nav class="settings-navigation" aria-label="Settings sections">
         @for (section of sections; track section.id) {
           <button
-            [attr.data-settings-section]="section.id"
             class="nav-item"
+            [attr.data-settings-section]="section.id"
             [class.selected]="activeSection === section.id"
             [attr.aria-current]="activeSection === section.id ? 'page' : null"
             (click)="sectionChanged.emit(section.id)"
@@ -60,11 +60,11 @@ export class UnifiedSettings {
   readonly data = inject(WorkspaceDataService);
   @Input() companyId = '';
   @Input() selected = 'profile';
-  get sections() {
+  get sections(): ({ readonly id: "organization"; readonly name: "Organization"; readonly admin: true; } | { readonly id: "department"; readonly name: "Department"; readonly admin: true; } | { readonly id: "team"; readonly name: "Team"; readonly admin: true; } | { readonly id: "profile"; readonly name: "Profile"; readonly admin: false; } | { readonly id: "system"; readonly name: "System"; readonly admin: false; })[] {
     return settingsSections(this.data.currentUser(), this.data.api.settingsAccess);
   }
 
-  get activeSection() {
+  get activeSection(): "team" | "department" | "organization" | "profile" | "system" {
     return resolveSettingsSection(
       this.selected,
       this.data.currentUser(),

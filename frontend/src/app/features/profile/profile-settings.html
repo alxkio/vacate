@@ -1,6 +1,6 @@
-<div class="settings-layout" [class.system-settings]="section === 'system'" id="settings-page">
+<div class="settings-layout" id="settings-page" [class.system-settings]="section === 'system'">
   @if (section === 'profile') {
-    <form class="settings-card" id="profile-form" (ngSubmit)="submit()" #form="ngForm">
+    <form #form="ngForm" class="settings-card" id="profile-form" (ngSubmit)="submit()">
       <div class="settings-card-heading">
         <div>
           <span class="eyebrow">YOUR ACCOUNT</span>
@@ -48,16 +48,16 @@
         <label class="wide"
           >Username / email<input
             id="profile-username"
-            [value]="profile?.username || ''"
             readonly
             aria-describedby="username-help"
+            [value]="profile?.username || ''"
           /><small id="username-help">Your sign-in email cannot be changed here.</small></label
         >
         <label class="wide"
           >Account status<input
             id="profile-status-readonly"
-            [value]="profile?.status || ''"
             readonly
+            [value]="profile?.status || ''"
         /></label>
       </div>
       <fieldset>
@@ -206,10 +206,10 @@
     </section>
   } @else {
     <form
+      #displayForm="ngForm"
       class="settings-card display-preferences-card"
       id="display-preferences-form"
       (ngSubmit)="saveDisplayPreferences()"
-      #displayForm="ngForm"
     >
       <div class="settings-card-heading">
         <div>
