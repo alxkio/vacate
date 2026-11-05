@@ -121,6 +121,8 @@ This deliberately enables shared, predictable demo credentials on a publicly rea
 
 ## Acceptance and verification
 
+The compiled Functions template is checked by `scripts/verify-functions-template.py` before infrastructure validation. Azure SQL environment suffixes already start with a dot: concatenate the server name directly with the suffix. [VAC-39](../docs/jira/VAC-39-login-unavailable.md) records the deployed sign-in outage caused by a duplicate separator and its hostname-only repair. API `/health` reports liveness, not database readiness.
+
 - Given a PR modifying infrastructure, all environment parameter files compile without Azure login.
 - Given a valid `AZURE_CREDENTIALS` repository secret and an existing target group, preview validates and reports changes without applying them.
 - Given `apply=true` and successful build checks, deployment creates/updates infrastructure, publishes the same commit to both hosts and verifies revision and endpoint checks; a repeat run retains stable resource names.

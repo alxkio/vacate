@@ -11,6 +11,9 @@ param enableSqlPersistence bool = false
 param sqlServerName string = ''
 param sqlDatabaseName string = ''
 
+// Azure SQL's environment suffix already includes its leading dot.
+var sqlServerHostname = '${sqlServerName}${environment().suffixes.sqlServerHostname}'
+
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
   location: location
@@ -83,7 +86,7 @@ resource api 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'DevelopmentAuthentication__Enabled', value: enableDevelopmentData ? 'true' : 'false' }
         { name: 'SeedData__Enabled', value: enableDevelopmentData ? 'true' : 'false' }
         { name: 'Persistence__Provider', value: enableSqlPersistence ? 'SqlServer' : 'InMemory' }
-        { name: 'ConnectionStrings__Vacate', value: enableSqlPersistence ? 'Server=tcp:${sqlServerName}.${environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabaseName};Authentication=Active Directory Managed Identity;User Id=${identity.properties.clientId};Encrypt=True;TrustServerCertificate=False;Connection Timeout=90;ConnectRetryCount=3;ConnectRetryInterval=5;' : '' }
+        { name: 'ConnectionStrings__Vacate', value: enableSqlPersistence ? 'Server=tcp:${sqlServerHostname},1433;Database=${sqlDatabaseName};Authentication=Active Directory Managed Identity;User Id=${identity.properties.clientId};Encrypt=True;TrustServerCertificate=False;Connection Timeout=90;ConnectRetryCount=3;ConnectRetryInterval=5;' : '' }
       ]
     }
     functionAppConfig: {
