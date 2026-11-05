@@ -44,7 +44,7 @@ All real Vacate issues, including completed releases. [Workflow, types and statu
 
 | VAC-38 | ![Task](badges/task.svg) | Avoid duplicate CI triggers and preview application builds | 🔍 QA | None | [VAC-38](VAC-38-ci-trigger-deduplication.md) |
 
-| VAC-39 | ![Bug](badges/bug.svg) | Fix invalid SQL hostname blocking development sign-in | 🔍 QA | None | [VAC-39](VAC-39-login-unavailable.md) |
+| VAC-39 | ![Bug](badges/bug.svg) | Fix invalid SQL hostname blocking development sign-in | 🚀 Released | None | [VAC-39](VAC-39-login-unavailable.md) |
 
 Dependencies list **direct implementation prerequisites**, matching each issue's `depends_on` metadata. Coordination links do not block implementation, and inherited prerequisites are not repeated. VAC-6 supplies the shared personas/account fixtures for VAC-2–VAC-4. VAC-5 uses founder-authorized provisional defaults while its questions remain open for revision; VAC-2 implements the bounded admin settings iteration; VAC-3/VAC-4 retain separate specification decisions.
 

@@ -55,6 +55,8 @@ None. Related: [VAC-7](VAC-7-optional-backend-deployment.md) owns historical fro
 
 C1 · 2026-11-05 · Assistant: static audit confirmed duplicate unfiltered push/PR triggers, no standalone CI cancellation, repeated manual deployment checks, and application checks during infrastructure-only preview. Deploy Azure is manual; merge alone never applies infrastructure or publishes applications. The GitHub connector returned no PR-triggered runs for f3ccd30; it cannot establish all push/manual execution history, so findings are configuration-based.
 
+C2 · 2026-11-05 · Assistant: observed one application CI run and one infrastructure-only PR check for PR #3, no duplicate merge-triggered run at b482402, then one manual full deployment (42072424616) with all checks/apply/publish/smoke passing. [VAC-39 release evidence](media/VAC-39/release-2026-11-05.md) records exact revisions/runs. Preview and negative/cancellation behavior remain locally model-verified; hosted preview/cancellation scenarios and repository protection settings remain unverified, so VAC-38 stays QA.
+
 ## Decisions
 
 D1 · 2026-11-05 · Assistant implementation choice under the product lead's request: PR-only automatic validation plus exact-commit manual deployment checks. Keep full and frontend-only coverage unchanged. Explicit job status handling permits preview after skipped application checks while failing closed for apply. Do not reuse PR artifacts for a different merged SHA or add automatic deployment.
@@ -71,8 +73,8 @@ H2 · 2026-11-05 · Assistant · QA after local configuration, 192-case gate mat
 
 ## Verification and release
 
-Local checks passed: see [verification and event matrix](media/VAC-38/verification-2026-11-05.md). Hosted execution, required-check settings and branch-protection enforcement remain unverified. No commit, push, merge, workflow dispatch, Azure deployment or external repository-setting change is authorized by this record.
+Local checks passed: see [verification and event matrix](media/VAC-38/verification-2026-11-05.md). Hosted execution, required-check settings and branch-protection enforcement remain unverified. The later product-lead-authorized VAC-39 release exercised commit/push/merge and full dev apply. This issue itself grants no external-setting permission; no repository protection settings were changed.
 
 ## Open questions and follow-up
 
-Hosted validation after the change is committed/pushed. Required PR checks and protection against direct master pushes are repository settings outside these files and were not changed. Additional reduction across successful CI and deployment requires a separate exact-revision artifact provenance design; this task retains the deployment gate.
+Hosted PR and full apply passed through the VAC-39 release; hosted preview, failed/skipped dependency and cancellation scenarios remain unobserved. Required PR checks and protection against direct master pushes are repository settings outside these files and were not changed. Additional reduction across successful CI and deployment requires a separate exact-revision artifact provenance design; this task retains the deployment gate.

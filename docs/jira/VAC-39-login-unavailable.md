@@ -2,7 +2,7 @@
 id: VAC-39
 type: bug
 summary: Fix invalid SQL hostname blocking development sign-in
-status: qa
+status: released
 created: 2026-11-05
 updated: 2026-11-05
 parent: null
@@ -11,7 +11,7 @@ depends_on: []
 
 # VAC-39 — Fix invalid SQL hostname blocking development sign-in
 
-![Bug](badges/bug.svg) **🔍 QA** · Owner: Assistant repair; independent review pending
+![Bug](badges/bug.svg) **🚀 Released** · Owner: Assistant repair; product lead authorized dev release
 
 ## Description and reproduction
 
@@ -57,6 +57,8 @@ C3 · 2026-11-05 · Assistant: isolated Chrome reproduced a pending sign-in at 6
 
 C4 · 2026-11-05 · Assistant: corrected Bicep, added a compiled-template CI guard, then applied the hostname-only live repair with escalation approval. Employee/admin HTTP sign-in, restoration, initial data, rejection/revocation and a real browser login passed. See [verification](media/VAC-39/verification-2026-11-05.md).
 
+C5 · 2026-11-05 · Assistant: committed/pushed 3ba7661, merged PR #3 after both PR workflows succeeded, and deployed merged b482402 to dev through successful run 42072424616. Independent post-deploy HTTP/browser checks passed and both hosts reported the merged revision. [Release evidence](media/VAC-39/release-2026-11-05.md) distinguishes hosted native CI from focused live browser acceptance.
+
 ## Decisions
 
 D1 · 2026-11-05 · Assistant: preserve existing free-tier, SQL data and security controls. Do not enable paid usage or infer that an ordinary Paused status means the monthly allowance is exhausted.
@@ -71,16 +73,22 @@ W1 · 2026-11-05 · Assistant recorded · Inspect sign-in source/configuration, 
 
 W2 · 2026-11-05 · Assistant recorded · Reproduce browser hang, isolate malformed deployed SQL hostname, compile corrected Bicep, add positive/negative regression checks, apply and read back hostname-only repair, verify live sign-in and denials · Duration: Unknown (not measured); human actual: Unknown. HTTP/browser timings are verification measurements only.
 
+W3 · 2026-11-05 · Assistant recorded · Commit/push fix, create and merge PR after successful checks, dispatch full dev deployment, monitor checks/apply/publish/smoke, verify live revision/login/denials and record release · Duration: Unknown (not measured); human actual: Unknown. No workflow duration is treated as assistant/human working time.
+
 ## History
 
 H1 · 2026-11-05 · Assistant · Created In progress for the reported sign-in failure and ongoing availability investigation.
 
 H2 · 2026-11-05 · Assistant · QA after source/configuration repair and focused live sign-in smoke passed; independent review, commit/push and hosted execution of the new template guard remain pending.
 
+H3 · 2026-11-05 · Assistant · Released to the named dev target at merged revision b482402 after successful PR/deployment checks and post-deploy sign-in/authorization verification. Product lead authorized the release; independent human QA is not claimed.
+
 ## Verification and release
+
+Current outcome: [dev release evidence](media/VAC-39/release-2026-11-05.md). Earlier investigation and QA entries below are historical.
 
 API health responds; two fictional session POST requests timed out. Runtime configuration and read-only Azure state were inspected. Local Python HTTPS trust was insufficient, so diagnostics used system curl with certificate verification retained. No tokens/profile bodies were printed or added to evidence. This describes the initial investigation. The subsequent hostname-only configuration repair is verified in the linked evidence; no application binary or database deployment occurred.
 
 ## Open questions
 
-Confirmed cause and recovery are recorded in [verification](media/VAC-39/verification-2026-11-05.md). Commit/push the source fix and guard so future deployments preserve the repair; hosted CI and independent review remain open. Broader timeout/readiness UX and process-local development-session limitations are unchanged.
+The source fix/guard are merged and deployed; see [release evidence](media/VAC-39/release-2026-11-05.md). Broader timeout/readiness UX and process-local development-session limitations are unchanged. Independent human review/production readiness are not claimed by this dev release.
