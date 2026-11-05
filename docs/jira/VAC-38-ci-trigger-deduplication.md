@@ -1,0 +1,78 @@
+---
+id: VAC-38
+type: task
+summary: Avoid duplicate CI triggers and preview application builds
+status: qa
+created: 2026-11-05
+updated: 2026-11-05
+parent: null
+depends_on: []
+---
+
+# VAC-38 — Avoid duplicate CI triggers and preview application builds
+
+![Task](badges/task.svg) **🔍 QA** · Owner: Assistant implementation; hosted review pending
+
+## Description
+
+Before merging the frontend branch, the product lead requested a review of repeated CI/deploy work, especially PR checks followed by merge checks. Existing CI triggers both push and pull_request without filtering, so an update to an open PR can run the full suite twice. Merge runs it again; manual deployment calls CI again, including when apply=false.
+
+## Scope
+
+Use PR-only automatic CI and retain workflow_call for exact-revision manual deployment checks. Cancel superseded PR validation runs while preserving distinct manual deployment runs. Preview-only Azure runs compile/validate/what-if infrastructure without application builds/tests. Applying still requires successful checks for the selected revision and uses artifacts from the same workflow run. No cross-run artifact reuse, automatic deployment, permission changes or application changes.
+
+ASSUMPTION: the recommended PR-only policy is used in the absence of a different preference; an optional policy question was presented during implementation. Direct branch/master pushes deliberately have no automatic CI under this policy; use a PR for pre-merge validation. Deployment validates its selected commit independently because a PR merge ref and a final merge/squash commit may differ. This repeated PR/deployment validation is intentional, not eliminated by claiming two revisions are equivalent.
+
+## Dependencies
+
+None. Related: [VAC-7](VAC-7-optional-backend-deployment.md) owns historical frontend-only deployment support; its deploy_backend default and full/limited smoke distinction are preserved. [VAC-15](VAC-15-stabilize-keyboard-browser-acceptance.md) owns native-browser coverage; these assertions remain enabled.
+
+## Acceptance scenarios
+
+- [x] Configuration/condition verification: updating an open PR starts one automatic application CI workflow, with no separate branch-push run; merge does not start another application CI run.
+- [x] Concurrency verification: a newer update cancels older CI/infrastructure PR validation for that PR; validation namespaces do not collide with manual deployment checks.
+- [x] Condition-matrix verification: apply=false skips reusable application CI but still requires successful infrastructure compilation before Azure validation/what-if; no publish/artifact steps execute.
+- [x] Condition-matrix verification: apply=true requires successful infrastructure and application checks. Failed, skipped or cancelled required checks block the deploy job; cancellation also blocks preview.
+- [x] Static coverage/artifact verification: full and frontend-only application checks, same-run artifacts, deployment environment serialization and post-deploy smoke modes are retained.
+- [x] Tenant isolation is unaffected: no runtime authorization/data paths change, and existing full CI still includes API/browser isolation checks. No new tenant test applies to workflow scheduling.
+
+- [ ] Observe the new policy on GitHub after commit/push, including successful preview/apply and blocked deployment after failed/cancelled checks.
+
+## Subtasks and responsibilities
+
+- Architecture/QA: trace events, reusable workflow context, skipped dependency behavior and artifact provenance; verify an event/result matrix and workflow syntax.
+- Repository steward: maintain issue/backlog and deployment documentation.
+- UX/UI, backend product behavior and database: Not applicable.
+
+## Attachments and sources
+
+- [.github/workflows/ci.yml](../../.github/workflows/ci.yml)
+- [.github/workflows/azure-infrastructure.yml](../../.github/workflows/azure-infrastructure.yml)
+- [Deployment documentation](../../infra/README.md)
+- GitHub primary documentation checked 2026-11-05: [workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows), [concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency), [job conditions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions).
+
+## Comments
+
+C1 · 2026-11-05 · Assistant: static audit confirmed duplicate unfiltered push/PR triggers, no standalone CI cancellation, repeated manual deployment checks, and application checks during infrastructure-only preview. Deploy Azure is manual; merge alone never applies infrastructure or publishes applications. The GitHub connector returned no PR-triggered runs for f3ccd30; it cannot establish all push/manual execution history, so findings are configuration-based.
+
+## Decisions
+
+D1 · 2026-11-05 · Assistant implementation choice under the product lead's request: PR-only automatic validation plus exact-commit manual deployment checks. Keep full and frontend-only coverage unchanged. Explicit job status handling permits preview after skipped application checks while failing closed for apply. Do not reuse PR artifacts for a different merged SHA or add automatic deployment.
+
+## Work log
+
+W1 · 2026-11-05 · Assistant recorded · Review workflows and deployment docs, consult GitHub documentation, implement trigger/concurrency/preview gates and verify conditions · Duration: Unknown (not measured); human actual: Unknown. No time totals inferred.
+
+## History
+
+H1 · 2026-11-05 · Assistant · Created In progress for the authorized CI/deployment duplication review and bounded corrections.
+
+H2 · 2026-11-05 · Assistant · QA after local configuration, 192-case gate matrix, concurrency, artifact, syntax and documentation checks passed; hosted validation remains open.
+
+## Verification and release
+
+Local checks passed: see [verification and event matrix](media/VAC-38/verification-2026-11-05.md). Hosted execution, required-check settings and branch-protection enforcement remain unverified. No commit, push, merge, workflow dispatch, Azure deployment or external repository-setting change is authorized by this record.
+
+## Open questions and follow-up
+
+Hosted validation after the change is committed/pushed. Required PR checks and protection against direct master pushes are repository settings outside these files and were not changed. Additional reduction across successful CI and deployment requires a separate exact-revision artifact provenance design; this task retains the deployment gate.

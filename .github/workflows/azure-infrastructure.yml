@@ -3,9 +3,9 @@ name: Deploy Azure
 on:
   pull_request:
     paths:
-      - 'infra/**'
-      - 'scripts/verify-sql-free-template.py'
-      - '.github/workflows/azure-infrastructure.yml'
+      - "infra/**"
+      - "scripts/verify-sql-free-template.py"
+      - ".github/workflows/azure-infrastructure.yml"
   workflow_dispatch:
     inputs:
       environment:
@@ -25,9 +25,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: azure-validation-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   checks:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.apply
     uses: ./.github/workflows/ci.yml
     with:
       skip_backend: ${{ !inputs.deploy_backend }}
@@ -51,7 +55,8 @@ jobs:
           done
 
   deploy:
-    if: github.event_name == 'workflow_dispatch'
+    # Preview permits skipped application checks; apply requires their success.
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && needs.compile.result == 'success' && (!inputs.apply || needs.checks.result == 'success') }}
     needs: [compile, checks]
     runs-on: ubuntu-24.04
     concurrency:
@@ -165,8 +170,8 @@ jobs:
           azure_static_web_apps_api_token: ${{ steps.swa.outputs.token }}
           action: upload
           app_location: artifacts/web
-          api_location: ''
-          output_location: ''
+          api_location: ""
+          output_location: ""
           skip_app_build: true
           skip_api_build: true
           production_branch: ${{ github.ref_name }}
