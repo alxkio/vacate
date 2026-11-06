@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+import { waitForChromeEndpoint } from './testing/chrome-startup.mjs';
 const root = dirname(fileURLToPath(import.meta.url));
 const profile = await mkdtemp(join(tmpdir(), 'vacate-mock-qa-'));
 const output = process.env.MOCK_SCREENSHOT_DIR || join(root, 'previews');
@@ -108,6 +109,7 @@ const chrome = spawn(
   ],
   { stdio: ['ignore', 'ignore', 'pipe'] },
 );
+const chromeReady = waitForChromeEndpoint(chrome, { profile, output });
 let socket,
   nextId = 0,
   frameSequence = 0;
@@ -128,17 +130,7 @@ const deadline = setTimeout(() => {
   process.exitCode = 1;
 }, suiteTimeoutMs);
 try {
-  const endpoint = await new Promise((resolve, reject) => {
-    let log = '';
-    chrome.stderr.on('data', (data) => {
-      log += data;
-      const match = log.match(/DevTools listening on (ws:\/\/[^\s]+)/);
-      if (match) resolve(match[1]);
-    });
-    chrome.on('error', reject);
-    chrome.on('exit', (code) => reject(new Error(`Chrome exited: ${code}`)));
-    setTimeout(() => reject(new Error('Chrome debugging endpoint unavailable')), 20000).unref();
-  });
+  const endpoint = await chromeReady;
   const port = new URL(endpoint).port;
   const targets = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
   socket = new WebSocket(targets.find((target) => target.type === 'page').webSocketDebuggerUrl);

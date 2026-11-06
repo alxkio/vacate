@@ -108,6 +108,7 @@ jobs:
           node verify-api-contract.mjs
           node verify-profiles.mjs
           node verify-organization.mjs
+          node --test testing/verify-chrome-startup.mjs
           python3 ../scripts/test_cloud_smoke.py
           python3 ../scripts/prepare-frontend.py --frontend-output dist/vacate-web/browser --revision "$GITHUB_SHA"
       - uses: actions/upload-artifact@v7
@@ -145,13 +146,16 @@ jobs:
           npm ci --prefix frontend
           API_CONTRACT_URL=http://127.0.0.1:7071/api node frontend/verify-api-contract.mjs
           export CHROME_BIN="$(command -v google-chrome || command -v chromium)"
+          "$CHROME_BIN" --version
+          node --version
+          npm --version
           export MOCK_SCREENSHOT_DIR="$RUNNER_TEMP/vacate-api-browser-previews"
           node frontend/verify.mjs
           python3 scripts/verify-leave-requests.py
       - name: Paired host diagnostics
         if: failure()
         run: cat "$RUNNER_TEMP/functions-paired.log" 2>/dev/null || true
-      - name: Native input failure evidence
+      - name: Browser failure evidence
         if: failure()
         uses: actions/upload-artifact@v7
         with:
@@ -159,4 +163,6 @@ jobs:
           path: |
             ${{ runner.temp }}/vacate-api-browser-previews/native-input-failure.json
             ${{ runner.temp }}/vacate-api-browser-previews/native-input-failure.png
+            ${{ runner.temp }}/vacate-api-browser-previews/chrome-startup.json
+            ${{ runner.temp }}/vacate-api-browser-previews/chrome-stderr.log
           if-no-files-found: ignore

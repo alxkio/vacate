@@ -4,7 +4,7 @@ type: bug
 summary: Stabilize trusted keyboard browser acceptance
 status: in-progress
 created: 2026-10-28
-updated: 2026-11-02
+updated: 2026-11-06
 parent: null
 depends_on: []
 ---
@@ -31,6 +31,10 @@ Make the browser acceptance sequence use the user's native keyboard path to clos
 
 At commit 6047b62, [CI run 41020923736](https://github.com/alxkio/vacate/actions/runs/41020923736) passed but [Deploy Azure run 41023946660](https://github.com/alxkio/vacate/actions/runs/41023946660) failed in the same reusable API/web check before deployment. The first calendar-date Enter action produced no trusted click although the emulated document reported focused and the button was active. This extends the existing native-input harness scope; no calendar or product behavior changes.
 
+### Chrome startup failure · 2026-11-06
+
+The founder supplied a CI log in which real HTTP and shared-schema checks pass, then `frontend/verify.mjs` fails with `Chrome debugging endpoint unavailable` after 20 seconds on Node v24.22.2. This is a browser bootstrap failure before CDP connects, separate from the prior trusted-input failures. The previous harness discarded startup stderr from the failure message and discovered the endpoint only through a stderr announcement. Extend this existing harness issue to profile-file discovery and startup diagnostics; the precise hosted Chrome failure remains **UNVERIFIED** without its startup output. npm audit/install-script warnings in the supplied log do not establish the cause.
+
 ## Dependencies
 
 None.
@@ -45,6 +49,8 @@ None.
 - [x] Dropped preparation input recovers; absent, untrusted, pointer-only and keyboard-only input fails readiness; an overlay receives no preparation input. Application actions remain single-attempt.
 - [ ] Repeated fresh-browser native acceptance and the complete hosted check pass without synthetic click fallback, skipped native assertions or retrying application actions.
 - [x] Given readiness input is missing, its original failure includes runtime diagnostics and a screenshot/JSON artifact; the deterministic rejection test validates capture without leaving intentional-failure artifacts on successful runs.
+- [x] Endpoint discovery accepts chunked stderr announcements and Chrome's fresh-profile port file; partial/invalid files cannot establish readiness, and missing executables, early exits and timeouts retain startup evidence. Six isolated launcher regressions pass.
+- [ ] The reported hosted startup failure passes on a fresh runner, or its uploaded stderr establishes the remaining cause. Startup hardening alone is not proof of a hosted fix.
 
 ## Subtasks and responsibilities
 
@@ -101,6 +107,8 @@ C-11 · 2026-11-02 · Codex: user reported the same zero-event readiness failure
 
 C-12 · 2026-11-02 · Codex: revised native-only, 4× CPU-stressed native-only and the complete default suite passed locally with all native assertions enabled. The no-input regression verified evidence capture and cleanup. Syntax, workflow/issue YAML, changed-file whitespace, issue/backlog and dependency checks passed. Remains In progress because local success does not establish the cause or resolution of the hosted recurrence; hosted verification is pending. Existing changes to `docs/next-up.md` were preserved.
 
+C-13 · 2026-11-06 · Codex: Followed up the founder's pre-CDP startup timeout. Added the documented DevToolsActivePort discovery path, bounded stderr capture, actionable startup failures/artifacts and CI version logging/upload. Six deterministic launcher tests pass; no dependency changes, timeout increase, native-input bypass, application/API change or hosted rerun is included. The original Chrome startup cause remains UNVERIFIED.
+
 ## Decisions
 
 D-1 · 2026-10-28 · Codex: Exercise the dialog's native keyboard close path rather than closing the dialog through DOM scripting immediately before another trusted keyboard check.
@@ -113,13 +121,14 @@ D-4 · 2026-11-02 · Codex: suppress browser-owned prompts with the standard aut
 
 ## Work log
 
-| Entry | Date | Actor / category | Activity | Duration | Basis |
-|---|---|---|---|---|---|
-| W-1 | 2026-10-28 | Codex / assistant recorded | Investigate the browser failure and stabilize keyboard acceptance sequencing | Unknown | Session work; no complete issue duration measured |
-| W-2 | 2026-10-28 | Codex / assistant recorded | Update issue evidence and backlog after focused browser verification | Unknown | Session work; no complete issue duration measured |
-| W-3 | 2026-10-30 | Codex / assistant recorded | Reproduce deployment-check focus failure, validate native renderer transport and run repeated native/full-browser checks | Unknown | No complete session duration measured; current verification record |
-| W-4 | 2026-10-30 | Codex / assistant recorded | Investigate repeated focus-preparation failure, add deterministic browser fault scenarios and verify locally under CPU throttling | Unknown | No complete session duration measured; current verification record |
-| W-5 | 2026-11-02 | Codex / assistant recorded | Inspect the recurring CI failure, isolate local Chrome transport, harden launcher/evidence capture and run native browser regressions | Unknown | No complete session duration measured; November 2 verification record |
+| Entry | Date       | Actor / category              | Activity                                                                                                                              | Duration | Basis                                                                 |
+| ----- | ---------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------- |
+| W-1   | 2026-10-28 | Codex / assistant recorded    | Investigate the browser failure and stabilize keyboard acceptance sequencing                                                          | Unknown  | Session work; no complete issue duration measured                     |
+| W-2   | 2026-10-28 | Codex / assistant recorded    | Update issue evidence and backlog after focused browser verification                                                                  | Unknown  | Session work; no complete issue duration measured                     |
+| W-3   | 2026-10-30 | Codex / assistant recorded    | Reproduce deployment-check focus failure, validate native renderer transport and run repeated native/full-browser checks              | Unknown  | No complete session duration measured; current verification record    |
+| W-4   | 2026-10-30 | Codex / assistant recorded    | Investigate repeated focus-preparation failure, add deterministic browser fault scenarios and verify locally under CPU throttling     | Unknown  | No complete session duration measured; current verification record    |
+| W-5   | 2026-11-02 | Codex / assistant recorded    | Inspect the recurring CI failure, isolate local Chrome transport, harden launcher/evidence capture and run native browser regressions | Unknown  | No complete session duration measured; November 2 verification record |
+| W-6   | 2026-11-06 | Codex / assistant, unmeasured | Investigate reported browser bootstrap timeout, add dual endpoint discovery and startup evidence, verify isolated launcher behavior   | Unknown  | Supplied CI log and local diff; no session duration measured          |
 
 Human actual: Unknown. Assistant recorded: Unknown. No estimates or overlapping elapsed totals.
 
@@ -156,6 +165,10 @@ The first correction above was insufficient on the deployment runner. The follow
 ### Recurring hosted failure · 2026-11-02
 
 [November 2 evidence](media/VAC-15/verification-2026-11-02.md) records the unchanged passing baseline, launcher/evidence hardening, passing revised native/stressed/full-browser checks and unresolved hosted cause. The API implementation, frontend application, authorization and lifecycle behavior are unaffected; no backend or product changes were needed. No hosted result is claimed for these uncommitted changes.
+
+### Browser bootstrap verification · 2026-11-06
+
+Six Node launcher regressions passed: split stderr announcement, profile-file discovery without stderr, partial file completion, early exit with retained output, missing executable and invalid/missing endpoint timeout. Three independent fresh Chrome 150.0.7871.125 launches on local macOS passed endpoint discovery, actual `/json/version` access and consistency with `DevToolsActivePort`. No API was contacted during these startup checks. JavaScript syntax, changed-file formatting, CI YAML/shell syntax and `git diff --check` passed. The hosted Linux failure was not reproduced locally; neither these focused checks nor a startup fallback establish full native/browser acceptance or a hosted fix. CI now uploads the missing startup evidence. [Chrome's protocol documentation](https://chromedevtools.github.io/devtools-protocol/) confirms both endpoint publication methods (checked 2026-11-06).
 
 ## Open questions and follow-up
 
