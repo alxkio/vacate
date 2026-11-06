@@ -36,6 +36,7 @@ None. Existing ADR-0004 and operator tooling are present. VAC-31 is the incident
 - [ ] Review SQL is retained with the same-release operator artifact; forward compatibility and failure recovery are documented.
 - [ ] Full dev SQL smoke checks read own membership and leave requests without resource writes; staging/production never enable fictional sign-in for the probe.
 - [ ] Actual-SQL migration replay, permissions and existing tenant-isolation tests run on an explicitly authorized target before hosted readiness is claimed. Tenant authorization logic is unchanged; target isolation and credential boundaries receive offline regression checks.
+- [ ] A temporarily unavailable SQL target receives bounded read-only readiness retries before migration-history access; persistent or nontransient failures still block publication, with no automatic migration/grant replay or change to AutoPause/free-limit controls.
 
 ## Subtasks and responsibilities
 
@@ -55,16 +56,19 @@ None. Existing ADR-0004 and operator tooling are present. VAC-31 is the incident
 - C-2 · 2026-11-06 · Codex: Local checks passed; SQL-provider cases remain skipped. The implementation is ready for QA, while migration identity provisioning, target permissions and the first hosted run remain unexecuted. No release approval is inferred.
 - C-3 · 2026-11-06 · Codex: At the founder's request, documented the complete migration identity setup in the infrastructure guide and linked it from the deployment runbook. Includes app registration, client secret, SQL user mapping, explicit dev-only full database authority, GitHub secret, first run and rotation. Documentation only; no identity, permission or secret was created.
 
+- C-4 · 2026-11-06 · Codex: Founder supplied a deployment failure with SQL 40613 from the first GetAppliedMigrations connection. The trace precedes migration writes. Serverless auto-resume is a likely but unverified cause. Added an isolated read-only EF readiness probe with bounded transient retries before migration history; the writer context and explicit runtime-grant transaction strategy remain unchanged. No live availability, credential correctness, provider retry result or migration success is inferred from the stack trace.
+
 ## Decisions
 
 - D-1 · 2026-11-06 · Founder acceptance: Database migration, runtime grants and verification precede API/frontend publication on every SQL backend release; separate identity, same-commit artifacts, environment serialization and compatible forward migrations are required. See the canonical deployment runbook and ADR-0004 amendment.
 
 ## Work log
 
-| Entry | Date       | Actor / category              | Activity                                                                                       | Duration | Basis and evidence                                                                    |
-| ----- | ---------- | ----------------------------- | ---------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------- |
-| W-1   | 2026-11-06 | Codex / assistant, unmeasured | Implement accepted database deployment gate, verification, regression checks and documentation | Unknown  | Local diff; no duration captured.                                                     |
-| W-2   | 2026-11-06 | Codex / assistant, unmeasured | Document migration identity setup in infrastructure and link the deployment runbook            | Unknown  | Founder request and documentation diff; no duration captured or live setup performed. |
+| Entry | Date       | Actor / category              | Activity                                                                                                | Duration | Basis and evidence                                                                      |
+| ----- | ---------- | ----------------------------- | ------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
+| W-1   | 2026-11-06 | Codex / assistant, unmeasured | Implement accepted database deployment gate, verification, regression checks and documentation          | Unknown  | Local diff; no duration captured.                                                       |
+| W-2   | 2026-11-06 | Codex / assistant, unmeasured | Document migration identity setup in infrastructure and link the deployment runbook                     | Unknown  | Founder request and documentation diff; no duration captured or live setup performed.   |
+| W-3   | 2026-11-06 | Codex / assistant, unmeasured | Handle reported first-connection SQL 40613 with read-only readiness retries and regression verification | Unknown  | Supplied deployment trace and local diff; no measured duration or live database change. |
 
 Human actual: Unknown. Assistant duration: Unknown. Automation elapsed and estimates: not recorded.
 
@@ -89,6 +93,10 @@ Local verification on 2026-11-06:
 | C# formatter, changed Markdown/workflow formatting, new documentation links and `git diff --check` | Passed                                                                                                                              |
 
 The Azure CLI wrapper could not download Bicep because of its local certificate chain; the installed standalone binary compiled the template successfully. These local checks do not establish GitHub runner execution, actual-SQL migration/grant behavior, deployed smoke success or independent human acceptance. No live database changes, credential/permission provisioning, commit, push or deployment were performed. No frontend source or HTTP resource contract changes were needed for this release-process change.
+
+### SQL availability follow-up verification · 2026-11-06
+
+The readiness correction passed a Release solution build with zero warnings/errors and the complete NUnit suite: 57 passed (47 integration/offline tests, 10 unit), with the same 18 actual-SQL cases skipped. Four new offline cases exercise the configured EF SQL Server strategy for transient recovery, finite retry exhaustion, immediate nontransient rejection and isolation from the operator's writer strategy. The existing three deployment-gate Python regressions also passed. C# formatting, changed Markdown formatting and `git diff --check` passed. No real SQL connection or auto-resume was exercised; provider/hosted verification remains pending. API behavior, frontend code and tenant authorization are unaffected; the probe reads only a constant. No commit, push, deployment, resource/permission or AutoPause/free-limit change was performed for this correction.
 
 ## Open questions and follow-up
 

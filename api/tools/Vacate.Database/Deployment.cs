@@ -40,6 +40,7 @@ internal static class Deployment
 
     internal static void Migrate(VacateDbContext context)
     {
+        DatabaseReadiness.Wait(context.Database.GetConnectionString()!);
         var applied = context.Database.GetAppliedMigrations().ToArray();
         var known = context.Database.GetMigrations().ToHashSet();
         if (applied.Any(id => !known.Contains(id)))

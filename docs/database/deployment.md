@@ -13,11 +13,19 @@ CI publishes a `database-package` artifact alongside the API and frontend packag
 The `deploy RUNTIME_NAME RUNTIME_CLIENT_ID` operator command:
 
 1. Validates the SQL connection against the hostname/database output by the selected Bicep deployment, requires certificate-verified TLS and a separate Entra migration service principal, and checks the executable revision before opening a connection.
-2. Rejects unknown migration history and an unrelated nonempty database, then applies forward migrations only.
+2. Runs a read-only `SELECT 1` availability probe with up to eight additional transient retries (including SQL 40613), a maximum 15-second retry delay, and 15-second SQL connection/command timeouts per probe attempt. After readiness succeeds, rejects unknown migration history and an unrelated nonempty database, then applies forward migrations only.
 3. Refreshes runtime table/sequence grants for the resolved managed identity and verifies its limited permission boundary, including request inserts.
 4. Requires no remaining migrations and compiles reads of every mapped column while impersonating the runtime principal. `TOP (0)` reads return no business records.
 
 Any failure blocks both application publications. If migrations succeeded but grants or schema verification fail, the schema changes remain applied; repair permissions or add a forward correction and retry. No automatic `Down`, reset, fictional import, entitlement configuration or holiday seeding runs during deployment. Migration history checks do not detect every kind of manual schema drift; mapped-column reads catch missing objects/columns, not every altered constraint or unexpected data value.
+
+### Transient unavailability before migration
+
+The founder reported SQL 40613 on the first migration-history connection on 2026-11-06, before migration writes began. Serverless auto-resume is a likely explanation, not a confirmed diagnosis from that log alone. The availability probe uses EF's SQL Server retry strategy in a separate, read-only context. It leaves the operator's migration and explicit grant transactions unchanged and does not retry the whole deployment command. Errors the provider classifies as nontransient fail immediately; transient errors that outlast the probe's bounded attempts still block publication. The total wait includes connection/command attempts as well as retry delays, not just the 15-second delay cap.
+
+If readiness remains unavailable, inspect database status, Azure activity logs and the free-limit allowance. Do not disable AutoPause, increase compute, enable overage billing or create a replacement database to bypass the error. A later migration/grant failure still needs inspection before retrying the release. API startup and application request retry behavior are unaffected.
+
+Sources checked 2026-11-06: [Azure SQL serverless auto-resume and 40613](https://learn.microsoft.com/en-us/azure/azure-sql/database/serverless-tier-auto-pause-resume?view=azuresql#troubleshooting-auto-resume-connectivity), [EF connection resiliency and explicit transactions](https://learn.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency#execution-strategies-and-transactions).
 
 ## Migration credential setup
 
