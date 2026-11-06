@@ -739,6 +739,12 @@
           "Vacate.Domain": "[1.0.0, )"
         }
       },
+      "vacate.database": {
+        "type": "Project",
+        "dependencies": {
+          "Vacate.Infrastructure": "[1.0.0, )"
+        }
+      },
       "vacate.domain": {
         "type": "Project"
       },

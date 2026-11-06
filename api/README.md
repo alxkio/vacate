@@ -42,6 +42,8 @@ Run the Angular dev server against the Functions host on port 7071. Profile, mem
 
 ## SQL persistence · VAC-26
 
+Full SQL deployments now use the [database deployment gate](../docs/database/deployment.md) (VAC-41): the same-release operator applies pending migrations, refreshes runtime grants and verifies mapped-column access before API/frontend publication. Configure the environment-specific migration credential first; API startup still never migrates or seeds SQL.
+
 See the [Stage A implementation and migration runbook](../docs/database/implementation-stage-a.md). Set Persistence__Provider=SqlServer and ConnectionStrings__Vacate explicitly for that host process. Keep encryption/certificate validation enabled. Default InMemory behavior and public resource schemas/routes remain compatible; sessions are still process-local and development-only in either resource mode.
 
 The operator tool under api/tools/Vacate.Database generates reviewed idempotent SQL, inspects schema counts, applies forward migrations and supports an explicit empty-only fictional import. Do not run startup migrations or seed real employee data. The exact baseline script is versioned under docs/database/migrations/. Actual SQL tests require VACATE_SQL_TEST_CONNECTION and an explicitly authorized migrated test target; without it they are reported skipped, not passed. Existing Functions/API/browser checks still apply to a repository swap.

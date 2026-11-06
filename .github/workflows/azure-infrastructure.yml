@@ -123,6 +123,37 @@ jobs:
           echo "function_url=$(jq -r '.properties.outputs.functionAppUrl.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
           echo "web_name=$(jq -r '.properties.outputs.staticSiteName.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
           echo "web_url=$(jq -r '.properties.outputs.staticSiteUrl.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
+          sql_enabled=$(jq -er '.properties.outputs.sqlPersistenceEnabled.value | if type == "boolean" then tostring else error("Missing SQL mode output") end' "$RUNNER_TEMP/deployment.json")
+          echo "sql_enabled=$sql_enabled" >> "$GITHUB_OUTPUT"
+          echo "sql_server=$(jq -r '.properties.outputs.sqlServerHostname.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
+          echo "sql_database=$(jq -r '.properties.outputs.sqlTargetDatabaseName.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
+          echo "runtime_name=$(jq -r '.properties.outputs.runtimeIdentityName.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
+          echo "runtime_client_id=$(jq -r '.properties.outputs.runtimeClientId.value' "$RUNNER_TEMP/deployment.json")" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-dotnet@v5
+        if: inputs.apply && inputs.deploy_backend
+        with:
+          global-json-file: global.json
+      - uses: actions/download-artifact@v8
+        if: inputs.apply && inputs.deploy_backend
+        with:
+          name: database-package
+          path: artifacts/database
+      - name: Deploy and verify database
+        if: inputs.apply && inputs.deploy_backend && steps.infrastructure.outputs.sql_enabled == 'true'
+        env:
+          VACATE_SQL_CONNECTION: ${{ secrets[format('AZURE_SQL_MIGRATION_CONNECTION_{0}', inputs.environment)] }}
+          VACATE_SQL_SERVER: ${{ steps.infrastructure.outputs.sql_server }}
+          VACATE_SQL_DATABASE: ${{ steps.infrastructure.outputs.sql_database }}
+          VACATE_DEPLOY_REVISION: ${{ github.sha }}
+          RUNTIME_NAME: ${{ steps.infrastructure.outputs.runtime_name }}
+          RUNTIME_CLIENT_ID: ${{ steps.infrastructure.outputs.runtime_client_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(cat artifacts/database/revision.txt)" = "$GITHUB_SHA"
+          test -n "$VACATE_SQL_CONNECTION" || { echo 'Configure the environment-specific AZURE_SQL_MIGRATION_CONNECTION secret before deploying a SQL backend.' >&2; exit 1; }
+          dotnet artifacts/database/Vacate.Database.dll deploy "$RUNTIME_NAME" "$RUNTIME_CLIENT_ID"
+          printf 'Database migrations, runtime grants and mapped-column reads verified for `%s`.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/download-artifact@v8
         if: inputs.apply && inputs.deploy_backend
         with:
@@ -182,7 +213,15 @@ jobs:
         env:
           API_URL: ${{ steps.infrastructure.outputs.function_url }}
           WEB_URL: ${{ steps.infrastructure.outputs.web_url }}
-        run: python3 scripts/cloud-smoke.py --api-base-url "$API_URL/api" --web-base-url "$WEB_URL" --revision "$GITHUB_SHA"
+          SQL_ENABLED: ${{ steps.infrastructure.outputs.sql_enabled }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          extra=()
+          if [[ "$DEPLOY_ENVIRONMENT" == 'dev' && "$SQL_ENABLED" == 'true' ]]; then
+            extra+=(--development-database)
+          fi
+          python3 scripts/cloud-smoke.py --api-base-url "$API_URL/api" --web-base-url "$WEB_URL" --revision "$GITHUB_SHA" "${extra[@]}"
       - name: Verify deployed frontend
         if: inputs.apply && !inputs.deploy_backend
         env:

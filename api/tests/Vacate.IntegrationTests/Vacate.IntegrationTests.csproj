@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Vacate.Api\Vacate.Api.csproj" />
+    <ProjectReference Include="../../tools/Vacate.Database/Vacate.Database.csproj" />
   </ItemGroup>
 
 </Project>

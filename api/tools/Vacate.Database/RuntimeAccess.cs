@@ -9,10 +9,8 @@ internal static partial class RuntimeAccess
 {
     public static void Grant(VacateDbContext context, string name, string clientIdText)
     {
-        if (!PrincipalName().IsMatch(name) || !Guid.TryParse(clientIdText, out var clientId) || clientId == Guid.Empty)
-        {
-            throw new ArgumentException("Use the resolved managed identity name and client ID.");
-        }
+        ValidatePrincipal(name, clientIdText);
+        var clientId = Guid.Parse(clientIdText);
 
         // CREATE USER WITH SID/TYPE uses the managed identity client ID, per current Azure SQL documentation.
         var sid = Convert.ToHexString(clientId.ToByteArray());
@@ -48,7 +46,7 @@ internal static partial class RuntimeAccess
             Execute(context, $"GRANT UPDATE ON OBJECT::[dbo].[{sequence}] TO [vacate_resource_runtime]");
         }
 
-        Execute(context, $"ALTER ROLE [vacate_resource_runtime] ADD MEMBER [{name}]");
+        Execute(context, $"IF IS_ROLEMEMBER(N'vacate_resource_runtime', N'{name}') = 0 ALTER ROLE [vacate_resource_runtime] ADD MEMBER [{name}]");
         using var command = context.Database.GetDbConnection().CreateCommand();
         command.Transaction = context.Database.CurrentTransaction!.GetDbTransaction();
         command.CommandText = $"""
@@ -60,14 +58,19 @@ internal static partial class RuntimeAccess
                 HAS_PERMS_BY_NAME(N'dbo.Leaves', N'OBJECT', N'SELECT'),
                 HAS_PERMS_BY_NAME(N'dbo.Leaves', N'OBJECT', N'INSERT'),
                 HAS_PERMS_BY_NAME(N'dbo.Leaves', N'OBJECT', N'UPDATE'),
-                HAS_PERMS_BY_NAME(N'dbo.Leaves', N'OBJECT', N'DELETE');
+                HAS_PERMS_BY_NAME(N'dbo.Leaves', N'OBJECT', N'DELETE'),
+                HAS_PERMS_BY_NAME(N'dbo.LeaveRequests', N'OBJECT', N'INSERT'),
+                HAS_PERMS_BY_NAME(N'dbo.CoveredLeaveSubmissions', N'OBJECT', N'INSERT'),
+                HAS_PERMS_BY_NAME(N'dbo.LeaveEntitlementPeriods', N'OBJECT', N'SELECT'),
+                HAS_PERMS_BY_NAME(N'dbo.PublicHolidays', N'OBJECT', N'SELECT');
             REVERT;
             """;
         using (var reader = command.ExecuteReader())
         {
             if (!reader.Read() || reader.GetInt32(0) != 0 || reader.GetInt32(1) != 0 || reader.GetInt32(2) != 1
                 || reader.GetInt32(3) != 0 || reader.GetInt32(4) != 0 || reader.GetInt32(5) != 1
-                || reader.GetInt32(6) != 1 || reader.GetInt32(7) != 0 || reader.GetInt32(8) != 0)
+                || reader.GetInt32(6) != 1 || reader.GetInt32(7) != 0 || reader.GetInt32(8) != 0
+                || reader.GetInt32(9) != 1 || reader.GetInt32(10) != 1 || reader.GetInt32(11) != 1 || reader.GetInt32(12) != 1)
             {
                 throw new InvalidOperationException("Runtime permission boundary failed; grants rolled back.");
             }
@@ -84,6 +87,14 @@ internal static partial class RuntimeAccess
         command.Transaction = context.Database.CurrentTransaction!.GetDbTransaction();
         command.CommandText = sql;
         command.ExecuteNonQuery();
+    }
+
+    internal static void ValidatePrincipal(string name, string clientIdText)
+    {
+        if (!PrincipalName().IsMatch(name) || !Guid.TryParse(clientIdText, out var clientId) || clientId == Guid.Empty)
+        {
+            throw new ArgumentException("Use the resolved managed identity name and client ID.");
+        }
     }
 
     [GeneratedRegex("^[A-Za-z0-9-]{1,128}$")]

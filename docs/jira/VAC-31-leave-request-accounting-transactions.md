@@ -138,6 +138,10 @@ Accepted canonical sources override issue notes. No unreviewed statutory default
 
 - C-6 · 2026-11-05 · Codex / Product Owner: Audited current authorized slice against the charter and ADR-0003/0004/0005. VAC-30 is not complete; existing explicit finite entitlements may support creation, while absent type/year coverage must block. Found no approved statutory evaluator or authorization for new default quotas.
 
+- C-7 · 2026-11-06 · Codex: Founder reports hosted development errors `Invalid column name 'EntitlementYear'`, `LeaveTypeId` and `RequestId` after committing, merging and deploying the corrective code. All three are Leaves columns introduced by `20261105214614_LeaveRequestSubmission`. The earlier verification explicitly did not apply this migration to the deployed database, and host startup intentionally never migrates. **UNVERIFIED live diagnosis:** deployed application/schema mismatch; inspect target migration history before applying the reviewed forward migration, then refresh the existing runtime principal grants for the new request tables. Generated idempotent SQL locally and confirmed these additions; no live database inspection, migration or grant change was performed in this investigation. Frontend and HTTP contracts require no change for this schema alignment.
+
+- C-8 · 2026-11-06 · Codex: Founder accepted a mandatory database stage before application publication. [VAC-41](VAC-41-database-deployment-gate.md) owns the implementation and its verification; this does not claim the missing hosted migration has been applied. Shared deployment-process work is logged only in VAC-41.
+
 ## Decisions
 
 - D-1 · 2026-11-01 · Founder request: Split current work and future scope into separate tracked items. Existing product decisions remain in linked canonical documents; no open choice is silently resolved.
@@ -182,6 +186,7 @@ Accepted canonical sources override issue notes. No unreviewed statutory default
 | W-10 | 2026-11-05 | Codex / assistant, unmeasured | Record explicit confirmation to preserve frontend date behaviour | Unknown | Documentation diff; duration unmeasured, no application change. |
 | W-11 | 2026-11-05 | Product Owner agent / assistant, unmeasured | Audit authorized creation scope, prerequisite readiness and deferred lifecycle/timezone work; synchronize active execution status | Unknown | Current documentation diff and source documents; no runtime or human acceptance claimed. |
 | W-12 | 2026-11-06 | Codex / assistant, unmeasured | Reproduce committed failures; correct explicit-allowance lookup and HTTP payload; run local backend/frontend/API/browser checks | Unknown | [Verification](media/VAC-31/verification-2026-11-06.md); no human/assistant duration measured. |
+| W-13 | 2026-11-06 | Codex / assistant, unmeasured | Trace hosted invalid-column report to VAC-31 schema additions and generate forward SQL for review | Unknown | C-7; migration source and operator script generation checked locally; no live database changes or measured duration. |
 
 Human actual: Unknown. Assistant duration: Unknown; shared work referenced only. Automation elapsed: not recorded. No estimate recorded. Implementation time is not measured.
 

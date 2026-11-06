@@ -121,6 +121,32 @@ class DeploymentSmokeTests(unittest.TestCase):
                 SMOKE.main()
         self.assertEqual(error.exception.code, 2)
 
+    def test_development_database_checks_membership_and_requests_without_resource_writes(self):
+        with patch.object(SMOKE, "json_request", side_effect=[
+            {"accessToken": "fictional-session"},
+            {"profile": {"membership": {"companyId": "fictional-company"}}}, [], None
+        ]) as request:
+            SMOKE.check_development_database(API)
+        self.assertEqual([(call.args[1], call.args[2]) for call in request.call_args_list], [
+            ("POST", "/auth/sessions"), ("GET", "/auth/sessions/current"),
+            ("GET", "/organizations/fictional-company/leave/requests"), ("DELETE", "/auth/sessions/current")
+        ])
+
+    def test_database_read_failure_is_not_hidden_and_session_is_revoked(self):
+        with patch.object(SMOKE, "json_request", side_effect=[
+            {"accessToken": "fictional-session"}, OSError("Database unavailable"), None
+        ]) as request:
+            with self.assertRaisesRegex(OSError, "Database unavailable"):
+                SMOKE.check_development_database(API)
+        self.assertEqual(request.call_args.args, (API, "DELETE", "/auth/sessions/current", "fictional-session"))
+
+    def test_frontend_only_cannot_enable_development_database_probe(self):
+        with patch("sys.argv", ["cloud-smoke.py", "--api-base-url", API, "--web-base-url", WEB,
+                                "--frontend-only", "--development-database"]), contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as error:
+                SMOKE.main()
+        self.assertEqual(error.exception.code, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

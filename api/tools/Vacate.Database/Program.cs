@@ -8,6 +8,16 @@ using Vacate.Infrastructure.Persistence.Sql;
 var operation = args.FirstOrDefault() ?? "script";
 var connection = Environment.GetEnvironmentVariable("VACATE_SQL_CONNECTION")
     ?? "Server=localhost;Database=Vacate;Integrated Security=true;Encrypt=true;TrustServerCertificate=false";
+if (operation == "deploy")
+{
+    if (args.Length != 3)
+    {
+        throw new ArgumentException("Use deploy RUNTIME_NAME RUNTIME_CLIENT_ID with the explicit deployment target environment variables.");
+    }
+
+    Deployment.Validate(connection, args[1], args[2]);
+}
+
 using var context = new VacateDbContext(new DbContextOptionsBuilder<VacateDbContext>().UseSqlServer(connection).Options);
 if (operation == "script")
 {
@@ -37,23 +47,15 @@ else if (operation == "verify-derived-migration" && Environment.GetEnvironmentVa
 {
     DerivedMigrationVerification.Run(context);
 }
+else if (operation == "deploy")
+{
+    Deployment.Migrate(context);
+    RuntimeAccess.Grant(context, args[1], args[2]);
+    Deployment.Verify(context, args[1]);
+}
 else if (operation == "migrate" && Environment.GetEnvironmentVariable("VACATE_SQL_CONNECTION") is not null)
 {
-    var applied = context.Database.GetAppliedMigrations().ToArray();
-    var known = context.Database.GetMigrations().ToHashSet();
-    if (applied.Any(id => !known.Contains(id)))
-    {
-        throw new InvalidOperationException("Database migration history is not owned by this application.");
-    }
-
-    if (applied.Length == 0 && context.Database.SqlQueryRaw<int>(
-        "SELECT COUNT(*) AS [Value] FROM sys.tables WHERE is_ms_shipped = 0 AND [name] <> N'__EFMigrationsHistory'").Single() != 0)
-    {
-        throw new InvalidOperationException("The baseline requires an empty database; existing data was preserved.");
-    }
-
-    context.Database.Migrate();
-    Console.WriteLine("Reviewed forward migrations applied.");
+    Deployment.Migrate(context);
 }
 else if (operation == "configure-leave-entitlement" && args.Length == 6 && Environment.GetEnvironmentVariable("VACATE_SQL_CONNECTION") is not null)
 {
@@ -99,5 +101,5 @@ else if (operation == "seed-fictional" && args.Contains("--empty-only") && Envir
 }
 else
 {
-    throw new ArgumentException("Use script, inspect, migrate, verify-derived-migration, configure-leave-entitlement ORGANIZATION_GUID MEMBERSHIP_GUID TYPE YEAR ALLOCATION, grant-runtime NAME CLIENT_ID, or seed-fictional --empty-only with VACATE_SQL_CONNECTION. No downgrade or automatic seed is supported.");
+    throw new ArgumentException("Use script, inspect, migrate, deploy RUNTIME_NAME RUNTIME_CLIENT_ID, verify-derived-migration, configure-leave-entitlement ORGANIZATION_GUID MEMBERSHIP_GUID TYPE YEAR ALLOCATION, grant-runtime NAME CLIENT_ID, or seed-fictional --empty-only with VACATE_SQL_CONNECTION. No downgrade or automatic seed is supported.");
 }
