@@ -2,16 +2,16 @@
 id: VAC-31
 type: story
 summary: Record leave requests and balance accounting transactions
-status: in-progress
+status: qa
 created: 2026-11-01
-updated: 2026-11-05
+updated: 2026-11-06
 parent: null
 depends_on: [VAC-30]
 ---
 
 # VAC-31 — Record leave requests and balance accounting transactions
 
-![Story](badges/story.svg) **🔨 In progress** · Owner: Unassigned
+![Story](badges/story.svg) **🔍 QA** · Owner: Unassigned
 
 ## Description
 
@@ -70,11 +70,8 @@ These are specification scenarios, not verification results. Criteria marked PRO
 | F-15 | The employee operates the form using keyboard or assistive technology | Inputs/modes have labels; validation, preview changes and warnings are accessible; opening/closing the form manages focus and Cancel saves nothing. |
 | F-16 | A Monday–Saturday schedule and a Friday–Monday range, with no public holidays | Count Friday, Saturday and Monday: 3 working days. Exclude Sunday only. If Saturday is a configured public holiday, count 2 days. Both endpoints are inclusive (confirmed). |
 | F-17 | Two organizations have different configured countries and a date is a holiday only in country A | Resolve each organization's own applicable calendar; exclude that date for A and count it for B when it is a scheduled working day. An employee cannot select another organization's country/calendar to change the charge. |
-
 | F-18 | The employee selects Sunday as start and 2 working days of duration, with Monday/Tuesday working and no holidays | Accept the start selection and warn that Sunday will not be included. Preview 2 days ending Tuesday. On valid submission, save Monday and Tuesday only; Sunday is neither stored as a leave date nor shown as leave in the calendar. |
 | F-19 | A date range includes a non-working start/end or an interior weekend/public holiday | Warn which selected dates are excluded. Persist/render only applicable working leave dates; saved boundaries use the first/last included dates. A Friday–Monday request on a five-day schedule creates leave only for Friday/Monday, without a calendar bar covering Saturday/Sunday. |
-
-
 | F-20 | A selection contains zero working days after applying known holidays and schedule exclusions | Block submission in the form/server with “No working days selected”; save no request or charge. |
 | F-21 | Public-holiday data is missing for all or part of the range | Continue using the company working weekdays/weekends for dates without holiday coverage; do not block solely for missing holidays. PROPOSED UX: label the fallback. Known holiday coverage elsewhere in the range still applies. |
 | F-22 | A request contains past working dates and future dates and approvals are enabled | Warn about past dates. Past dates bypass approval; future dates follow the effective approval setting. Store per-date state/charges or equivalent segments so a single request status cannot bypass future approval. Server timestamps show actual creation, not a backdated submission. |
@@ -84,11 +81,8 @@ These are specification scenarios, not verification results. Criteria marked PRO
 | F-26 | An organization administrator views Greek annual-leave policy settings or attempts to change the cutoff | Display “Previous-year annual leave can be used through 31 March of the following year” as read-only. No editable deadline control; crafted API updates cannot change the policy deadline. |
 | F-27 | The employee changes leave type or selects dates spanning balance periods | Show only that type's own balance, its relevant year/period and eligible carryover. Clear stale previous-type results and refresh the preview; do not display another type's balance or sum unrelated types/units. |
 | F-28 | The selected type has no configured finite balance for a required period | Show a configuration explanation and prevent submission on both client/server. No arbitrary quota or zero balance is created. Historical unknown reference information is not converted into a personal allowance. |
-
 | F-29 | Every selected working date already has pending or approved leave, possibly under different types | Warn that all dates are already covered. Allow Submit and return an already-covered acknowledgement; create no new request, leave dates, calendar entries or charges. Preserve all original types/statuses. Recheck coverage server-side under concurrent submissions. |
 | F-30 | A selected working date has only cancelled or rejected leave | Treat it as uncovered; permit a new request under normal balance/approval rules without reviving or changing the historical record. |
-
-
 | F-31 | An organization has no explicitly configured timezone when the setting is introduced | Persist a required organization TimeZone value defaulting to UTC; show UTC in organization settings. Existing organizations are backfilled to UTC without changing stored leave dates/timestamps. |
 | F-32 | An authorized administrator saves the organization timezone setting | Persist/read back the value through the organization API/settings and enforce same-company access; reject invalid timezone identifiers atomically. The timezone governs the server business date used to classify past leave immediately; no frontend display conversion is introduced. Changing it does not rewrite existing request statuses/charges or activate automatic renewal/carryover processing. |
 
@@ -170,6 +164,8 @@ Accepted canonical sources override issue notes. No unreviewed statutory default
 
 - D-13 · 2026-11-05 · Founder clarification during implementation: Use the organization timezone immediately to determine the server business date/past-date approval bypass. Supersedes D-9/D-10’s configuration-only rule for this boundary only. Preserve existing frontend date display and date-only values; TZ-2 remains deferred. Organization default remains UTC. **ASSUMPTION pending confirmation:** dates strictly before organization-local today are past; today follows approval settings.
 
+- D-13 · 2026-11-06 · Codex corrective implementation: A current-period explicit CustomAllocation is a configured finite request allowance even when the separate statutory policy floor is unresolved. Use it without inventing a policy/default; missing explicit/evaluated amounts and unconfigured years remain blocked. The existing legacy policy projection is unchanged. Regression/evidence: [local verification](media/VAC-31/verification-2026-11-06.md).
+
 ## Work log
 
 | Entry | Date | Actor / category | Activity | Duration | Basis and evidence |
@@ -184,8 +180,8 @@ Accepted canonical sources override issue notes. No unreviewed statutory default
 | W-8 | 2026-11-05 | Codex / assistant, unmeasured | Record agreed fully covered behaviour and status-coverage criteria | Unknown | Documentation diff; duration unmeasured, no runtime changes. |
 | W-9 | 2026-11-05 | Codex / assistant, unmeasured | Specify organization timezone default and deferred dependent subtask; inspect existing date helpers | Unknown | Current documentation diff and workspace-data.service.ts date helpers; duration unmeasured. |
 | W-10 | 2026-11-05 | Codex / assistant, unmeasured | Record explicit confirmation to preserve frontend date behaviour | Unknown | Documentation diff; duration unmeasured, no application change. |
-
 | W-11 | 2026-11-05 | Product Owner agent / assistant, unmeasured | Audit authorized creation scope, prerequisite readiness and deferred lifecycle/timezone work; synchronize active execution status | Unknown | Current documentation diff and source documents; no runtime or human acceptance claimed. |
+| W-12 | 2026-11-06 | Codex / assistant, unmeasured | Reproduce committed failures; correct explicit-allowance lookup and HTTP payload; run local backend/frontend/API/browser checks | Unknown | [Verification](media/VAC-31/verification-2026-11-06.md); no human/assistant duration measured. |
 
 Human actual: Unknown. Assistant duration: Unknown; shared work referenced only. Automation elapsed: not recorded. No estimate recorded. Implementation time is not measured.
 
@@ -210,9 +206,11 @@ Human actual: Unknown. Assistant duration: Unknown; shared work referenced only.
 
 - H-10 · 2026-11-05 · Codex / Product Owner: Specification → In progress after explicit team implementation request. Current scope is creation F-1–F-32 plus TZ-1; VAC-30 remains an unsatisfied broader policy prerequisite, missing type/year entitlements fail closed, and organization-local today is selected and the strict-before-today assumption awaits confirmation.
 
+- H-11 · 2026-11-06 · Codex: In progress → QA for the bounded request-creation slice after corrective local verification. 39 backend tests, 65 frontend tests, full native browser and actual HTTP acceptance pass. 18 SQL cases remain skipped; no hosted release or SQL readiness claim.
+
 ## Verification and release
 
-Implementation and verification are in progress. Earlier documentation checks do not prove runtime acceptance. No current-slice test, migration, commit, push or deployment is claimed until linked execution evidence is recorded. Existing completed verification remains in its original issue records.
+[Local execution evidence, 2026-11-06](media/VAC-31/verification-2026-11-06.md) records reproduced failures, corrective changes and actual passed checks. SQL migration/provider/grants tests remain outstanding; the 18 skips are not a persistence pass. The founder committed the implementation as 4287fe5; corrective changes from this verification remain uncommitted. No push, deployment, Done/Released or independent human acceptance is claimed.
 
 ## Open questions and follow-up
 

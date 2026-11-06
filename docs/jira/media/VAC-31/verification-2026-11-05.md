@@ -26,3 +26,8 @@ The HTTP script deliberately accepts only loopback URLs. It adds fictional dates
 ## Remaining limits
 
 No deployment, SQL target, native browser pass, independent human review or complete-slice acceptance is claimed until actual execution evidence is recorded below. Missing holiday coverage explicitly falls back to company weekdays; the blocked external holiday import is tracked separately under VAC-40.
+
+
+## Subsequent execution
+
+The pending checks above describe the 2026-11-05 baseline. See [2026-11-06 verification](verification-2026-11-06.md) for the subsequent committed-baseline failures, corrective changes and actual local execution results. SQL-provider gates remain unexecuted.

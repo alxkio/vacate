@@ -84,3 +84,13 @@ Converted to the accepted mock scope in [VAC-19](jira/VAC-19-calendar-display-pr
     Unify ui into 2? and create UX 
     
 
+
+
+- As a user I want to be able to add a leave request using the button and the form. In the form, i would have 2 ways of adding it: 
+    - add the start date and the duration (preview amount)
+    - add the start and end date, and when I do so I want the preview amount to adjust to the days (working days) I have selected (count them). 
+    - when a weekend/public holiday falls within the dates I ve selected, I want it to be excluded from the calculation (and of cource from the amout to be registered in the db)
+    - In the form I would like to be able to select the vacation type (as is for now) and choose the unit 
+    - when the unit is hours, the date should be fixed (only one date selected, end date would be hidden). 
+    (owner comment: since hours are not in scope yet lets disable the form from submission) 
+    - when I have a low balance I want to get a  .warning  in the form. 

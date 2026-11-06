@@ -56,6 +56,21 @@ public sealed class LeaveRequestTests
     }
 
     [Test]
+    public void Explicit_allowance_funds_requests_without_inventing_an_unknown_policy_default()
+    {
+        var member = database.Memberships.Single(m => m.Id == membership);
+        Assert.That(member.Balance.PolicyMinimum, Is.Null);
+        Assert.That(member.Balance.CustomAllocation, Is.Not.Null);
+        Assert.That(service.Preview(actor, company, Range("2026-01-05", "2026-01-05")).CanSubmit, Is.True);
+
+        member.Update(member.Configuration, null, DateTimeOffset.UtcNow);
+        var missing = service.Preview(actor, company, Range("2026-01-05", "2026-01-05"));
+        Assert.That(missing.CanSubmit, Is.False);
+        Assert.That(missing.Errors, Has.Some.Contains("No finite annual balance"));
+        Assert.That(service.Requests(actor, company), Is.Empty);
+    }
+
+    [Test]
     public void Six_day_schedule_includes_saturday_but_not_sunday()
     {
         var org = database.Organizations.Values.Single(x => x.Guid == company);

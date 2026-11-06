@@ -138,8 +138,10 @@ public sealed class LeaveService(IUnitOfWork work, AccessPolicy access, IMembers
         }
 
         var entitlements = leaves.Entitlements(org.Id, member.Id).Where(e => e.LeaveTypeId == draft.LeaveTypeId).ToList();
+        // A configured allowance is finite even when the separate statutory policy floor is unresolved.
+        // Without an explicit allowance or evaluated policy amount, keep submission blocked.
         if (draft.LeaveTypeId == "annual" && entitlements.All(e => e.Year != member.Balance.PeriodStart.Year)
-            && member.Balance.Allocation is { } allocation)
+            && (member.Balance.CustomAllocation ?? member.Balance.Allocation) is { } allocation)
         {
             entitlements.Add(new("annual", member.Balance.PeriodStart.Year, allocation, member.Balance.Used, member.Balance.Pending));
         }

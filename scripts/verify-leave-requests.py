@@ -94,13 +94,14 @@ def main():
         for invalid in (dict(draft, unit='hours'),
                         dict(draft, leaveTypeId='unconfigured'),
                         dict(draft, endDate='2026-01-04'),
-                        dict(draft, mode='duration', duration=100),
+                        dict(draft, mode='duration', duration=100, endDate=None),
                         dict(draft, startDate='2027-06-01', endDate='2027-06-03')):
             result = call('POST', prefix + 'preview', token, invalid)
             assert not result['canSubmit'] and result['errors']
             call('POST', prefix + 'requests', token,
                  dict(invalid, idempotencyKey=str(uuid.uuid4())), 400)
         call('POST', prefix + 'preview', token, dict(draft, amount=0), 400)
+        call('POST', prefix + 'preview', token, dict(draft, mode='duration', duration=2), 400)
         call('POST', prefix + 'preview', token, dict(draft, employeeId=str(uuid.uuid4())), 400)
         call('POST', prefix + 'preview', token, dict(draft, mode='duration', duration=1.5), 400)
         assert call('GET', prefix + 'requests', token) == before
