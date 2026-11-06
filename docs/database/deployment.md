@@ -13,7 +13,7 @@ CI publishes a `database-package` artifact alongside the API and frontend packag
 The `deploy RUNTIME_NAME RUNTIME_CLIENT_ID` operator command:
 
 1. Validates the SQL connection against the hostname/database output by the selected Bicep deployment, requires certificate-verified TLS and a separate Entra migration service principal, and checks the executable revision before opening a connection.
-2. Runs a read-only `SELECT 1` availability probe with up to eight additional transient retries (including SQL 40613), a maximum 15-second retry delay, and 15-second SQL connection/command timeouts per probe attempt. After readiness succeeds, rejects unknown migration history and an unrelated nonempty database, then applies forward migrations only.
+2. Runs a read-only `SELECT 1` availability probe with up to eight additional transient retries (including SQL 40613 and SqlClient timeout -2), a maximum 15-second retry delay, and 15-second SQL connection/command timeouts per probe attempt. After readiness succeeds, rejects unknown migration history and an unrelated nonempty database, then applies forward migrations only.
 3. Refreshes runtime table/sequence grants for the resolved managed identity and verifies its limited permission boundary, including request inserts.
 4. Requires no remaining migrations and compiles reads of every mapped column while impersonating the runtime principal. `TOP (0)` reads return no business records.
 

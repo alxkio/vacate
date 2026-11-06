@@ -58,17 +58,20 @@ None. Existing ADR-0004 and operator tooling are present. VAC-31 is the incident
 
 - C-4 · 2026-11-06 · Codex: Founder supplied a deployment failure with SQL 40613 from the first GetAppliedMigrations connection. The trace precedes migration writes. Serverless auto-resume is a likely but unverified cause. Added an isolated read-only EF readiness probe with bounded transient retries before migration history; the writer context and explicit runtime-grant transaction strategy remain unchanged. No live availability, credential correctness, provider retry result or migration success is inferred from the stack trace.
 
+- C-5 · 2026-11-06 · Codex: At the founder's explicit request, committed/pushed the readiness correction as `e6751a4` and dispatched [full dev deployment 42232427359](https://github.com/alxkio/vacate/actions/runs/42232427359). Compilation, frontend/backend checks, paired API/browser acceptance and infrastructure apply passed. The availability probe then failed before migration writes with SqlClient post-login timeout -2; its initial policy explicitly added 40613 but did not cover -2. Both application publications and hosted smoke were skipped. Added -2 only to the read-only probe's retry policy, with a regression producing an actual SqlClient timeout through a local inert TCP listener. No write replay, AutoPause/free-limit change or paid fallback is introduced.
+
 ## Decisions
 
 - D-1 · 2026-11-06 · Founder acceptance: Database migration, runtime grants and verification precede API/frontend publication on every SQL backend release; separate identity, same-commit artifacts, environment serialization and compatible forward migrations are required. See the canonical deployment runbook and ADR-0004 amendment.
 
 ## Work log
 
-| Entry | Date       | Actor / category              | Activity                                                                                                | Duration | Basis and evidence                                                                      |
-| ----- | ---------- | ----------------------------- | ------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
-| W-1   | 2026-11-06 | Codex / assistant, unmeasured | Implement accepted database deployment gate, verification, regression checks and documentation          | Unknown  | Local diff; no duration captured.                                                       |
-| W-2   | 2026-11-06 | Codex / assistant, unmeasured | Document migration identity setup in infrastructure and link the deployment runbook                     | Unknown  | Founder request and documentation diff; no duration captured or live setup performed.   |
-| W-3   | 2026-11-06 | Codex / assistant, unmeasured | Handle reported first-connection SQL 40613 with read-only readiness retries and regression verification | Unknown  | Supplied deployment trace and local diff; no measured duration or live database change. |
+| Entry | Date       | Actor / category              | Activity                                                                                                                  | Duration | Basis and evidence                                                                             |
+| ----- | ---------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------- |
+| W-1   | 2026-11-06 | Codex / assistant, unmeasured | Implement accepted database deployment gate, verification, regression checks and documentation                            | Unknown  | Local diff; no duration captured.                                                              |
+| W-2   | 2026-11-06 | Codex / assistant, unmeasured | Document migration identity setup in infrastructure and link the deployment runbook                                       | Unknown  | Founder request and documentation diff; no duration captured or live setup performed.          |
+| W-3   | 2026-11-06 | Codex / assistant, unmeasured | Handle reported first-connection SQL 40613 with read-only readiness retries and regression verification                   | Unknown  | Supplied deployment trace and local diff; no measured duration or live database change.        |
+| W-4   | 2026-11-06 | Codex / assistant, unmeasured | Commit/push and dispatch authorized dev deployment; inspect its timeout and correct read-only SqlClient -2 retry coverage | Unknown  | Workflow 42232427359, deployment-job log and local diff; no assistant/human duration measured. |
 
 Human actual: Unknown. Assistant duration: Unknown. Automation elapsed and estimates: not recorded.
 
@@ -97,6 +100,10 @@ The Azure CLI wrapper could not download Bicep because of its local certificate 
 ### SQL availability follow-up verification · 2026-11-06
 
 The readiness correction passed a Release solution build with zero warnings/errors and the complete NUnit suite: 57 passed (47 integration/offline tests, 10 unit), with the same 18 actual-SQL cases skipped. Four new offline cases exercise the configured EF SQL Server strategy for transient recovery, finite retry exhaustion, immediate nontransient rejection and isolation from the operator's writer strategy. The existing three deployment-gate Python regressions also passed. C# formatting, changed Markdown formatting and `git diff --check` passed. No real SQL connection or auto-resume was exercised; provider/hosted verification remains pending. API behavior, frontend code and tenant authorization are unaffected; the probe reads only a constant. No commit, push, deployment, resource/permission or AutoPause/free-limit change was performed for this correction.
+
+### First authorized hosted attempt · 2026-11-06
+
+[Run 42232427359](https://github.com/alxkio/vacate/actions/runs/42232427359) used `e6751a4620f774bc744ee110ff60ee5313189ede`, environment `dev`, `apply=true`, `deploy_backend=true`. All pre-deploy jobs, including paired browser acceptance, passed. Infrastructure apply succeeded. The database step failed during the initial read-only probe with SqlClient -2 post-login timeout, before history checks/migrations/grants. API/frontend publication and hosted smoke were skipped. The original SQL 40613 and this timeout are availability symptoms; the exact Azure cause remains unverified. Provider deployment verification is not complete. The follow-up -2 correction passed a zero-warning/error Release build and all 58 local NUnit tests (48 integration/offline, 10 unit); the 18 actual-SQL cases remained skipped. Its new regression uses a local TCP listener to obtain a real SqlClient -2 exception and verifies recovery through the read-only strategy.
 
 ## Open questions and follow-up
 

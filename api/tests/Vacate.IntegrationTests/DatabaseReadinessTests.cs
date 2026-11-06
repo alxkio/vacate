@@ -1,3 +1,6 @@
+using System.Net;
+using System.Net.Sockets;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Vacate.Database;
@@ -8,6 +11,40 @@ namespace Vacate.IntegrationTests;
 public sealed class DatabaseReadinessTests
 {
     private const string Connection = "Server=tcp:example.invalid,1433;Database=readiness-test;Encrypt=True;TrustServerCertificate=False";
+
+    [Test]
+    public async Task Sqlclient_timeout_error_minus_two_is_retried_by_the_read_only_probe()
+    {
+        // Accept TCP but never answer SQL's pre-login handshake to produce a real SqlClient -2 error.
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var accepted = listener.AcceptTcpClientAsync();
+        using var connection = new SqlConnection($"Server=tcp:127.0.0.1,{port};Database=synthetic;User Id=synthetic;Password=synthetic;Encrypt=True;TrustServerCertificate=False;Connect Timeout=1;ConnectRetryCount=0;Pooling=False");
+        var open = connection.OpenAsync();
+        using var client = await accepted.WaitAsync(TimeSpan.FromSeconds(5));
+        var timeout = Assert.ThrowsAsync<SqlException>(async () => await open)!;
+        Assert.That(timeout.Number, Is.EqualTo(-2));
+
+        using var probe = DatabaseReadiness.CreateProbe(Connection, TimeSpan.Zero);
+        var attempts = 0;
+        var result = probe.Database.CreateExecutionStrategy().Execute(() =>
+        {
+            attempts++;
+            if (attempts < 3)
+            {
+                throw timeout;
+            }
+
+            return 1;
+        });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(attempts, Is.EqualTo(3));
+            Assert.That(result, Is.EqualTo(1));
+        });
+    }
 
     [Test]
     public void Transient_probe_failure_recovers_within_the_retry_budget()

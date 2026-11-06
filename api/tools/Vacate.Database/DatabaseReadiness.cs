@@ -37,7 +37,8 @@ internal static class DatabaseReadiness
             .UseSqlServer(sql.ConnectionString, provider =>
             {
                 provider.CommandTimeout(15);
-                provider.EnableRetryOnFailure(MaxRetryCount, maxRetryDelay ?? TimeSpan.FromSeconds(15), [40613]);
+                // SqlClient reports login/connection timeouts as -2; replay is safe for this constant read only.
+                provider.EnableRetryOnFailure(MaxRetryCount, maxRetryDelay ?? TimeSpan.FromSeconds(15), [40613, -2]);
             })
             .LogTo(_ => Console.WriteLine("Transient SQL availability failure; retrying the read-only readiness check."), [CoreEventId.ExecutionStrategyRetrying])
             .Options;
