@@ -53,6 +53,7 @@ None. Existing ADR-0004 and operator tooling are present. VAC-31 is the incident
 
 - C-1 · 2026-11-06 · Codex: Founder accepted the recommended release sequence. Implementation proceeds locally; existing VAC-31 investigation edits are preserved.
 - C-2 · 2026-11-06 · Codex: Local checks passed; SQL-provider cases remain skipped. The implementation is ready for QA, while migration identity provisioning, target permissions and the first hosted run remain unexecuted. No release approval is inferred.
+- C-3 · 2026-11-06 · Codex: At the founder's request, documented the complete migration identity setup in the infrastructure guide and linked it from the deployment runbook. Includes app registration, client secret, SQL user mapping, explicit dev-only full database authority, GitHub secret, first run and rotation. Documentation only; no identity, permission or secret was created.
 
 ## Decisions
 
@@ -60,9 +61,10 @@ None. Existing ADR-0004 and operator tooling are present. VAC-31 is the incident
 
 ## Work log
 
-| Entry | Date       | Actor / category              | Activity                                                                                       | Duration | Basis and evidence                |
-| ----- | ---------- | ----------------------------- | ---------------------------------------------------------------------------------------------- | -------- | --------------------------------- |
-| W-1   | 2026-11-06 | Codex / assistant, unmeasured | Implement accepted database deployment gate, verification, regression checks and documentation | Unknown  | Local diff; no duration captured. |
+| Entry | Date       | Actor / category              | Activity                                                                                       | Duration | Basis and evidence                                                                    |
+| ----- | ---------- | ----------------------------- | ---------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------- |
+| W-1   | 2026-11-06 | Codex / assistant, unmeasured | Implement accepted database deployment gate, verification, regression checks and documentation | Unknown  | Local diff; no duration captured.                                                     |
+| W-2   | 2026-11-06 | Codex / assistant, unmeasured | Document migration identity setup in infrastructure and link the deployment runbook            | Unknown  | Founder request and documentation diff; no duration captured or live setup performed. |
 
 Human actual: Unknown. Assistant duration: Unknown. Automation elapsed and estimates: not recorded.
 

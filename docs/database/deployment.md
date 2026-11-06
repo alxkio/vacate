@@ -21,13 +21,11 @@ Any failure blocks both application publications. If migrations succeeded but gr
 
 ## Migration credential setup
 
+Follow the infrastructure guide's [database migration identity setup](../../infra/README.md#database-migration-identity-setup) for the complete portal procedure, SQL user/role script, GitHub secret value, first deployment and credential rotation. That guide is the canonical identity setup procedure. Its `db_owner` grant is explicitly a broad dev-database option, not a custom least-privilege or production role design.
+
 An administrator must provision a dedicated Entra service principal as a database user on the designated database, with the reviewed schema/data migration, runtime-principal grant and impersonation permissions required by the operator. Azure Contributor access alone does not establish SQL access. Use a different application/client ID from the runtime managed identity. The migration credential must never be placed in API app settings or the application package. Provisioning this identity and granting database authority require a separately authorized administrative action; this implementation does not do either.
 
-Set the GitHub Actions repository secret for the selected environment: `AZURE_SQL_MIGRATION_CONNECTION_DEV`, `AZURE_SQL_MIGRATION_CONNECTION_STAGING` or `AZURE_SQL_MIGRATION_CONNECTION_PROD`. GitHub secret lookup is case-insensitive. Use this template, substituting the actual target, migration application ID and secret:
-
-```text
-Server=tcp:vacate-dev-srv.database.windows.net,1433;Database=vacate-dev-db;Authentication=Active Directory Service Principal;User Id=<migration-application-client-id>;Password=<migration-client-secret>;Encrypt=True;TrustServerCertificate=False;Connection Timeout=90;
-```
+Set the GitHub Actions repository secret for the selected environment: `AZURE_SQL_MIGRATION_CONNECTION_DEV`, `AZURE_SQL_MIGRATION_CONNECTION_STAGING` or `AZURE_SQL_MIGRATION_CONNECTION_PROD`, using the connection template in the infrastructure setup guide. GitHub secret lookup is case-insensitive.
 
 The connection is passed only to the database step as `VACATE_SQL_CONNECTION`, never as a command argument or log entry. Missing credentials, wrong targets, runtime-identity reuse and SQL-password authentication fail deployment. Other environments require their own matching connection and existing SQL target. Rotate expiring client secrets through the same repository secret. Keep the migration identity's elevated database authority separate from the API's limited runtime permissions.
 

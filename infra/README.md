@@ -54,6 +54,46 @@ This is a deployment identity; it does not change customer account authenticatio
 
 `SWA_DEPLOYMENT_TOKEN` is also supported as an optional repository secret, matching the name in `alcalc`. It must belong to the **Vacate** Static Web App. If absent, the workflow retrieves and masks the provisioned Vacate site's token using the Azure login. This lets the first deployment provision and publish the frontend in one run. The `alcalc` site's token must not be reused for Vacate.
 
+### Database migration identity setup
+
+Follow this one-time setup for the existing dev database before the first full SQL deployment. The [database deployment runbook](../docs/database/deployment.md) owns release ordering, compatibility, verification and recovery. These instructions describe setup; they do not establish that an identity or secret has already been created.
+
+1. In Azure Portal, select the same Entra directory as the SQL server, then open **Microsoft Entra ID → App registrations → New registration**. Name the app `vacate-dev-db-migrator`, select **Accounts in this organizational directory only**, leave the redirect URI empty and register it. Registration creates the tenant's service principal. Copy the **Application (client) ID**; the Object ID is a different value.
+2. Open **Certificates & secrets → Client secrets → New client secret**. Choose an expiration and record a rotation reminder. Copy the secret **Value** immediately; the Secret ID cannot authenticate. Keep the value out of chat, source control and logs.
+3. Connect as the existing SQL Entra administrator to server `vacate-dev-srv.database.windows.net`, database **`vacate-dev-db`**, through the portal Query editor or VS Code using [these connection instructions](../docs/database/development-access.md). Replace `<APPLICATION-CLIENT-ID>` below with the new app's client ID and run the SQL once:
+
+```sql
+IF DB_NAME() <> N'vacate-dev-db'
+    THROW 51000, 'Connect to vacate-dev-db before provisioning the migration identity.', 1;
+
+DECLARE @clientId uniqueidentifier = '<APPLICATION-CLIENT-ID>';
+DECLARE @sid nvarchar(34) =
+    CONVERT(nvarchar(34), CONVERT(varbinary(16), @clientId), 1);
+
+DECLARE @sql nvarchar(max) =
+    N'CREATE USER [vacate-dev-db-migrator] WITH SID = '
+    + @sid + N', TYPE = E;';
+
+EXEC sys.sp_executesql @sql;
+
+ALTER ROLE [db_owner]
+    ADD MEMBER [vacate-dev-db-migrator];
+```
+
+This development setup gives the dedicated migrator **full authority within this database** through `db_owner`, including schema/data migrations, permission management and runtime-user impersonation. It is broader than a custom least-privilege role. Do not apply this role to the API runtime identity or treat it as a production permission design. The SID form uses the service principal's client ID directly and does not perform a Microsoft Graph lookup. The migrator does not need a resource-group Contributor role for this SQL-only connection; the existing `AZURE_CREDENTIALS` identity continues to deploy Azure resources.
+
+4. In GitHub, open **Vacate → Settings → Secrets and variables → Actions → New repository secret**. Name it **`AZURE_SQL_MIGRATION_CONNECTION_DEV`**. Set its value to the following connection string, replacing both placeholders:
+
+```text
+Server=tcp:vacate-dev-srv.database.windows.net,1433;Database=vacate-dev-db;Authentication=Active Directory Service Principal;User Id=<APPLICATION-CLIENT-ID>;Password="<CLIENT-SECRET-VALUE>";Encrypt=True;TrustServerCertificate=False;Connection Timeout=90;
+```
+
+5. Once the workflow changes are merged, run **Deploy Azure** for `dev`, with **`apply=true`** and **`deploy_backend=true`**. Confirm the database step reports migration, runtime-grant and mapped-column verification before the API/frontend publication steps, followed by successful dev database-backed HTTP smoke checks. The workflow never imports fictional fixtures or configures entitlements during deployment; existing records must already be present.
+
+The secret is scoped to the database step and must not be copied into API app settings. Before it expires, create a replacement client secret, update the GitHub connection-string secret and verify a deployment before retiring the old credential. Staging/production need their own identities, database permission review, target connection and `_STAGING`/`_PROD` repository secrets; do not reuse the dev credential.
+
+Sources checked 2026-11-06: [app registration](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app), [client secret creation](https://learn.microsoft.com/en-us/entra/identity-platform/howto-create-service-principal-portal#option-3-create-a-new-client-secret), [SQL user creation with client ID](https://learn.microsoft.com/en-us/sql/t-sql/statements/create-user-transact-sql#k-create-a-contained-database-user-from-a-microsoft-entra-principal-without-validation), [database role permissions](https://learn.microsoft.com/en-us/sql/relational-databases/security/authentication-access/database-level-roles).
+
 ### Optional setup helper
 
 After `az login`, an administrator with Azure resource, application and role-assignment permissions can run:
