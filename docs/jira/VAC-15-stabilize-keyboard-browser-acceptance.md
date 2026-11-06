@@ -109,6 +109,8 @@ C-12 · 2026-11-02 · Codex: revised native-only, 4× CPU-stressed native-only a
 
 C-13 · 2026-11-06 · Codex: Followed up the founder's pre-CDP startup timeout. Added the documented DevToolsActivePort discovery path, bounded stderr capture, actionable startup failures/artifacts and CI version logging/upload. Six deterministic launcher tests pass; no dependency changes, timeout increase, native-input bypass, application/API change or hosted rerun is included. The original Chrome startup cause remains UNVERIFIED.
 
+C-14 · 2026-11-06 · Codex: Paired API/browser acceptance passed on fresh hosted runners in [run 42232427359](https://github.com/alxkio/vacate/actions/runs/42232427359) at `e6751a4` and [run 42234078829](https://github.com/alxkio/vacate/actions/runs/42234078829) at `1558743`, with the committed Chrome endpoint discovery/diagnostics and all default browser/native assertions retained. The first deployment subsequently failed at SQL readiness; the second deployment and its hosted smoke passed. These results establish current hosted passes, not the root cause of earlier intermittent Chrome failures. Shared execution/monitoring time is recorded only in VAC-41 W-4/W-5; no duplicate duration is added here.
+
 ## Decisions
 
 D-1 · 2026-10-28 · Codex: Exercise the dialog's native keyboard close path rather than closing the dialog through DOM scripting immediately before another trusted keyboard check.

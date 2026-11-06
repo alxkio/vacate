@@ -33,8 +33,8 @@ None. Existing ADR-0004 and operator tooling are present. VAC-31 is the incident
 - [ ] Missing migration credentials, a different SQL target, runtime identity reuse, a mismatched artifact, migration/grant failure or missing mapped columns blocks both publications.
 - [ ] One environment lock spans database and application changes; different environment targets cannot be substituted through the connection secret.
 - [ ] Preview, frontend-only and InMemory deployment paths do not run database mutation.
-- [ ] Review SQL is retained with the same-release operator artifact; forward compatibility and failure recovery are documented.
-- [ ] Full dev SQL smoke checks read own membership and leave requests without resource writes; staging/production never enable fictional sign-in for the probe.
+- [x] Review SQL is retained with the same-release operator artifact; forward compatibility and failure recovery are documented.
+- [x] Full dev SQL smoke checks read own membership and leave requests without resource writes; staging/production never enable fictional sign-in for the probe.
 - [ ] Actual-SQL migration replay, permissions and existing tenant-isolation tests run on an explicitly authorized target before hosted readiness is claimed. Tenant authorization logic is unchanged; target isolation and credential boundaries receive offline regression checks.
 - [ ] A temporarily unavailable SQL target receives bounded read-only readiness retries before migration-history access; persistent or nontransient failures still block publication, with no automatic migration/grant replay or change to AutoPause/free-limit controls.
 
@@ -60,6 +60,8 @@ None. Existing ADR-0004 and operator tooling are present. VAC-31 is the incident
 
 - C-5 · 2026-11-06 · Codex: At the founder's explicit request, committed/pushed the readiness correction as `e6751a4` and dispatched [full dev deployment 42232427359](https://github.com/alxkio/vacate/actions/runs/42232427359). Compilation, frontend/backend checks, paired API/browser acceptance and infrastructure apply passed. The availability probe then failed before migration writes with SqlClient post-login timeout -2; its initial policy explicitly added 40613 but did not cover -2. Both application publications and hosted smoke were skipped. Added -2 only to the read-only probe's retry policy, with a regression producing an actual SqlClient timeout through a local inert TCP listener. No write replay, AutoPause/free-limit change or paid fallback is introduced.
 
+- C-6 · 2026-11-06 · Codex: Committed/pushed the verified -2 correction as `1558743`, then dispatched [full dev deployment 42234078829](https://github.com/alxkio/vacate/actions/runs/42234078829). Every job passed, including database migration/grant/schema verification, API/frontend publication and hosted smoke with the dev membership/request read probe. This attempt's readiness check succeeded without a logged retry; actual cold-start retry recovery is not established by that success. Issue remains QA pending the remaining SQL-provider scenarios and independent review.
+
 ## Decisions
 
 - D-1 · 2026-11-06 · Founder acceptance: Database migration, runtime grants and verification precede API/frontend publication on every SQL backend release; separate identity, same-commit artifacts, environment serialization and compatible forward migrations are required. See the canonical deployment runbook and ADR-0004 amendment.
@@ -72,6 +74,7 @@ None. Existing ADR-0004 and operator tooling are present. VAC-31 is the incident
 | W-2   | 2026-11-06 | Codex / assistant, unmeasured | Document migration identity setup in infrastructure and link the deployment runbook                                       | Unknown  | Founder request and documentation diff; no duration captured or live setup performed.          |
 | W-3   | 2026-11-06 | Codex / assistant, unmeasured | Handle reported first-connection SQL 40613 with read-only readiness retries and regression verification                   | Unknown  | Supplied deployment trace and local diff; no measured duration or live database change.        |
 | W-4   | 2026-11-06 | Codex / assistant, unmeasured | Commit/push and dispatch authorized dev deployment; inspect its timeout and correct read-only SqlClient -2 retry coverage | Unknown  | Workflow 42232427359, deployment-job log and local diff; no assistant/human duration measured. |
+| W-5   | 2026-11-06 | Codex / assistant, unmeasured | Push timeout correction, execute and monitor successful full dev deployment, record hosted evidence                       | Unknown  | Workflow 42234078829 and its deployment-job log; no measured assistant/human duration.         |
 
 Human actual: Unknown. Assistant duration: Unknown. Automation elapsed and estimates: not recorded.
 
@@ -105,6 +108,19 @@ The readiness correction passed a Release solution build with zero warnings/erro
 
 [Run 42232427359](https://github.com/alxkio/vacate/actions/runs/42232427359) used `e6751a4620f774bc744ee110ff60ee5313189ede`, environment `dev`, `apply=true`, `deploy_backend=true`. All pre-deploy jobs, including paired browser acceptance, passed. Infrastructure apply succeeded. The database step failed during the initial read-only probe with SqlClient -2 post-login timeout, before history checks/migrations/grants. API/frontend publication and hosted smoke were skipped. The original SQL 40613 and this timeout are availability symptoms; the exact Azure cause remains unverified. Provider deployment verification is not complete. The follow-up -2 correction passed a zero-warning/error Release build and all 58 local NUnit tests (48 integration/offline, 10 unit); the 18 actual-SQL cases remained skipped. Its new regression uses a local TCP listener to obtain a real SqlClient -2 exception and verifies recovery through the read-only strategy.
 
+### Successful hosted deployment · 2026-11-06
+
+[Run 42234078829](https://github.com/alxkio/vacate/actions/runs/42234078829) deployed `1558743ff053634343529f4cd2f2445b0faa2933` to `dev`, with `apply=true` and `deploy_backend=true`. Compile, frontend/backend CI and paired API/browser acceptance all passed. The deployment job then passed infrastructure validation/apply, database verification, both application publications and same-revision hosted smoke checks.
+
+The deployment log records:
+
+- SQL availability succeeded before history/migration work; no transient retry was logged in this successful attempt.
+- Forward migrations completed and `20261105214614_LeaveRequestSubmission` was verified, including runtime access to every mapped column.
+- Runtime request/leave inserts and resource access were verified, with db_owner, DDL, physical DELETE, migration-history writes and Leaves UPDATE/DELETE denied to the application identity.
+- API and Angular publication succeeded. Hosted smoke passed with the workflow's dev-only database-backed own-membership/request read enabled; only an ephemeral session is created/revoked by that probe.
+
+Named targets: [dev web](https://lemon-beach-02f7a7103.4.azurestaticapps.net), [dev API health](https://vacate-dev-sc-wv5pdctnrzamu-api.azurewebsites.net/api/health), existing `vacate-dev-db` on `vacate-dev-srv`. The 18 opt-in actual-SQL regression cases remained skipped in CI; successful deployment/schema/grant checks do not replace those tests or independent acceptance. No AutoPause/free-limit change or paid recovery fallback was made by this correction. Shared deployment monitoring is logged here only, not duplicated in VAC-15.
+
 ## Open questions and follow-up
 
-Which dedicated migration service principal will the administrator provision and authorize for each SQL environment? The workflow deliberately fails until its matching credential and permissions exist. A hosted rollout and actual-SQL checks remain to execute after that setup.
+The configured dev migration credential and runtime grants were exercised successfully in run 42234078829. Actual cold-start retry recovery, opt-in SQL regression scenarios and independent review remain to verify. Staging/production identities, matching credentials and permission designs remain separate setup work; the successful dev deployment does not establish their readiness.
