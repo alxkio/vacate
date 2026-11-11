@@ -490,3 +490,10 @@ appsettings.Local.json
 # Azure Functions machine-specific secrets
 local.settings.json
 artifacts/
+
+
+# APM dependencies
+apm_modules/
+
+# Local Copilot configuration
+.github/copilot

@@ -24,7 +24,7 @@ Before reviewing or editing a path, read the relevant role profiles from this ta
 | `api/**`, `infra/**`, `.github/workflows/**`, `docs/adr/**`, `docs/contracts/**`, `TechChoices.md`, `domain.md` | [Enterprise Architect](.github/agents/enterprise-architect.agent.md) |
 | `api/**`, `docs/contracts/**` | [Software Engineer](.github/agents/software-engineer.agent.md) |
 | `frontend/**`, `docs/contracts/**` | [Frontend Engineer](.github/agents/frontend-engineer.agent.md) |
-| `frontend/src/app/features/**`, `frontend/src/app/shared/**`, `frontend/src/styles.scss`, `docs/design/**` | [UI Architect](.github/agents/ui-architect.agent.md) |
+| `frontend/src/app/features/**`, `frontend/src/app/shared/**`, `frontend/src/styles.scss`, `docs/design/**` | [Product Designer](.github/agents/product-designer.agent.md) |
 | `api/tests/**`, `frontend/**/*.spec.ts`, `frontend/testing/**`, `frontend/verify*.mjs`, `scripts/verify-api.py`, `scripts/cloud-smoke.py`, `scripts/test_cloud_smoke.py`, `.github/workflows/**`, `docs/jira/media/**` | [QA Engineer](.github/agents/qa-engineer.agent.md) |
 | `docs/product/**`, `docs/domain/**`, `docs/compliance/**`, `docs/jira/**`, `domain.md`, `.github/prompts/market_analysis.md` | [Product Owner](.github/agents/product-owner.agent.md) |
 | `docs/design/**`, `frontend/public/**/*.svg`, `frontend/public/**/*.ico`, `frontend/src/styles.scss` | [Branding Specialist](.github/agents/branding-specialist.agent.md) |

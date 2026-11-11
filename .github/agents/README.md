@@ -7,7 +7,7 @@ Each profile uses the enterprise-architect reference layout: YAML `name`, `descr
 - [Enterprise Architect](enterprise-architect.agent.md)
 - [Software Engineer](software-engineer.agent.md)
 - [Frontend Engineer](frontend-engineer.agent.md)
-- [UI Architect](ui-architect.agent.md)
+- [Product Designer](product-designer.agent.md)
 - [QA Engineer](qa-engineer.agent.md)
 - [Product Owner](product-owner.agent.md)
 - [Branding Specialist](branding-specialist.agent.md)

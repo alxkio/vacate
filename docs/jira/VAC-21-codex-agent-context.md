@@ -4,7 +4,7 @@ type: story
 summary: Engineer and maintain repository AI context
 status: in-progress
 created: 2026-10-30
-updated: 2026-11-05
+updated: 2026-11-11
 parent: null
 depends_on: []
 ---
@@ -122,7 +122,6 @@ Final Markdown-only validation passed: all seven YAML headers parse; normal Mark
 
 Current iteration still needs a disposition for the review findings on API-skill validation guidance versus ADR-0003 and the loading routes for the three added skills. These are recorded findings, not completed fixes. Fresh-session routing and automatic skill discovery remain UNVERIFIED; after reloading, check the applicable Markdown profiles for representative backend/frontend paths. No follow-up issue created and no additional product decision is made by this story rewrite.
 
-
 ## Frontend guidance correction · 2026-11-05
 
 C6 · 2026-11-05 · Product lead / assistant: use the requested skill-builder profile to correct frontend-engineer guidance before reviewing the frontend again. The skill-builder profile is consulted as Markdown guidance under root source precedence; its generic runtime/metadata claims are not installed or adopted. Revised the frontend profile to separate observed paths from architectural constraints, remove ADR-0003 as frontend layout authority, require status-aware use of the dedicated [frontend ADR](../adr/0005-frontend-capability-architecture.md), and evaluate capability-owned routes/state/models/clients. Existing pending profile and application changes were preserved. Current branch `VAC-21-frontend-agent-guidance` follows the story-key/short-description convention.
@@ -134,3 +133,38 @@ W5 · 2026-11-05 · Assistant recorded · Read skill-builder/context/issue guida
 H6 · 2026-11-05 · Assistant · Remains In progress; this bounded profile correction is delivered with static checks, while existing story-wide unresolved findings and product lead review remain open. Backlog summary/type/status/dependencies unchanged.
 
 Verification: profile/root `applyTo` scopes remain aligned; relative references and Markdown formatting checked. The profile was explicitly reread in this session to perform the review; automatic instruction discovery in a fresh session remains UNVERIFIED. Root guidance says to start a new session after instruction changes; this session's explicit reread does not claim to test discovery. No application changes or runtime tests in this iteration.
+
+## UI profile refinement · 2026-11-07
+
+- **C7 · Product lead / assistant:** refined the [UI profile](../../.github/agents/product-designer.agent.md) into concise bullets with bold emphasis, preserving the user's Product Designer direction and existing scope. The supplied architecture-reviewer example informed writing style only. Added five inactive skill placeholders for research, design systems, prototyping, accessibility and usability validation.
+- **D7 · Assistant:** retain existing metadata and root routing; distinguish researched personas from assumptions, recommendations from accepted behaviour and verified checks from untested claims. Specific skills remain to be selected. The user declined the required branch-creation escalation; edits remain local on `master`.
+- **W6 · Assistant recorded:** read context and issue guidance, refine the profile and check formatting/metadata/links. Duration: Unknown (not measured); human actual: Unknown. Evidence: C7 and verification below.
+- **H7 · Assistant:** remains In progress; backlog summary/type/status/dependencies are unchanged. No application, API or tenant-isolation behaviour changes in this context-only iteration.
+- **Verification:** Prettier and scoped whitespace checks passed; metadata, root/profile scope parity, existing paths, local links and five inactive placeholders checked. All 40 real issue IDs have matching backlog metadata and valid, acyclic dependencies. Application and tenant-isolation tests are not applicable to these documentation edits. Fresh-session loading and behavioural evaluation remain **UNVERIFIED**.
+
+## Product Designer skill catalogue review · 2026-11-11
+
+- **C11 · Product lead / assistant:** following C10, requested re-enabling the entire Skills section and linking Impeccable where appropriate. Removed the catalogue comment, added direct relative links to its installed `SKILL.md`, and named the relevant workflows: `critique`/`polish`/`clarify`/`adapt`, `document`/`extract`, and `audit`. The profile directs reading the skill before following the command's reference; these entries do not execute commands automatically. Journey mapping and unfilled placeholders are preserved.
+- **W10 · Assistant recorded:** re-enabled the catalogue, scoped command references, updated the context guide and checked formatting, links and active-section boundaries. Duration: Unknown (not measured); human actual: Unknown.
+- **H11 · Assistant:** remains In progress; backlog metadata and dependencies unchanged. Static formatting, links and scoped whitespace checks passed; fresh-session behavior remains **UNVERIFIED**. No application changes or application/tenant-isolation tests. This follow-up supersedes C10's catalogue disablement and continues under the earlier branch refusal.
+
+- **C10 · Product lead / assistant:** reviewed the Product Designer's Impeccable assignments against the installed skill. `document`/`extract` support design-system documentation, tokens and reuse; `audit` supports technical accessibility checks. Retained the references, narrowed the accessibility description to avoid implying verified conformance, and commented out the entire Skills section as requested. The comment explicitly marks the catalogue inactive. The separate journeys checklist still links the journey-mapping skill.
+- **D10 · Assistant:** no package uninstall, APM change or application change. This is a continuation on `master` under the earlier branch-creation refusal; unrelated pending work is preserved.
+- **W9 · Assistant recorded:** inspected profile and installed skill references, disabled the catalogue and checked Markdown/comment boundaries. Duration: Unknown (not measured); human actual: Unknown.
+- **H10 · Assistant:** remains In progress; backlog metadata and dependencies unchanged. Static formatting and scoped whitespace checks passed; fresh-session instruction behavior remains **UNVERIFIED**. Application and tenant-isolation tests are not applicable.
+
+## User journey mapping skill · 2026-11-11
+
+- **C9 · Product lead / assistant:** converted the loose Lean UX draft into [user-journey-mapping](../../.github/skills/user-journey-mapping/SKILL.md), a reusable Markdown skill covering current/proposed journeys, stages, touchpoints, handoffs, recovery, evidence, pain points and validation experiments. Removed the superseded `.github/agents/lean-ux.skill.md` draft and its unsupported `commands` frontmatter.
+- **D9 · Assistant:** linked the skill from the Product Designer journeys checklist and research/journeys entry. Updated root routing, the role index and the context guide for the user's pending profile rename. Preserved unrelated profile selections and pending edits. The earlier branch-creation refusal still applies; this continuation remains local on `master`. No new product decisions or application changes.
+- **W8 · Assistant recorded:** read skill-creator/context/issue guidance, converted the draft, updated explicit loading links and checked metadata, formatting and references. Duration: Unknown (not measured); human actual: Unknown.
+- **H9 · Assistant:** remains In progress; backlog summary, type, status and dependencies are unchanged. Fresh-session skill discovery and behavioral evaluation remain **UNVERIFIED**. Application and tenant-isolation tests are not applicable to these context-only edits.
+- **Verification:** skill YAML, supported fields, naming, description and unfinished-placeholder checks passed using Ruby's YAML parser; local skill/profile/index/root links and profile/root scope parity passed. All 40 real issues have unique IDs, backlog entries and valid acyclic dependencies. Prettier passed for the skill, profile, role index, context guide and issue; scoped whitespace checks passed. The bundled Python `quick_validate.py` could not run because its environment lacks PyYAML; these static checks do not claim that validator or a fresh-session behavior test passed.
+
+## Impeccable installation · 2026-11-10
+
+- **C8 · Product lead / assistant:** requested installing `pbakaus/impeccable` through APM. Ran `apm install pbakaus/impeccable --https --verbose` using the existing Codex and Copilot targets. Added the dependency to [apm.yml](../../apm.yml), recorded version 4.8.2 at revision `f37ae34f2aba824b1e9a8e1d22ef75b08516642a` in [apm.lock.yaml](../../apm.lock.yaml), and deployed `.agents/skills/impeccable/`. Source: [upstream repository](https://github.com/pbakaus/impeccable). Installation was explicitly authorized by this request; it does not authorize applying design changes or initializing product/design documents.
+- **D8 · Assistant:** preserved the existing Figma dependency and pending edits. Branch creation was declined at the permission prompt, so this iteration remains on `master`. Root instruction and accepted-source precedence still apply to the installed skill. No commits, pushes or application changes.
+- **W7 · Assistant recorded:** inspected APM/context/issue guidance, previewed installation, interrupted the first slow clone attempt, installed over explicit HTTPS, and checked deployment and audits. Duration: Unknown (total not measured); human actual: Unknown. The successful APM invocation reported automation elapsed of 347.4 seconds; this is included in the unmeasured iteration, not an additional assistant-time total.
+- **H8 · Assistant:** remains In progress; backlog summary, type, status and dependencies are unchanged.
+- **Verification:** installation exited successfully; the skill header reports version 4.8.2, and its launcher is executable. `apm audit pbakaus/impeccable` exited 0 with two informational unusual-character findings. `apm audit --ci` replayed both dependencies without drift and passed lockfile/ref/deployment checks, but exited 1 because the pre-existing `figma/mcp-server-guide` subset entry `figma-use` was not found in that package tree. That separate configuration remains unchanged. Fresh-session discovery and launcher execution on macOS 12 are **UNVERIFIED**. Application/API/frontend contracts and tenant isolation are unaffected; no application tests were needed.

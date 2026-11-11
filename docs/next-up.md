@@ -94,3 +94,14 @@ Converted to the accepted mock scope in [VAC-19](jira/VAC-19-calendar-display-pr
     - when the unit is hours, the date should be fixed (only one date selected, end date would be hidden). 
     (owner comment: since hours are not in scope yet lets disable the form from submission) 
     - when I have a low balance I want to get a  .warning  in the form. 
+
+
+Admin functionality: (epic)
+    1. As an admin i want to be able and set closed dates for my company; 
+       i would have an option to set a setting if the closed days leaves will be subtracted from the employees balance when taken or if they will not impact it. 
+    2. As an admin I want to be able and set custom holiday days for my company. Fix dates that they will be carried year over year. The mandate for this is that different regions in greece have different holidays ex. Thessaloniki has a holiday on oct. 26, Athens on oct 8 etc 
+    3. Improve settings layout : design 
+    4. UX-UI agent prompt and skills / perhaps figma. 
+    5. As an admin I want a screen with the leave requests I have to approve/decline
+    6. As an admin I want an overview screen of my personnel, and the leaves they ve taken. 
+    7. 

@@ -6,10 +6,14 @@ author: Alex
 # Resolution order: --target flag > this field > auto-detect from filesystem.
 # Accepted values: agent-skills, antigravity, claude, codex, copilot, cursor, gemini, grok-bot, grok-build, hermes, kiro, opencode, vscode, windsurf
 targets:
-- codex
-- copilot
+  - codex
+  - copilot
 dependencies:
-  apm: []
+  apm:
+    - git: figma/mcp-server-guide
+      skills:
+        - figma-use
+    - pbakaus/impeccable
   mcp: []
 includes: auto
 scripts: {}
