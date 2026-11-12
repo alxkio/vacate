@@ -153,7 +153,7 @@ export class Workspace implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    void this.leave.refresh().then(() => this.changeDetector.markForCheck());
+    void this.refreshSavedLeave();
     this.subscription = this.route.queryParamMap.subscribe((params) => {
       if (!this.ensureSession()) {
         return;
@@ -254,6 +254,14 @@ export class Workspace implements OnInit, OnDestroy {
     this.mobileOpen = false;
     this.accountOpen = false;
     this.main.nativeElement.focus();
+    this.changeDetector.markForCheck();
+  }
+
+  async refreshSavedLeave(): Promise<void> {
+    if (this.leave.loading()) {
+      return;
+    }
+    await this.leave.refresh();
     this.changeDetector.markForCheck();
   }
 

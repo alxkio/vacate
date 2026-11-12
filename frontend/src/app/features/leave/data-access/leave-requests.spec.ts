@@ -83,4 +83,54 @@ describe('Saved leave session isolation', () => {
     expect(leaves.entries).toEqual([]);
     expect(leaves.requests).toEqual([]);
   });
+  it('reports loading and failure, then clears the error after retry', async () => {
+    const leaves = TestBed.inject(LeaveRequests);
+    request.mockRejectedValueOnce(Error('offline'));
+    const pending = leaves.refresh();
+    expect(leaves.loading()).toBe(true);
+    await pending;
+    expect(leaves.loading()).toBe(false);
+    expect(leaves.error()).toContain('Retry');
+    await leaves.refresh();
+    expect(leaves.error()).toBe('');
+    expect(leaves.requests.length).toBe(1);
+  });
+
+  it('does not carry errors or loading feedback across organizations or sessions', async () => {
+    const leaves = TestBed.inject(LeaveRequests);
+    request.mockRejectedValueOnce(Error('offline'));
+    await leaves.refresh();
+    expect(leaves.error()).not.toBe('');
+    const originalCompany = actor.companyId;
+    actor.companyId = 'another-company';
+    try {
+      expect(leaves.error()).toBe('');
+      expect(leaves.loading()).toBe(false);
+      expect(leaves.requests).toEqual([]);
+    } finally {
+      actor.companyId = originalCompany;
+    }
+    generation++;
+    expect(leaves.error()).toBe('');
+    expect(leaves.loading()).toBe(false);
+    expect(leaves.requests).toEqual([]);
+  });
+
+  it('keeps the latest refresh feedback when an older request fails later', async () => {
+    let rejectOld!: (reason: Error) => void;
+    request.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectOld = reject;
+        }),
+    );
+    const leaves = TestBed.inject(LeaveRequests);
+    const older = leaves.refresh();
+    await leaves.refresh();
+    rejectOld(Error('old failure'));
+    await older;
+    expect(leaves.error()).toBe('');
+    expect(leaves.loading()).toBe(false);
+    expect(leaves.requests.length).toBe(1);
+  });
 });

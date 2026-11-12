@@ -153,6 +153,8 @@ describe('Workspace navigation', () => {
     trigger.click();
     harness.detectChanges();
     expect(dialog.open).toBe(true);
+    expect(dialog.getAttribute('aria-labelledby')).toBe('workspace-dialog-title');
+    expect(dialog.querySelector('#workspace-dialog-title')?.textContent?.trim()).toBeTruthy();
     expect(dialog.textContent).toContain('YOUR REQUEST');
     expect(dialog.textContent).toContain('Autumn leave');
 

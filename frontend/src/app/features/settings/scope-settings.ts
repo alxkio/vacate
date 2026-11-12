@@ -40,7 +40,9 @@ import { ApiDepartment } from '../../core/http/contracts';
             Team settings override department settings, then the organization default.
           </p>
           <div class="settings-footer">
-            <button class="primary" [disabled]="busy">Save approval setting</button>
+            <button class="primary" [disabled]="busy">
+              {{ busy ? 'Saving…' : 'Save approval setting' }}
+            </button>
           </div>
           <p id="scope-settings-status" role="status" class="settings-success">{{ message }}</p>
           @if (error) {
@@ -99,7 +101,9 @@ export class ScopeSettings implements OnChanges {
   }
 
   async save(): Promise<void> {
-    if (this.busy) {return;}
+    if (this.busy) {
+      return;
+    }
     if (
       this.companyId !== this.data.currentUser()?.companyId ||
       !this.nodes.some((n) => n.guid === this.selectedId)

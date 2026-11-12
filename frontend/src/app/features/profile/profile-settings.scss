@@ -54,6 +54,10 @@ h2 {
   line-height: 1.7;
   margin: 18px 0;
 }
+.settings-intro + .settings-fields {
+  margin-top: 18px;
+}
+
 .settings-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;

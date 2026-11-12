@@ -61,4 +61,23 @@ describe('My Leave summary', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.usedTypes.map((type) => type.id)).toEqual(['annual']);
   });
+  it('distinguishes loading, unavailable and empty saved history with an actionable retry', () => {
+    TestBed.inject(WorkspaceDataService).environment.VacateSession.login('maya', 'maya');
+    const fixture = TestBed.createComponent(MyLeave);
+    fixture.componentRef.setInput('savedLoading', true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Loading saved requests');
+    expect(fixture.nativeElement.textContent).not.toContain('No saved requests');
+    fixture.componentRef.setInput('savedLoading', false);
+    fixture.componentRef.setInput('savedError', 'Network unavailable');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('No saved requests');
+    let retries = 0;
+    fixture.componentInstance.retry.subscribe(() => retries++);
+    fixture.nativeElement.querySelector('button.secondary').click();
+    expect(retries).toBe(1);
+    fixture.componentRef.setInput('savedError', '');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No saved requests');
+  });
 });

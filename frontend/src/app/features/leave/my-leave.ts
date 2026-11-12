@@ -1,4 +1,4 @@
-import { Component, inject, Input } from '@angular/core';
+import { Component, inject, Input, Output, EventEmitter } from '@angular/core';
 import { BalanceBar } from './balance-bar';
 import { SavedRequest } from './data-access/leave-requests';
 import {
@@ -12,6 +12,41 @@ import { Entry, LeaveType } from '../../core/models/workspace.models';
   selector: 'vacate-my-leave',
   imports: [BalanceBar],
   template: `
+    <section class="navigation-card" aria-labelledby="my-leave-requests">
+      <h2 id="my-leave-requests">My requests</h2>
+      <h3>Saved requests</h3>
+      @if (savedLoading) {
+        <p role="status">Loading saved requests…</p>
+      }
+      @if (savedError) {
+        <p role="alert">{{ savedError }}</p>
+      }
+      <button
+        class="secondary"
+        type="button"
+        [attr.aria-disabled]="savedLoading"
+        (click)="!savedLoading && retry.emit()"
+      >
+        {{ savedError ? 'Retry saved requests' : 'Refresh saved requests' }}
+      </button>
+      <ul class="dialog-list" id="saved-leave-requests">
+        @for (request of savedRequests; track request.guid) {
+          <li [attr.data-saved-request]="request.guid">
+            <strong>{{ data.typeName(request.leaveTypeId) }}</strong>
+            @for (day of request.dates; track day.date) {
+              <small
+                >{{ day.date }} · {{ day.status === 'Pending' ? 'Pending approval' : day.status }} ·
+                Entitlement {{ day.entitlementYear }}</small
+              >
+            }
+          </li>
+        } @empty {
+          @if (!savedLoading && !savedError) {
+            <li>No saved requests. Use Request leave to add one.</li>
+          }
+        }
+      </ul>
+    </section>
     <section class="navigation-card" aria-labelledby="my-leave-balances">
       <h2 id="my-leave-balances">My balances · {{ year }}</h2>
       <p>
@@ -41,28 +76,8 @@ import { Entry, LeaveType } from '../../core/models/workspace.models';
       </div>
       <button class="inline-link" data-nav="balances">View my balances →</button>
     </section>
-    <section class="navigation-card" aria-labelledby="my-leave-requests">
-      <h2 id="my-leave-requests">My requests</h2>
-      <h3>Saved requests</h3>
-      @if (savedError) {
-        <p role="alert">{{ savedError }}</p>
-      }
-      <ul class="dialog-list" id="saved-leave-requests">
-        @for (request of savedRequests; track request.guid) {
-          <li [attr.data-saved-request]="request.guid">
-            <strong>{{ data.typeName(request.leaveTypeId) }}</strong>
-            @for (day of request.dates; track day.date) {
-              <small
-                >{{ day.date }} · {{ day.status === 'Pending' ? 'Pending approval' : day.status }} ·
-                Entitlement {{ day.entitlementYear }}</small
-              >
-            }
-          </li>
-        } @empty {
-          <li>No saved requests.</li>
-        }
-      </ul>
-      <h3>Fictional reference history</h3>
+    <section class="navigation-card" aria-labelledby="reference-history">
+      <h2 id="reference-history">Fictional reference history</h2>
       <p>
         The reference examples below are separate from saved requests and are not submitted or
         charged.
@@ -97,6 +112,8 @@ import { Entry, LeaveType } from '../../core/models/workspace.models';
 export class MyLeave {
   @Input() savedRequests: SavedRequest[] = [];
   @Input() savedError = '';
+  @Input() savedLoading = false;
+  @Output() retry = new EventEmitter<void>();
   readonly data = inject(WorkspaceDataService);
   readonly year = REFERENCE_TODAY.getFullYear();
   readonly shortDate = shortDate;

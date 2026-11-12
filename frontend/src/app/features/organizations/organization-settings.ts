@@ -51,6 +51,8 @@ export class OrganizationSettings implements OnChanges {
   }
 
   editMember(member: MemberRecord): void {
+    this.memberTrigger =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     this.selectedMember = member;
     const m = member.membership;
     this.memberDraft = {
@@ -74,6 +76,14 @@ export class OrganizationSettings implements OnChanges {
     });
   }
 
+  private memberTrigger: HTMLElement | null = null;
+
+  closeMember(): void {
+    this.selectedMember = null;
+    this.detector.detectChanges();
+    this.memberTrigger?.focus();
+  }
+
   async saveMember(): Promise<void> {
     if (!this.selectedMember || this.busy) {
       return;
@@ -89,10 +99,10 @@ export class OrganizationSettings implements OnChanges {
       this.selectedMember.userGuid,
       patch,
     );
-    if (result.ok) {
-      this.selectedMember = null;
-    }
     this.finish(result);
+    if (result.ok) {
+      this.closeMember();
+    }
   }
 
   @Input() companyId = '';

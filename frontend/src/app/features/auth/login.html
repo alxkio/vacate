@@ -28,6 +28,7 @@
     ><select
       #account
       id="demo-account"
+      aria-describedby="persona-description"
       (change)="choose(account.value, username, password, description)"
     >
       <option value="">Choose a persona…</option>
@@ -38,7 +39,7 @@
     <p #description id="persona-description" class="login-note">
       Select a persona to fill their public demo credentials.
     </p>
-    <form id="login-form" (submit)="submit($event, username, password)">
+    <form id="login-form" [attr.aria-busy]="busy" (submit)="submit($event, username, password)">
       <label for="username">Username</label
       ><input
         #username
@@ -60,7 +61,7 @@
       />
       <p id="login-error" class="login-error" role="alert" [hidden]="!error">{{ error }}</p>
       <button class="primary" type="submit" [disabled]="busy">
-        Sign in <span aria-hidden="true">→</span>
+        {{ busy ? 'Signing in…' : 'Sign in' }} <span aria-hidden="true">→</span>
       </button>
     </form>
     <div class="demo-credentials">
@@ -71,11 +72,11 @@
           ><code>{{ persona.id }} / {{ persona.id }}</code>
         </p>
       }
-      <p>The two lead personas currently have the same access.</p>
+      <p>Lead settings access depends on assigned scope and organization delegation.</p>
     </div>
     <p class="login-note">
-      Public browser simulation. All fixture data is downloadable. No secure authentication or real
-      requests.
+      Development sign-in with public fictional accounts. Reference examples are downloadable.
+      Submitted requests and settings save through the API. Use fictional data only.
     </p>
     <noscript><p>Enable JavaScript to use this interactive demo.</p></noscript>
   </section>
