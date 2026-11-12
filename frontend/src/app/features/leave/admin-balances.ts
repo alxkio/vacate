@@ -48,7 +48,16 @@ import { OrganizationRecord } from '../../core/models/workspace.models';
           High balance means at least {{ validThreshold }}% of the known annual allocation remains.
           This is a viewing aid, not a policy rule.
         </p>
-        <div class="overview-table" tabindex="0" aria-label="Employee annual leave balances">
+        <p class="table-hint" id="balance-table-hint">
+          Scroll the table horizontally to see all balance details.
+        </p>
+        <div
+          class="overview-table"
+          role="region"
+          tabindex="0"
+          aria-label="Employee annual leave balances"
+          aria-describedby="balance-table-hint"
+        >
           <table>
             <caption>
               Annual leave balances · days ·
@@ -145,7 +154,9 @@ export class AdminBalances {
 
   get rows(): MemberRecord[] {
     const actor = this.data.currentUser();
-    if (!this.organization || !actor) {return [];}
+    if (!this.organization || !actor) {
+      return [];
+    }
     return this.data.api.members
       .filter(
         (member) =>

@@ -54,7 +54,12 @@ export class LeaveRequests {
     entries: Entry[];
     requests: SavedRequest[];
   } | null>(null);
-  readonly error = signal('');
+  private readonly feedback = signal<{ owner: string; loading: boolean; error: string } | null>(
+    null,
+  );
+  readonly loading = () => this.feedback()?.owner === this.owner && !!this.feedback()?.loading;
+  readonly error = () => (this.feedback()?.owner === this.owner ? this.feedback()!.error : '');
+  private refreshSequence = 0;
 
   get entries(): Entry[] {
     return this.records()?.owner === this.owner ? this.records()!.entries : [];
@@ -96,10 +101,12 @@ export class LeaveRequests {
 
   async refresh(): Promise<void> {
     const owner = this.owner;
+    const sequence = ++this.refreshSequence;
     const actor = this.data.currentUser();
     if (!actor || !this.data.api.authenticatedRequest) {
       return;
     }
+    this.feedback.set({ owner, loading: true, error: '' });
     try {
       const [requests, dates] = await Promise.all([
         this.request<SavedRequest[]>('GET', 'requests'),
@@ -108,7 +115,7 @@ export class LeaveRequests {
           'calendar',
         ),
       ]);
-      if (owner !== this.owner) {
+      if (owner !== this.owner || sequence !== this.refreshSequence) {
         return;
       }
       this.records.set({
@@ -127,12 +134,15 @@ export class LeaveRequests {
           unit: 'working days',
         })),
       });
-      this.error.set('');
+      this.feedback.set({ owner, loading: false, error: '' });
     } catch {
-      if (owner === this.owner) {
-        this.error.set(
-          'Saved leave could not be refreshed. Try again before relying on this calendar.',
-        );
+      if (owner === this.owner && sequence === this.refreshSequence) {
+        this.feedback.set({
+          owner,
+          loading: false,
+          error:
+            'Saved leave could not be refreshed. Retry before relying on this calendar or history.',
+        });
       }
     }
   }

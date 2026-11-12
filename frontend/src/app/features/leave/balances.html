@@ -2,7 +2,9 @@
   <div class="balance-heading">
     <div>
       <h2 id="balances-title">My leave balances</h2>
-      <p>Your own balances · five-day workweek · demo allocations · separate units and periods</p>
+      <p>
+        Fictional reference balances · five-day examples · separate from saved request calculations
+      </p>
     </div>
     <button
       class="inline-link"
@@ -88,7 +90,7 @@
                     [attr.aria-describedby]="'eligibility-' + type.id"
                     (click)="preview(type, $event)"
                   >
-                    Preview {{ data.label(type).toLowerCase() }} example →
+                    Request {{ data.label(type).toLowerCase() }} →
                   </button>
                   <p class="example-eligibility" [id]="'eligibility-' + type.id">
                     {{ decision.reason }}

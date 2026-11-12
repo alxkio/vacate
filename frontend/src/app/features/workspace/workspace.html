@@ -75,9 +75,9 @@
     <div class="sidebar-note">
       <span class="note-icon">↗</span><strong>Make room for time off.</strong>
       <p>A little planning.<br />A better balance.</p>
-      <span class="demo-tag">INTERACTIVE MOCK</span>
+      <span class="demo-tag">DEVELOPMENT DEMO</span>
     </div>
-    <div class="sidebar-bottom"><span class="status-dot"></span> Design proposal · v01</div>
+    <div class="sidebar-bottom"><span class="status-dot"></span> Fictional development data</div>
   </aside>
   <main #main id="main" tabindex="-1">
     <div class="page-heading">
@@ -183,8 +183,15 @@
               }
             </span>
           </div>
+          @if (leave.loading()) {
+            <p class="load-feedback" role="status">
+              Loading saved leave… Reference examples remain visible.
+            </p>
+          }
           @if (leave.error()) {
-            <p role="alert">{{ leave.error() }}</p>
+            <div class="load-feedback">
+              <p role="alert">{{ leave.error() }}</p>
+            </div>
           }
           <div id="calendar-content">
             <vacate-calendar
@@ -204,7 +211,15 @@
                   ? 'Select an absence to see availability'
                   : 'Select a date to see details'
             }}</span
-            ><span>Demo date: 22 Oct 2026</span>
+            ><button
+              class="inline-link"
+              type="button"
+              (click)="refreshSavedLeave()"
+              [attr.aria-disabled]="leave.loading()"
+            >
+              {{ leave.error() ? 'Retry saved leave' : 'Refresh saved leave' }}
+            </button>
+            <span>Demo date: 22 Oct 2026</span>
           </div>
         </section>
         <aside class="insights" aria-label="Your leave overview">
@@ -214,8 +229,8 @@
             aria-label="Your annual leave balance"
           >
             <div class="annual-heading">
-              <h2>Annual leave</h2>
-              <span>Your balance</span>
+              <h2>Annual leave reference</h2>
+              <span>Fictional example</span>
             </div>
             @if (view.annual; as balance) {
               <p class="annual-available">
@@ -318,8 +333,9 @@
         @if (user.capability === 'admin' && !state.denied) {
           <p role="status">Approval inbox unavailable.</p>
           <p>
-            Request submission and approver assignments are not configured. Fictional pending leave
-            is not an assigned approval request.
+            Requests can be saved, but an approval inbox and approver assignments are unavailable.
+            Pending saved requests remain pending. Fictional reference entries are not assigned
+            work.
           </p>
         } @else {
           <p>You do not have access to approval requests.</p>
@@ -327,7 +343,12 @@
       </section>
     }
     @if (state.page === 'leave') {
-      <vacate-my-leave [savedRequests]="leave.requests" [savedError]="leave.error()" />
+      <vacate-my-leave
+        [savedRequests]="leave.requests"
+        [savedError]="leave.error()"
+        [savedLoading]="leave.loading()"
+        (retry)="refreshSavedLeave()"
+      />
     }
     @if (state.page === 'balances') {
       <vacate-balances
@@ -338,8 +359,8 @@
       <section id="balances-page" hidden></section>
     }
     <p class="prototype-note">
-      Design exploration · Fictional people and requests · Public fixture data · No requests are
-      saved or sent · Shared views show availability only
+      Development demo · Fictional accounts and reference examples · Submitted requests and settings
+      are saved through the API · Shared views show availability only
     </p>
   </main>
 </div>

@@ -1,0 +1,144 @@
+# Implemented Vacate page review · VAC-42
+
+Review: 2026-11-11–12. Scope: existing application refinement, preserving visual identity, transactions, permission rules and policy. Initial working tree: clean. Initial review excluded commits and deployment; the product lead authorized branch commit, merge and deployment on 2026-11-12.
+
+Method: dual-agent Impeccable critique (A: `/root/design_assessment`; B: `/root/technical_assessment`), followed by clarify, adapt, audit and polish. Journey mapping follows the installed repository user-journey-mapping skill. A reviewed design/source and existing visual evidence independently; B ran the source detector and inspected technical states. Fresh rendered inspection follows below. These are expert assessments, not participant research or an accessibility certification.
+
+## Baseline and authority
+
+[Product charter](../product/product-charter.md), accepted [ADR-0003](../adr/0003-domain-and-application-services.md) and [ADR-0005](../adr/0005-frontend-capability-architecture.md), [VAC-20](../jira/VAC-20-unified-settings-and-navigation.md), current [VAC-31](../jira/VAC-31-leave-request-accounting-transactions.md) implementation, route/state adapters and actual owning components establish the baseline. Older profile/README claims about entirely local writes and unimplemented requests are stale relative to source. No production identity, policy algorithm or release readiness is inferred.
+
+The existing visual system is dark ink, muted green with an optional warm brown scheme, rounded white surfaces, restrained supporting text and calendar/agenda composition. No redesign, new component library or architecture migration is included.
+
+## Active inventory
+
+`frontend/src/app/app.routes.ts` loads sign-in and the workspace. `workspace-route-state.ts` maps direct/query compatibility paths; settings navigation uses API-supplied access. Unknown routes fall back to the workspace/calendar, rather than a separate not-found page.
+
+| Surface and entry                                         | Role/variant coverage                                                                                                                                        | Implemented versus example/unavailable                                                                                                                                         |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/login.html`                                             | Maya employee, Leah team lead, Ella department lead, Nora administrator advertised; all twelve credentials retained                                          | API development session; public fictional accounts. No production identity/account registration                                                                                |
+| `/`, `/index.html`, calendar query; `/availability` alias | Self/team/department/organization scopes and groups according to existing visibility; year/month/week/day; calendar/planner; green/warm brown; mobile agenda | Reference absences plus own saved request projections. Generic colleague availability does not expose private request details. Today uses fixed reference date 22 October 2026 |
+| `/leave`, `?page=leave`                                   | All signed-in accounts                                                                                                                                       | API saved request history, then fictional yearly balances and reference history. Reference figures are separate from server request calculations                               |
+| `/balances`, `?page=balances`                             | Own reference eligibility, shortlist/all types, expanded rules and unknown/unavailable amounts                                                               | Fictional allowance examples. Request action opens the existing API preview/submission form; hourly submission unavailable                                                     |
+| `/people`, `?page=people`                                 | Employees/leads: directory; administrators: membership roster and editor                                                                                     | API records; permissions remain server-owned. Invitation/acceptance and new-account flows unavailable                                                                          |
+| `/admin-balances`, matching query                         | Administrators; name/team filters, sort, threshold, unknown totals                                                                                           | API membership overview, provisional overrides separately identified. High-balance threshold is a viewing aid                                                                  |
+| `/approvals`, matching query                              | Administrator unavailable state; non-admin denial                                                                                                            | No assigned inbox or approval decision action. Saved pending requests remain pending; public reference pending entries are not work assignments                                |
+| `/settings`, matching query, `section=profile`            | All accounts; profile editor and read-only membership                                                                                                        | Profile saves through API. Server-owned timestamps/permissions unchanged                                                                                                       |
+| `section=system`                                          | Per account/browser; calendar/planner and green/brown                                                                                                        | Browser local preferences, distinct from API writes                                                                                                                            |
+| `section=organization`; legacy organization query aliases | Administrators; organization, department and team drilldowns; rename/work schedule/approval/delegation/carryover config                                      | API saves; legacy carryover controls remain configuration; the existing Greek previous-year usage rule is displayed read-only. Create/delete remain API-only                   |
+| `section=department`, `section=team`                      | API-delegated leads and administrators, scoped selectors and own-team list                                                                                   | Scoped vacation-approval configuration; no inferred permission from a title. Forbidden direct sections resolve to permitted Profile                                            |
+| Shared navigation                                         | Sidebar/mobile disclosure, account dropdown, settings subsections, main focus and Back/Forward                                                               | Existing routes retained; unavailable approval item retained pending product decision                                                                                          |
+| Native dialog                                             | Request form/calculation/error/success; date; own event; shared availability; unavailable event/type; help; account details                                  | Named modal, native Escape/trapping and trigger return retained. Saved-request edit/cancel unavailable                                                                         |
+
+Unused studio direction controls and old screenshot alternatives are not active pages. Planner normalizes unsupported period modes using the existing adapter; an unsupported query is not a new implemented layout.
+
+## Current journey maps
+
+Actors are task-based descriptions. Thoughts/feelings are **ASSUMPTION** without participant research; no emotional scores or quotes are claimed.
+
+### Employee: understand and save time away
+
+| Stage and goal     | Actions/touchpoints                                                  | Response and completion/handoff                                                                                       | Friction and impact                                                                      | Evidence and uncertainty                                            | Improvement and success signal                                                                                             |
+| ------------------ | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Enter the demo     | Choose a public persona → sign in                                    | API session opens permitted calendar; invalid credentials remain at sign-in                                           | Earlier copy described a browser simulation despite server writes                        | Login source and local rendered check; not production identity      | Explicit development-account scope and visible Signing in state; user can distinguish demo credentials from a real account |
+| Understand records | Calendar → My Leave → reference balances                             | Own saved history and sample material have different sources; calendar retains selected date/scope/view               | Saved history was below fictional balances; reference annual rail appeared authoritative | Fresh 375px baseline confirmed roughly 800px before saved history   | Saved requests first; reference labels preserved in all balance entry points                                               |
+| Plan a request     | Request leave or type-specific request action → dates/unit → preview | API calculates included/excluded/covered dates and finite balances; hourly/invalid/unresolved cases block submission  | “Preview example” opened a writable form                                                 | `example` only expands reference rules; it does not suppress submit | Honest Request label and explicit API save explanation; no new workflow                                                    |
+| Save and confirm   | Submit → success → return to page                                    | Server response precedes success; dates refresh into own history/calendar; duplicate-covered outcome remains explicit | Global “nothing saves” claim contradicted the completion signal                          | Existing request service/idempotency behavior; preserved            | Success remains tied to API response; reference material never described as a save                                         |
+| Recover or wait    | Retry failed saved history/directory; inspect pending status         | Failed refresh remains unavailable; explicit retry reloads data. Pending approval has no inbox handoff                | Empty history was shown during loading/error; no retry action                            | New service/component tests and browser fault checks below          | No false empty assertion; draft/save logic unchanged. **OPEN QUESTION:** operational approval handoff                      |
+
+### Lead: adjust permitted settings
+
+| Stage and goal     | Actions/touchpoints                                            | Response/handoff                                                                | Friction and impact                                             | Evidence and uncertainty                                                 | Improvement and success signal                                                              |
+| ------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Find scope         | Sign in → Settings → Department/Team if API permits            | Only delegated scopes appear; direct forbidden entry resolves to Profile        | Old sign-in note claimed both leads always had identical access | Existing settings-access mapping and later product-charter clarification | Copy says scope/delegation determines access; no permission change                          |
+| Configure approval | Select permitted node → inherited/required/not required → save | API validates and confirms; precedence remains team → department → organization | Disabled save retained unchanged action label                   | Existing scope component                                                 | Visible Saving label, consistent spacing and responsive controls                            |
+| Return to planning | Calendar/My Leave or account settings                          | Existing state/preferences retained; live revocation remains server-owned       | Many independent controls require clear grouping                | Existing route/history tests                                             | Preserve groups; verify navigation and account isolation. No new approval decision workflow |
+
+### Administrator: inspect and edit records
+
+| Stage and goal        | Actions/touchpoints                               | Response/handoff                                                          | Friction and impact                                                                                | Evidence and uncertainty                     | Improvement and success signal                                                                                           |
+| --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Find a colleague      | People → membership roster → editor               | API-backed current membership, native labels and known/unknown allocation | Cancel/save removed focused editor without roster focus return                                     | Source-confirmed; browser Cancel check below | Focus returns to the original roster control                                                                             |
+| Compare balances      | Leave balances → filter/sort → inspect wide table | Unknown values stay To confirm; threshold changes presentation only       | Scroll region lacked visible keyboard focus and a scrolling cue                                    | Source and mobile rendering                  | Named region, visible focus, scroll cue and readable filters; columns retained                                           |
+| Manage organization   | Settings → Organization → department/team         | API config/name saves; errors reject without implied policy processing    | Dense supporting copy; inconsistent save progress                                                  | Existing forms and rendered drilldowns       | Shared typography/focus refinements and Saving labels                                                                    |
+| Inspect approval work | Approval Requests                                 | Explicit unavailable state                                                | Subtitle promised work awaiting approval; body denied submission capability despite working submit | Source-confirmed inconsistency               | Explain missing inbox/assignments and pending state. **OPEN QUESTION:** approved handoff and future navigation treatment |
+
+## Prioritized findings and implementation
+
+| Priority | Finding → user impact                                                                                                                      | Supported refinement                                                                                                                                                                           | Affected pages                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| P1       | “Nothing saves”, “local simulation”, restart-reset and example-only claims conflict with API writes → unsafe expectations about submitting | Correct login/footer/help/account/profile copy; label writable balance action Request; distinguish reference rail/balance page from server calculation; explain unavailable approvals honestly | All pages through shell, sign-in, balances, request, profile, approvals              |
+| P1       | Initial/failing history renders “No saved requests” → user may rely on incomplete calendar/history                                         | Owner/session-scoped loading/error, latest-refresh protection, conditional empty state, retry. Directory retry discards stale-session results                                                  | Calendar, My Leave, People                                                           |
+| P1       | Saved requests follow fictional balance cards → mobile users miss actual records                                                           | Place saved history first, retain references below                                                                                                                                             | My Leave                                                                             |
+| P2       | Native dialog unnamed → assistive technology lacks task context                                                                            | `aria-labelledby` points to the current info/request/success heading                                                                                                                           | Every dialog                                                                         |
+| P2       | Membership dismissal loses keyboard context; table focus invisible                                                                         | Restore original roster trigger on cancel/success; focus treatment for summaries/tabindex regions; named scroll region and cue                                                                 | People administration, balance overview, balance disclosures                         |
+| P2       | Small metadata, weak section separation and tight preferences copy → scanning/touch difficulty                                             | Target supporting text at 12px, consistent section/form spacing, 44px key controls, single-column narrow date fields, 16px mobile request/filter inputs, wrapping labels                       | Shared shell, calendar, balances, all Settings sections, dialogs, My Leave, overview |
+| P2       | Disabled save buttons provide weak feedback                                                                                                | Signing in/Saving labels while existing operations are pending                                                                                                                                 | Sign-in, profile, scope settings and organization editors                            |
+
+Strengths preserved: coherent muted palette; generic shared availability with private details excluded; explicit unknown balances; native labelled forms/fieldsets; semantic table captions/headers; mobile agenda alternative; server response before success; account-scoped preferences and session guards.
+
+Baseline heuristic assessment (source plus representative rendered evidence, expert judgment): status 2, real-world language 2, control 3, consistency 3, error prevention 2, recognition 3, efficiency 3, hierarchy 3, recovery 2, help 2: **25/40**. This is a review aid, not a measured usability result. No post-change numerical improvement is asserted.
+
+Cognitive load: scope, group, date and view are independent calendar decisions. Settings legitimately has up to five sections; hiding valid actions to meet a generic option-count rule would harm discoverability. Expandable allowance rules and shortlists remain useful progressive disclosure. **ASSUMPTION:** clearer sample/save labels reduce mistaken submissions; validate in a future supervised task walkthrough by asking participants to predict whether Request saves data before submitting. Baseline/target/time window are unknown; no participant contact or analytics installation occurred.
+
+## Files changed
+
+- `frontend/src/styles.scss`: shared focus, touch targets, metadata, spacing, narrow form/filter refinements and darker muted text for pale-surface contrast.
+- `features/workspace/`: shell/copy/loading/retry composition, native dialog titles and accurate help/account information.
+- `features/auth/login.html`: development scope, persona explanation, busy feedback.
+- `features/leave/`: request/save explanation; reference labels and honest type action; saved-first My Leave; table accessibility; session-scoped refresh feedback and race protection.
+- `features/people/people.ts`: retry and session checks; new focused recovery tests.
+- `features/profile/`: persistence copy, save state and preferences spacing.
+- `features/organizations/`: membership focus return, policy-form spacing and save state labels.
+- `features/settings/scope-settings.ts`: save state label.
+- Relevant leave/workspace specs; [VAC-42](../jira/VAC-42-implemented-page-design-review.md), backlog and this document.
+
+Backend/contracts/database are unaffected: resource paths, payloads, policy, authorization, timestamps, persistence and request lifecycle remain unchanged. Retry calls existing reads. UI tests cover session feedback boundaries; local browser denial tests do not prove SQL tenant isolation.
+
+### Complete text-file manifest
+
+- [docs/design/implemented-page-review.md](implemented-page-review.md)
+- [docs/jira/Product-Backlog.md](../jira/Product-Backlog.md)
+- [docs/jira/VAC-42-implemented-page-design-review.md](../jira/VAC-42-implemented-page-design-review.md)
+- [docs/jira/media/VAC-42/verification-2026-11-12.md](../jira/media/VAC-42/verification-2026-11-12.md)
+- [frontend/src/app/features/auth/login.html](../../frontend/src/app/features/auth/login.html)
+- [frontend/src/app/features/leave/admin-balances.ts](../../frontend/src/app/features/leave/admin-balances.ts)
+- [frontend/src/app/features/leave/balances.html](../../frontend/src/app/features/leave/balances.html)
+- [frontend/src/app/features/leave/data-access/leave-requests.spec.ts](../../frontend/src/app/features/leave/data-access/leave-requests.spec.ts)
+- [frontend/src/app/features/leave/data-access/leave-requests.ts](../../frontend/src/app/features/leave/data-access/leave-requests.ts)
+- [frontend/src/app/features/leave/my-leave.spec.ts](../../frontend/src/app/features/leave/my-leave.spec.ts)
+- [frontend/src/app/features/leave/my-leave.ts](../../frontend/src/app/features/leave/my-leave.ts)
+- [frontend/src/app/features/leave/request.html](../../frontend/src/app/features/leave/request.html)
+- [frontend/src/app/features/organizations/organization-settings.html](../../frontend/src/app/features/organizations/organization-settings.html)
+- [frontend/src/app/features/organizations/organization-settings.scss](../../frontend/src/app/features/organizations/organization-settings.scss)
+- [frontend/src/app/features/organizations/organization-settings.ts](../../frontend/src/app/features/organizations/organization-settings.ts)
+- [frontend/src/app/features/people/people.spec.ts](../../frontend/src/app/features/people/people.spec.ts)
+- [frontend/src/app/features/people/people.ts](../../frontend/src/app/features/people/people.ts)
+- [frontend/src/app/features/profile/profile-settings.html](../../frontend/src/app/features/profile/profile-settings.html)
+- [frontend/src/app/features/profile/profile-settings.scss](../../frontend/src/app/features/profile/profile-settings.scss)
+- [frontend/src/app/features/settings/scope-settings.ts](../../frontend/src/app/features/settings/scope-settings.ts)
+- [frontend/src/app/features/workspace/workspace-dialog.html](../../frontend/src/app/features/workspace/workspace-dialog.html)
+- [frontend/src/app/features/workspace/workspace-dialog.ts](../../frontend/src/app/features/workspace/workspace-dialog.ts)
+- [frontend/src/app/features/workspace/workspace-page-copy.ts](../../frontend/src/app/features/workspace/workspace-page-copy.ts)
+- [frontend/src/app/features/workspace/workspace.html](../../frontend/src/app/features/workspace/workspace.html)
+- [frontend/src/app/features/workspace/workspace.spec.ts](../../frontend/src/app/features/workspace/workspace.spec.ts)
+- [frontend/src/app/features/workspace/workspace.ts](../../frontend/src/app/features/workspace/workspace.ts)
+- [frontend/src/styles.scss](../../frontend/src/styles.scss)
+
+Screenshots are indexed in the verification record below.
+
+## Verification evidence
+
+[Verification record and representative screenshots](../jira/media/VAC-42/verification-2026-11-12.md): 71 tests in 17 files; app/spec TypeScript; production build; reference fixture/schema/profile/organization checks; complete real API/browser suite including native keyboard; final focused company/session feedback, failed-read recovery/focus, table/policy/membership lower controls and drilldowns. Desktop 1440px, mobile 375px and 320px checks passed without page-level overflow. Source detector returned zero findings; manual review nevertheless found substantive accessibility/state defects. Final sRGB shared-token contrasts are recorded separately from unverified legacy combinations.
+
+The complete suite preceded the last CSS/focus refinements; those received a fresh build, unit checks and targeted browser verification. Independent design and technical reviews found no blocking defect. The product lead authorized merge/deployment on 2026-11-12; VAC-42 is Done pending actual release evidence. No SQL, hosted or accessibility-conformance claim.
+
+## Remaining product questions and limits
+
+- **OPEN QUESTION:** who acts on saved pending requests before an approval inbox/assignment workflow exists? No invented handoff, permission or notification was implemented.
+- **PROPOSED:** a dedicated read-only request example could be a future workflow. Current behavior remains save-capable and is labelled honestly.
+- **OPEN QUESTION:** whether to hide unavailable Approval Requests. Existing accepted navigation is retained.
+- **UNVERIFIED:** production identity, SQL/deployed persistence behavior, real assistive technology and physical mobile devices. Browser emulation and source review cannot certify conformance.
+- Fixed demo date versus actual request date remains explicit; no product decision to replace the reference calendar or compute statutory entitlements is implied.
+
+Questions skipped during critique closure: user already authorized supported improvements and asked independent work to continue; the open product questions above do not block these refinements.

@@ -100,7 +100,7 @@
           </p>
           <div class="org-actions">
             <button class="primary" [disabled]="policyForm.invalid || busy">
-              Save organization settings
+              {{ busy ? 'Saving…' : 'Save organization settings' }}
             </button>
           </div>
         </form>
@@ -123,7 +123,7 @@
             /></label>
             <div class="org-actions">
               <button type="submit" class="primary" [disabled]="renameForm.invalid || busy">
-                Save name</button
+                {{ busy ? 'Saving…' : 'Save name' }}</button
               ><button type="button" class="org-secondary" [disabled]="busy" (click)="reset()">
                 Cancel changes
               </button>
@@ -246,7 +246,7 @@
             </p>
             <div class="org-actions">
               <button type="submit" class="primary" [disabled]="companyForm.invalid || busy">
-                Save organization</button
+                {{ busy ? 'Saving…' : 'Save organization' }}</button
               ><button type="button" class="org-secondary" [disabled]="busy" (click)="reset()">
                 Cancel changes
               </button>
@@ -468,12 +468,12 @@
             </p>
             <div class="org-actions">
               <button type="submit" class="primary" [disabled]="busy || membershipForm.invalid">
-                Save membership</button
+                {{ busy ? 'Saving…' : 'Save membership' }}</button
               ><button
                 type="button"
                 class="org-secondary"
                 [disabled]="busy"
-                (click)="selectedMember = null"
+                (click)="closeMember()"
               >
                 Cancel
               </button>

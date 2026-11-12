@@ -318,3 +318,17 @@ input[type='radio'] {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+#organization-policy-form > label + label {
+  margin-top: 18px;
+}
+
+#organization-policy-form .org-hint {
+  margin-top: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+#organization-policy-form + .org-layout {
+  margin-top: 24px;
+}

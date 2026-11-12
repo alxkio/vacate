@@ -1,6 +1,6 @@
 @if (submitted && type) {
   <span class="eyebrow">LEAVE REQUEST</span>
-  <h2>
+  <h2 id="workspace-dialog-title">
     {{
       savedOutcome === 'already-covered'
         ? 'These dates are already covered.'
@@ -21,10 +21,10 @@
   <button class="primary" id="finish-demo" (click)="finished.emit()">Back to {{ page }}</button>
 } @else {
   <span class="eyebrow">LEAVE REQUEST</span>
-  <h2>Plan your time away.</h2>
+  <h2 id="workspace-dialog-title">Plan your time away.</h2>
   <p>
-    Create a request for {{ data.currentUser()?.name }}. Your company working schedule and known
-    public holidays determine the charged days.
+    Create a request for {{ data.currentUser()?.name }}. Submitting saves a request through the API.
+    Your company working schedule and known public holidays determine the charged days.
   </p>
   <form #form id="request-form" (submit)="submit($event)">
     <fieldset [disabled]="saving" style="border: 0; padding: 0; margin: 0; min-width: 0">

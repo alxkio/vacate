@@ -12,7 +12,7 @@
         Keep your details up to date. Your family information stays out of colleagues’ profiles.
       </p>
       <p class="settings-demo">
-        Fictional demo · Edits are stored by the demo API and reset when the API restarts.
+        Fictional development data · Profile edits are saved through the API.
       </p>
       <div class="settings-fields">
         <label
@@ -106,7 +106,8 @@
         {{ message }}
       </p>
       <div class="settings-footer">
-        <button type="submit" class="primary" [disabled]="form.invalid || busy">Save profile</button
+        <button type="submit" class="primary" [disabled]="form.invalid || busy">
+          {{ busy ? 'Saving…' : 'Save profile' }}</button
         ><button type="button" class="secondary" [disabled]="busy" (click)="reset()">
           Cancel changes
         </button>

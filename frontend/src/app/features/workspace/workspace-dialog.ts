@@ -147,7 +147,7 @@ export class WorkspaceDialog {
         title: 'A little guide',
         paragraphs: [
           'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the fixed demo date, 22 October 2026.',
-          'Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. All interactions use local fictional data.',
+          'Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. Reference examples are fictional. Submitted requests and settings are saved through the API. Approval decisions, hourly requests and editing saved requests are unavailable.',
         ],
       },
       trigger,
@@ -163,7 +163,7 @@ export class WorkspaceDialog {
         paragraphs: [
           `${this.user.title} · ${this.user.role} preview`,
           `${this.data.companyName} · ${this.data.groupName('team', this.user.teamId) || this.user.team}`,
-          `Signed in as ${this.user.username}. Public fictional browser simulation. All fixture assets are downloadable; these presentation checks do not provide secure authentication or authorization.`,
+          `Signed in as ${this.user.username}. Development sign-in with a public fictional account. Reference assets are downloadable; requests and settings are saved through the API. Production identity is not available.`,
         ],
       },
       trigger,

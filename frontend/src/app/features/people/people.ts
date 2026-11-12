@@ -19,6 +19,14 @@ import { OrganizationSettings } from '../organizations/organization-settings';
         @if (loading) {
           <p role="status">Loading people…</p>
         }
+        <button
+          type="button"
+          class="secondary"
+          (click)="loadPeople()"
+          [attr.aria-disabled]="loading"
+        >
+          {{ error ? 'Retry loading people' : 'Refresh people' }}
+        </button>
         <ul class="dialog-list">
           @for (person of people; track person.username) {
             <li [attr.data-person]="person.email.split('@')[0]">
@@ -43,12 +51,29 @@ export class People implements OnInit {
   error = '';
 
   async ngOnInit(): Promise<void> {
-    if (this.data.currentUser()?.capability === 'admin') {return;}
+    if (this.data.currentUser()?.capability === 'admin') {
+      return;
+    }
+    await this.loadPeople();
+  }
+
+  async loadPeople(): Promise<void> {
+    if (this.loading) {
+      return;
+    }
+    const actor = this.data.currentUser()?.id;
+    const generation = this.data.api.sessionGeneration;
     this.loading = true;
+    this.error = '';
     try {
-      this.people = await this.data.api.directory();
+      const people = await this.data.api.directory();
+      if (this.data.currentUser()?.id === actor && this.data.api.sessionGeneration === generation) {
+        this.people = people;
+      }
     } catch {
-      this.error = 'People could not be loaded. Reopen this page to try again.';
+      if (this.data.currentUser()?.id === actor && this.data.api.sessionGeneration === generation) {
+        this.error = 'People could not be loaded. Try again.';
+      }
     } finally {
       this.loading = false;
       this.detector.markForCheck();

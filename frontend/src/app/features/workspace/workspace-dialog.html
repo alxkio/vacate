@@ -1,4 +1,4 @@
-<dialog #dialog id="dialog" (close)="closed()">
+<dialog #dialog id="dialog" aria-labelledby="workspace-dialog-title" (close)="closed()">
   <form method="dialog"><button class="dialog-close" aria-label="Close dialog">×</button></form>
   <div id="dialog-content">
     @if (modal; as content) {
@@ -14,7 +14,7 @@
         @if (content.eyebrow) {
           <span class="eyebrow">{{ content.eyebrow }}</span>
         }
-        <h2>{{ content.title }}</h2>
+        <h2 id="workspace-dialog-title">{{ content.title }}</h2>
         @for (paragraph of content.paragraphs || []; track $index) {
           <p>{{ paragraph }}</p>
         }
