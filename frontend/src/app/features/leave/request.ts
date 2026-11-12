@@ -136,8 +136,9 @@ export class Request implements OnInit, OnDestroy {
   capture(form: HTMLFormElement): void {
     const values = new FormData(form);
     this.start = String(values.get('start') || '');
-    this.end = String(values.get('end') || this.end);
-    this.amount = String(values.get('amount') || this.amount);
+    this.end =
+      this.mode === 'range' && this.unit !== 'hours' ? String(values.get('end') || '') : this.end;
+    this.amount = this.mode === 'duration' ? String(values.get('amount') || '') : this.amount;
     this.unit = String(values.get('unit') || 'working days');
     this.queuePreview();
   }
@@ -165,16 +166,47 @@ export class Request implements OnInit, OnDestroy {
     if (this.unit === 'hours') {
       return;
     }
-    if (!this.start || (this.mode === 'range' && (!this.end || this.end < this.start))) {
-      this.message = 'Choose an end date on or after the start date.';
-      return;
-    }
-    if (this.mode === 'duration' && (!Number.isInteger(+this.amount) || +this.amount <= 0)) {
-      this.message = 'Enter a positive whole-day duration.';
+    if (this.startError || this.endError || this.amountError) {
+      this.message = this.startError || this.endError || this.amountError;
       return;
     }
     this.loading = true;
     this.timer = setTimeout(() => void this.loadPreview(sequence), 200);
+  }
+
+  private validDate(value: string): boolean {
+    return /^\d{4}-\d{2}-\d{2}$/.test(value) && dateKey(dateFromKey(value)) === value;
+  }
+
+  get startError(): string {
+    return this.validDate(this.start) ? '' : 'Enter a valid start date.';
+  }
+
+  get endError(): string {
+    if (this.mode !== 'range' || this.unit === 'hours') return '';
+    if (!this.validDate(this.end)) return 'Enter a valid end date.';
+    return !this.startError && this.end < this.start
+      ? 'End date must be on or after the start date.'
+      : '';
+  }
+
+  get amountError(): string {
+    return this.mode === 'duration' &&
+      this.unit !== 'hours' &&
+      (!Number.isInteger(+this.amount) || +this.amount <= 0)
+      ? 'Enter a positive whole number of working days.'
+      : '';
+  }
+
+  get pastDateWarning(): string {
+    const today = dateKey(new Date());
+    return !this.startError && this.start < today
+      ? 'This selection includes past dates. Past working days bypass approval; other dates follow your company settings.'
+      : '';
+  }
+
+  retryPreview(): void {
+    if (!this.loading && !this.saving) this.queuePreview();
   }
 
   private async loadPreview(sequence: number): Promise<void> {
@@ -204,6 +236,9 @@ export class Request implements OnInit, OnDestroy {
     return (
       !this.loading &&
       !this.saving &&
+      !this.startError &&
+      !this.endError &&
+      !this.amountError &&
       this.unit !== 'hours' &&
       this.type?.shape !== 'supplement' &&
       this.decision.status !== 'not-eligible' &&

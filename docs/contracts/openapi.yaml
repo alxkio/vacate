@@ -87,6 +87,7 @@ paths:
       operationId: listUsers
       tags: [Users]
       summary: List users visible to the current account
+      description: Company-scoped directory with public GUID and nullable department/team GUIDs and names; excludes private membership, family and leave fields.
       security:
         - bearerAuth: []
       responses:
@@ -368,7 +369,8 @@ paths:
         teamMembers contains the current member and colleagues assigned to the same team
         in this organization, or an empty array when no team is assigned. Each item uses
         the directory allowlist (username, email, firstName, middleName, lastName, gender,
-        jobTitle, systemRole); it never includes membership balances or family fields.
+        jobTitle, systemRole, guid, departmentId, departmentName, teamId, teamName);
+        unassigned structure is null. It never includes membership balances or family fields.
         Membership is not evidence of team administration or approval rights.
       security:
         - bearerAuth: []
@@ -386,6 +388,7 @@ paths:
       operationId: getOrganizationDirectory
       tags: [Organizations]
       summary: List the authorized organization directory
+      description: Same-company public directory including GUID and nullable department/team GUIDs and names.
       security:
         - bearerAuth: []
       responses:

@@ -20,6 +20,11 @@ import {
   WorkspaceEnvironment,
 } from '../models/workspace.models';
 
+export const currentDate = (): Date => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+};
+
 export const REFERENCE_TODAY = new Date(2026, 9, 22);
 const displayPreferencesKey = (person: Person): string =>
   `vacate.display-preferences.v1.${encodeURIComponent(person.companyId)}.${encodeURIComponent(person.id)}`;

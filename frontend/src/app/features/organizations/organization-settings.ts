@@ -82,6 +82,7 @@ export class OrganizationSettings implements OnChanges {
     this.selectedMember = null;
     this.detector.detectChanges();
     this.memberTrigger?.focus();
+    this.memberClosed.emit();
   }
 
   async saveMember(): Promise<void> {
@@ -107,6 +108,8 @@ export class OrganizationSettings implements OnChanges {
 
   @Input() companyId = '';
   @Input() membersOnly = false;
+  @Input() memberGuid = '';
+  readonly memberClosed = output<void>();
   readonly changed = output<void>();
   readonly staleSession = output<void>();
   readonly actorId = this.data.currentUser()?.id || '';
@@ -131,6 +134,59 @@ export class OrganizationSettings implements OnChanges {
     carryoverEnabled: false,
     carryoverYears: 0,
   };
+
+  @ViewChild('createDialog') createDialog?: ElementRef<HTMLDialogElement>;
+  createKind: 'departments' | 'teams' = 'departments';
+  createName = '';
+  createDepartment: string | null = null;
+  createError = '';
+  creating = false;
+  private createTrigger: HTMLElement | null = null;
+
+  openCreate(kind: 'departments' | 'teams'): void {
+    this.createTrigger =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    this.createKind = kind;
+    this.createName = '';
+    this.createDepartment = null;
+    this.createError = '';
+    this.createDialog?.nativeElement.showModal();
+  }
+
+  cancelCreate(event: Event): void {
+    event.preventDefault();
+    if (!this.creating) this.closeCreate();
+  }
+
+  closeCreate(): void {
+    this.createDialog?.nativeElement.close();
+    this.createTrigger?.focus();
+  }
+
+  async createStructure(): Promise<void> {
+    if (this.creating || !this.createName.trim()) return;
+    this.creating = true;
+    const result = await this.data.api.createStructure(
+      this.companyId,
+      this.actorId,
+      this.createKind,
+      this.createName.trim(),
+      this.createDepartment,
+    );
+    this.creating = false;
+    if (this.data.currentUser()?.id !== this.actorId) {
+      this.closeCreate();
+      return;
+    }
+    this.createError = result.error || '';
+    if (result.ok) {
+      this.reset();
+      this.message = `${this.createKind === 'departments' ? 'Department' : 'Team'} added.`;
+      this.closeCreate();
+      this.changed.emit();
+    }
+    this.detector.markForCheck();
+  }
 
   async savePolicies(): Promise<void> {
     if (this.busy) {
@@ -171,6 +227,12 @@ export class OrganizationSettings implements OnChanges {
 
   ngOnChanges(): void {
     this.reset();
+    if (this.membersOnly && this.memberGuid) {
+      const member = this.members.find((item) => item.userGuid === this.memberGuid);
+      if (member) {
+        this.editMember(member);
+      }
+    }
   }
 
   reset(): void {

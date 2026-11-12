@@ -146,7 +146,7 @@ export class WorkspaceDialog {
         kind: 'info',
         title: 'A little guide',
         paragraphs: [
-          'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the fixed demo date, 22 October 2026.',
+          'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the current local date. Reference examples retain their labelled historical dates.',
           'Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. Reference examples are fictional. Submitted requests and settings are saved through the API. Approval decisions, hourly requests and editing saved requests are unavailable.',
         ],
       },

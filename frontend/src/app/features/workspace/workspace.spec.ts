@@ -156,7 +156,7 @@ describe('Workspace navigation', () => {
     expect(dialog.getAttribute('aria-labelledby')).toBe('workspace-dialog-title');
     expect(dialog.querySelector('#workspace-dialog-title')?.textContent?.trim()).toBeTruthy();
     expect(dialog.textContent).toContain('YOUR REQUEST');
-    expect(dialog.textContent).toContain('Autumn leave');
+    expect(dialog.textContent).toContain('Parental leave');
 
     page.workspaceDialog.showDate(new Date(2026, 9, 26), trigger);
     harness.detectChanges();

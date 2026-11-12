@@ -58,9 +58,29 @@ export const fixtureWorkspaceProvider = {
         return environment.VacateEligibility;
       },
       api: {
+        directory: async () =>
+          fixtures.people
+            .filter((p) => p.companyId === environment.VacateSession.currentUser()?.companyId)
+            .map((p) => ({
+              guid: p.id,
+              username: p.email,
+              email: p.email,
+              firstName: p.name,
+              middleName: null,
+              lastName: '',
+              gender: null,
+              jobTitle: p.title,
+              systemRole: p.capability,
+              departmentId: p.departmentId,
+              departmentName:
+                fixtures.departments.find((d) => d.id === p.departmentId)?.name || null,
+              teamId: p.teamId,
+              teamName: fixtures.teams.find((t) => t.id === p.teamId)?.name || null,
+            })),
         members: [],
         roles: { systemRoles: [], jobRoles: [] },
         refresh: async () => {},
+        validateSession: async () => !!environment.VacateSession.currentUser(),
         get settingsAccess() {
           const person = environment.VacateSession.currentUser();
           const admin = person?.capability === 'admin';

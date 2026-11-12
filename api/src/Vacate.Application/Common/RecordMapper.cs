@@ -31,7 +31,12 @@ public sealed class RecordMapper(IUserRepository users, IMembershipRepository me
     public DirectoryUserRecord Directory(User user)
     {
         var m = memberships.Current(user.Id);
-        return new(user.Username, user.Username, user.Name.FirstName, user.Name.MiddleName, user.Name.LastName, user.Gender, JobTitle(m), m is null ? null : m.IsAdmin ? "admin" : "employee");
+        var org = m is null ? null : organizations.Find(m.CompanyId);
+        var department = org?.Departments.SingleOrDefault(d => !d.IsDeleted && d.Id == m?.Configuration.DepartmentId);
+        var team = org?.Teams.SingleOrDefault(t => !t.IsDeleted && t.Id == m?.Configuration.TeamId);
+        return new(user.Username, user.Username, user.Name.FirstName, user.Name.MiddleName, user.Name.LastName, user.Gender,
+            JobTitle(m), m is null ? null : m.IsAdmin ? "admin" : "employee", user.Guid,
+            department?.Guid, department?.Name, team?.Guid, team?.Name);
     }
 
     public PersonRecord Person(User user)

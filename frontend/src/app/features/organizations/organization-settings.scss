@@ -332,3 +332,40 @@ input[type='radio'] {
 #organization-policy-form + .org-layout {
   margin-top: 24px;
 }
+
+#organization-policy-form {
+  margin-top: 28px;
+}
+#organization-policy-form > label {
+  margin-top: 20px;
+  min-height: 44px;
+}
+.structure-dialog {
+  width: min(520px, calc(100% - 32px));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 28px;
+  color: var(--ink);
+}
+.structure-dialog::backdrop {
+  background: #173b2c66;
+}
+@media (max-width: 600px) {
+  .org-section-heading,
+  .org-actions {
+    flex-wrap: wrap;
+  }
+  .structure-dialog {
+    padding: 20px;
+  }
+}
+
+#organization-form > label + label {
+  margin-top: 20px;
+}
+#organization-form .org-hint {
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--muted);
+  margin: 8px 0 20px;
+}

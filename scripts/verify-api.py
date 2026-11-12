@@ -54,7 +54,7 @@ def main():
     org_path = 'organizations/' + org_id
     roles = call('GET', org_path + '/roles', token)
     colleague = call('GET', 'users/20000000-0000-4000-8000-000000000004', token)
-    assert set(colleague) == {'username', 'email', 'firstName', 'middleName', 'lastName', 'gender', 'jobTitle', 'systemRole'}
+    assert set(colleague) == {'username', 'email', 'firstName', 'middleName', 'lastName', 'gender', 'jobTitle', 'systemRole', 'guid', 'departmentId', 'departmentName', 'teamId', 'teamName'}
     created = call('POST', 'users', token, {'username': 'http-acceptance-' + uuid.uuid4().hex + '@example.invalid', 'firstName': 'HTTP', 'lastName': 'Example'}, 201)
     user_id = created['guid']
     membership_path = org_path + '/memberships/' + user_id

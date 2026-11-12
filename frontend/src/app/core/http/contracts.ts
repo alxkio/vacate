@@ -70,6 +70,11 @@ export type OrganizationResponse = {
 } & Lifecycle;
 
 export type DirectoryUser = {
+  guid?: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
+  teamId?: string | null;
+  teamName?: string | null;
   username: string;
   email: string;
   firstName: string;

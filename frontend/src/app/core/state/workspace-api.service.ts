@@ -140,6 +140,17 @@ export class WorkspaceApiService {
     return result;
   }
 
+  async validateSession(): Promise<boolean> {
+    if (!this.currentUser()) return false;
+    const token = this.token;
+    try {
+      await firstValueFrom(this.sessions.current(token));
+    } catch {
+      // Authentication failures clear browser credentials in ApiClient; offline errors stay recoverable.
+    }
+    return token === this.token && !!this.currentUser();
+  }
+
   async directory(): Promise<DirectoryUser[]> {
     const token = this.token;
     const people = await firstValueFrom(this.users.list(token));
@@ -328,6 +339,26 @@ export class WorkspaceApiService {
       ),
     clear: () => {},
   };
+
+  createStructure(
+    id: string,
+    actor: string,
+    kind: 'departments' | 'teams',
+    name: string,
+    departmentId: string | null,
+  ) {
+    return this.writeOrganization(id, actor, (token) =>
+      firstValueFrom(
+        this.organizations.createNode(
+          apiId(id),
+          kind,
+          name,
+          departmentId ? apiId(departmentId) : null,
+          token,
+        ),
+      ),
+    );
+  }
 
   private writeOrganization(
     id: string,

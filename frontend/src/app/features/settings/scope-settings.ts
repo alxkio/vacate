@@ -28,13 +28,25 @@ import { ApiDepartment } from '../../core/http/contracts';
               </select>
             </label>
             <label
-              >Vacation approval
-              <select id="scope-vacation-approval" name="approval" [(ngModel)]="required">
-                <option [ngValue]="null">Use inherited setting</option>
-                <option [ngValue]="true">Require approval</option>
-                <option [ngValue]="false">Do not require approval</option>
-              </select>
-            </label>
+              >Use inherited approval setting<input
+                type="checkbox"
+                role="switch"
+                class="settings-switch"
+                name="inheritApproval"
+                [ngModel]="required === null"
+                (ngModelChange)="required = $event ? null : true"
+            /></label>
+            @if (required !== null) {
+              <label
+                >Require vacation approval<input
+                  type="checkbox"
+                  role="switch"
+                  class="settings-switch"
+                  id="scope-vacation-approval"
+                  name="approval"
+                  [(ngModel)]="required"
+              /></label>
+            }
           </div>
           <p class="settings-hint">
             Team settings override department settings, then the organization default.

@@ -6,7 +6,7 @@ import {
   dateKey,
   fullDate,
   monthName,
-  REFERENCE_TODAY,
+  currentDate,
   shortDate,
   weekStart,
   WorkspaceDataService,
@@ -30,7 +30,9 @@ export class Calendar {
   fullDate = fullDate;
   shortDate = shortDate;
   weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  today = dateKey(REFERENCE_TODAY);
+  get today(): string {
+    return dateKey(currentDate());
+  }
   get people(): Person[] {
     return this.state.denied
       ? []

@@ -1,9 +1,10 @@
+import { loginUrl } from './core/http/session-navigation';
 import { inject } from '@angular/core';
 import { CanActivateFn, Route, Router, Routes, UrlTree } from '@angular/router';
 import { WorkspaceDataService } from './core/state/workspace-data.service';
 import { resolveSettingsSection } from './features/settings/settings-navigation';
 
-const signedIn: CanActivateFn = async (route) => {
+const signedIn: CanActivateFn = async (route, state) => {
   const data = inject(WorkspaceDataService);
   const router = inject(Router);
   await data.initialize();
@@ -16,12 +17,12 @@ const signedIn: CanActivateFn = async (route) => {
       await data.api.refresh();
     } catch {
       data.environment.VacateSession.logout();
-      return router.parseUrl('/login.html');
+      return router.parseUrl(loginUrl(state.url));
     }
   }
   const person = data.currentUser();
   if (!person) {
-    return router.parseUrl('/login.html');
+    return router.parseUrl(loginUrl(state.url));
   }
   const legacyOrganization = page === 'organization' || page === 'organization-settings';
   if (page === 'settings' || legacyOrganization) {

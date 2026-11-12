@@ -6,10 +6,10 @@
   [attr.data-page]="state.page"
 >
   <header class="topbar">
-    <div class="brand">
+    <a class="brand" href="/index.html" aria-label="Vacate home, workspace">
       <span class="brand-symbol">v<span>•</span></span
       >vacate<span class="brand-dot">.</span>
-    </div>
+    </a>
     <span class="company" id="workspace-organization">
       <span class="company-mark" aria-hidden="true">{{ data.companyName.charAt(0) }}</span>
       {{ data.companyName }}
@@ -219,7 +219,7 @@
             >
               {{ leave.error() ? 'Retry saved leave' : 'Refresh saved leave' }}
             </button>
-            <span>Demo date: 22 Oct 2026</span>
+            <span>Today: {{ shortDate(dateKey(today)) }} {{ today.getFullYear() }}</span>
           </div>
         </section>
         <aside class="insights" aria-label="Your leave overview">

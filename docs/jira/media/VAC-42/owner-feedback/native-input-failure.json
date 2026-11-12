@@ -1,0 +1,21 @@
+{
+  "attempts": 41,
+  "elapsedMs": 5059,
+  "browser": "Chrome/150.0.7871.125",
+  "node": "v22.22.3",
+  "platform": "darwin",
+  "headful": true,
+  "focused": true,
+  "visibility": "visible",
+  "active": "MAIN",
+  "pointer": false,
+  "keyDown": false,
+  "keyUp": false,
+  "events": [],
+  "anchor": "H1",
+  "hit": "H1",
+  "point": {
+    "x": 187.5,
+    "y": 177.9921875
+  }
+}

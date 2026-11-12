@@ -49,7 +49,7 @@ All real Vacate issues, including completed releases. [Workflow, types and statu
 | VAC-40 | ![Task](badges/task.svg) | Import Greek public holidays for 2026 through 2028 | 🔨 In progress | [VAC-26](VAC-26-azure-sql-resource-persistence.md) | [VAC-40](VAC-40-greek-public-holiday-import.md) |
 | VAC-41 | ![Task](badges/task.svg) | Gate application deployment on database migration and verification | 🔍 QA | None | [VAC-41](VAC-41-database-deployment-gate.md) |
 
-| VAC-42 | ![Task](badges/task.svg) | Review and refine every implemented Vacate page | ✅ Done | None | [VAC-42](VAC-42-implemented-page-design-review.md) |
+| VAC-42 | ![Task](badges/task.svg) | Review and refine every implemented Vacate page | 🔍 QA | None | [VAC-42](VAC-42-implemented-page-design-review.md) |
 
 Dependencies list **direct implementation prerequisites**, matching each issue's `depends_on` metadata. Coordination links do not block implementation, and inherited prerequisites are not repeated. VAC-6 supplies the shared personas/account fixtures for VAC-2–VAC-4. VAC-5 uses founder-authorized provisional defaults while its questions remain open for revision; VAC-2 implements the bounded admin settings iteration; VAC-3/VAC-4 retain separate specification decisions.
 

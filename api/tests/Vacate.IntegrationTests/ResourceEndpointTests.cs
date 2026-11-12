@@ -338,8 +338,12 @@ public sealed class ResourceEndpointTests
         {
             var token = await Login(alias);
             var result = await Call("GET", $"users/{GuidFor(4)}", token);
-            var expected = new[] { "username", "email", "firstName", "middleName", "lastName", "gender", "jobTitle", "systemRole" };
+            var expected = new[] { "username", "email", "firstName", "middleName", "lastName", "gender", "jobTitle", "systemRole", "guid", "departmentId", "departmentName", "teamId", "teamName" };
             Assert.That(result.Json!.AsObject().Select(x => x.Key), Is.EquivalentTo(expected));
+            Assert.That(result.Json["guid"]!.ToString(), Is.EqualTo(GuidFor(4)));
+            Assert.That(result.Json["teamId"]!.ToString(), Is.EqualTo(GuidFor(401)));
+            Assert.That(result.Json["teamName"]!.ToString(), Is.Not.Empty);
+            Assert.That(result.Json["departmentName"]!.ToString(), Is.Not.Empty);
             Assert.That((await Call("PATCH", $"users/{GuidFor(4)}", token, new
             {
                 firstName = "Other"
@@ -369,7 +373,7 @@ public sealed class ResourceEndpointTests
         {
             Assert.That(member!.AsObject().Select(field => field.Key), Is.EquivalentTo(new[]
             {
-                "username", "email", "firstName", "middleName", "lastName", "gender", "jobTitle", "systemRole"
+                "username", "email", "firstName", "middleName", "lastName", "gender", "jobTitle", "systemRole", "guid", "departmentId", "departmentName", "teamId", "teamName"
             }));
         }
 

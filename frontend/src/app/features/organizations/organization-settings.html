@@ -24,87 +24,6 @@
         }
       </nav>
       <div class="org-notice">Fictional development data · Changes are saved through the API.</div>
-      @if (!department && !team && data.api.organizationSettings) {
-        <form
-          #policyForm="ngForm"
-          id="organization-policy-form"
-          class="org-card"
-          (ngSubmit)="savePolicies()"
-        >
-          <h2>Organization settings</h2>
-          <label
-            >Vacation approval
-            <select
-              name="requireVacationApproval"
-              id="organization-vacation-approval"
-              [(ngModel)]="settingsDraft.requireVacationApproval"
-            >
-              <option [ngValue]="true">Require approval by default</option>
-              <option [ngValue]="false">Do not require approval by default</option>
-            </select>
-          </label>
-          <label
-            >Department lead settings access
-            <select
-              name="departmentLeadSettingsEnabled"
-              id="department-lead-settings"
-              [(ngModel)]="settingsDraft.departmentLeadSettingsEnabled"
-            >
-              <option [ngValue]="true">Allowed for their department and its teams</option>
-              <option [ngValue]="false">Not allowed</option>
-            </select>
-          </label>
-          <label
-            >Team lead settings access
-            <select
-              name="teamLeadSettingsEnabled"
-              id="team-lead-settings"
-              [(ngModel)]="settingsDraft.teamLeadSettingsEnabled"
-            >
-              <option [ngValue]="true">Allowed for their team</option>
-              <option [ngValue]="false">Not allowed</option>
-            </select>
-          </label>
-          <label
-            >Vacation-day carryover
-            <select
-              name="carryoverEnabled"
-              id="carryover-enabled"
-              [disabled]="org.settings?.countryCode === 'GR'"
-              [(ngModel)]="settingsDraft.carryoverEnabled"
-            >
-              <option [ngValue]="false">Disabled</option>
-              <option [ngValue]="true">Allowed</option>
-            </select>
-          </label>
-          <label
-            >Carryover years (0 = unlimited)
-            <input
-              id="carryover-years"
-              [disabled]="org.settings?.countryCode === 'GR'"
-              name="carryoverYears"
-              type="number"
-              min="0"
-              step="1"
-              required
-              [(ngModel)]="settingsDraft.carryoverYears"
-            />
-          </label>
-          <p class="org-hint">
-            @if (org.settings?.countryCode === 'GR') {
-              Previous-year annual leave can be used through 31 March of the following year. This
-              policy is read-only; the legacy carryover controls do not override it.
-            } @else {
-              Carryover is saved configuration only; it does not change days or balances.
-            }
-          </p>
-          <div class="org-actions">
-            <button class="primary" [disabled]="policyForm.invalid || busy">
-              {{ busy ? 'Saving…' : 'Save organization settings' }}
-            </button>
-          </div>
-        </form>
-      }
       @if (department || team) {
         <section class="org-card" aria-labelledby="org-view-heading">
           <div class="org-section-heading">
@@ -174,7 +93,7 @@
             <div class="org-section-heading">
               <div>
                 <span class="eyebrow">COMPANY WORKSPACE</span>
-                <h2 #viewHeading id="org-view-heading" tabindex="-1">Organization settings</h2>
+                <h2 #viewHeading id="org-view-heading" tabindex="-1">Company workspace</h2>
               </div>
               <span class="org-tag">Admin only</span>
             </div>
@@ -275,12 +194,100 @@
             </p>
           </section>
         </div>
+        @if (!department && !team && data.api.organizationSettings) {
+          <form
+            #policyForm="ngForm"
+            id="organization-policy-form"
+            class="org-card"
+            (ngSubmit)="savePolicies()"
+          >
+            <h2>Organization settings</h2>
+            <label
+              >Vacation approval
+              <input
+                type="checkbox"
+                role="switch"
+                class="settings-switch"
+                name="requireVacationApproval"
+                id="organization-vacation-approval"
+                [(ngModel)]="settingsDraft.requireVacationApproval"
+              />
+            </label>
+            <label
+              >Department lead settings access
+              <input
+                type="checkbox"
+                role="switch"
+                class="settings-switch"
+                name="departmentLeadSettingsEnabled"
+                id="department-lead-settings"
+                [(ngModel)]="settingsDraft.departmentLeadSettingsEnabled"
+              />
+            </label>
+            <label
+              >Team lead settings access
+              <input
+                type="checkbox"
+                role="switch"
+                class="settings-switch"
+                name="teamLeadSettingsEnabled"
+                id="team-lead-settings"
+                [(ngModel)]="settingsDraft.teamLeadSettingsEnabled"
+              />
+            </label>
+            <label
+              >Vacation-day carryover
+              <input
+                type="checkbox"
+                role="switch"
+                class="settings-switch"
+                name="carryoverEnabled"
+                id="carryover-enabled"
+                [(ngModel)]="settingsDraft.carryoverEnabled"
+                [disabled]="org.settings?.countryCode === 'GR'"
+              />
+            </label>
+            <label
+              >Carryover years (0 = unlimited)
+              <input
+                id="carryover-years"
+                [disabled]="org.settings?.countryCode === 'GR'"
+                name="carryoverYears"
+                type="number"
+                min="0"
+                step="1"
+                required
+                [(ngModel)]="settingsDraft.carryoverYears"
+              />
+            </label>
+            <p class="org-hint">
+              @if (org.settings?.countryCode === 'GR') {
+                Previous-year annual leave can be used through 31 March of the following year. This
+                policy is read-only; the legacy carryover controls do not override it.
+              } @else {
+                Carryover is saved configuration only; it does not change days or balances.
+              }
+            </p>
+            <div class="org-actions">
+              <button class="primary" [disabled]="policyForm.invalid || busy">
+                {{ busy ? 'Saving…' : 'Save organization settings' }}
+              </button>
+            </div>
+          </form>
+        }
         <section class="org-structure" aria-labelledby="org-structure-heading">
           <div class="org-section-heading">
             <div>
               <span class="eyebrow">ORGANIZATION</span>
               <h2 id="org-structure-heading">Departments &amp; teams</h2>
             </div>
+          </div>
+          <div class="org-actions">
+            <button type="button" class="primary" (click)="openCreate('departments')">
+              Add department</button
+            ><button type="button" class="org-secondary" (click)="openCreate('teams')">
+              Add team
+            </button>
           </div>
           @if (!org.departments.length && !org.teams.length) {
             <p class="org-empty">
@@ -361,19 +368,21 @@
         <p class="org-intro">
           Manage roles, employment details and provisional allocation for your members.
         </p>
-        <div class="org-team-grid org-membership-roster">
-          @for (member of members; track member.userGuid) {
-            <button
-              type="button"
-              class="org-team"
-              [disabled]="busy"
-              [attr.data-edit-membership]="member.person.id"
-              (click)="editMember(member)"
-            >
-              {{ member.person.name }} · Edit membership
-            </button>
-          }
-        </div>
+        @if (!memberGuid) {
+          <div class="org-team-grid org-membership-roster">
+            @for (member of members; track member.userGuid) {
+              <button
+                type="button"
+                class="org-team"
+                [disabled]="busy"
+                [attr.data-edit-membership]="member.person.id"
+                (click)="editMember(member)"
+              >
+                {{ member.person.name }} · Edit membership
+              </button>
+            }
+          </div>
+        }
         @if (selectedMember; as member) {
           <form #membershipForm="ngForm" id="membership-form" (ngSubmit)="saveMember()">
             <h3 id="membership-editor-heading" tabindex="-1">{{ member.person.name }}</h3>
@@ -495,3 +504,51 @@
     </p>
   </section>
 }
+
+<dialog
+  #createDialog
+  class="structure-dialog"
+  aria-labelledby="create-structure-heading"
+  (cancel)="cancelCreate($event)"
+>
+  <form #createForm="ngForm" (ngSubmit)="createStructure()">
+    <h2 id="create-structure-heading">
+      Add {{ createKind === 'departments' ? 'department' : 'team' }}
+    </h2>
+    <label
+      >Name<input
+        name="createName"
+        required
+        maxlength="120"
+        [(ngModel)]="createName"
+        [disabled]="creating"
+        autofocus
+    /></label>
+    @if (createKind === 'teams') {
+      <label
+        >Department<select
+          name="createDepartment"
+          [(ngModel)]="createDepartment"
+          [disabled]="creating"
+        >
+          <option [ngValue]="null">No department</option>
+          @for (dept of record?.departments || []; track dept.id) {
+            <option [ngValue]="dept.id">{{ dept.name }}</option>
+          }
+        </select></label
+      >
+    }
+    @if (createError) {
+      <p class="field-error" role="alert">{{ createError }}</p>
+    }
+    <div class="org-actions">
+      <button type="submit" class="primary" [disabled]="creating || !createName.trim()">
+        {{
+          creating ? 'Adding…' : 'Add ' + (createKind === 'departments' ? 'department' : 'team')
+        }}</button
+      ><button type="button" class="org-secondary" [disabled]="creating" (click)="closeCreate()">
+        Cancel
+      </button>
+    </div>
+  </form>
+</dialog>
