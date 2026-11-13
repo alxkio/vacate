@@ -179,6 +179,7 @@ export const fixtureWorkspaceProvider = {
       },
       groupName: organization.groupName,
       typeName: (id?: string) => {
+        if (id === 'company-closure') return 'Company closure';
         const type = id && environment.VacateLeave.getType(id);
         return type ? environment.VacateLeave.typeLabel(type) : 'Leave';
       },

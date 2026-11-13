@@ -29,6 +29,21 @@ public sealed class InMemoryLeaves(InMemoryDatabase database) : ILeaveRepository
 
     public void AddCoveredReceipt(int companyId, int membershipId, Guid key, string fingerprint) => database.CoveredReceipts.Add((companyId, membershipId, key), fingerprint);
 
+    public void Update(StoredLeaveRequest request)
+    {
+        var index = database.LeaveRequests.FindIndex(x => x.CompanyId == request.CompanyId && x.MembershipId == request.MembershipId && x.Request.Guid == request.Request.Guid);
+        var prior = database.LeaveRequests[index];
+        var member = database.Memberships.Single(m => m.Id == request.MembershipId && m.CompanyId == request.CompanyId);
+        if (request.Request.LeaveTypeId == "annual")
+        {
+            var year = member.Balance.PeriodStart.Year;
+            member.AddLeaveConsumption(request.Request.Dates.Count(d => d.EntitlementYear == year && d.Status == "Approved") - prior.Request.Dates.Count(d => d.EntitlementYear == year && d.Status == "Approved"),
+                request.Request.Dates.Count(d => d.EntitlementYear == year && d.Status == "Pending") - prior.Request.Dates.Count(d => d.EntitlementYear == year && d.Status == "Pending"));
+        }
+
+        database.LeaveRequests[index] = request;
+    }
+
     public void Add(StoredLeaveRequest request)
     {
         database.LeaveRequests.Add(request);
@@ -39,4 +54,11 @@ public sealed class InMemoryLeaves(InMemoryDatabase database) : ILeaveRepository
             member.AddLeaveConsumption(dates.Count(d => d.Status == "Approved"), dates.Count(d => d.Status == "Pending"));
         }
     }
+}
+
+public sealed class InMemoryCompanyCalendar(InMemoryDatabase database) : ICompanyCalendarRepository
+{
+    public CompanyCalendarState Read(int companyId) => database.CompanyCalendars.GetValueOrDefault(companyId) ?? CompanyCalendarState.Empty;
+
+    public void Write(int companyId, CompanyCalendarState calendar, DateTimeOffset now) => database.CompanyCalendars[companyId] = calendar;
 }

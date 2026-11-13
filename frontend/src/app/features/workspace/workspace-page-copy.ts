@@ -32,8 +32,8 @@ export const workspaceSubtitle = (
     leave: 'Your requests and personal leave balances.',
     people:
       user.capability === 'admin'
-        ? 'Colleagues and membership management.'
+        ? 'Colleagues, membership management and recorded personnel leave.'
         : 'Your organization’s directory.',
-    approvals: 'Approval inbox and assignments are not available yet.',
+    approvals: 'Review and decide saved requests assigned to you.',
     'admin-balances': 'Review employee annual leave balances across your organization.',
   })[page];

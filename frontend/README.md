@@ -75,7 +75,7 @@ On older macOS hosts where embedded Sass cannot run, `NG_BUILD_SASS_EMBEDDED=0` 
 
 Company admins can open **Settings → Organization** or use `/index.html?page=organization`. Rename the organization, choose five/six working days, browse departments/teams and rename them. These pages and application services reject employees, non-admin leads, foreign companies and stale administrator forms. In the fictional calendar fixture, every demo account can now select organization-wide generic availability; this does not change admin authorization or implement production visibility rules.
 
-Structure is optional: the read model supports empty departments/teams, organization members without teams and teams without a department. The shipped Northstar fixture is one department/team example, not a hierarchy requirement. Standalone/cross-company organizations and arbitrary groups remain deferred. Create/delete operations are API-only.
+Structure is optional: the read model supports empty departments/teams, organization members without teams and teams without a department. The shipped Northstar fixture is one department/team example, not a hierarchy requirement. Standalone/cross-company organizations and arbitrary groups remain deferred. Administrators can add departments and teams through native dialogs. Delete operations remain API-only.
 
 Changes survive reload/sign-out and reset on API restart. Renamed labels appear in the organization, calendar and membership views. Working days is company demo configuration; the reviewed leave catalogue/ledgers retain explicitly labelled five-day reference behavior. No six-day legal-policy calculator is implemented. `verify-organization.mjs` checks the component-test double, including flat/direct-team layouts and negative authorization contexts. [VAC-2](../docs/jira/VAC-2-organization-settings-mock.md) records scope and evidence.
 
@@ -93,7 +93,7 @@ The main sidebar contains Calendar, My Leave, People, admin-only Approval Reques
 
 The employee balance overview (`?page=admin-balances`) uses the existing administrator-only membership API, filters by team/name and sorts remaining totals, names or teams. Its adjustable high-balance threshold defaults to 75% of known allocation. Null server totals remain “To confirm”, while provisional custom allocations are shown separately. My Team uses the current actor's team directory from the organization summary, includes the actor and does not imply management rights; its authorized calendar visibility is separate from delegated Team Settings. Per product lead correction on 2026-10-30, the top bar retains the organization name and omits the visible user name. Account identity and sign-out live in the avatar dropdown.
 
-Approval Requests is explicitly unavailable by product lead confirmation until a request/assignment backend exists. Public fictional pending entries are never presented as assigned work. No calendar redesign is included. `MOCK_NAVIGATION_ONLY=1 node verify.mjs` checks these flows against the running Functions API and built Angular artifact.
+Approval Requests lists actual saved pending requests assigned to the signed-in company administrator. Assignment configuration uses team, department, then organization inheritance; administrators can approve or decline through the server-authorized decision endpoint. Public fictional pending entries are never presented as assigned work. No calendar redesign is included. `MOCK_NAVIGATION_ONLY=1 node verify.mjs` checks these flows against the running Functions API and built Angular artifact.
 
 ### History regression checks
 
@@ -120,3 +120,12 @@ The API summary supplies scoped settings access; route navigation refreshes it b
 Organization carryover controls save configuration only. Enabled with zero years means unlimited years; disabled is separate. No carryover transfer, expiry or recalculation is implemented. `MOCK_FEEDBACK_ONLY=1 node verify.mjs` exercises these settings, owner/HR/lead/employee access, live revocation, API denials and My Leave against the running API; it is also part of the complete default suite.
 
 For hosted acceptance, set MOCK_URL to the existing website URL. The suite reads that site's public config.json for its direct API destination, including fixture cleanup and denial checks. `MOCK_SUITE_TIMEOUT_MS=900000` gives the complete suite a bounded fifteen-minute cloud deadline (default remains five minutes); native input and functional assertions are unchanged. No browser write bypass or alternate API is introduced.
+
+
+## Administrator company calendar and personnel · VAC-43
+
+Organization Settings keeps company essentials and policy before assigned approvers, company calendars, and departments/teams. Assigned approvers are company administrators; changing an assignment reroutes pending requests while decided history is preserved. A company administrator may decide their own request when assigned.
+
+Company calendar separates recurring whole-company holidays from dated closures. Fixed month/day holidays recur annually; 29 February applies only in leap years. A closure requires a server preview before publication and automatically records leave for eligible employees. Its switch controls annual-balance deduction. Insufficient or unresolved annual balances are skipped and reported by the server; the saved employee report remains available. No-impact closure records are labelled separately from annual leave and fictional reference data.
+
+People retains the shared sanitized directory and administrator membership editing. Administrators can switch to Personnel leave overview for actual saved records, entitlement-year annual totals and per-date request statuses. Unknown allocation remains “To confirm”; opening totals are not invented as dated events. Feature-owned administration components and their API client live under `src/app/features/administration/`; authoritative rules, permissions and accounting remain in the API.

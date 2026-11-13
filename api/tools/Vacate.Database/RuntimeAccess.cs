@@ -26,7 +26,7 @@ internal static partial class RuntimeAccess
             """);
 
         // Allow current resource operations only; schema management and physical deletion stay with the operator.
-        foreach (var table in new[] { "Users", "UserPrivateProfiles", "Organizations", "Departments", "Teams", "Memberships", "MembershipEntitlements", "JobRoles", "DevelopmentProvisioningAccess" })
+        foreach (var table in new[] { "Users", "UserPrivateProfiles", "Organizations", "Departments", "Teams", "Memberships", "MembershipEntitlements", "JobRoles", "DevelopmentProvisioningAccess", "CompanyHolidays", "CompanyClosures", "CompanyClosureResults", "CompanyApproverAssignments" })
         {
             Execute(context, $"GRANT SELECT, INSERT, UPDATE ON OBJECT::[dbo].[{table}] TO [vacate_resource_runtime]");
         }
@@ -41,7 +41,12 @@ internal static partial class RuntimeAccess
             Execute(context, $"GRANT SELECT, INSERT ON OBJECT::[dbo].[{table}] TO [vacate_resource_runtime]");
         }
 
-        foreach (var sequence in new[] { "UserIds", "MembershipIds", "OrganizationIds", "DepartmentIds", "TeamIds", "JobRoleIds" })
+        foreach (var table in new[] { "Leaves", "LeaveRequests" })
+        {
+            Execute(context, $"GRANT UPDATE ON OBJECT::[dbo].[{table}] TO [vacate_resource_runtime]");
+        }
+
+        foreach (var sequence in new[] { "UserIds", "MembershipIds", "OrganizationIds", "DepartmentIds", "TeamIds", "JobRoleIds", "CompanyHolidayIds", "CompanyClosureIds", "CompanyApproverIds" })
         {
             Execute(context, $"GRANT UPDATE ON OBJECT::[dbo].[{sequence}] TO [vacate_resource_runtime]");
         }
@@ -49,8 +54,18 @@ internal static partial class RuntimeAccess
         Execute(context, $"IF IS_ROLEMEMBER(N'vacate_resource_runtime', N'{name}') = 0 ALTER ROLE [vacate_resource_runtime] ADD MEMBER [{name}]");
         using var command = context.Database.GetDbConnection().CreateCommand();
         command.Transaction = context.Database.CurrentTransaction!.GetDbTransaction();
+        var administrativeTables = new[] { "CompanyHolidays", "CompanyClosures", "CompanyClosureResults", "CompanyApproverAssignments" };
+        var administrativeSequences = new[] { "CompanyHolidayIds", "CompanyClosureIds", "CompanyApproverIds" };
+        var checks = administrativeTables.SelectMany(table => new[] { "SELECT", "INSERT", "UPDATE" }
+                .Select(permission => $"IF COALESCE(HAS_PERMS_BY_NAME(N'dbo.{table}', N'OBJECT', N'{permission}'), 0) <> 1 THROW 51000, 'Company administration runtime permission missing.', 1;"))
+            .Concat(administrativeTables.Select(table => $"IF COALESCE(HAS_PERMS_BY_NAME(N'dbo.{table}', N'OBJECT', N'DELETE'), 0) <> 0 THROW 51000, 'Company administration DELETE permission is forbidden.', 1;"))
+            .Concat(administrativeSequences.Select(sequence => $"IF COALESCE(HAS_PERMS_BY_NAME(N'dbo.{sequence}', N'OBJECT', N'UPDATE'), 0) <> 1 THROW 51000, 'Company administration sequence permission missing.', 1;"));
         command.CommandText = $"""
             EXECUTE AS USER = N'{name}';
+            BEGIN TRY
+            {string.Join("\n", checks)}
+            IF COALESCE(HAS_PERMS_BY_NAME(N'dbo.LeaveRequests', N'OBJECT', N'UPDATE'), 0) <> 1
+                THROW 51000, 'Leave decision runtime permission missing.', 1;
             SELECT IS_MEMBER(N'db_owner'), HAS_PERMS_BY_NAME(DB_NAME(), N'DATABASE', N'CREATE TABLE'),
                 HAS_PERMS_BY_NAME(N'dbo.Organizations', N'OBJECT', N'UPDATE'),
                 HAS_PERMS_BY_NAME(N'dbo.Users', N'OBJECT', N'DELETE'),
@@ -64,12 +79,17 @@ internal static partial class RuntimeAccess
                 HAS_PERMS_BY_NAME(N'dbo.LeaveEntitlementPeriods', N'OBJECT', N'SELECT'),
                 HAS_PERMS_BY_NAME(N'dbo.PublicHolidays', N'OBJECT', N'SELECT');
             REVERT;
+            END TRY
+            BEGIN CATCH
+                REVERT;
+                THROW;
+            END CATCH;
             """;
         using (var reader = command.ExecuteReader())
         {
             if (!reader.Read() || reader.GetInt32(0) != 0 || reader.GetInt32(1) != 0 || reader.GetInt32(2) != 1
                 || reader.GetInt32(3) != 0 || reader.GetInt32(4) != 0 || reader.GetInt32(5) != 1
-                || reader.GetInt32(6) != 1 || reader.GetInt32(7) != 0 || reader.GetInt32(8) != 0
+                || reader.GetInt32(6) != 1 || reader.GetInt32(7) != 1 || reader.GetInt32(8) != 0
                 || reader.GetInt32(9) != 1 || reader.GetInt32(10) != 1 || reader.GetInt32(11) != 1 || reader.GetInt32(12) != 1)
             {
                 throw new InvalidOperationException("Runtime permission boundary failed; grants rolled back.");
@@ -77,7 +97,7 @@ internal static partial class RuntimeAccess
         }
 
         transaction.Commit();
-        Console.WriteLine("Resolved Entra principal granted resource DML/sequence access; db_owner, DDL, DELETE and migration writes and Leaves UPDATE/DELETE denied; request/leave inserts permitted.");
+        Console.WriteLine("Resolved Entra principal granted resource DML/sequence access; db_owner, DDL, DELETE and migration writes denied; request/leave updates permitted for assigned decisions.");
     }
 
     private static void Execute(VacateDbContext context, string sql)

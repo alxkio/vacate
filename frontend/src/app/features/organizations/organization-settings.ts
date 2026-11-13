@@ -18,9 +18,11 @@ import {
   OrganizationTeam,
 } from '../../core/models/workspace.models';
 
+import { ApproverSettings } from '../administration/approver-settings';
+import { CompanyCalendar } from '../administration/company-calendar';
 @Component({
   selector: 'vacate-organization',
-  imports: [FormsModule],
+  imports: [ApproverSettings, CompanyCalendar, FormsModule],
   templateUrl: './organization-settings.html',
   styleUrl: './organization-settings.scss',
 })

@@ -8,7 +8,8 @@ public sealed record LeaveEntitlement(string LeaveTypeId, int Year, decimal Allo
 
 public sealed record LeaveDateRecord(DateOnly Date, string Status, int EntitlementYear);
 
-public sealed record LeaveRequestRecord(Guid Guid, string LeaveTypeId, DateTimeOffset CreatedAt, IReadOnlyList<LeaveDateRecord> Dates);
+public sealed record LeaveRequestRecord(Guid Guid, string LeaveTypeId, DateTimeOffset CreatedAt, IReadOnlyList<LeaveDateRecord> Dates, Guid? ApproverGuid = null, DateTimeOffset? DecidedAt = null,
+    string Source = "EmployeeRequest", Guid? ClosureGuid = null, DateTimeOffset? UpdatedAt = null);
 
 public sealed record StoredLeaveRequest(int CompanyId, int MembershipId, Guid IdempotencyKey, string Fingerprint, LeaveRequestRecord Request);
 
@@ -36,6 +37,8 @@ public interface ILeaveRepository
     IReadOnlySet<int> HolidayYears(string? countryCode);
 
     void Add(StoredLeaveRequest request);
+
+    void Update(StoredLeaveRequest request);
 
     string? CoveredReceipt(int companyId, int membershipId, Guid key);
 

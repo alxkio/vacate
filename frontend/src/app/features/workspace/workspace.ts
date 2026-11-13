@@ -1,3 +1,4 @@
+import { Approvals } from '../administration/approvals';
 import {
   ChangeDetectorRef,
   Component,
@@ -48,6 +49,7 @@ import { WorkspaceView } from './workspace-view';
 @Component({
   selector: 'vacate-workspace',
   imports: [
+    Approvals,
     Calendar,
     Balances,
     BalanceBar,

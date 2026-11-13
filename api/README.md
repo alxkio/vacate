@@ -51,3 +51,18 @@ The operator tool under api/tools/Vacate.Database generates reviewed idempotent 
 Generating a migration does not apply it. The user-authorized development cutover uses the existing free SQL database, explicit fictional import and a resolved managed identity with limited table/sequence permissions. SQL free-limit/AutoPause remain mandatory; minimum-cost replacement runtime storage and diagnostics were separately approved. The user later selected initial-development open IPv4 access while retaining Entra-only/TLS, for app/VS Code/portal use. See the development-access and relocation evidence; production recovery/identity/policy/onboarding remain separate.
 
 VAC-36 replaces the initial snapshot table with MembershipEntitlements and Leaves; consumption and remaining values are derived on each membership read, with runtime Leaves access restricted to SELECT. See [mapping and guarded fixture migration](../docs/database/derived-leave-balances.md) and [current verification gaps](../docs/jira/media/VAC-36/verification-2026-11-02.md). No public leave-writing workflow is added.
+
+## Company administration · VAC-43
+
+The administrator calendar endpoints now configure company recurring holidays, explicit administrator approvers and automatic company-closure leave. Assigned approvals and sanitized personnel history are real saved-record projections. See the [administration contract](../docs/contracts/api.md#company-administration--vac-43--2026-11-12) for routes, payloads, privacy boundaries and accounting. The frontend is paired with these contracts; it does not manufacture an approval inbox or recorded closure results.
+
+`20261112210758_CompanyAdministration` adds normalized company-owned holiday/closure/result/assignment tables and request decision/provenance columns. Review the [forward SQL](../docs/database/migrations/0004-company-administration.sql) and apply it only through the explicit database operator before publishing a SQL-backed API. Runtime grants now include the new tables/sequences plus Leaves/LeaveRequests UPDATE for authorized decisions; the grant gate checks these permissions and continues to reject physical DELETE, schema and migration-history authority. No startup migration or automatic production approver assignment is added. The opt-in fictional fixture explicitly configures Nora; newly created production companies require administrator configuration.
+
+Focused checks:
+
+```sh
+dotnet test api/tests/Vacate.IntegrationTests --no-restore -m:1 -nr:false --filter FullyQualifiedName~AdminLeaveTests
+python3 scripts/verify-admin.py --help
+```
+
+The integration fixture verifies tenant denials, assignment inheritance/rerouting, self-approval, mixed past/future decisions, balance validation, holiday recurrence/history and automatic closure idempotency. Two additional SQL-provider scenarios verify normalized persistence and concurrent accounting only when `VACATE_SQL_TEST_CONNECTION` names an authorized migrated test database. Without that target they are skipped; model/script checks and InMemory passes do not establish SQL execution or release approval. Closure cancellation/history correction and company-holiday editing remain outside the exposed creation workflow.

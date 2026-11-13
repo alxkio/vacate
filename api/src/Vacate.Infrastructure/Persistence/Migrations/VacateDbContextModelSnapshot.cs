@@ -23,6 +23,12 @@ namespace Vacate.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.HasSequence<int>("CompanyApproverIds");
+
+            modelBuilder.HasSequence<int>("CompanyClosureIds");
+
+            modelBuilder.HasSequence<int>("CompanyHolidayIds");
+
             modelBuilder.HasSequence<int>("DepartmentIds");
 
             modelBuilder.HasSequence<int>("JobRoleIds");
@@ -36,6 +42,232 @@ namespace Vacate.Infrastructure.Persistence.Migrations
             modelBuilder.HasSequence<int>("UserIds");
 
             modelBuilder.HasSequence<int>("WorkScheduleIds");
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CompanyApproverRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("ApproverGuid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeleteRequestedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("Guid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("nvarchar(24)");
+
+                    b.Property<Guid>("ScopeGuid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApproverGuid");
+
+                    b.HasIndex("Guid")
+                        .IsUnique();
+
+                    b.HasIndex("CompanyId", "Scope", "ScopeGuid")
+                        .IsUnique()
+                        .HasFilter("[DeletedAt] IS NULL");
+
+                    b.ToTable("CompanyApproverAssignments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CompanyApproverAssignments_Identity", "[Id] > 0 AND [Guid] <> '00000000-0000-0000-0000-000000000000'");
+
+                            t.HasCheckConstraint("CK_CompanyApproverAssignments_Lifecycle", "[UpdatedAt] >= [CreatedAt] AND ([DeleteRequestedAt] IS NULL OR [DeleteRequestedAt] BETWEEN [CreatedAt] AND [UpdatedAt]) AND ([DeletedAt] IS NULL OR ([DeleteRequestedAt] IS NOT NULL AND [DeletedAt] BETWEEN [DeleteRequestedAt] AND [UpdatedAt]))");
+
+                            t.HasCheckConstraint("CK_CompanyApproverAssignments_Scope", "[Scope] IN (N'organization', N'department', N'team') AND [ScopeGuid] <> '00000000-0000-0000-0000-000000000000'");
+
+                            t.HasCheckConstraint("CK_CompanyApproverAssignments_Utc", "DATEPART(TZOFFSET, [CreatedAt]) = 0 AND DATEPART(TZOFFSET, [UpdatedAt]) = 0 AND ([DeleteRequestedAt] IS NULL OR DATEPART(TZOFFSET, [DeleteRequestedAt]) = 0) AND ([DeletedAt] IS NULL OR DATEPART(TZOFFSET, [DeletedAt]) = 0)");
+                        });
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CompanyClosureResultRow", b =>
+                {
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClosureId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UserGuid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Days")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(401)
+                        .HasColumnType("nvarchar(401)");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("nvarchar(24)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("CompanyId", "ClosureId", "UserGuid");
+
+                    b.ToTable("CompanyClosureResults", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CompanyClosureResults_Outcome", "[Days] >= 0 AND [Outcome] IN (N'recorded', N'skipped', N'already-covered')");
+                        });
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CompanyClosureRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("DeductAnnualLeave")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("DeleteRequestedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("Guid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdempotencyKey")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Guid")
+                        .IsUnique();
+
+                    b.HasIndex("CompanyId", "IdempotencyKey")
+                        .IsUnique();
+
+                    b.ToTable("CompanyClosures", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CompanyClosures_Date", "LEN([Name]) > 0 AND [EndDate] >= [StartDate] AND DATEDIFF(day, [StartDate], [EndDate]) <= 366");
+
+                            t.HasCheckConstraint("CK_CompanyClosures_Identity", "[Id] > 0 AND [Guid] <> '00000000-0000-0000-0000-000000000000'");
+
+                            t.HasCheckConstraint("CK_CompanyClosures_Lifecycle", "[UpdatedAt] >= [CreatedAt] AND ([DeleteRequestedAt] IS NULL OR [DeleteRequestedAt] BETWEEN [CreatedAt] AND [UpdatedAt]) AND ([DeletedAt] IS NULL OR ([DeleteRequestedAt] IS NOT NULL AND [DeletedAt] BETWEEN [DeleteRequestedAt] AND [UpdatedAt]))");
+
+                            t.HasCheckConstraint("CK_CompanyClosures_Utc", "DATEPART(TZOFFSET, [CreatedAt]) = 0 AND DATEPART(TZOFFSET, [UpdatedAt]) = 0 AND ([DeleteRequestedAt] IS NULL OR DATEPART(TZOFFSET, [DeleteRequestedAt]) = 0) AND ([DeletedAt] IS NULL OR DATEPART(TZOFFSET, [DeletedAt]) = 0)");
+                        });
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CompanyHolidayRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Day")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("DeleteRequestedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("Guid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Guid")
+                        .IsUnique();
+
+                    b.HasIndex("CompanyId", "Month", "Day")
+                        .IsUnique()
+                        .HasFilter("[DeletedAt] IS NULL");
+
+                    b.ToTable("CompanyHolidays", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CompanyHolidays_Date", "LEN([Name]) > 0 AND [Month] BETWEEN 1 AND 12 AND [Day] BETWEEN 1 AND CASE WHEN [Month] = 2 THEN 29 WHEN [Month] IN (4,6,9,11) THEN 30 ELSE 31 END");
+
+                            t.HasCheckConstraint("CK_CompanyHolidays_Identity", "[Id] > 0 AND [Guid] <> '00000000-0000-0000-0000-000000000000'");
+
+                            t.HasCheckConstraint("CK_CompanyHolidays_Lifecycle", "[UpdatedAt] >= [CreatedAt] AND ([DeleteRequestedAt] IS NULL OR [DeleteRequestedAt] BETWEEN [CreatedAt] AND [UpdatedAt]) AND ([DeletedAt] IS NULL OR ([DeleteRequestedAt] IS NOT NULL AND [DeletedAt] BETWEEN [DeleteRequestedAt] AND [UpdatedAt]))");
+
+                            t.HasCheckConstraint("CK_CompanyHolidays_Utc", "DATEPART(TZOFFSET, [CreatedAt]) = 0 AND DATEPART(TZOFFSET, [UpdatedAt]) = 0 AND ([DeleteRequestedAt] IS NULL OR DATEPART(TZOFFSET, [DeleteRequestedAt]) = 0) AND ([DeletedAt] IS NULL OR DATEPART(TZOFFSET, [DeletedAt]) = 0)");
+                        });
+                });
 
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CoveredSubmissionRow", b =>
                 {
@@ -223,10 +455,19 @@ namespace Vacate.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<Guid?>("ApproverGuid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ClosureGuid")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DecidedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Fingerprint")
@@ -248,6 +489,13 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                     b.Property<int>("MembershipId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasDefaultValue("EmployeeRequest");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -256,10 +504,15 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                     b.HasIndex("Guid")
                         .IsUnique();
 
+                    b.HasIndex("CompanyId", "ApproverGuid");
+
                     b.HasIndex("CompanyId", "MembershipId", "IdempotencyKey")
                         .IsUnique();
 
-                    b.ToTable("LeaveRequests", (string)null);
+                    b.ToTable("LeaveRequests", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_LeaveRequests_DecisionUtc", "[DecidedAt] IS NULL OR ([DecidedAt] >= [CreatedAt] AND DATEPART(TZOFFSET, [DecidedAt]) = 0)");
+                        });
                 });
 
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.LeaveRow", b =>
@@ -890,6 +1143,50 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CompanyApproverRow", b =>
+                {
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.UserRow", null)
+                        .WithMany()
+                        .HasForeignKey("ApproverGuid")
+                        .HasPrincipalKey("Guid")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.OrganizationRow", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CompanyClosureResultRow", b =>
+                {
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.CompanyClosureRow", null)
+                        .WithMany("Results")
+                        .HasForeignKey("CompanyId", "ClosureId")
+                        .HasPrincipalKey("CompanyId", "Id")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CompanyClosureRow", b =>
+                {
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.OrganizationRow", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CompanyHolidayRow", b =>
+                {
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.OrganizationRow", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CoveredSubmissionRow", b =>
                 {
                     b.HasOne("Vacate.Infrastructure.Persistence.Sql.MembershipRow", null)
@@ -1060,6 +1357,11 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                         .HasForeignKey("CompanyId", "DepartmentId")
                         .HasPrincipalKey("CompanyId", "Id")
                         .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.CompanyClosureRow", b =>
+                {
+                    b.Navigation("Results");
                 });
 
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.MembershipRow", b =>

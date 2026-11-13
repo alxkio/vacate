@@ -20,6 +20,7 @@ builder.Services.AddScoped<MembershipService>();
 builder.Services.AddScoped<OrganizationService>();
 builder.Services.AddScoped<AuthenticationService>();
 builder.Services.AddScoped<LeaveService>();
+builder.Services.AddScoped<AdminLeaveService>();
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
 // Worker logs use the Functions host pipeline and its host.json filters.

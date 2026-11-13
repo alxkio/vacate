@@ -143,6 +143,10 @@ internal sealed class DevelopmentAccessRow
 
 internal sealed class LeaveRequestRow
 {
+    public Guid? ApproverGuid { get; set; }
+    public DateTimeOffset? DecidedAt { get; set; }
+    public string Source { get; set; } = "EmployeeRequest";
+    public Guid? ClosureGuid { get; set; }
     public int Id { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public Guid Guid { get; set; }
@@ -176,4 +180,42 @@ internal sealed class CoveredSubmissionRow
     public int MembershipId { get; set; }
     public Guid IdempotencyKey { get; set; }
     public string Fingerprint { get; set; } = "";
+}
+
+internal sealed class CompanyHolidayRow : EntityRow
+{
+    public int CompanyId { get; set; }
+    public string Name { get; set; } = "";
+    public int Month { get; set; }
+    public int Day { get; set; }
+}
+
+internal sealed class CompanyClosureRow : EntityRow
+{
+    public int CompanyId { get; set; }
+    public string Name { get; set; } = "";
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+    public bool DeductAnnualLeave { get; set; }
+    public Guid IdempotencyKey { get; set; }
+    public List<CompanyClosureResultRow> Results { get; set; } = [];
+}
+
+internal sealed class CompanyClosureResultRow
+{
+    public int CompanyId { get; set; }
+    public int ClosureId { get; set; }
+    public Guid UserGuid { get; set; }
+    public string DisplayName { get; set; } = "";
+    public string Outcome { get; set; } = "";
+    public int Days { get; set; }
+    public string? Reason { get; set; }
+}
+
+internal sealed class CompanyApproverRow : EntityRow
+{
+    public int CompanyId { get; set; }
+    public string Scope { get; set; } = "";
+    public Guid ScopeGuid { get; set; }
+    public Guid ApproverGuid { get; set; }
 }

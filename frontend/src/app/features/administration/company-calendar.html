@@ -1,0 +1,295 @@
+<section class="admin-section" aria-labelledby="company-calendar-heading">
+  <div class="admin-heading">
+    <h2 id="company-calendar-heading">Company calendar</h2>
+    <button type="button" class="secondary" (click)="load()" [disabled]="loading">
+      {{ error ? 'Retry company calendar' : 'Refresh calendar' }}
+    </button>
+  </div>
+  <p class="admin-hint">
+    Company-wide dates used by saved leave calculations. Existing saved history remains unchanged.
+  </p>
+  @if (loading) {
+    <p role="status">Loading company calendar…</p>
+  }
+  @if (error) {
+    <p role="alert" class="admin-error">{{ error }}</p>
+  }
+  @if (record; as calendar) {
+    <div class="admin-heading">
+      <h3>Closed dates</h3>
+      <button type="button" class="primary" (click)="open('closure', $event.currentTarget)">
+        Add closure
+      </button>
+    </div>
+    <p class="admin-hint">
+      Publish automatic company closure leave, with or without an annual leave deduction. Employees
+      with insufficient annual balance are skipped and reported.
+    </p>
+    <div class="admin-table" role="region" tabindex="0" aria-label="Company closures">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Dates</th>
+            <th scope="col">Balance impact</th>
+            <th scope="col">Results</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (closure of calendar.closures; track closure.guid) {
+            <tr>
+              <th scope="row">{{ closure.name }}</th>
+              <td>{{ closure.startDate }} – {{ closure.endDate }}</td>
+              <td>{{ closure.deductAnnualLeave ? 'Annual leave' : 'No deduction' }}</td>
+              <td>
+                <button type="button" class="secondary" (click)="showReport(closure)">
+                  View employee results<span class="sr-only"> for {{ closure.name }}</span>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4">No company closures configured.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (report) {
+      <section class="admin-review" aria-labelledby="closure-results-heading">
+        <h3 #reportHeading id="closure-results-heading" tabindex="-1">
+          Closure employee results · {{ reportName }}
+        </h3>
+        <p>{{ reportDates }}</p>
+        <p>
+          {{ resultCount(report, 'recorded') }} recorded ·
+          {{ resultCount(report, 'skipped') }} skipped ·
+          {{ resultCount(report, 'already-covered') }} already covered
+        </p>
+        <p class="admin-hint">
+          Recorded outcomes are the saved result for this closure, including any employees skipped.
+        </p>
+        <div class="admin-table" role="region" tabindex="0" aria-label="Closure employee results">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Employee</th>
+                <th scope="col">Outcome</th>
+                <th scope="col">Days</th>
+                <th scope="col">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (result of report; track result.userGuid) {
+                <tr>
+                  <th scope="row">{{ result.displayName }}</th>
+                  <td>{{ result.outcome }}</td>
+                  <td>{{ result.days }}</td>
+                  <td>{{ result.reason || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4">No affected employees.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+    <div class="admin-heading">
+      <h3>Recurring holidays</h3>
+      <button type="button" class="primary" (click)="open('holiday', $event.currentTarget)">
+        Add recurring holiday
+      </button>
+    </div>
+    <p class="admin-hint">
+      Fixed month and day, every year, for the whole company. These dates are excluded from leave
+      calculations. A 29 February holiday applies only in leap years.
+    </p>
+    <div class="admin-table" role="region" tabindex="0" aria-label="Recurring company holidays">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Holiday</th>
+            <th scope="col">Month / day</th>
+            <th scope="col">Applies to</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (holiday of calendar.holidays; track holiday.guid) {
+            <tr>
+              <th scope="row">{{ holiday.name }}</th>
+              <td>
+                {{ holiday.month }} / {{ holiday.day
+                }}{{ holiday.month === 2 && holiday.day === 29 ? ' · Leap years only' : '' }}
+              </td>
+              <td>Whole company · Every year</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3">No recurring company holidays configured.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  <p role="status" class="admin-success">{{ message }}</p>
+</section>
+<dialog #editor aria-labelledby="calendar-editor-heading" (cancel)="close($event)">
+  <form class="admin-form" #calendarForm="ngForm" (ngSubmit)="save()">
+    <h2 id="calendar-editor-heading">
+      {{ kind === 'holiday' ? 'Add recurring holiday' : 'Add company closure' }}
+    </h2>
+    <label
+      >Name<input
+        name="name"
+        required
+        maxlength="120"
+        [(ngModel)]="name"
+        (ngModelChange)="invalidatePreview()"
+        [disabled]="busy"
+        autofocus
+    /></label>
+    @if (kind === 'holiday') {
+      <div class="admin-fields">
+        <label
+          >Month<input
+            type="number"
+            name="month"
+            [attr.aria-invalid]="holidayMonthError ? true : null"
+            aria-describedby="holiday-month-error"
+            min="1"
+            max="12"
+            step="1"
+            required
+            [(ngModel)]="month"
+            [disabled]="busy" /></label
+        ><label
+          >Day<input
+            type="number"
+            name="day"
+            [attr.aria-invalid]="holidayDayError ? true : null"
+            aria-describedby="holiday-day-error holiday-recurrence-help"
+            min="1"
+            [max]="holidayMaxDay"
+            step="1"
+            required
+            [(ngModel)]="day"
+            [disabled]="busy"
+        /></label>
+      </div>
+      @if (holidayMonthError) {
+        <p id="holiday-month-error" class="admin-error">{{ holidayMonthError }}</p>
+      }
+      @if (holidayDayError) {
+        <p id="holiday-day-error" class="admin-error">{{ holidayDayError }}</p>
+      }
+      <p id="holiday-recurrence-help" class="admin-hint">
+        Applies to the whole company annually. A 29 February holiday applies only in leap years. The
+        server also checks these dates.
+      </p>
+    } @else {
+      <div class="admin-fields">
+        <label
+          >Start date<input
+            type="date"
+            name="startDate"
+            #startField="ngModel"
+            [attr.aria-invalid]="
+              (startField.touched || startField.dirty) && startDateError ? true : null
+            "
+            aria-describedby="closure-start-error"
+            required
+            [(ngModel)]="startDate"
+            (ngModelChange)="invalidatePreview()"
+            [disabled]="busy" /></label
+        ><label
+          >End date<input
+            type="date"
+            name="endDate"
+            #endField="ngModel"
+            [attr.aria-invalid]="
+              (endField.touched || endField.dirty || endDate) && endDateError ? true : null
+            "
+            aria-describedby="closure-end-error"
+            required
+            [min]="startDate"
+            [(ngModel)]="endDate"
+            (ngModelChange)="invalidatePreview()"
+            [disabled]="busy"
+        /></label>
+      </div>
+      @if ((startField.touched || startField.dirty) && startDateError) {
+        <p id="closure-start-error" class="admin-error">{{ startDateError }}</p>
+      }
+      @if ((endField.touched || endField.dirty || endDate) && endDateError) {
+        <p id="closure-end-error" class="admin-error">{{ endDateError }}</p>
+      }
+      <label
+        >Deduct from annual leave<input
+          type="checkbox"
+          role="switch"
+          class="settings-switch"
+          name="deductAnnualLeave"
+          [(ngModel)]="deductAnnualLeave"
+          (ngModelChange)="invalidatePreview()"
+          [disabled]="busy"
+      /></label>
+      <p class="admin-hint">
+        Publishing automatically records company closure leave for eligible employees.
+        {{
+          deductAnnualLeave
+            ? 'Annual leave is charged. Employees without enough confirmed balance are skipped and listed in the result.'
+            : 'Employee balances are not charged.'
+        }}
+        Review the preview before publishing.
+      </p>
+      @if (preview) {
+        <h3>Preview · not yet published</h3>
+        <p>
+          {{ resultCount(preview, 'recorded') }} would be recorded ·
+          {{ resultCount(preview, 'skipped') }} would be skipped ·
+          {{ resultCount(preview, 'already-covered') }} already covered
+        </p>
+        <ul>
+          @for (result of preview; track result.userGuid) {
+            <li>
+              {{ result.displayName }} · {{ result.outcome }} · {{ result.days }} days
+              {{ result.reason || '' }}
+            </li>
+          } @empty {
+            <li>No affected employees.</li>
+          }
+        </ul>
+      }
+    }
+    @if (formError) {
+      <p role="alert" class="admin-error">{{ formError }}</p>
+    }
+    <div class="admin-actions">
+      <button
+        class="primary"
+        type="submit"
+        [disabled]="
+          busy ||
+          calendarForm.invalid ||
+          (kind === 'holiday'
+            ? holidayMonthError || holidayDayError
+            : startDateError || endDateError)
+        "
+      >
+        {{
+          busy
+            ? 'Working…'
+            : kind === 'holiday'
+              ? 'Save recurring holiday'
+              : preview
+                ? 'Publish closure'
+                : 'Preview closure'
+        }}</button
+      ><button class="secondary" type="button" [disabled]="busy" (click)="close()">Cancel</button>
+    </div>
+  </form>
+</dialog>

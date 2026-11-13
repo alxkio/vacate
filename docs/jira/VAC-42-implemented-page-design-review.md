@@ -137,3 +137,10 @@ None for the accepted feedback scope.
 - [ ] Manual native keyboard QA: Space toggles, Tab sequence, Escape and focus return. Automated trusted input delivery was unavailable in both headless/visible Chrome; source semantics and functional focus are verified separately.
 
 - 2026-11-12 · Assistant: reopened the released baseline for the owner-feedback subtask; implementation moved to QA after functional/browser/API checks. No separate issue/story, commit or deployment. Original staged release evidence preserved.
+
+## CI fixture-date regression · 2026-11-12
+
+Owner supplied runner failure after the trusted native readiness checks passed: `keyboardClick` attempted to focus absent `[data-date="2026-10-01"]`. Source confirms native acceptance opened a month view without a date, while the accepted current-date refinement now opens the current month. The historical fixture journey now requests `date=2026-10-01` explicitly; keyboard target readiness and missing-selector diagnostics are added without bypassing trusted-event checks. Root will verify rendered October target and preserve the current-month default. Native runner rerun remains a separate check from local synthetic interaction. Tracked here as the existing UI-refinement subtask, not a new story.
+
+
+2026-11-13 · Assistant / QA follow-up: found and corrected the second historical functional calendar load as well as the native load. Both explicitly request `date=2026-10-01`; default month remains today. The route regression passes in the 85-test Angular suite; rendered October target presence and DOM focus pass in admin browser acceptance. The isolated trusted native keyboard suite now passes locally on Chrome 150 / Node 22.22.3 / macOS, including readiness, October date activation, Escape/focus return, shortlist and avatar navigation. This verifies the reported absent-target regression locally; it does not claim a rerun of the supplied Linux CI job or every new administrator keyboard journey. [Shared evidence](media/VAC-43/verification.md).

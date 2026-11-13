@@ -2,7 +2,7 @@
 
 **Status:** Confirmed intent plus proposed pilot scope
 **Owner:** Product lead / founder  
-**Last updated:** 2026-11-01
+**Last updated:** 2026-11-12
 
 ## Confirmed intent
 
@@ -263,3 +263,36 @@ All current company members can browse the company People table and understand d
 Use boolean switches in Settings while preserving inherited/null approval choices. Order Organization as company workspace and at-a-glance first, organization configuration second, departments/teams last. Administrators may create departments and teams through dialogs using the existing APIs; a team's department is optional. This supersedes earlier frontend creation exclusions for these two structure types only. Calendar/planner display preferences apply immediately for the signed-in account, without requiring sign-out. The VAC-42 owner-feedback subtask owns implementation/verification; no deployment or further lifecycle/permission change is implied.
 
 Additional owner feedback · 2026-11-12: the Vacate brand link returns to workspace home. An expired authenticated session returns to login and resumes the previous internal page after sign-in. A failed login or permission denial does not count as session expiry; return destinations cannot leave the application.
+
+
+## Owner decisions — administrator functionality · 2026-11-12
+
+Source: owner's six-point administrator epic request, explicit clarification replies and delegated implementation instruction, 2026-11-12. [VAC-43](../jira/VAC-43-admin-functionality.md) coordinates the six children; earlier VAC-42 owner feedback remains its own existing subtask.
+
+1. Company administrators configure closed company dates and whether resulting closure leave reduces employee balances. The owner explicitly selected **automatic closure leave recording**, rather than employee-submitted requests. This authorizes the capability but does not choose a debit leave type, insufficient-balance publication strategy, affected employment-date population or correction/cancellation policy. [VAC-44](../jira/VAC-44-company-closure-leave.md).
+2. Administrators configure named **fixed month/day holidays recurring annually for the whole company initially**. Per-work-location calendars and movable-date rules remain outside scope. Regional variation motivates company configuration; the owner's illustrative Greek city/date examples are not verified legal facts and must not be seeded as statutory defaults. Company holiday configuration complements national holiday data and must not rewrite previously saved leave charges. [VAC-45](../jira/VAC-45-recurring-company-holidays.md).
+3. Improve Settings design for the administration tasks while preserving the accepted workspace/summary → configuration → structure sequence, role permissions and established visual identity. This extends the prior UI work rather than duplicating VAC-42. [VAC-46](../jira/VAC-46-admin-settings-design.md).
+4. Evaluate UX/UI role prompts and installed skills against the administrator journeys; Figma is optional where useful, not required infrastructure or a tool-adoption decision. Follow repository context guidance for any justified profile/skill edits. [VAC-47](../jira/VAC-47-ux-ui-workflow-evaluation.md).
+5. Deliver an administrator approval/decline screen using **assigned approvers**, rather than every admin owning every pending company request. Existing approval-required settings do not establish assignment, self-approval or fallback authority. Assignment ownership and those decision rules require explicit resolution before the affected mutations ship. This supersedes the earlier unavailable-inbox scope only for the newly authorized implementation; the fictional VAC-4 proposal is not actual request data. [VAC-48](../jira/VAC-48-assigned-approval-inbox.md).
+6. Provide administrator personnel/recorded-leave oversight, using People as an entry where feasible. Preserve the employee directory's sanitized public fields; it grants no employee right to colleagues' private leave details. Reports use actual saved dates/statuses/accounting, distinguish pending from taken and identify legacy opening totals without inventing dated history. Exclude family/eligibility facts, medical evidence and private request notes. Existing VAC-20 annual balance summaries are integration context. [VAC-49](../jira/VAC-49-personnel-leave-overview.md).
+
+Implementation is authorized across frontend and backend with company authorization, tenant isolation, UTC lifecycle and appropriate SQL/HTTP/rendered verification. No commit, push, deployment, new paid service or production-readiness claim is authorized by this request. Negative balances remain prohibited; pending approval does not deduct; existing overlap rules preserve covered dates/types/statuses; past dates remain allowed with warnings and their established approval bypass. Calendar/policy changes do not silently rewrite saved history.
+
+OPEN QUESTIONS: closure debit type and insufficient-balance publication strategy; affected employee/effective-date boundaries and applied-closure corrections; leap-day holiday recurrence/observance; explicit approver assignment mechanism, eligible roles, self-approval, absence/deletion fallback and reassignment of existing pending requests. Block only affected operations and continue independent work. The implementation must not silently turn missing assignment into company-wide approval authority.
+
+
+### Administrator epic clarification replies · 2026-11-12
+
+Source: owner's explicit option replies during delegated implementation. These decisions resolve the corresponding earlier open questions in this section; earlier entries retain the decision history.
+
+- Deducting company closures automatically record **annual leave**. When an employee lacks sufficient balance, **skip that employee and include an explicit skipped-employee report**; process eligible employees without permitting negative balances. This is an explicitly accepted partial-application policy, not silent partial success. Idempotency and existing-overlap preservation remain required.
+- **Administrators configure an approver per team, department and organization**. Resolve assignment using **team → department → organization** inheritance; no assignment may be inferred from job title or manager text. **Self-approval is allowed when the actor is explicitly assigned**. Scope inheritance alone does not authorize a missing/absent/deleted-approver fallback.
+- A recurring **February 29 holiday applies only in leap years**, with no replacement date in other years.
+
+OPEN QUESTION — awaiting explicit replies: are eligible assigned approvers restricted to company admins, or may any explicitly assigned company member approve; do approver configuration changes reroute existing pending requests or affect new requests only? Existing requests must not be silently reassigned while this is unresolved. Closure employee/effective-date/correction rules, missing approver fallback and weekend observance remain unresolved rather than inferred.
+
+
+Further owner clarification · 2026-11-12: assigned approvers must be **company administrators only**. This resolves the eligible-role question above. Pending-request rerouting after configuration changes remains unanswered; preserve existing pending assignment/history until decided. Implementation recovery boundary: if a new future approval-required request has no valid configured company-admin approver, preview/submission must explain the missing configuration and block that affected operation instead of fabricating an orphan assignment or granting every admin authority. Past-only requests keep their accepted approval bypass. This does not define absence/deletion fallback or change legacy pending records.
+
+
+Final routing clarification · 2026-11-12: the owner selected **reroute all pending requests** when approver configuration changes. Apply the current effective team → department → organization company-admin assignment to both existing/legacy pending and newly submitted requests. This supersedes the temporary unanswered-routing/preserve-pending boundary above. Preserve approved/declined decisions and completed history; do not recalculate their charges or reopen completed requests. Missing/invalid assignment must not grant general admin authority. Missing/absent/deleted-approver fallback, closure correction/effective-date rules and weekend holiday observance remain separate unresolved lifecycle decisions.

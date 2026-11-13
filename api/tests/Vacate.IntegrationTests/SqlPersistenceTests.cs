@@ -51,6 +51,7 @@ public sealed class SqlPersistenceTests
         services.AddScoped<MembershipService>();
         services.AddScoped<OrganizationService>();
         services.AddScoped<LeaveService>();
+        services.AddScoped<AdminLeaveService>();
         provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         a = CreateTenant();
         b = CreateTenant();
@@ -72,9 +73,13 @@ public sealed class SqlPersistenceTests
         var userIds = context.Set<MembershipRow>().Where(x => companyIds.Contains(x.CompanyId)).Select(x => x.UserId)
             .Concat(context.Set<DevelopmentAccessRow>().Where(x => companyIds.Contains(x.CompanyId)).Select(x => x.UserId)).Distinct().ToArray();
         context.Set<DevelopmentAccessRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
+        context.Set<CompanyClosureResultRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
+        context.Set<CompanyHolidayRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
+        context.Set<CompanyApproverRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<LeaveRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<CoveredSubmissionRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<LeaveRequestRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
+        context.Set<CompanyClosureRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<LeaveEntitlementRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<MembershipEntitlementRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<MembershipRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
@@ -438,6 +443,57 @@ public sealed class SqlPersistenceTests
         var context = scope.ServiceProvider.GetRequiredService<VacateDbContext>();
         Assert.That(context.Set<LeaveRow>().Count(x => x.CompanyId == a.CompanyId), Is.EqualTo(2));
         Assert.That(context.Set<LeaveRow>().Where(x => x.CompanyId == a.CompanyId).All(x => x.StartDate == x.EndDate && x.QuantityDays == 1 && x.RequestId != null), Is.True);
+    }
+
+    [Test]
+    public void Company_calendar_is_durable_tenant_scoped_and_clear_restore_preserves_assignment_history()
+    {
+        var holiday = Use(s => s.GetRequiredService<AdminLeaveService>().AddHoliday(a.AdminId, a.CompanyGuid, "Annual company day", 2, 29));
+        Use(s => s.GetRequiredService<AdminLeaveService>().SetApprover(a.AdminId, a.CompanyGuid, "organization", a.CompanyGuid, a.AdminGuid));
+        Use(s => s.GetRequiredService<AdminLeaveService>().SetApprover(a.AdminId, a.CompanyGuid, "organization", a.CompanyGuid, null));
+        Use(s => s.GetRequiredService<AdminLeaveService>().SetApprover(a.AdminId, a.CompanyGuid, "organization", a.CompanyGuid, a.AdminGuid));
+        var calendar = Use(s => s.GetRequiredService<AdminLeaveService>().Calendar(a.AdminId, a.CompanyGuid));
+        Assert.That(calendar.Holidays.Single().Guid, Is.EqualTo(holiday.Guid));
+        Assert.That(calendar.Approvers.Single().ApproverGuid, Is.EqualTo(a.AdminGuid));
+        Assert.Throws<ServiceException>(() => Use(s => s.GetRequiredService<AdminLeaveService>().Calendar(b.AdminId, a.CompanyGuid)));
+        using var scope = provider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<VacateDbContext>();
+        Assert.That(context.Set<CompanyApproverRow>().Count(x => x.CompanyId == a.CompanyId), Is.EqualTo(2));
+        Assert.That(context.Set<CompanyApproverRow>().Count(x => x.CompanyId == a.CompanyId && x.DeletedAt != null), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Company_closure_retries_and_concurrent_assigned_decisions_are_durable_exactly_once()
+    {
+        Use(s => s.GetRequiredService<AdminLeaveService>().SetApprover(a.AdminId, a.CompanyGuid, "organization", a.CompanyGuid, a.AdminGuid));
+        var key = Guid.NewGuid();
+        var draft = new ClosureDraft("Office closure", new(2026, 1, 5), new(2026, 1, 5), true);
+        var closures = Enumerable.Range(0, 2).AsParallel().Select(_ => Use(s =>
+            s.GetRequiredService<AdminLeaveService>().PublishClosure(a.AdminId, a.CompanyGuid, draft, key))).ToArray();
+        Assert.That(closures.Select(c => c.Guid).Distinct().Count(), Is.EqualTo(1));
+        var requestGuid = Guid.NewGuid();
+        Use(s =>
+        {
+            var member = s.GetRequiredService<IMembershipRepository>().Current(a.MemberId)!;
+            s.GetRequiredService<ILeaveRepository>().Add(new(a.CompanyId, member.Id, Guid.NewGuid(), "synthetic-provider-test",
+                new(requestGuid, "annual", DateTimeOffset.UtcNow, [new(new(2026, 1, 6), "Pending", 2026)], a.AdminGuid)));
+            return true;
+        });
+        var decisions = Enumerable.Range(0, 2).AsParallel().Select(_ =>
+        {
+            try
+            {
+                Use(s => s.GetRequiredService<AdminLeaveService>().Decide(a.AdminId, a.CompanyGuid, requestGuid, "approve"));
+                return "approved";
+            }
+            catch (DomainConflictException)
+            {
+                return "conflict";
+            }
+        }).ToArray();
+        Assert.That(decisions, Is.EquivalentTo(new[] { "approved", "conflict" }));
+        Assert.That(Use(s => s.GetRequiredService<IMembershipRepository>().Current(a.MemberId)!.Balance.Used), Is.EqualTo(2));
+        Assert.Throws<ServiceException>(() => Use(s => s.GetRequiredService<AdminLeaveService>().Decide(b.AdminId, a.CompanyGuid, requestGuid, "decline")));
     }
 
     private Tenant CreateTenant() => Use(s =>

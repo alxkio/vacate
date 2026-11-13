@@ -322,6 +322,7 @@ export class WorkspaceDataService {
   }
 
   typeName(id?: string): string {
+    if (id === 'company-closure') return 'Company closure';
     const type = id && this.catalogue.getType(id);
     return type ? this.label(type) : 'Leave';
   }

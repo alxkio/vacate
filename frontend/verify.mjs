@@ -1,3 +1,4 @@
+import { runAdminAcceptance } from './testing/admin-acceptance.mjs';
 import { runFeedbackAcceptance } from './testing/feedback-acceptance.mjs';
 // Browser acceptance checks and reproducible screenshots. Node.js 22+, local Chrome.
 import { spawn } from 'node:child_process';
@@ -435,7 +436,12 @@ try {
       'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))',
     );
     // Dialog close handlers can restore focus on the next frame.
-    await evaluate(`document.querySelector(${JSON.stringify(selector)}).focus()`);
+    await waitFor(`!!document.querySelector(${JSON.stringify(selector)})`);
+    await evaluate(`(()=>{
+      const target = document.querySelector(${JSON.stringify(selector)});
+      if (!target) throw Error('Keyboard target missing: ' + ${JSON.stringify(selector)} + ' at ' + location.href);
+      target.focus();
+    })()`);
     await waitFor(`document.activeElement === document.querySelector(${JSON.stringify(selector)})`);
     // Capture at the document so replacing an Angular button cannot detach the evidence listener.
     await evaluate(`(()=>{
@@ -595,7 +601,19 @@ try {
     await call('Emulation.setCPUThrottlingRate', { rate });
   }
   await call('Page.bringToFront');
-  if (process.env.MOCK_FEEDBACK_ONLY === '1') {
+  if (process.env.MOCK_ADMIN_ONLY === '1') {
+    await runAdminAcceptance({
+      evaluate,
+      click,
+      waitFor,
+      navigate,
+      viewport,
+      screenshot,
+      call,
+      baseUrl,
+      errors,
+    });
+  } else if (process.env.MOCK_FEEDBACK_ONLY === '1') {
     await runFeedbackAcceptance({
       evaluate,
       click,
@@ -1515,7 +1533,7 @@ try {
       await waitFor('window.VacateMock?.state.page === "approvals"');
       assert.match(
         await evaluate('document.querySelector(".navigation-card").textContent'),
-        /Approval inbox unavailable/,
+        /Assigned approval requests/,
       );
       await click('[data-nav=leave]');
       await waitFor('!!document.querySelector("vacate-my-leave")');
@@ -1592,7 +1610,7 @@ try {
       await historyAcceptance();
       assert.deepEqual(errors, [], 'Unexpected navigation browser exceptions');
       console.log(
-        'PASS: VAC-20 unified settings, own team, People membership editor/directory, personal leave, admin balance search, employee denials, explicit unavailable approvals, topbar cleanup and desktop/mobile layouts.',
+        'PASS: VAC-20 unified settings, own team, People membership editor/directory, personal leave, admin balance search, employee denials, assigned approval destination, topbar cleanup and desktop/mobile layouts.',
       );
     } else if (process.env.MOCK_ORG_FUNCTIONAL_ONLY === '1') {
       await signIn('nora', 'nora');
@@ -1671,7 +1689,8 @@ try {
         await signOut();
         await signIn('user', 'user');
         await ready();
-        await load('?scope=self&view=month');
+        // This journey asserts historical fixture dates; the app default intentionally follows today.
+        await load('?scope=self&view=month&date=2026-10-01');
         assert.equal(await evaluate('!!document.querySelector(".topbar #demo-person")'), false);
         assert.match(
           await evaluate('document.querySelector("#workspace-organization").textContent'),
@@ -2472,7 +2491,7 @@ try {
         await click('[data-view="month"]');
         // Isolate native keyboard input from the browser's earlier reportValidity popup.
         // Account/history and date-validation behavior are checked separately above.
-        await load('?scope=self&view=month');
+        await load('?scope=self&view=month&date=2026-10-01');
         await click('[data-date="2026-10-01"]');
         assert.match(
           await evaluate('document.querySelector("#dialog").textContent'),

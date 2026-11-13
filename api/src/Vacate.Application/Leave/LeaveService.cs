@@ -10,7 +10,7 @@ using Vacate.Domain.Organizations;
 namespace Vacate.Application.Leave;
 
 public sealed class LeaveService(IUnitOfWork work, AccessPolicy access, IMembershipRepository memberships,
-    ILeaveRepository leaves, TimeProvider clock)
+    ILeaveRepository leaves, TimeProvider clock, ICompanyCalendarRepository? calendars = null, IUserRepository? users = null)
 {
     public LeavePreview Preview(int actor, Guid company, LeaveDraft draft) => work.Execute(() =>
     {
@@ -76,7 +76,10 @@ public sealed class LeaveService(IUnitOfWork work, AccessPolicy access, IMembers
             return new("already-covered", null, result.Preview);
         }
 
-        var request = new LeaveRequestRecord(Guid.NewGuid(), draft.LeaveTypeId, clock.GetUtcNow(), result.Dates);
+        var approver = result.Dates.Any(d => d.Status == "Pending") && calendars is not null
+            ? AdminLeaveService.ResolveApprover(calendars.Read(organization.Id), organization, member) : null;
+        var now = clock.GetUtcNow();
+        var request = new LeaveRequestRecord(Guid.NewGuid(), draft.LeaveTypeId, now, result.Dates, approver, UpdatedAt: now);
         leaves.Add(new(organization.Id, member.Id, key, fingerprint, request));
         return new("created", request, result.Preview);
     });
@@ -90,7 +93,12 @@ public sealed class LeaveService(IUnitOfWork work, AccessPolicy access, IMembers
 
     private (LeavePreview Preview, IReadOnlyList<LeaveDateRecord> Dates) Calculate(Organization org, Membership member, LeaveDraft draft)
     {
-        var holidays = leaves.Holidays(org.Settings.CountryCode);
+        var holidays = leaves.Holidays(org.Settings.CountryCode).ToHashSet();
+        if (calendars is not null)
+        {
+            var endYear = draft.EndDate?.Year ?? Math.Min(9999, draft.StartDate.Year + 11);
+            holidays.UnionWith(AdminLeaveService.RecurringDates(calendars.Read(org.Id), draft.StartDate.Year, Math.Max(draft.StartDate.Year, endYear)));
+        }
         var selection = Domain.Leave.LeaveCalculation.Select(draft.StartDate, draft.EndDate, draft.Duration,
             draft.Mode, org.WorkWeekDays, holidays);
         var covered = leaves.CoveredDates(org.Id, member.Id);
@@ -189,7 +197,19 @@ public sealed class LeaveService(IUnitOfWork work, AccessPolicy access, IMembers
             errors.Add("This request would result in a negative balance. Reduce the requested days.");
         }
 
-        var digestData = JsonSerializer.Serialize(new { draft, selection.WorkingDates, selection.ExcludedDates, existingDates, previews, org.Settings, today, approvalRequired });
+        Guid? assignedApprover = null;
+        if (dates.Any(d => d.Status == "Pending") && calendars is not null)
+        {
+            var approver = AdminLeaveService.ResolveApprover(calendars.Read(org.Id), org, member);
+            assignedApprover = approver;
+            var approverUser = approver is null ? null : users?.FindByGuid(approver.Value);
+            if (approverUser?.CanSignIn != true || memberships.Current(approverUser.Id) is not { IsAdmin: true } assigned || assigned.CompanyId != org.Id)
+            {
+                errors.Add("No active company approver is configured for this request. Ask an administrator to configure an approver.");
+            }
+        }
+
+        var digestData = JsonSerializer.Serialize(new { draft, selection.WorkingDates, selection.ExcludedDates, existingDates, previews, org.Settings, today, approvalRequired, assignedApprover });
         var digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(digestData)));
         return (new(selection.StartDate, selection.EndDate, selection.WorkingDates, selection.ExcludedDates,
             existingDates, newDates, newDates.Length, previews, warnings, errors.Distinct().ToArray(), errors.Count == 0, digest), dates);

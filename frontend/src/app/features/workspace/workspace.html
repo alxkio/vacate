@@ -328,19 +328,14 @@
       }
     }
     @if (state.page === 'approvals') {
-      <section class="navigation-card">
-        <h2>Approval Requests</h2>
-        @if (user.capability === 'admin' && !state.denied) {
-          <p role="status">Approval inbox unavailable.</p>
-          <p>
-            Requests can be saved, but an approval inbox and approver assignments are unavailable.
-            Pending saved requests remain pending. Fictional reference entries are not assigned
-            work.
-          </p>
-        } @else {
-          <p>You do not have access to approval requests.</p>
-        }
-      </section>
+      @if (user.capability === 'admin' && !state.denied) {
+        <vacate-approvals />
+      } @else {
+        <section class="navigation-card">
+          <h2>Approval requests</h2>
+          <p role="alert">You do not have access to approval requests.</p>
+        </section>
+      }
     }
     @if (state.page === 'leave') {
       <vacate-my-leave

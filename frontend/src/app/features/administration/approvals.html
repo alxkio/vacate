@@ -1,0 +1,99 @@
+<section class="navigation-card" aria-labelledby="approvals-heading">
+  <div class="admin-heading">
+    <h2 #inboxHeading id="approvals-heading" tabindex="-1">Assigned approval requests</h2>
+    <button type="button" class="secondary" (click)="load()" [disabled]="loading || busy">
+      {{ error ? 'Retry assigned requests' : 'Refresh requests' }}
+    </button>
+  </div>
+  <p class="admin-hint">
+    Pending requests explicitly assigned to you. Approval charges the applicable leave balance;
+    decline changes only pending dates. Previously approved dates are preserved.
+  </p>
+  @if (loading) {
+    <p role="status">Loading assigned requests…</p>
+  }
+  @if (error) {
+    <p class="admin-error" role="alert">{{ error }}</p>
+  }
+  <p class="admin-success" role="status">{{ message }}</p>
+  <p id="approval-table-hint" class="admin-hint admin-scroll-hint">
+    Scroll the table horizontally to see all columns and review actions.
+  </p>
+  <div
+    class="admin-table"
+    role="region"
+    tabindex="0"
+    aria-label="Assigned pending leave requests"
+    aria-describedby="approval-table-hint"
+  >
+    <table>
+      <caption>
+        Saved requests · Pending decisions
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Employee</th>
+          <th scope="col">Leave type</th>
+          <th scope="col">Dates</th>
+          <th scope="col">Pending days</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (record of records; track record.requestGuid) {
+          <tr>
+            <th scope="row">{{ record.displayName }}</th>
+            <td>{{ api.data.typeName(record.leaveTypeId) }}</td>
+            <td>{{ record.dates[0]?.date }} – {{ record.dates[record.dates.length - 1]?.date }}</td>
+            <td>{{ pending(record) }}</td>
+            <td>
+              <button
+                type="button"
+                class="secondary"
+                (click)="review(record, $event.currentTarget)"
+                [disabled]="busy"
+              >
+                Review<span class="sr-only"> {{ record.displayName }}’s request</span>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          @if (!loading && !error) {
+            <tr>
+              <td colspan="5">No pending requests are assigned to you.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  @if (selected; as record) {
+    <section class="admin-review" aria-labelledby="approval-review-heading">
+      <h3 #reviewHeading id="approval-review-heading" tabindex="-1">
+        Review {{ record.displayName }}’s request
+      </h3>
+      <p>{{ api.data.typeName(record.leaveTypeId) }} · Submitted {{ record.createdAt }}</p>
+      <ul>
+        @for (date of record.dates; track date.date) {
+          <li>{{ date.date }} · {{ date.status }}</li>
+        }
+      </ul>
+      <p class="admin-hint">
+        {{ pending(record) }} pending working days. The server checks your assignment and the latest
+        balance before confirming. Self-approval is permitted when the request is assigned to you.
+      </p>
+      @if (decisionError) {
+        <p class="admin-error" role="alert">{{ decisionError }}</p>
+      }
+      <div class="admin-actions">
+        <button type="button" class="primary" [disabled]="busy" (click)="decide('approve')">
+          {{ busy ? 'Saving decision…' : 'Approve request' }}</button
+        ><button type="button" class="secondary" [disabled]="busy" (click)="decide('decline')">
+          Decline request</button
+        ><button type="button" class="secondary" [disabled]="busy" (click)="close()">
+          Cancel review
+        </button>
+      </div>
+    </section>
+  }
+</section>

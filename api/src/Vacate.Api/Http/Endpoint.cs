@@ -26,7 +26,7 @@ public static class Endpoint
         try
         {
             var body = new JsonObject();
-            if (request.Method is "POST" or "PATCH")
+            if (request.Method is "POST" or "PATCH" or "PUT")
             {
                 if (request.ContentType?.Split(';')[0] != "application/json")
                 {

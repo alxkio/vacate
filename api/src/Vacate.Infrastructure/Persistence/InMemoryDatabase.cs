@@ -13,6 +13,7 @@ public sealed class InMemoryDatabase
     internal List<StoredLeaveRequest> LeaveRequests { get; } = [];
     internal List<(int CompanyId, int MembershipId, LeaveEntitlement Entitlement)> LeaveEntitlements { get; } = [];
     internal List<(string CountryCode, DateOnly Date, string Name)> PublicHolidays { get; } = [];
+    internal Dictionary<int, CompanyCalendarState> CompanyCalendars { get; } = [];
     internal object Gate { get; } = new();
     internal Dictionary<int, User> Users { get; } = [];
     internal List<Membership> Memberships { get; } = [];
