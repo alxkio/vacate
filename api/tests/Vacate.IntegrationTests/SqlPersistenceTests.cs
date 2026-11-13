@@ -496,6 +496,82 @@ public sealed class SqlPersistenceTests
         Assert.Throws<ServiceException>(() => Use(s => s.GetRequiredService<AdminLeaveService>().Decide(b.AdminId, a.CompanyGuid, requestGuid, "decline")));
     }
 
+    [TestCase("Approved")]
+    [TestCase("Pending")]
+    [TestCase("Mixed")]
+    [TestCase("Declined")]
+    public void Personal_request_deletion_is_durable_atomic_and_restores_only_its_derived_charges(string state)
+    {
+        Use(s => s.GetRequiredService<AdminLeaveService>().SetApprover(a.AdminId, a.CompanyGuid, "organization", a.CompanyGuid, a.AdminGuid));
+        var requestGuid = Guid.NewGuid();
+        var key = Guid.NewGuid();
+        Use(s =>
+        {
+            var member = s.GetRequiredService<IMembershipRepository>().Current(a.MemberId)!;
+            IReadOnlyList<LeaveDateRecord> dates = state == "Mixed"
+                ? [new(new(2026, 1, 5), "Approved", 2026), new(new(2026, 1, 6), "Pending", 2026)]
+                : [new(new(2026, 1, 5), state == "Approved" ? "Approved" : "Pending", 2026)];
+            s.GetRequiredService<ILeaveRepository>().Add(new(a.CompanyId, member.Id, key, "synthetic-provider-deletion",
+                new(requestGuid, "annual", DateTimeOffset.UtcNow, dates, a.AdminGuid)));
+            return true;
+        });
+        if (state == "Declined")
+        {
+            Use(s => s.GetRequiredService<AdminLeaveService>().Decide(a.AdminId, a.CompanyGuid, requestGuid, "decline"));
+        }
+
+        Assert.Throws<ServiceException>(() => Use(s =>
+        {
+            s.GetRequiredService<LeaveService>().Delete(a.MemberId, a.CompanyGuid, requestGuid);
+            return true;
+        }));
+        Assert.Throws<ServiceException>(() => Use(s =>
+        {
+            s.GetRequiredService<LeaveService>().Delete(b.AdminId, a.CompanyGuid, requestGuid);
+            return true;
+        }));
+        var outcomes = Enumerable.Range(0, 2).AsParallel().Select(_ =>
+        {
+            try
+            {
+                return Use(s =>
+                {
+                    s.GetRequiredService<LeaveService>().Delete(a.AdminId, a.CompanyGuid, requestGuid);
+                    return "deleted";
+                });
+            }
+            catch (ServiceException error) when (error.Kind == ServiceError.NotFound)
+            {
+                return "missing";
+            }
+        }).ToArray();
+        Assert.That(outcomes, Is.EquivalentTo(new[] { "deleted", "missing" }));
+        var after = Use(s => s.GetRequiredService<IMembershipRepository>().Current(a.MemberId)!.Balance);
+        Assert.That(after.Used, Is.EqualTo(0));
+        Assert.That(after.Pending, Is.EqualTo(0));
+        Assert.That(after.AvailableFor(true), Is.EqualTo(22));
+        Assert.That(Use(s => s.GetRequiredService<LeaveService>().Requests(a.MemberId, a.CompanyGuid)), Is.Empty);
+        using var scope = provider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<VacateDbContext>();
+        Assert.That(context.Set<LeaveRequestRow>().Any(r => r.CompanyId == a.CompanyId && (r.Guid == requestGuid || r.IdempotencyKey == key)), Is.False);
+        Assert.That(context.Set<LeaveRow>().Any(r => r.CompanyId == a.CompanyId), Is.False);
+    }
+
+    [Test]
+    public void SQL_generated_company_closure_cannot_be_deleted_as_personal_request()
+    {
+        Use(s => s.GetRequiredService<AdminLeaveService>().PublishClosure(a.AdminId, a.CompanyGuid,
+            new("Protected closure", new(2026, 1, 5), new(2026, 1, 5), true), Guid.NewGuid()));
+        var saved = Use(s => s.GetRequiredService<LeaveService>().Requests(a.MemberId, a.CompanyGuid)).Single();
+        Assert.Throws<DomainConflictException>(() => Use(s =>
+        {
+            s.GetRequiredService<LeaveService>().Delete(a.AdminId, a.CompanyGuid, saved.Guid);
+            return true;
+        }));
+        Assert.That(Use(s => s.GetRequiredService<IMembershipRepository>().Current(a.MemberId)!.Balance.Used), Is.EqualTo(1));
+        Assert.That(Use(s => s.GetRequiredService<LeaveService>().Requests(a.MemberId, a.CompanyGuid)).Single().Guid, Is.EqualTo(saved.Guid));
+    }
+
     private Tenant CreateTenant() => Use(s =>
     {
         var organizations = s.GetRequiredService<IOrganizationRepository>();

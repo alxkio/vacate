@@ -2,6 +2,8 @@
 
 Date: 2026-11-13. Baseline commit: `8cc5496458bf3b4bb6aa8a8f544998df2898345f`. Verification ran before publication on `VAC-42-release-evidence`; the working tree was clean at the start of this epic. No deployment or database application was performed. The owner subsequently authorized commit, push and PR creation; publication uses `VAC-43-admin-functionality` against `master`. This does not change the QA status or outstanding verification gates.
 
+Later owner-requested follow-up: [real future-request acceptance, administrator deletion and failure-path teardown](upcoming-request-deletion.md) records the latest API/test changes and verification. Earlier counts below describe the original implementation baseline.
+
 ## Outcome and product baseline
 
 Implemented the accepted administrator epic from the [charter](../../../product/product-charter.md#owner-decisions--administrator-functionality--2026-11-12), preserving accepted request/accounting rules and Vacate's established visual identity. [Design handoff](../../../design/admin-functionality-handoff.md) records journeys, review workflows, states and independent visual review. VAC-42 retains its earlier owner feedback and the reported CI regression as subtasks.

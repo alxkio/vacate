@@ -1,3 +1,4 @@
+import { runUpcomingAcceptance } from './testing/upcoming-acceptance.mjs';
 import { runAdminAcceptance } from './testing/admin-acceptance.mjs';
 import { runFeedbackAcceptance } from './testing/feedback-acceptance.mjs';
 // Browser acceptance checks and reproducible screenshots. Node.js 22+, local Chrome.
@@ -204,12 +205,41 @@ try {
   // Synthetic UI clicks need the same activation context as real user input.
   const click = async (selector) => {
     await waitFor(`!!document.querySelector(${JSON.stringify(selector)})`);
-    return selector.includes('logout') || selector.includes('a.brand')
-      ? evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`, true)
-      : evaluate(
-          `(async()=>{document.querySelector(${JSON.stringify(selector)}).click();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));})()`,
-          true,
-        );
+    const { destination, action } = await evaluate(
+      `(()=>{const target=document.querySelector(${JSON.stringify(selector)});return {destination:target.dataset.nav||null,action:target.dataset.action||null}})()`,
+    );
+    if (selector.includes('logout') || selector.includes('a.brand')) {
+      await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`, true);
+      return;
+    }
+    await evaluate(
+      `(async()=>{document.querySelector(${JSON.stringify(selector)}).click();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));})()`,
+      true,
+    );
+    if (action === 'request') {
+      await waitFor(
+        `!!document.querySelector('#login-form') || (document.querySelector('#dialog')?.open && !!document.querySelector('#request-form'))`,
+      );
+    }
+    if (
+      [
+        'calendar',
+        'balances',
+        'settings',
+        'leave',
+        'people',
+        'approvals',
+        'admin-balances',
+      ].includes(destination)
+    ) {
+      // Page navigation performs two router transitions; rendered frames alone are not completion.
+      await waitFor(
+        `!!document.querySelector('#login-form') || window.VacateMock?.state.page === ${JSON.stringify(destination)}`,
+      );
+      await evaluate(
+        'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))',
+      );
+    }
   };
 
   const prepareNativeFocus = async ({
@@ -601,7 +631,35 @@ try {
     await call('Emulation.setCPUThrottlingRate', { rate });
   }
   await call('Page.bringToFront');
-  if (process.env.MOCK_ADMIN_ONLY === '1') {
+  const teardownFailure = Error('Deliberate assertion failure after saving future leave');
+  const upcomingAcceptance = (failAfterSave = false) =>
+    runUpcomingAcceptance({
+      evaluate,
+      click,
+      waitFor,
+      navigate,
+      viewport,
+      screenshot,
+      baseUrl,
+      apiUrl: process.env.MOCK_API_URL || 'http://127.0.0.1:7071',
+      ...(failAfterSave
+        ? {
+            screenshot: async () => {
+              throw teardownFailure;
+            },
+          }
+        : {}),
+    });
+  if (process.env.MOCK_UPCOMING_TEARDOWN_ONLY === '1') {
+    await assert.rejects(upcomingAcceptance(true), (error) => error === teardownFailure);
+    assert.deepEqual(errors, [], 'Unexpected teardown browser exceptions');
+    console.log(
+      'PASS: deliberate failure after saving future leave still deletes the request and restores records/calendar/balances.',
+    );
+  } else if (process.env.MOCK_UPCOMING_ONLY === '1') {
+    await upcomingAcceptance();
+    assert.deepEqual(errors, [], 'Unexpected upcoming-request browser exceptions');
+  } else if (process.env.MOCK_ADMIN_ONLY === '1') {
     await runAdminAcceptance({
       evaluate,
       click,
@@ -1067,7 +1125,7 @@ try {
       assert.equal(await evaluate('document.querySelector("#organization-week-6").checked'), true);
       // Employee management belongs to People.
       await click('[data-nav=people]');
-      await waitFor('!!document.querySelector(".org-membership-roster")');
+      await waitFor('!!document.querySelector("vacate-people .people-table [data-edit-membership=maya]")');
       // Membership editor saves through the API and the API response refreshes the page.
       await click('[data-edit-membership=maya]');
       await waitFor('!!document.querySelector("#membership-form")');
@@ -1077,7 +1135,7 @@ try {
       await click('#membership-form button[type=submit]');
       await waitFor('!document.querySelector("#membership-form")');
       await navigate(baseUrl + '?page=people');
-      await waitFor('!!document.querySelector(".org-membership-roster")');
+      await waitFor('!!document.querySelector("vacate-people .people-table [data-edit-membership=maya]")');
       await click('[data-edit-membership=maya]');
       await waitFor('!!document.querySelector("#membership-form")');
       assert.equal(
@@ -1955,6 +2013,9 @@ try {
               id + '/' + scope + ' scope affordance',
             );
           await click('[data-action="account"]');
+          await waitFor(
+            'document.querySelector("[data-action=account]").getAttribute("aria-expanded") === "true" && !!document.querySelector("[data-action=account-details]")',
+          );
           assert.equal(
             await evaluate(
               'document.querySelector("[data-action=account]").getAttribute("aria-expanded")',
@@ -1962,6 +2023,9 @@ try {
             'true',
           );
           await click('[data-action="account-details"]');
+          await waitFor(
+            `document.querySelector('#dialog')?.open && document.querySelector('#dialog-content')?.textContent.includes(${JSON.stringify('Signed in as ' + id + '.')})`,
+          );
           assert.match(
             await evaluate('document.querySelector("#dialog-content").textContent'),
             new RegExp('Signed in as ' + id + '\\.'),
@@ -1973,6 +2037,9 @@ try {
             id + ' stale dialog',
           );
           await click('[data-action="request"]');
+          await waitFor(
+            'document.querySelector("#dialog")?.open && !!document.querySelector("#start-date") && !!document.querySelector("#end-date")',
+          );
           assert.equal(
             await evaluate(
               'document.querySelector("#end-date").value === document.querySelector("#start-date").value',
@@ -2042,6 +2109,9 @@ try {
           assert.equal(await evaluate('document.querySelector("#balances-page").hidden'), true);
           await click('[data-nav=leave]');
           await click('.navigation-card [data-nav=balances]');
+          await waitFor(
+            '!document.querySelector("#balances-page").hidden && document.querySelectorAll("[data-balance]").length > 0',
+          );
           assert.deepEqual(
             await balanceTypes(),
             expectedBalanceTypes(id),
@@ -2067,16 +2137,6 @@ try {
             'page',
           );
           await click('[data-nav=calendar]');
-          const expectedUpcoming = await evaluate(
-            `window.VacateFixtures.ownEntries(window.VacateFixtures.person(${JSON.stringify(id)})).filter(entry=>entry.end>='2026-10-22').sort((a,b)=>a.start.localeCompare(b.start)).slice(0,3).map(entry=>entry.id)`,
-          );
-          assert.deepEqual(
-            await evaluate(
-              'Array.from(document.querySelectorAll(".upcoming-card [data-event]")).map(button=>button.dataset.event)',
-            ),
-            expectedUpcoming,
-            id + ' own upcoming entries',
-          );
           const expectedBalance = await evaluate(
             `window.VacateFixtures.balancesFor(window.VacateFixtures.person(${JSON.stringify(id)})).annual`,
           );
@@ -2219,14 +2279,21 @@ try {
           await load('?scope=' + directoryScope);
           await click('[data-nav="people"]');
           await waitFor(
-            '!!document.querySelector(".org-membership-roster") || document.querySelectorAll("vacate-people [data-person]").length === 12',
+            'document.querySelectorAll("vacate-people .people-table tbody tr[data-person]").length === 12',
           );
           assert.equal(
             await evaluate(
-              'document.querySelectorAll("vacate-people [data-person],vacate-people [data-edit-membership]").length',
+              'document.querySelectorAll("vacate-people .people-table tbody tr[data-person]").length',
             ),
             12,
             id + ' directory roster',
+          );
+          assert.equal(
+            await evaluate(
+              'document.querySelectorAll("vacate-people [data-edit-membership]").length',
+            ),
+            role === 'admin' ? 12 : 0,
+            id + ' membership edit permissions',
           );
           assert.equal(
             await evaluate('!!document.querySelector("nav [data-nav=approvals]")'),
@@ -2235,7 +2302,7 @@ try {
           await load('?page=approvals');
           assert.match(
             await evaluate('document.querySelector(".navigation-card").textContent'),
-            role === 'admin' ? /unavailable/ : /do not have access/,
+            role === 'admin' ? /Assigned approval requests/ : /do not have access/,
           );
           assert.equal(
             await evaluate(
@@ -2515,7 +2582,10 @@ try {
         await click('[data-action="next"]');
         assert.equal(await evaluate('document.querySelector("#period").textContent'), '2027');
         await click('[data-action="today"]');
-        assert.equal(await evaluate('document.querySelector("#period").textContent'), '2026');
+        assert.equal(
+          await evaluate('document.querySelector("#period").textContent'),
+          await evaluate('String(new Date().getFullYear())'),
+        );
         await click('[data-action="request"]');
         await waitFor('!!document.querySelector("#request-form")');
         await closeDialog();
@@ -2750,6 +2820,7 @@ try {
         );
         await organizationAcceptance();
         await feedbackAcceptance();
+        await upcomingAcceptance();
         assert.deepEqual(errors, [], 'Unexpected browser exceptions');
         console.log(
           (process.env.MOCK_FUNCTIONAL_ONLY === '1'

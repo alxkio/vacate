@@ -40,6 +40,10 @@ public interface ILeaveRepository
 
     void Update(StoredLeaveRequest request);
 
+    StoredLeaveRequest? Find(int companyId, Guid requestGuid);
+
+    void Delete(StoredLeaveRequest request);
+
     string? CoveredReceipt(int companyId, int membershipId, Guid key);
 
     void AddCoveredReceipt(int companyId, int membershipId, Guid key, string fingerprint);

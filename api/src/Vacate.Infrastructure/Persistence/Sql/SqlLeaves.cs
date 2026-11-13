@@ -49,6 +49,20 @@ internal sealed class SqlLeaves(SqlSession session) : ILeaveRepository
         Fingerprint = fingerprint
     });
 
+    public StoredLeaveRequest? Find(int companyId, Guid requestGuid)
+    {
+        var row = session.Context.Set<LeaveRequestRow>().SingleOrDefault(r => r.CompanyId == companyId && r.Guid == requestGuid);
+        return row is null ? null : Requests(companyId, row.MembershipId).Single(r => r.Request.Guid == requestGuid);
+    }
+
+    public void Delete(StoredLeaveRequest request)
+    {
+        var row = session.Context.Set<LeaveRequestRow>().Single(r => r.CompanyId == request.CompanyId && r.MembershipId == request.MembershipId && r.Guid == request.Request.Guid);
+        var dates = session.Context.Set<LeaveRow>().Where(d => d.CompanyId == request.CompanyId && d.MembershipId == request.MembershipId && d.RequestId == row.Id).ToArray();
+        session.Context.RemoveRange(dates);
+        session.Context.Remove(row);
+    }
+
     public void Update(StoredLeaveRequest request)
     {
         var row = session.Context.Set<LeaveRequestRow>().Single(r => r.CompanyId == request.CompanyId && r.MembershipId == request.MembershipId && r.Guid == request.Request.Guid);

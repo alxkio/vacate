@@ -939,6 +939,32 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/leave/requests/{requestId}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: requestId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    delete:
+      operationId: deletePersonalLeaveRequest
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Permanently delete a personal request and its dated charges
+      description: >-
+        Requires a current active company administrator. Removes saved request/date history
+        and restores its derived balance impact atomically. Generated company-closure leave
+        is protected. Missing, foreign and repeated deletion returns 404. Original submission
+        keys are removed, so a later POST with that key creates a fresh request.
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /organizations/{organizationId}/leave/calendar:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'

@@ -28,6 +28,25 @@ public sealed class LeaveService(IUnitOfWork work, AccessPolicy access, IMembers
         .SelectMany(request => request.Dates.Where(d => d.Status is "Approved" or "Pending")
             .Select(d => new LeaveCalendarDate(request.Guid, request.LeaveTypeId, d.Date, d.Status))).ToArray();
 
+    public void Delete(int actor, Guid company, Guid requestGuid) => work.Execute(() =>
+    {
+        var organization = access.RequireAdmin(actor, company);
+        if (memberships.Current(actor) is not { IsAdmin: true } member || member.CompanyId != organization.Id)
+        {
+            throw new ServiceException(ServiceError.NotFound, "Leave request unavailable.");
+        }
+
+        var request = leaves.Find(organization.Id, requestGuid)
+            ?? throw new ServiceException(ServiceError.NotFound, "Leave request unavailable.");
+        if (request.Request.Source != "EmployeeRequest" || request.Request.ClosureGuid is not null)
+        {
+            throw new DomainConflictException("Generated company-closure leave cannot be deleted through personal leave requests.");
+        }
+
+        leaves.Delete(request);
+        return true;
+    });
+
     public LeaveSubmission Submit(int actor, Guid company, LeaveDraft draft, Guid key, string? previewFingerprint = null) => work.Execute<LeaveSubmission>(() =>
     {
         if (key == Guid.Empty)
@@ -45,7 +64,13 @@ public sealed class LeaveService(IUnitOfWork work, AccessPolicy access, IMembers
                 throw new DomainConflictException("The submission key was already used for another draft.");
             }
 
-            return new("already-covered", null, Calculate(organization, member, draft).Preview);
+            var replay = Calculate(organization, member, draft).Preview;
+            if (replay.NewDates.Count > 0)
+            {
+                throw new DomainConflictException("Previously covered dates have changed. Review the preview and submit with a new key.");
+            }
+
+            return new("already-covered", null, replay);
         }
 
         var prior = leaves.Requests(organization.Id, member.Id).SingleOrDefault(x => x.IdempotencyKey == key);

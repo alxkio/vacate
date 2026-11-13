@@ -2,7 +2,7 @@
 
 **Status:** Confirmed intent plus proposed pilot scope
 **Owner:** Product lead / founder  
-**Last updated:** 2026-11-12
+**Last updated:** 2026-11-13
 
 ## Confirmed intent
 
@@ -296,3 +296,8 @@ Further owner clarification · 2026-11-12: assigned approvers must be **company 
 
 
 Final routing clarification · 2026-11-12: the owner selected **reroute all pending requests** when approver configuration changes. Apply the current effective team → department → organization company-admin assignment to both existing/legacy pending and newly submitted requests. This supersedes the temporary unanswered-routing/preserve-pending boundary above. Preserve approved/declined decisions and completed history; do not recalculate their charges or reopen completed requests. Missing/invalid assignment must not grant general admin authority. Missing/absent/deleted-approver fallback, closure correction/effective-date rules and weekend holiday observance remain separate unresolved lifecycle decisions.
+
+
+## Owner decision — permanent personal-request deletion · 2026-11-13
+
+The owner requested a real delete API/functionality so test teardown can remove created leave values, and selected **Administrators only**. Active administrators of the same company may permanently delete a personal saved leave request, including approved, pending or declined dates. Remove its saved request and associated date/charge rows atomically; approved consumption and pending totals are restored through derived accounting. Employees and foreign-company actors cannot delete requests. Company-generated closure leave remains protected; closure correction/cancellation is a separate unresolved workflow. This is permanent removal of saved history, not soft deletion or a GDPR erasure claim. The request's idempotency key is removed with its record; a later submission with that key may create a fresh request. No general-purpose database reset or test-only production endpoint is introduced.

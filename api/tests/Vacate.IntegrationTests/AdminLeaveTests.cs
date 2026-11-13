@@ -369,6 +369,140 @@ public sealed class AdminLeaveTests
         Assert.That(script, Does.Not.Match(@"(?im)^\s*(DROP|DELETE|TRUNCATE)\s"));
     }
 
+    [TestCase("approved", "2026-11-04", "2026-11-04")]
+    [TestCase("pending", "2026-11-10", "2026-11-10")]
+    [TestCase("mixed", "2026-11-05", "2026-11-06")]
+    [TestCase("declined", "2026-11-10", "2026-11-10")]
+    public async Task Admin_permanent_delete_restores_balances_removes_history_and_retry_cannot_double_restore(string state, string start, string end)
+    {
+        var beforeUsed = Member(maya).Balance.Used;
+        var beforePending = Member(maya).Balance.Pending;
+        var beforeAvailable = Member(maya).Balance.AvailableFor(true);
+        var key = Guid.NewGuid();
+        var draft = Draft(start, end);
+        var saved = leave.Submit(maya, company, draft, key).Request!;
+        if (state == "declined")
+        {
+            admin.Decide(nora, company, saved.Guid, "decline");
+        }
+
+        var endpoint = new LeaveFunctions(leave, authentication);
+        var response = await endpoint.Delete(Request("DELETE", "nora", new { }), company.ToString(), saved.Guid.ToString());
+        Assert.That(Status(response), Is.EqualTo(204));
+        Assert.That(leave.Requests(maya, company), Is.Empty);
+        Assert.That(leave.Calendar(maya, company), Is.Empty);
+        Assert.That(admin.Inbox(nora, company), Is.Empty);
+        Assert.That(Member(maya).Balance.Used, Is.EqualTo(beforeUsed));
+        Assert.That(Member(maya).Balance.Pending, Is.EqualTo(beforePending));
+        Assert.That(Member(maya).Balance.AvailableFor(true), Is.EqualTo(beforeAvailable));
+        Assert.That(Status(await endpoint.Delete(Request("DELETE", "nora", new { }), company.ToString(), saved.Guid.ToString())), Is.EqualTo(404));
+        Assert.That(Member(maya).Balance.Used, Is.EqualTo(beforeUsed));
+        Assert.That(Member(maya).Balance.Pending, Is.EqualTo(beforePending));
+        var replacement = leave.Submit(maya, company, draft, key).Request!;
+        Assert.That(replacement.Guid, Is.Not.EqualTo(saved.Guid));
+        Assert.That(leave.Requests(maya, company).Single().Guid, Is.EqualTo(replacement.Guid));
+        leave.Delete(nora, company, replacement.Guid);
+    }
+
+    [Test]
+    public async Task Permanent_delete_requires_current_company_admin_even_with_provisioning_grants_and_hides_foreign_ids()
+    {
+        var saved = leave.Submit(maya, company, Draft("2026-11-10", "2026-11-10"), Guid.NewGuid()).Request!;
+        var endpoint = new LeaveFunctions(leave, authentication);
+        var anonymous = new DefaultHttpContext().Request;
+        anonymous.Method = "DELETE";
+        Assert.That(Status(await endpoint.Delete(anonymous, company.ToString(), saved.Guid.ToString())), Is.EqualTo(401));
+        Assert.That(Status(await endpoint.Delete(Request("DELETE", "maya", new { }), company.ToString(), saved.Guid.ToString())), Is.EqualTo(404));
+        Assert.That(Status(await endpoint.Delete(Request("DELETE", "nora", new { }), company.ToString(), Guid.NewGuid().ToString())), Is.EqualTo(404));
+        var foreign = new Vacate.Domain.Organizations.Organization(900004, Guid.NewGuid(), "Foreign company", 5, DateTimeOffset.UtcNow);
+        database.Organizations.Add(foreign.Id, foreign);
+        Assert.That(Status(await endpoint.Delete(Request("DELETE", "nora", new { }), foreign.Guid.ToString(), saved.Guid.ToString())), Is.EqualTo(404));
+        database.ProvisioningGrants.Add((nora, companyId));
+        Member(nora).Update(Member(nora).Configuration with { SystemRoleId = SystemRoles.Employee }, Member(nora).Balance.CustomAllocation, DateTimeOffset.UtcNow);
+        Assert.That(Status(await endpoint.Delete(Request("DELETE", "nora", new { }), company.ToString(), saved.Guid.ToString())), Is.EqualTo(404));
+        Assert.That(leave.Requests(maya, company).Single().Guid, Is.EqualTo(saved.Guid));
+        leave.Delete(otherAdmin, company, saved.Guid);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task Generated_closure_leave_is_protected_from_personal_permanent_deletion(bool deductAnnual)
+    {
+        admin.PublishClosure(nora, company, new("Protected closure", new(2026, 11, 10), new(2026, 11, 10), deductAnnual), Guid.NewGuid());
+        var saved = leave.Requests(maya, company).Single();
+        var beforeUsed = Member(maya).Balance.Used;
+        var endpoint = new LeaveFunctions(leave, authentication);
+        Assert.That(Status(await endpoint.Delete(Request("DELETE", "nora", new { }), company.ToString(), saved.Guid.ToString())), Is.EqualTo(409));
+        Assert.That(leave.Requests(maya, company).Single().Guid, Is.EqualTo(saved.Guid));
+        Assert.That(Member(maya).Balance.Used, Is.EqualTo(beforeUsed));
+    }
+
+    [Test]
+    public void Deleting_cross_period_leave_releases_each_entitlement_year_without_touching_opening_consumption()
+    {
+        var organization = database.Organizations[companyId];
+        organization.Update(organization.Name, organization.WorkWeekDays, DateTimeOffset.UtcNow,
+            new Vacate.Domain.Organizations.VacationSettings(countryCode: "GR"));
+        database.LeaveEntitlements.Add((companyId, Member(maya).Id, new("annual", 2025, 1)));
+        database.LeaveEntitlements.Add((companyId, Member(maya).Id, new("annual", 2026, 22)));
+        var opening = Member(maya).Balance.Used;
+        var saved = leave.Submit(maya, company, Draft("2026-01-05", "2026-01-06"), Guid.NewGuid()).Request!;
+        Assert.That(saved.Dates.Select(d => d.EntitlementYear), Is.EqualTo(new[] { 2025, 2026 }));
+        var repository = provider.GetRequiredService<ILeaveRepository>();
+        Assert.That(repository.Entitlements(companyId, Member(maya).Id).Sum(e => e.Used), Is.EqualTo(2));
+        leave.Delete(nora, company, saved.Guid);
+        Assert.That(repository.Entitlements(companyId, Member(maya).Id).Sum(e => e.Used), Is.EqualTo(0));
+        Assert.That(Member(maya).Balance.Used, Is.EqualTo(opening));
+    }
+
+    [Test]
+    public void Covered_acknowledgment_replay_after_deletion_conflicts_instead_of_claiming_missing_dates_exist()
+    {
+        var draft = Draft("2026-11-10", "2026-11-10");
+        var saved = leave.Submit(maya, company, draft, Guid.NewGuid()).Request!;
+        var acknowledgmentKey = Guid.NewGuid();
+        Assert.That(leave.Submit(maya, company, draft, acknowledgmentKey).Outcome, Is.EqualTo("already-covered"));
+        leave.Delete(nora, company, saved.Guid);
+        var error = Assert.Throws<DomainConflictException>(() => leave.Submit(maya, company, draft, acknowledgmentKey));
+        Assert.That(error!.Message, Does.Contain("new key"));
+        Assert.That(leave.Requests(maya, company), Is.Empty);
+        Assert.That(leave.Calendar(maya, company), Is.Empty);
+        Assert.That(leave.Preview(maya, company, draft).NewDates, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void Permanent_delete_preserves_other_requests_people_and_company_ledger_rows()
+    {
+        var target = leave.Submit(maya, company, Draft("2026-11-04", "2026-11-04"), Guid.NewGuid()).Request!;
+        var retained = leave.Submit(maya, company, Draft("2026-11-03", "2026-11-03"), Guid.NewGuid()).Request!;
+        var colleague = leave.Submit(nora, company, Draft("2026-11-02", "2026-11-02"), Guid.NewGuid()).Request!;
+        var now = DateTimeOffset.UtcNow;
+        var foreign = new Vacate.Domain.Organizations.Organization(900008, Guid.NewGuid(), "Other company", 5, now);
+        var foreignUser = new Vacate.Domain.Users.User(900008, Guid.NewGuid(), "foreign-admin@example.invalid", new("Foreign", null, "Admin"), "unspecified", new(false, 0, false), now);
+        var foreignMember = new Membership(900008, Guid.NewGuid(), foreignUser.Id, foreign.Id, new(SystemRoles.Admin, 900008),
+            new(new(2026, 1, 1), new(2026, 12, 31), new(2026, 1, 1), "synthetic-test", 22, null, 0, 0), now);
+        database.Organizations.Add(foreign.Id, foreign);
+        database.Users.Add(foreignUser.Id, foreignUser);
+        database.Memberships.Add(foreignMember);
+        database.JobRoles.Add(new(900008, Guid.NewGuid(), "Foreign role", foreign.Id));
+        var foreignRequest = leave.Submit(foreignUser.Id, foreign.Guid, Draft("2026-11-04", "2026-11-04"), Guid.NewGuid()).Request!;
+        var mayaBefore = Member(maya).Balance;
+        var noraBefore = Member(nora).Balance;
+        var foreignBefore = foreignMember.Balance;
+        var unrelated = database.LeaveRequests.Where(r => r.Request.Guid != target.Guid).ToArray();
+        leave.Delete(nora, company, target.Guid);
+        Assert.That(database.LeaveRequests, Is.EquivalentTo(unrelated));
+        Assert.That(leave.Requests(maya, company).Single(), Is.EqualTo(retained));
+        Assert.That(leave.Calendar(maya, company).Select(d => d.Date), Is.EqualTo(new[] { new DateOnly(2026, 11, 3) }));
+        Assert.That(Member(maya).Balance.Used, Is.EqualTo(mayaBefore.Used - 1));
+        Assert.That(Member(maya).Balance.Pending, Is.EqualTo(mayaBefore.Pending));
+        Assert.That(leave.Requests(nora, company).Single(), Is.EqualTo(colleague));
+        Assert.That(Member(nora).Balance, Is.EqualTo(noraBefore));
+        Assert.That(leave.Requests(foreignUser.Id, foreign.Guid).Single(), Is.EqualTo(foreignRequest));
+        Assert.That(foreignMember.Balance, Is.EqualTo(foreignBefore));
+        Assert.Throws<ServiceException>(() => leave.Delete(nora, company, foreignRequest.Guid));
+    }
+
     private sealed class FixedClock : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => new(2026, 11, 6, 12, 0, 0, TimeSpan.Zero);

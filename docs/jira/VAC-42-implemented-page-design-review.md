@@ -4,7 +4,7 @@ type: task
 summary: Review and refine every implemented Vacate page
 status: qa
 created: 2026-11-11
-updated: 2026-11-12
+updated: 2026-11-13
 parent: null
 depends_on: []
 ---
@@ -144,3 +144,11 @@ Owner supplied runner failure after the trusted native readiness checks passed: 
 
 
 2026-11-13 · Assistant / QA follow-up: found and corrected the second historical functional calendar load as well as the native load. Both explicitly request `date=2026-10-01`; default month remains today. The route regression passes in the 85-test Angular suite; rendered October target presence and DOM focus pass in admin browser acceptance. The isolated trusted native keyboard suite now passes locally on Chrome 150 / Node 22.22.3 / macOS, including readiness, October date activation, Escape/focus return, shortlist and avatar navigation. This verifies the reported absent-target regression locally; it does not claim a rerun of the supplied Linux CI job or every new administrator keyboard journey. [Shared evidence](media/VAC-43/verification.md).
+
+
+### Upcoming-request CI follow-up · 2026-11-13
+
+The owner reported `leah own upcoming entries`: the assertion still treated October 2026 fixture leave as upcoming after its dates passed. Owner direction: create real future leave and verify visualization, rather than reimplement upcoming filtering or pin time for that assertion. The new journey selects a future working date through server preview, submits through the rendered form, reloads, verifies the saved request in upcoming/calendar/details on desktop/mobile and checks another employee's own view. Admin-only permanent deletion (VAC-31 subtask) supplies `finally` teardown with balance/list/calendar checks and session revocation; cleanup errors fail the test. Verification pending.
+
+
+2026-11-13 · Assistant verification update: API build and 72 integration checks passed, with 25 actual-SQL cases explicitly skipped. The real future-request UI journey and deliberate post-save assertion-failure journey both passed exact request/calendar/balance restoration and session revocation. Independent QA reviewed cleanup/preservation. [Follow-up evidence](media/VAC-43/upcoming-request-deletion.md). Full functional rerun result is recorded there; existing issue status remains QA.
