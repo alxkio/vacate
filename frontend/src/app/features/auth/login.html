@@ -51,6 +51,24 @@
         Your session ended. Sign in again to return to your previous page.
       </p>
     }
+    @if (data.api.sessionRecoveryAvailable) {
+      <section aria-labelledby="session-recovery-title" [attr.aria-busy]="busy">
+        <h3 id="session-recovery-title">Reconnect to your workspace</h3>
+        <p role="status">
+          We couldn’t check your saved session. Retry to reconnect without entering your password
+          again.
+        </p>
+        <button
+          id="retry-session"
+          type="button"
+          class="primary"
+          [disabled]="busy"
+          (click)="retrySession()"
+        >
+          {{ busy ? 'Reconnecting…' : 'Retry connection' }}
+        </button>
+      </section>
+    }
     <form id="login-form" [attr.aria-busy]="busy" (submit)="submit($event, username, password)">
       <label for="username">Username</label
       ><input

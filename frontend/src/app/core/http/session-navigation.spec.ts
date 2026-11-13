@@ -1,4 +1,9 @@
-import { safeReturnUrl, loginUrl, SessionNavigation } from './session-navigation';
+import {
+  safeReturnUrl,
+  loginUrl,
+  expiredSessionUrl,
+  SessionNavigation,
+} from './session-navigation';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -7,6 +12,18 @@ import { ApiClient } from './api-client';
 import { RUNTIME_CONFIG } from './runtime-config';
 
 describe('Session expiry navigation', () => {
+  it('retains the original internal destination when a saved-session retry expires on Login', () => {
+    const destination = '/index.html?page=people&scope=org';
+    const result = new URL(expiredSessionUrl(loginUrl(destination)), 'https://vacate.invalid');
+    expect(result.pathname).toBe('/login.html');
+    expect(result.searchParams.get('returnUrl')).toBe(destination);
+    expect(result.searchParams.get('reason')).toBe('expired');
+    const unsafe = new URL(
+      expiredSessionUrl('/login.html?returnUrl=https://evil.invalid'),
+      'https://vacate.invalid',
+    );
+    expect(unsafe.searchParams.get('returnUrl')).toBe('/index.html');
+  });
   it('preserves internal page state and rejects external, encoded or malformed redirect destinations', () => {
     expect(safeReturnUrl('/index.html?page=people&scope=org')).toBe(
       '/index.html?page=people&scope=org',

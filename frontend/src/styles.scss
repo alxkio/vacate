@@ -132,7 +132,12 @@ router-outlet { display: none; }
 }
 
 /* Shared task feedback, readable supporting text and keyboard access. */
-:where(summary, [tabindex]):focus-visible {
+/* The page landmark receives navigation focus without drawing a frame around the workspace. */
+main#main:focus {
+  outline: none;
+}
+
+:where(summary, [tabindex]):not(main):focus-visible {
   outline: 3px solid var(--blue);
   outline-offset: 3px;
 }

@@ -1,4 +1,4 @@
-<a class="skip" href="#main">Skip to {{ view.pageTitle }}</a>
+<a class="skip" [attr.href]="skipLink">Skip to {{ view.pageTitle }}</a>
 <div
   class="app"
   [attr.data-layout]="state.layout"

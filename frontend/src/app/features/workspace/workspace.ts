@@ -159,6 +159,10 @@ export class Workspace implements OnInit, OnDestroy {
     return this.view.period;
   }
 
+  get skipLink(): string {
+    return this.router.url.split('#')[0] + '#main';
+  }
+
   ngOnInit(): void {
     void this.refreshSavedLeave();
     this.subscription = this.route.queryParamMap.subscribe((params) => {
@@ -209,10 +213,12 @@ export class Workspace implements OnInit, OnDestroy {
   }
 
   ensureSession(): boolean {
-    if (this.data.currentUser()?.id === this.initialUser.id) {
+    const currentUser = this.data.currentUser();
+    if (currentUser?.id === this.initialUser.id) {
       return true;
     }
-    location.replace(loginUrl(this.router.url));
+    // A replacement account starts with its own defaults; an ended session can resume its page.
+    location.replace(currentUser ? '/index.html' : loginUrl(this.router.url));
     return false;
   }
 

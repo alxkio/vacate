@@ -1,4 +1,4 @@
-import { loginUrl } from './core/http/session-navigation';
+import { loginUrl, safeReturnUrl } from './core/http/session-navigation';
 import { inject } from '@angular/core';
 import { CanActivateFn, Route, Router, Routes, UrlTree } from '@angular/router';
 import { WorkspaceDataService } from './core/state/workspace-data.service';
@@ -13,10 +13,7 @@ const signedIn: CanActivateFn = async (route, state) => {
     data.currentUser() &&
     ['settings', 'organization', 'organization-settings'].includes(page || '')
   ) {
-    try {
-      await data.api.refresh();
-    } catch {
-      data.environment.VacateSession.logout();
+    if (!(await data.api.restoreSession())) {
       return router.parseUrl(loginUrl(state.url));
     }
   }
@@ -38,11 +35,13 @@ const signedIn: CanActivateFn = async (route, state) => {
   }
   return true;
 };
-const signedOut: CanActivateFn = async (): Promise<boolean | UrlTree> => {
+const signedOut: CanActivateFn = async (route): Promise<boolean | UrlTree> => {
   const data = inject(WorkspaceDataService);
   const router = inject(Router);
   await data.initialize();
-  return data.currentUser() ? router.parseUrl('/index.html') : true;
+  return data.currentUser()
+    ? router.parseUrl(safeReturnUrl(route.queryParamMap.get('returnUrl')))
+    : true;
 };
 const workspace: NonNullable<Route['loadComponent']> = () =>
   import('./features/workspace/workspace').then((module) => module.Workspace);

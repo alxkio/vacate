@@ -1367,10 +1367,11 @@ components:
       properties:
         accessToken:
           type: string
-          description: Opaque bearer token; retain privately and do not log.
+          description: Opaque bearer token with a 30-minute absolute lifetime; retain privately and do not log.
         expiresAt:
           type: string
           format: date-time
+          description: Server UTC expiry, exactly 30 minutes after issuance. Activity does not renew it.
     UserCreate:
       type: object
       required: [username, firstName, lastName]

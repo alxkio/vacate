@@ -20,7 +20,7 @@ public sealed class AuthenticationService(ICredentialValidator credentials, ISes
             throw new ServiceException(ServiceError.Unauthenticated, "Incorrect development credentials.");
         }
 
-        var ticket = sessions.Issue(user.Id, clock.GetUtcNow().AddHours(8));
+        var ticket = sessions.Issue(user.Id, clock.GetUtcNow().AddMinutes(30));
         return new SignInResult(ticket.AccessToken, ticket.ExpiresAt, mapper.Person(user));
     });
 

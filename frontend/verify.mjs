@@ -1,6 +1,8 @@
 import { runUpcomingAcceptance } from './testing/upcoming-acceptance.mjs';
 import { runAdminAcceptance } from './testing/admin-acceptance.mjs';
 import { runFeedbackAcceptance } from './testing/feedback-acceptance.mjs';
+import { runPageFocusAcceptance } from './testing/page-focus-acceptance.mjs';
+import { runSessionRecoveryAcceptance } from './testing/session-recovery-acceptance.mjs';
 // Browser acceptance checks and reproducible screenshots. Node.js 22+, local Chrome.
 import { spawn } from 'node:child_process';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
@@ -15,11 +17,22 @@ const profile = await mkdtemp(join(tmpdir(), 'vacate-mock-qa-'));
 const output = process.env.MOCK_SCREENSHOT_DIR || join(root, 'previews');
 await mkdir(output, { recursive: true });
 let server;
+let apiResponseFault;
 let baseUrl = process.env.MOCK_URL;
 if (!baseUrl) {
   const dist = resolve(process.env.MOCK_DIST || join(root, 'dist/vacate-web/browser'));
   server = createServer(async (request, response) => {
     if (request.url.startsWith('/api/')) {
+      if (request.method === 'GET' && apiResponseFault?.path === request.url) {
+        const { status } = apiResponseFault;
+        apiResponseFault = undefined;
+        response.writeHead(status, {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        });
+        response.end(JSON.stringify({ error: 'Injected acceptance connection failure' }));
+        return;
+      }
       try {
         const chunks = [];
         for await (const chunk of request) chunks.push(chunk);
@@ -216,7 +229,11 @@ try {
         expandedBefore:target.getAttribute('aria-expanded'),
         dateBefore:window.VacateMock?.state.date?.getTime()??null}})()`,
     );
-    if (selector.includes('logout') || selector.includes('a.brand')) {
+    if (
+      selector.includes('logout') ||
+      selector.includes('a.brand') ||
+      selector === '#retry-session'
+    ) {
       await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`, true);
       return;
     }
@@ -697,7 +714,42 @@ try {
           }
         : {}),
     });
-  if (process.env.MOCK_UPCOMING_TEARDOWN_ONLY === '1') {
+  const pageFocusAcceptance = () =>
+    runPageFocusAcceptance({
+      evaluate,
+      click,
+      waitFor,
+      navigate,
+      viewport,
+      screenshot,
+      call,
+      baseUrl,
+      errors,
+    });
+  const sessionRecoveryAcceptance = () => {
+    assert.ok(server, 'Session fault injection requires the local acceptance server');
+    return runSessionRecoveryAcceptance({
+      evaluate,
+      click,
+      waitFor,
+      navigate,
+      viewport,
+      screenshot,
+      baseUrl,
+      errors,
+      failResponseOnce: (path, status) => {
+        apiResponseFault = { path, status };
+      },
+      resetResponseFault: () => {
+        apiResponseFault = undefined;
+      },
+    });
+  };
+  if (process.env.MOCK_PAGE_FOCUS_ONLY === '1') {
+    await pageFocusAcceptance();
+  } else if (process.env.MOCK_SESSION_RECOVERY_ONLY === '1') {
+    await sessionRecoveryAcceptance();
+  } else if (process.env.MOCK_UPCOMING_TEARDOWN_ONLY === '1') {
     await assert.rejects(upcomingAcceptance(true), (error) => error === teardownFailure);
     assert.deepEqual(errors, [], 'Unexpected teardown browser exceptions');
     console.log(
@@ -2893,6 +2945,8 @@ try {
         await organizationAcceptance();
         await feedbackAcceptance();
         await upcomingAcceptance();
+        if (server) await sessionRecoveryAcceptance();
+        await pageFocusAcceptance();
         assert.deepEqual(errors, [], 'Unexpected browser exceptions');
         console.log(
           (process.env.MOCK_FUNCTIONAL_ONLY === '1'

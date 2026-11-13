@@ -156,3 +156,14 @@ The owner reported `leah own upcoming entries`: the assertion still treated Octo
 ### Native runner follow-up · 2026-11-13
 
 The owner's pushed `171134e` failed paired CI before keyboard activation: Chrome 157/Linux headless acknowledged preparation but delivered no pointer/key events. Retrieved logs and screenshot confirm the failure layer. The existing refinement subtask now tracks a headed Chrome/Xvfb CI execution correction, enhanced failure diagnostics and correction of obsolete dropdown-style interactions with Settings switches. No product behavior or permissions change. Local headed native and 4× CPU runs passed; Linux CI remains the required gate. [Evidence and limits](media/VAC-42/native-input-2026-11-13.md). Assistant work unmeasured; human actual Unknown. Issue/backlog status remains QA.
+
+### Page outline and session recovery subtask · 2026-11-13
+
+Owner screenshot/clarification confirms the unwanted large brown outline is main-landmark focus, not a requested layout redesign. Preserve navigation/skip-link focus and control indicators while removing the frame. Owner selects 30 minutes for the existing absolute session lifetime. Source review additionally finds false sign-out after startup/Settings refresh failures and permission/resource denials; recovery must retain the ticket, hide partial/stale account state, retry without credentials and preserve the destination if retry subsequently expires.
+
+- [x] Rendered login/refresh/navigation/skip-link checks at desktop/mobile, including warm brown administrator People/Settings and interactive/negative-tabindex focus indicators.
+- [x] Network/current-user/summary failure recovery, 401 while reconnecting, safe return navigation, stale-account rejection and overlapping restore verification.
+- [x] Controlled-clock HTTP tests verify exact 30-minute expiry, no activity renewal, separate sessions, logout and account revocation; existing actor/company authorization remains enforced.
+- [x] Complete relevant frontend/backend and rendered regressions, independent QA review and evidence.
+
+[Accepted duration/recovery behavior](../product/product-charter.md#session-and-page-focus-refinement--2026-11-13). Shared SQL session persistence remains a separately requested owner decision under ADR-0004. Implementation remains the existing refinement subtask, with status QA unchanged. Unrelated untracked `docs/review-43.md` is preserved. Assistant implementation/review time unmeasured; human actual Unknown. [Evidence and remaining gate](media/VAC-42/page-session-recovery-2026-11-13.md).

@@ -30,7 +30,7 @@ public sealed class ResourceEndpointTests
     [SetUp]
     public void Setup() => Configure(true);
 
-    private void Configure(bool developmentAuthentication)
+    private void Configure(bool developmentAuthentication, TimeProvider? clock = null)
     {
         provider?.Dispose();
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
@@ -39,6 +39,11 @@ public sealed class ResourceEndpointTests
             ["SeedData:Enabled"] = "true"
         }).Build();
         var services = new ServiceCollection().AddSingleton<IConfiguration>(configuration).AddInMemoryPersistence();
+        if (clock is not null)
+        {
+            services.AddSingleton(clock);
+        }
+
         services.AddSingleton<RecordMapper>();
         services.AddSingleton<AccessPolicy>();
         services.AddSingleton<UserService>();
@@ -143,6 +148,72 @@ public sealed class ResourceEndpointTests
             Assert.That(functions.Any(function => function.Route.Contains('*')), Is.False);
             Assert.That(routeMethods, Has.Length.EqualTo(routeMethods.Distinct(StringComparer.OrdinalIgnoreCase).Count()));
         });
+    }
+
+    [Test]
+    public async Task Session_has_thirty_minute_absolute_expiry_and_authenticated_activity_does_not_extend_it()
+    {
+        var clock = new SessionClock(new(2026, 11, 13, 12, 0, 0, TimeSpan.Zero));
+        Configure(true, clock);
+        var issued = clock.GetUtcNow();
+        var response = await Call("POST", "auth/sessions", body: new { username = "maya", password = "maya" });
+        Assert.That(response.Status, Is.EqualTo(200));
+        Assert.That(DateTimeOffset.Parse(response.Json!["expiresAt"]!.ToString()), Is.EqualTo(issued.AddMinutes(30)));
+        var token = response.Json["accessToken"]!.ToString();
+        clock.Advance(TimeSpan.FromMinutes(15));
+        Assert.That((await Call("GET", "auth/sessions/current", token)).Status, Is.EqualTo(200));
+        clock.Advance(TimeSpan.FromMinutes(15) - TimeSpan.FromTicks(1));
+        Assert.That((await Call("GET", "auth/sessions/current", token)).Status, Is.EqualTo(200));
+        clock.Advance(TimeSpan.FromTicks(1));
+        Assert.That((await Call("GET", "auth/sessions/current", token)).Status, Is.EqualTo(401));
+        Assert.That((await Call("GET", $"organizations/{Company}", token)).Status, Is.EqualTo(401));
+    }
+
+    [Test]
+    public async Task Sessions_have_independent_issue_times_and_signout_revokes_only_the_selected_token()
+    {
+        var clock = new SessionClock(new(2026, 11, 13, 12, 0, 0, TimeSpan.Zero));
+        Configure(true, clock);
+        var first = await Login("maya");
+        clock.Advance(TimeSpan.FromMinutes(5));
+        var second = await Login("maya");
+        Assert.That((await Call("GET", "auth/sessions/current", first)).Status, Is.EqualTo(200));
+        Assert.That((await Call("DELETE", "auth/sessions/current", first)).Status, Is.EqualTo(204));
+        Assert.That((await Call("GET", "auth/sessions/current", first)).Status, Is.EqualTo(401));
+        Assert.That((await Call("GET", "auth/sessions/current", second)).Status, Is.EqualTo(200));
+        clock.Advance(TimeSpan.FromMinutes(25));
+        Assert.That((await Call("GET", "auth/sessions/current", second)).Status, Is.EqualTo(200));
+        clock.Advance(TimeSpan.FromMinutes(5));
+        Assert.That((await Call("GET", "auth/sessions/current", second)).Status, Is.EqualTo(401));
+    }
+
+    [Test]
+    public async Task Account_disabling_revokes_unexpired_sessions_without_giving_employee_admin_authority()
+    {
+        var clock = new SessionClock(new(2026, 11, 13, 12, 0, 0, TimeSpan.Zero));
+        Configure(true, clock);
+        var employee = await Login("maya");
+        var anotherEmployeeSession = await Login("maya");
+        var admin = await Login("nora");
+        var path = $"users/{GuidFor(4)}/account";
+        clock.Advance(TimeSpan.FromMinutes(10));
+        Assert.That((await Call("PATCH", path, employee, new { status = "disabled" })).Status, Is.EqualTo(404));
+        Assert.That((await Call("GET", "auth/sessions/current", employee)).Status, Is.EqualTo(200));
+        Assert.That((await Call("PATCH", path, admin, new { status = "disabled" })).Status, Is.EqualTo(200));
+        Assert.That((await Call("GET", "auth/sessions/current", employee)).Status, Is.EqualTo(401));
+        Assert.That((await Call("GET", "auth/sessions/current", anotherEmployeeSession)).Status, Is.EqualTo(401));
+        Assert.That((await Call("PATCH", path, admin, new { status = "active" })).Status, Is.EqualTo(200));
+        Assert.That((await Call("GET", "auth/sessions/current", employee)).Status, Is.EqualTo(401));
+        Assert.That((await Call("GET", "auth/sessions/current", admin)).Status, Is.EqualTo(200));
+    }
+
+    private sealed class SessionClock(DateTimeOffset now) : TimeProvider
+    {
+        private DateTimeOffset current = now;
+
+        public override DateTimeOffset GetUtcNow() => current;
+
+        public void Advance(TimeSpan elapsed) => current += elapsed;
     }
 
     private async Task<string> Login(string id)

@@ -51,6 +51,8 @@ export class WorkspaceApiService {
   private token = sessionStorage.getItem('vacate.session.token') || '';
   private initialized = false;
   private generation = 0;
+  private recoveryNeeded = false;
+  private restoration?: { token: string; result: Promise<boolean> };
 
   get sessionGeneration(): number {
     return this.generation;
@@ -71,11 +73,50 @@ export class WorkspaceApiService {
     if (!this.token) {
       return;
     }
+    await this.restoreSession();
+  }
+
+  get sessionRecoveryAvailable(): boolean {
+    return (
+      this.recoveryNeeded &&
+      !!this.token &&
+      sessionStorage.getItem('vacate.session.token') === this.token
+    );
+  }
+
+  async restoreSession(): Promise<boolean> {
+    const token = this.token;
+    if (!token) return false;
+    if (this.restoration?.token === token) return this.restoration.result;
+    const restoration = { token, result: this.restoreCurrentSession(token) };
+    this.restoration = restoration;
+    try {
+      return await restoration.result;
+    } finally {
+      if (this.restoration === restoration) this.restoration = undefined;
+    }
+  }
+
+  private async restoreCurrentSession(token: string): Promise<boolean> {
     try {
       await this.refresh();
-    } catch {
-      this.clear();
-      this.error = 'The API session is unavailable. Sign in again.';
+      return true;
+    } catch (error: unknown) {
+      if (token !== this.token) return false;
+      if (
+        (error as { status?: number }).status === 401 ||
+        sessionStorage.getItem('vacate.session.token') !== token
+      ) {
+        this.clear();
+        this.error = 'Your session ended. Sign in again to return to your page.';
+      } else {
+        // Keep the ticket for recovery, but do not expose a partially loaded or stale account.
+        this.generation++;
+        this.clearWorkspace();
+        this.recoveryNeeded = true;
+        this.error = 'Vacate could not reconnect to your workspace. Retry your saved session.';
+      }
+      return false;
     }
   }
 
@@ -91,9 +132,7 @@ export class WorkspaceApiService {
       const response = await firstValueFrom(this.sessions.signIn(username, password));
       this.token = response.accessToken;
       sessionStorage.setItem('vacate.session.token', this.token);
-      await this.refresh();
-      this.error = '';
-      return true;
+      return await this.restoreSession();
     } catch {
       this.clear();
       this.error =
@@ -113,14 +152,19 @@ export class WorkspaceApiService {
   private clear(): void {
     this.generation++;
     this.token = '';
+    this.recoveryNeeded = false;
+    this.clearWorkspace();
+    sessionStorage.removeItem('vacate.session.token');
+    sessionStorage.removeItem('vacate.demo.account.v2');
+  }
+
+  private clearWorkspace(): void {
     this.actor = null;
     this.profile = null;
     this.org = null;
     this.summaryRecord = null;
     this.members = [];
     this.roles = { systemRoles: [], jobRoles: [], workSchedules: [] };
-    sessionStorage.removeItem('vacate.session.token');
-    sessionStorage.removeItem('vacate.demo.account.v2');
   }
 
   async authenticatedRequest<T>(
@@ -202,6 +246,7 @@ export class WorkspaceApiService {
 
   async refresh(): Promise<void> {
     const token = this.token;
+    const generation = this.generation;
     const response = await firstValueFrom(this.sessions.current(token));
     const companyId = response.profile.membership?.companyId;
     const summary = companyId
@@ -239,7 +284,11 @@ export class WorkspaceApiService {
         members: members.map(member),
       };
     }
-    if (token !== this.token) {
+    if (
+      token !== this.token ||
+      generation !== this.generation ||
+      sessionStorage.getItem('vacate.session.token') !== token
+    ) {
       throw Error('Your account changed.');
     }
     this.actor = {
@@ -253,6 +302,8 @@ export class WorkspaceApiService {
     this.org = org;
     this.members = members;
     this.roles = roles;
+    this.recoveryNeeded = false;
+    this.error = '';
   }
 
   private async write(
@@ -271,7 +322,7 @@ export class WorkspaceApiService {
       await this.refresh();
       return { ok: true };
     } catch (error: any) {
-      if (token === this.token && [401, 403, 404].includes(error.status)) {
+      if (token === this.token && error.status === 401) {
         this.clear();
       }
       return {

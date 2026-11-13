@@ -264,6 +264,14 @@ Use boolean switches in Settings while preserving inherited/null approval choice
 
 Additional owner feedback · 2026-11-12: the Vacate brand link returns to workspace home. An expired authenticated session returns to login and resumes the previous internal page after sign-in. A failed login or permission denial does not count as session expiry; return destinations cannot leave the application.
 
+### Session and page-focus refinement · 2026-11-13
+
+The owner confirmed that the reported page-rendering problem is the large brown outline around the main content after login/refresh. Remove the page-sized outline while preserving programmatic landmark/skip-link focus and visible focus on interactive controls.
+
+The owner selected a **30-minute session lifetime**. Retain the existing absolute-expiry semantics, measured from successful sign-in; page activity does not silently extend it. An API/network failure is not evidence of expiry: retain the stored ticket, hide partially loaded/stale private state and offer reconnection without requiring credentials again. A definitive authenticated 401 still requires sign-in and preserves the original safe internal destination, including when a saved-session retry expires on Login. Permission/resource denials do not sign the user out.
+
+OPEN QUESTION: shared durable tickets in the existing SQL database would address process restarts/instance changes invalidating unexpired tickets. ADR-0004 leaves durable sessions as separate work; owner decision is requested separately. Browser recovery and the 30-minute duration do not by themselves remove that process-local limitation or establish production identity.
+
 
 ## Owner decisions — administrator functionality · 2026-11-12
 

@@ -29,14 +29,21 @@ export function loginUrl(destination: string): string {
   return '/login.html?returnUrl=' + encodeURIComponent(safeReturnUrl(destination));
 }
 
+export function expiredSessionUrl(currentUrl: string): string {
+  const current = new URL(currentUrl, 'https://vacate.invalid');
+  const destination =
+    current.pathname === '/login.html'
+      ? safeReturnUrl(current.searchParams.get('returnUrl'))
+      : current.pathname + current.search + current.hash;
+  return loginUrl(destination) + '&reason=expired';
+}
+
 @Injectable({ providedIn: 'root' })
 export class SessionNavigation {
   expired(token: string): void {
     // A late failure from a signed-out or replaced account must not clear the new session.
     if (!token || sessionStorage.getItem('vacate.session.token') !== token) return;
     sessionStorage.removeItem('vacate.session.token');
-    location.replace(
-      loginUrl(location.pathname + location.search + location.hash) + '&reason=expired',
-    );
+    location.replace(expiredSessionUrl(location.pathname + location.search + location.hash));
   }
 }
