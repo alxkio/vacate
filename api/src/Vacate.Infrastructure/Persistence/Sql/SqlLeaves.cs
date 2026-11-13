@@ -21,7 +21,8 @@ internal sealed class SqlLeaves(SqlSession session) : ILeaveRepository
         return session.Context.Set<LeaveRequestRow>().Where(x => x.CompanyId == companyId && x.MembershipId == membershipId).ToArray()
             .Select(r => new StoredLeaveRequest(companyId, membershipId, r.IdempotencyKey, r.Fingerprint,
                 new(r.Guid, r.LeaveTypeId, r.CreatedAt, dates.Where(d => d.RequestId == r.Id).OrderBy(d => d.StartDate)
-                    .Select(d => new LeaveDateRecord(d.StartDate!.Value, d.Status == "Used" ? "Approved" : d.Status, d.EntitlementYear!.Value)).ToArray()))).ToArray();
+                    .Select(d => new LeaveDateRecord(d.StartDate!.Value, d.Status == "Used" ? "Approved" : d.Status == "Cancelled" ? "Declined" : d.Status, d.EntitlementYear!.Value)).ToArray(),
+                    r.ApproverGuid, r.DecidedAt, r.Source, r.ClosureGuid, r.UpdatedAt))).ToArray();
     }
 
     public IReadOnlySet<DateOnly> CoveredDates(int companyId, int membershipId)
@@ -48,11 +49,43 @@ internal sealed class SqlLeaves(SqlSession session) : ILeaveRepository
         Fingerprint = fingerprint
     });
 
+    public StoredLeaveRequest? Find(int companyId, Guid requestGuid)
+    {
+        var row = session.Context.Set<LeaveRequestRow>().SingleOrDefault(r => r.CompanyId == companyId && r.Guid == requestGuid);
+        return row is null ? null : Requests(companyId, row.MembershipId).Single(r => r.Request.Guid == requestGuid);
+    }
+
+    public void Delete(StoredLeaveRequest request)
+    {
+        var row = session.Context.Set<LeaveRequestRow>().Single(r => r.CompanyId == request.CompanyId && r.MembershipId == request.MembershipId && r.Guid == request.Request.Guid);
+        var dates = session.Context.Set<LeaveRow>().Where(d => d.CompanyId == request.CompanyId && d.MembershipId == request.MembershipId && d.RequestId == row.Id).ToArray();
+        session.Context.RemoveRange(dates);
+        session.Context.Remove(row);
+    }
+
+    public void Update(StoredLeaveRequest request)
+    {
+        var row = session.Context.Set<LeaveRequestRow>().Single(r => r.CompanyId == request.CompanyId && r.MembershipId == request.MembershipId && r.Guid == request.Request.Guid);
+        row.ApproverGuid = request.Request.ApproverGuid;
+        row.DecidedAt = request.Request.DecidedAt;
+        row.UpdatedAt = request.Request.UpdatedAt ?? row.UpdatedAt;
+        foreach (var date in session.Context.Set<LeaveRow>().Where(d => d.CompanyId == request.CompanyId && d.MembershipId == request.MembershipId && d.RequestId == row.Id))
+        {
+            var updated = request.Request.Dates.Single(d => d.Date == date.StartDate);
+            date.Status = updated.Status == "Approved" ? "Used" : updated.Status == "Declined" ? "Cancelled" : updated.Status;
+            date.UpdatedAt = row.UpdatedAt;
+        }
+    }
+
     public void Add(StoredLeaveRequest request)
     {
         var requestRow = new LeaveRequestRow
         {
             Guid = request.Request.Guid,
+            ApproverGuid = request.Request.ApproverGuid,
+            DecidedAt = request.Request.DecidedAt,
+            Source = request.Request.Source,
+            ClosureGuid = request.Request.ClosureGuid,
             CompanyId = request.CompanyId,
             MembershipId = request.MembershipId,
             IdempotencyKey = request.IdempotencyKey,
@@ -76,7 +109,7 @@ internal sealed class SqlLeaves(SqlSession session) : ILeaveRepository
                 LeaveTypeId = request.Request.LeaveTypeId,
                 QuantityDays = 1,
                 Status = date.Status == "Approved" ? "Used" : date.Status,
-                Source = "EmployeeRequest",
+                Source = request.Request.Source,
                 CreatedAt = request.Request.CreatedAt,
                 UpdatedAt = request.Request.CreatedAt
             });

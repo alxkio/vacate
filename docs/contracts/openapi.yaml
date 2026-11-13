@@ -87,6 +87,7 @@ paths:
       operationId: listUsers
       tags: [Users]
       summary: List users visible to the current account
+      description: Company-scoped directory with public GUID and nullable department/team GUIDs and names; excludes private membership, family and leave fields.
       security:
         - bearerAuth: []
       responses:
@@ -368,7 +369,8 @@ paths:
         teamMembers contains the current member and colleagues assigned to the same team
         in this organization, or an empty array when no team is assigned. Each item uses
         the directory allowlist (username, email, firstName, middleName, lastName, gender,
-        jobTitle, systemRole); it never includes membership balances or family fields.
+        jobTitle, systemRole, guid, departmentId, departmentName, teamId, teamName);
+        unassigned structure is null. It never includes membership balances or family fields.
         Membership is not evidence of team administration or approval rights.
       security:
         - bearerAuth: []
@@ -386,6 +388,7 @@ paths:
       operationId: getOrganizationDirectory
       tags: [Organizations]
       summary: List the authorized organization directory
+      description: Same-company public directory including GUID and nullable department/team GUIDs and names.
       security:
         - bearerAuth: []
       responses:
@@ -936,6 +939,32 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/leave/requests/{requestId}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: requestId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    delete:
+      operationId: deletePersonalLeaveRequest
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Permanently delete a personal request and its dated charges
+      description: >-
+        Requires a current active company administrator. Removes saved request/date history
+        and restores its derived balance impact atomically. Generated company-closure leave
+        is protected. Missing, foreign and repeated deletion returns 404. Original submission
+        keys are removed, so a later POST with that key creates a fresh request.
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /organizations/{organizationId}/leave/calendar:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
@@ -951,6 +980,235 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LeaveCalendarList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/admin/calendar:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: getAdminCalendar
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Read company administrative calendar
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/leave/company-calendar:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: getCompanyCalendar
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Read sanitized company holidays and closures
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/admin/holidays:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    post:
+      operationId: createCompanyHoliday
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Add a whole-company fixed recurring holiday
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyHolidayInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/admin/approvers:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    put:
+      operationId: setCompanyApprover
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Configure explicit approver and reroute pending requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproverInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/admin/closures/preview:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    post:
+      operationId: previewCompanyClosure
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Review automatic closure leave and skipped employees
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClosureDraft'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/admin/closures:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    post:
+      operationId: publishCompanyClosure
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Publish automatic closure leave with idempotency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClosurePublication'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/admin/approvals:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      operationId: listAssignedApprovals
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Read only actionable requests assigned to this administrator
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/admin/approvals/{requestId}/decision:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: requestId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: decideAssignedLeave
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Approve or decline only pending dates of an assigned request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveDecision'
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+  /organizations/{organizationId}/admin/personnel:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: year
+        in: query
+        required: true
+        schema: {type: integer, minimum: 1, maximum: 9999}
+    get:
+      operationId: getPersonnelLeave
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Read sanitized company annual balance and actual dated history
+      responses:
+        '200':
+          $ref: '#/components/responses/JsonData'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1418,6 +1676,11 @@ components:
         guid: {type: string, format: uuid}
         leaveTypeId: {type: string}
         createdAt: {type: string, format: date-time}
+        approverGuid: {type: string, format: uuid, nullable: true}
+        decidedAt: {type: string, format: date-time, nullable: true}
+        source: {type: string, enum: [EmployeeRequest, CompanyClosure]}
+        closureGuid: {type: string, format: uuid, nullable: true}
+        updatedAt: {type: string, format: date-time, nullable: true}
         dates:
           type: array
           items:
@@ -1425,7 +1688,7 @@ components:
             required: [date, status, entitlementYear]
             properties:
               date: {type: string, format: date}
-              status: {type: string, enum: [Approved, Pending]}
+              status: {type: string, enum: [Approved, Pending, Declined]}
               entitlementYear: {type: integer}
     LeaveRequestList:
       type: array
@@ -1453,3 +1716,45 @@ components:
           leaveTypeId: {type: string}
           date: {type: string, format: date}
           status: {type: string, enum: [Approved, Pending]}
+
+    CompanyHolidayInput:
+      type: object
+      additionalProperties: false
+      required: [name, month, day]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 200}
+        month: {type: integer, minimum: 1, maximum: 12}
+        day: {type: integer, minimum: 1, maximum: 31}
+    ApproverInput:
+      type: object
+      additionalProperties: false
+      required: [scope, scopeGuid]
+      properties:
+        scope: {type: string, enum: [organization, department, team]}
+        scopeGuid: {type: string, format: uuid}
+        approverGuid: {type: string, format: uuid, nullable: true}
+    ClosureDraft:
+      type: object
+      additionalProperties: false
+      required: [name, startDate, endDate, deductAnnualLeave]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 200}
+        startDate: {type: string, format: date}
+        endDate: {type: string, format: date}
+        deductAnnualLeave: {type: boolean}
+    ClosurePublication:
+      type: object
+      additionalProperties: false
+      required: [name, startDate, endDate, deductAnnualLeave, idempotencyKey]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 200}
+        startDate: {type: string, format: date}
+        endDate: {type: string, format: date}
+        deductAnnualLeave: {type: boolean}
+        idempotencyKey: {type: string, format: uuid}
+    LeaveDecision:
+      type: object
+      additionalProperties: false
+      required: [decision]
+      properties:
+        decision: {type: string, enum: [approve, decline]}

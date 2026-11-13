@@ -70,6 +70,35 @@ describe('Leave request form', () => {
     return fixture;
   }
 
+  it('marks reversed and missing date fields, clears stale preview, and allows past dates with warnings', async () => {
+    const fixture = await setup();
+    const page = fixture.componentInstance;
+    page.start = '2026-11-10';
+    page.end = '2026-11-09';
+    page.queuePreview();
+    expect(page.endError).toContain('on or after');
+    await vi.advanceTimersByTimeAsync(0);
+    page.changeDetector.detectChanges();
+    expect(fixture.nativeElement.querySelector('#end-date').getAttribute('aria-invalid')).toBe(
+      'true',
+    );
+    expect(page.canSubmit).toBe(false);
+    expect(page.preview).toBeNull();
+    page.end = '';
+    expect(page.endError).toContain('valid end date');
+    page.end = '2026-11-10';
+    page.start = '2020-01-01';
+    page.queuePreview();
+    await vi.advanceTimersByTimeAsync(250);
+    expect(page.pastDateWarning).toContain('past dates');
+    expect(page.canSubmit).toBe(true);
+    page.switchMode('duration');
+    page.amount = '';
+    page.queuePreview();
+    expect(page.amountError).toContain('positive whole number');
+    expect(page.canSubmit).toBe(false);
+  });
+
   it('shows server amount and only selected-type balance, includes excluded date explanation', async () => {
     const fixture = await setup();
     expect(fixture.nativeElement.querySelector('#request-amount-preview').textContent).toContain(

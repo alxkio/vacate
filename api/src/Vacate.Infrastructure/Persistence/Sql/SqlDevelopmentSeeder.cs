@@ -74,6 +74,20 @@ public static class SqlDevelopmentSeeder
             context.Add(new DevelopmentAccessRow { UserId = userId, CompanyId = companyId, Invited = true });
         }
 
+        var assignmentId = 1;
+        foreach (var (companyId, calendar) in fixture.CompanyCalendars)
+        {
+            foreach (var assignment in calendar.Approvers)
+            {
+                context.Add(new CompanyApproverRow
+                {
+                    Id = assignmentId++, Guid = Guid.NewGuid(), CompanyId = companyId,
+                    Scope = assignment.Scope, ScopeGuid = assignment.ScopeGuid, ApproverGuid = assignment.ApproverGuid,
+                    CreatedAt = now, UpdatedAt = now
+                });
+            }
+        }
+
         context.SaveChanges();
         Restart(context, "UserIds", fixture.Users.Keys.DefaultIfEmpty(0).Max() + 1);
         Restart(context, "OrganizationIds", fixture.Organizations.Keys.DefaultIfEmpty(0).Max() + 1);
@@ -82,6 +96,7 @@ public static class SqlDevelopmentSeeder
         Restart(context, "TeamIds", fixture.Organizations.Values.SelectMany(x => x.Teams).Select(x => x.Id).DefaultIfEmpty(0).Max() + 1);
         Restart(context, "JobRoleIds", fixture.JobRoles.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1);
         Restart(context, "WorkScheduleIds", fixture.WorkSchedules.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1);
+        Restart(context, "CompanyApproverIds", assignmentId);
         transaction.Commit();
         context.ChangeTracker.Clear();
     }

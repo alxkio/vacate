@@ -1,3 +1,4 @@
+import { Approvals } from '../administration/approvals';
 import {
   ChangeDetectorRef,
   Component,
@@ -8,6 +9,7 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { loginUrl } from '../../core/http/session-navigation';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BalanceBar } from '../leave/balance-bar';
@@ -24,7 +26,7 @@ import {
   dateFromKey,
   dateKey,
   monthName,
-  REFERENCE_TODAY,
+  currentDate,
   shortDate,
   WorkspaceDataService,
 } from '../../core/state/workspace-data.service';
@@ -47,6 +49,7 @@ import { WorkspaceView } from './workspace-view';
 @Component({
   selector: 'vacate-workspace',
   imports: [
+    Approvals,
     Calendar,
     Balances,
     BalanceBar,
@@ -93,7 +96,7 @@ export class Workspace implements OnInit, OnDestroy {
     groupId: null,
     denied: false,
     view: 'month',
-    date: new Date(REFERENCE_TODAY),
+    date: currentDate(),
   };
   balanceViewState = { showAll: false, expanded: new Set<string>() };
   readonly navigation = [
@@ -126,6 +129,10 @@ export class Workspace implements OnInit, OnDestroy {
       this.accountOpen = false;
       document.querySelector<HTMLButtonElement>('[data-action="account"]')?.focus();
     }
+  }
+
+  get today(): Date {
+    return currentDate();
   }
 
   selectedDate: Date | null = null;
@@ -205,7 +212,7 @@ export class Workspace implements OnInit, OnDestroy {
     if (this.data.currentUser()?.id === this.initialUser.id) {
       return true;
     }
-    location.replace('/login.html');
+    location.replace(loginUrl(this.router.url));
     return false;
   }
 
@@ -285,12 +292,22 @@ export class Workspace implements OnInit, OnDestroy {
     if (!this.ensureSession()) {
       return;
     }
+    const layoutChanged = this.state.layout !== preferences.layout;
     this.state.layout = preferences.layout;
     this.state.colorScheme = preferences.colorScheme;
+    if (layoutChanged) {
+      this.state.view = 'month';
+    }
     if (preferences.layout === 'planner' && !['month', 'week'].includes(this.state.view)) {
       this.state.view = 'week';
     }
     this.refresh();
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: this.query(this.state.page),
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   showAdminDestination(nav: string): void {
@@ -321,12 +338,15 @@ export class Workspace implements OnInit, OnDestroy {
   }
 
   @HostListener('click', ['$event'])
-  handleClick(event: Event): void {
+  async handleClick(event: Event): Promise<void> {
     const button = (event.target as Element).closest<HTMLButtonElement>('button');
     if (!button || button.disabled || !this.ensureSession()) {
       return;
     }
     const { scope, view, nav, action } = button.dataset;
+    if ((scope || view || nav || action) && action !== 'logout') {
+      if (!(await this.data.api.validateSession()) || !this.ensureSession()) return;
+    }
     this.handleScopeAndView(scope, view);
     this.handleNavigation(nav, button);
     this.handleAction(action, button);
@@ -368,7 +388,7 @@ export class Workspace implements OnInit, OnDestroy {
 
   private handleAction(action: string | undefined, button: HTMLButtonElement): void {
     if (action === 'today') {
-      this.state.date = new Date(REFERENCE_TODAY);
+      this.state.date = currentDate();
       this.refresh();
     }
     if (action === 'previous' || action === 'next') {

@@ -130,24 +130,33 @@
           <label for="start-date">{{ unit === 'hours' ? 'Date' : 'From' }}</label
           ><input
             id="start-date"
+            [attr.aria-invalid]="!!startError"
+            aria-describedby="start-date-feedback"
             name="start"
             type="date"
             required
             [value]="start"
             (input)="capture(form)"
           />
+          <p id="start-date-feedback" class="field-error" [hidden]="!startError">
+            {{ startError }}
+          </p>
         </div>
         @if (unit !== 'hours' && mode === 'range') {
           <div>
             <label for="end-date">To (inclusive)</label
             ><input
               id="end-date"
+              [attr.min]="start || null"
+              [attr.aria-invalid]="!!endError"
+              aria-describedby="end-date-feedback"
               name="end"
               type="date"
               required
               [value]="end"
               (input)="capture(form)"
             />
+            <p id="end-date-feedback" class="field-error" [hidden]="!endError">{{ endError }}</p>
           </div>
         }
         @if (unit !== 'hours' && mode === 'duration') {
@@ -155,6 +164,8 @@
             <label for="request-amount">Duration (working days)</label
             ><input
               id="request-amount"
+              [attr.aria-invalid]="!!amountError"
+              aria-describedby="duration-feedback"
               name="amount"
               type="number"
               min="1"
@@ -163,9 +174,15 @@
               [value]="amount"
               (input)="capture(form)"
             />
+            <p id="duration-feedback" class="field-error" [hidden]="!amountError">
+              {{ amountError }}
+            </p>
           </div>
         }
       </div>
+      @if (pastDateWarning) {
+        <p class="field-warning" role="status">{{ pastDateWarning }}</p>
+      }
       @if (unit === 'hours') {
         <p id="request-hourly-notice" role="status">Hourly leave requests are not available yet.</p>
       }
@@ -175,6 +192,16 @@
         }
         @if (message) {
           <p id="request-error" role="alert">{{ message }}</p>
+          @if (!startError && !endError && !amountError) {
+            <button
+              class="secondary"
+              type="button"
+              (click)="retryPreview()"
+              [disabled]="loading || saving"
+            >
+              Recalculate preview
+            </button>
+          }
         }
         @if (preview; as result) {
           <p id="request-amount-preview">
@@ -220,9 +247,19 @@
           }
         }
       </div>
+      <p class="form-hint">
+        {{
+          loading
+            ? 'Wait for the calculation before submitting.'
+            : preview?.canSubmit
+              ? 'Review the dates and warnings, then submit to save.'
+              : 'Correct the highlighted fields or calculation errors before submitting.'
+        }}
+      </p>
       <button class="primary" type="submit" [disabled]="!canSubmit">
         {{ saving ? 'Saving…' : 'Submit leave request →' }}
       </button>
+      <button type="button" class="secondary" (click)="finished.emit()">Cancel</button>
     </fieldset>
   </form>
 }

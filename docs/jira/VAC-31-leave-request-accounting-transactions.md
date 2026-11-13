@@ -4,7 +4,7 @@ type: story
 summary: Record leave requests and balance accounting transactions
 status: qa
 created: 2026-11-01
-updated: 2026-11-06
+updated: 2026-11-13
 parent: null
 depends_on: [VAC-30]
 ---
@@ -225,3 +225,15 @@ Human actual: Unknown. Assistant duration: Unknown; shared work referenced only.
 4. Greek annual carryover deadline and oldest-eligible-first consumption are selected; business date/timezone, retroactive request effects on prior allocations, cancellation after cutoff and legacy configuration migration remain to design. Never borrow a later year's allowance for earlier dates without an explicit product decision. Request/calculation work must coordinate VAC-32 without creating a reverse dependency cycle.
 5. Public-holiday regional/observed applicability and source correctness remain unresolved (VAC-40). Missing holiday coverage now explicitly permits schedule/weekend-only calculation. Decide how users are informed of fallback and how later corrections affect already-saved requests; no silent recalculation is authorized.
 6. Existing wider lifecycle: future-date approver assignments/self-approval/fallback and cancellation rules. Coordinate VAC-4/VAC-9/VAC-20; existing reference fixtures do not approve workflow assignments.
+
+
+## Owner-requested deletion and test teardown · 2026-11-13
+
+Accepted decision: active same-company administrators only may permanently delete personal saved leave requests, restoring charged/ pending amounts and removing request/date rows atomically. Closure-generated leave is protected. [Canonical decision](../product/product-charter.md#owner-decision--permanent-personal-request-deletion--2026-11-13). Implementation is a subtask here, coordinated with VAC-42's CI current-date regression; no new issue is created.
+
+Acceptance: own-employee, cross-company, revoked/provisioning-only admin and unknown IDs are denied without mutation; approved/pending/mixed/declined deletion restores only that request's ledger; a repeated delete is a harmless missing-record result; company closures are rejected; SQL request/date removal and runtime DELETE grants remain narrowly scoped. Future-request browser acceptance creates real leave through UI and deletes only new test requests in `finally`, checks list/calendar absence and original used/pending/available totals, and revokes created sessions. Deliberate post-save assertion failure must also clean up.
+
+Assistant recorded implementation/verification duration: unmeasured. Human actual: Unknown. Status remains QA; actual results will be appended when available.
+
+
+2026-11-13 · Assistant verification update: API build and 72 integration checks passed, with 25 actual-SQL cases explicitly skipped. The real future-request UI journey and deliberate post-save assertion-failure journey both passed exact request/calendar/balance restoration and session revocation. Independent QA reviewed cleanup/preservation. [Follow-up evidence](media/VAC-43/upcoming-request-deletion.md). Full functional rerun result is recorded there; existing issue status remains QA.

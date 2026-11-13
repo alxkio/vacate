@@ -33,10 +33,24 @@ import { Entry, LeaveType } from '../../core/models/workspace.models';
         @for (request of savedRequests; track request.guid) {
           <li [attr.data-saved-request]="request.guid">
             <strong>{{ data.typeName(request.leaveTypeId) }}</strong>
+            @if (request.closureGuid) {
+              <small
+                >Automatically recorded company closure ·
+                {{
+                  request.leaveTypeId === 'company-closure'
+                    ? 'No balance impact'
+                    : 'Deducted from annual leave'
+                }}</small
+              >
+            }
             @for (day of request.dates; track day.date) {
               <small
                 >{{ day.date }} · {{ day.status === 'Pending' ? 'Pending approval' : day.status }} ·
-                Entitlement {{ day.entitlementYear }}</small
+                {{
+                  request.leaveTypeId === 'company-closure'
+                    ? 'No balance impact'
+                    : 'Entitlement ' + day.entitlementYear
+                }}</small
               >
             }
           </li>

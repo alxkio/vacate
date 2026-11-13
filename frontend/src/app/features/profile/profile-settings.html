@@ -81,6 +81,8 @@
               id="profile-married"
               name="married"
               type="checkbox"
+              role="switch"
+              class="settings-switch"
               aria-describedby="family-help"
               [(ngModel)]="draft.married"
             />
@@ -91,6 +93,8 @@
               id="profile-sole-care"
               name="soleCare"
               type="checkbox"
+              role="switch"
+              class="settings-switch"
               aria-describedby="family-help"
               [(ngModel)]="draft.soleCare"
             />
@@ -220,13 +224,18 @@
         <span class="settings-tag">This browser</span>
       </div>
       <p class="settings-intro">
-        Saved separately for each demo account in this browser. These choices do not change your
-        profile or leave data.
+        Changes apply immediately and are saved separately for each demo account in this browser.
+        These choices do not change your profile or leave data.
       </p>
       <div class="settings-fields">
         <label
           >Calendar layout
-          <select id="display-layout" name="layout" [(ngModel)]="displayPreferences.layout">
+          <select
+            id="display-layout"
+            name="layout"
+            [(ngModel)]="displayPreferences.layout"
+            (ngModelChange)="saveDisplayPreferences()"
+          >
             <option value="calendar">Calendar workspace</option>
             <option value="planner">Team planner</option>
           </select>
@@ -237,6 +246,7 @@
             id="display-color-scheme"
             name="colorScheme"
             [(ngModel)]="displayPreferences.colorScheme"
+            (ngModelChange)="saveDisplayPreferences()"
           >
             <option value="a">A · Green</option>
             <option value="c">C · Warm brown</option>

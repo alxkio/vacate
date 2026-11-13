@@ -1,5 +1,12 @@
 import { ChangeDetectorRef, Component, inject, OnDestroy } from '@angular/core';
-import { WorkspaceDataService } from '../../core/state/workspace-data.service';
+import { safeReturnUrl } from '../../core/http/session-navigation';
+import {
+  addDays,
+  currentDate,
+  monthName,
+  weekStart,
+  WorkspaceDataService,
+} from '../../core/state/workspace-data.service';
 
 @Component({ selector: 'vacate-login', templateUrl: './login.html' })
 export class Login implements OnDestroy {
@@ -11,6 +18,10 @@ export class Login implements OnDestroy {
     { id: 'ella', label: 'Department lead', name: 'Ella' },
     { id: 'nora', label: 'Organization admin', name: 'Nora' },
   ];
+  readonly today = currentDate();
+  readonly month = monthName(this.today);
+  readonly days = Array.from({ length: 7 }, (_, i) => addDays(weekStart(this.today), i));
+  readonly sessionEnded = new URLSearchParams(location.search).get('reason') === 'expired';
   error = this.data.api.error;
   busy = false;
 
@@ -31,20 +42,28 @@ export class Login implements OnDestroy {
   ): void {
     const persona = this.personas.find((option) => option.id === id);
     const person = this.data.fixtures.person(id);
-    if (!persona || !person) {return;}
+    if (!persona || !person) {
+      return;
+    }
     username.value = password.value = person.username;
     description.textContent = `${persona.label} · ${person.team} · ${person.username}`;
     this.error = '';
   }
 
-  async submit(event: Event, username: HTMLInputElement, password: HTMLInputElement): Promise<void> {
+  async submit(
+    event: Event,
+    username: HTMLInputElement,
+    password: HTMLInputElement,
+  ): Promise<void> {
     event.preventDefault();
-    if (this.busy) {return;}
+    if (this.busy) {
+      return;
+    }
     this.busy = true;
     try {
       if (await this.data.environment.VacateSession.login(username.value.trim(), password.value)) {
         password.value = '';
-        location.replace('/index.html');
+        location.replace(safeReturnUrl(new URLSearchParams(location.search).get('returnUrl')));
         return;
       }
       this.error = this.data.api.error;

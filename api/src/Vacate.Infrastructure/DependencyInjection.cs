@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton(provider => new InMemoryDatabase(bool.TryParse(provider.GetRequiredService<IConfiguration>()["SeedData:Enabled"], out var seed) && seed));
         services.AddSingleton<IUnitOfWork, InMemoryUnitOfWork>();
         services.AddSingleton<ILeaveRepository, InMemoryLeaves>();
+        services.AddSingleton<ICompanyCalendarRepository, InMemoryCompanyCalendar>();
         services.AddSingleton<IUserRepository, UserRepository>();
         services.AddSingleton<IMembershipRepository, MembershipRepository>();
         services.AddSingleton<IOrganizationRepository, OrganizationRepository>();
@@ -62,6 +63,7 @@ public static class DependencyInjection
         services.AddDbContext<VacateDbContext>(options => options.UseSqlServer(connection));
         services.AddScoped<SqlSession>();
         services.AddScoped<ILeaveRepository, SqlLeaves>();
+        services.AddScoped<ICompanyCalendarRepository, SqlCompanyCalendar>();
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<SqlSession>());
         services.AddScoped<IUserRepository, SqlUsers>();
         services.AddScoped<IMembershipRepository, SqlMemberships>();

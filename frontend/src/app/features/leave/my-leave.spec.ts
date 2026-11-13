@@ -80,4 +80,25 @@ describe('My Leave summary', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('No saved requests');
   });
+  it('labels automatic non-deducting closure records without suggesting an entitlement charge', () => {
+    const data = TestBed.inject(WorkspaceDataService);
+    data.environment.VacateSession.login('maya', 'maya');
+    const fixture = TestBed.createComponent(MyLeave);
+    fixture.componentRef.setInput('savedRequests', [
+      {
+        guid: 'closure-record',
+        closureGuid: 'closure',
+        source: 'CompanyClosure',
+        leaveTypeId: 'company-closure',
+        createdAt: '2026-11-12T00:00:00Z',
+        dates: [{ date: '2027-01-04', status: 'Approved', entitlementYear: 2027 }],
+      },
+    ]);
+    fixture.detectChanges();
+    const saved = fixture.nativeElement.querySelector('#saved-leave-requests').textContent;
+    expect(saved).toContain('Company closure');
+    expect(saved).toContain('Automatically recorded company closure');
+    expect(saved).toContain('No balance impact');
+    expect(saved).not.toContain('Entitlement 2027');
+  });
 });

@@ -8,16 +8,23 @@
     <h1>Make room<br />for time off<span>.</span></h1>
     <p>Your plans. Your people. One clear calendar.</p>
     <div class="login-calendar" aria-hidden="true">
-      <div><span>OCTOBER</span><span>2026</span></div>
+      <div>
+        <span>{{ month.toUpperCase() }}</span
+        ><span>{{ today.getFullYear() }}</span>
+      </div>
       <div class="login-week">
         <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span
         ><span>S</span>
       </div>
       <div class="login-week">
-        <span>19</span><span>20</span><span>21</span><span class="login-today">22</span
-        ><span>23</span><span>24</span><span>25</span>
+        @for (date of days; track date.getTime()) {
+          <span [class.login-today]="date.getTime() === today.getTime()">{{ date.getDate() }}</span>
+        }
       </div>
-      <div class="login-break">✓ A little autumn pause · 26–28 Oct</div>
+      <div class="login-break">
+        This week ·
+        {{ today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' }) }}
+      </div>
     </div>
   </section>
   <section class="login-card" aria-labelledby="login-title">
@@ -39,6 +46,11 @@
     <p #description id="persona-description" class="login-note">
       Select a persona to fill their public demo credentials.
     </p>
+    @if (sessionEnded) {
+      <p role="status" class="login-note">
+        Your session ended. Sign in again to return to your previous page.
+      </p>
+    }
     <form id="login-form" [attr.aria-busy]="busy" (submit)="submit($event, username, password)">
       <label for="username">Username</label
       ><input

@@ -106,7 +106,9 @@ export class WorkspaceDialog {
             ? `${this.data.typeName(entry.type)} · ${entry.status}`
             : 'Availability in your demo company. Private request details are not shared.',
           entry.id.startsWith('saved:')
-            ? 'Saved request · changes are not available here.'
+            ? entry.type === 'company-closure'
+              ? 'Automatically recorded company closure · No balance impact · changes are not available here.'
+              : 'Saved request · changes are not available here.'
             : 'Fictional sample · no changes can be made here.',
         ],
       },
@@ -146,8 +148,8 @@ export class WorkspaceDialog {
         kind: 'info',
         title: 'A little guide',
         paragraphs: [
-          'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the fixed demo date, 22 October 2026.',
-          'Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. Reference examples are fictional. Submitted requests and settings are saved through the API. Approval decisions, hourly requests and editing saved requests are unavailable.',
+          'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the current local date. Reference examples retain their labelled historical dates.',
+          'Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. Reference examples are fictional. Submitted requests and settings are saved through the API. Assigned administrators can decide pending requests in Approval Requests. Hourly requests and editing saved requests are unavailable.',
         ],
       },
       trigger,

@@ -38,7 +38,9 @@ export type SavedRequest = {
   guid: string;
   leaveTypeId: string;
   createdAt: string;
-  dates: { date: string; status: 'Approved' | 'Pending'; entitlementYear: number }[];
+  source?: string;
+  closureGuid?: string | null;
+  dates: { date: string; status: 'Approved' | 'Pending' | 'Declined'; entitlementYear: number }[];
 };
 export type SubmitResult = {
   outcome: 'created' | 'already-covered';
@@ -128,7 +130,9 @@ export class LeaveRequests {
           start: date.date,
           end: date.date,
           type: date.leaveTypeId,
-          title: this.data.typeName(date.leaveTypeId),
+          title: requests.find((request) => request.guid === date.requestGuid)?.closureGuid
+            ? `Company closure · ${date.leaveTypeId === 'company-closure' ? 'No balance impact' : 'Annual leave'}`
+            : this.data.typeName(date.leaveTypeId),
           status: date.status,
           amount: 1,
           unit: 'working days',

@@ -4,7 +4,7 @@ import {
   dateFromKey,
   dateKey,
   monthName,
-  REFERENCE_TODAY,
+  currentDate,
   shortDate,
   weekStart,
   WorkspaceDataService,
@@ -129,7 +129,7 @@ export class WorkspaceView {
   get upcoming(): Entry[] {
     return this.context
       .entries()
-      .filter((entry) => entry.end >= dateKey(REFERENCE_TODAY))
+      .filter((entry) => entry.end >= dateKey(currentDate()))
       .sort((a, b) => a.start.localeCompare(b.start))
       .slice(0, 3);
   }

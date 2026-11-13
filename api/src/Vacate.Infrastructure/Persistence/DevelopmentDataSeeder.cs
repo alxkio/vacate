@@ -75,5 +75,10 @@ internal static class DevelopmentDataSeeder
             database.Memberships.Add(new(Id(m), Uuid(m), user.Id, Id(m, "companyId"), config, balance, now, settingsRole));
             database.Invitations.Add(user.Id, Id(m, "companyId"));
         }
+        // Explicit fictional fixture assignment; production companies remain unconfigured.
+        var nora = database.Users.Values.Single(u => u.Username.StartsWith("nora"));
+        var noraMember = database.Memberships.Single(m => m.UserId == nora.Id);
+        var company = database.Organizations[noraMember.CompanyId];
+        database.CompanyCalendars[company.Id] = new([], [], [new("organization", company.Guid, nora.Guid)]);
     }
 }

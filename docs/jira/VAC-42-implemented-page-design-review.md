@@ -2,16 +2,16 @@
 id: VAC-42
 type: task
 summary: Review and refine every implemented Vacate page
-status: done
+status: qa
 created: 2026-11-11
-updated: 2026-11-12
+updated: 2026-11-13
 parent: null
 depends_on: []
 ---
 
 # VAC-42 — Review and refine every implemented Vacate page
 
-![Task](badges/task.svg) **✅ Done** · Owner: Assistant implementation; product lead review
+![Task](badges/task.svg) **🔍 QA** · Owner: Assistant implementation; product lead review
 
 ## Description and scope
 
@@ -50,6 +50,8 @@ UX/UI: inventory, critique, clarify, adapt, audit and polish. QA: focused compon
 
 - C3 · 2026-11-12 · Product lead: “lets commit in a branch, merge and deploy”. Assistant will use the existing dev target and database-first release workflow.
 
+- C4 · 2026-11-12 · Assistant: [PR #4](https://github.com/alxkio/vacate/pull/4) merged after CI; full dev deployment of `9465318` succeeded, including live database gate, both publications and hosted smoke. Independent smoke and diagnostic sign-in/calendar recheck passed after initial timeouts; cause unverified. [Release evidence](media/VAC-42/deployment-2026-11-12.md).
+
 ## Decisions
 
 - D1 · 2026-11-11 · User-authorized refinement: preserve existing transactions, routes, permissions and visual identity. Label the existing writable balance action honestly; do not invent a read-only preview workflow or approval inbox.
@@ -60,6 +62,8 @@ UX/UI: inventory, critique, clarify, adapt, audit and polish. QA: focused compon
 
 - W1 · 2026-11-11 · Assistant recorded: review/implementation/verification; duration unmeasured. Human actual: Unknown. Automation durations are recorded only where emitted by checks; no inferred hours.
 
+- W2 · 2026-11-12 · Assistant recorded: branch/PR/merge, preview, deployment monitoring and release verification; duration unmeasured. GitHub job execution timestamps are linked as evidence, not inferred human or assistant working hours.
+
 ## History
 
 - 2026-11-11 · Assistant · Created In progress for authorized cross-page review/refinement.
@@ -68,10 +72,87 @@ UX/UI: inventory, critique, clarify, adapt, audit and polish. QA: focused compon
 
 - H3 · 2026-11-12 · Assistant · QA → Done after completed verification/reviews and product-lead authorization to merge/deploy. Released status requires actual named deployment evidence.
 
+- H4 · 2026-11-12 · Assistant · Done → Released: revision `94653183506398a757cc289c0d57e4dd69216a1e` available at the named dev target after [successful deployment](https://github.com/alxkio/vacate/actions/runs/43217227468) and post-deployment checks. Broader SQL regression and assistive-technology limits remain.
+
 ## Verification and release
 
-[Local verification](media/VAC-42/verification-2026-11-12.md): 71 tests/17 files, both TypeScript projects, production build, fixture/schema scripts and complete native browser/API acceptance passed. Final focused checks verify refresh focus, explicit company/session feedback isolation and admin lower forms at 1440/375/320px. Independent design/technical reviews found no blocking issue after refinements. Release authorized on 2026-11-12; deployment pending. Local evidence does not claim physical-device/screen-reader or SQL/deployed validation.
+[Local verification](media/VAC-42/verification-2026-11-12.md): 71 tests/17 files, both TypeScript projects, production build, fixture/schema scripts and complete native browser/API acceptance passed. Final focused checks verify refresh focus, explicit company/session feedback isolation and admin lower forms at 1440/375/320px. Independent design/technical reviews found no blocking issue after refinements. Released to the [existing dev web](https://lemon-beach-02f7a7103.4.azurestaticapps.net) at revision `9465318`; [deployment evidence](media/VAC-42/deployment-2026-11-12.md) distinguishes verified live schema/grants/reads and publication from the 18 skipped SQL regression cases, initial timeout/recheck and unverified physical-device/screen-reader behavior.
 
 ## Open questions
 
 Approval handoff without an inbox, future read-only request examples and future production identity remain product decisions; continue independent refinements.
+
+## Owner feedback subtask · 2026-11-12 · QA
+
+Reopened from the released baseline to implement owner feedback. The owner requested these refinements remain a subtask of this UI review. The released baseline above remains historical evidence; this follow-up is not yet released.
+
+### Acceptance scenarios
+
+- [x] Login week and workspace default/Today match the current local date; explicit URL dates and history remain intact.
+- [x] Invalid/missing/reversed dates and invalid durations identify their fields accessibly; warnings remain distinct from blocking errors, drafts survive recovery and stale previews cannot submit.
+- [x] Company colleagues appear in a shared table with department/team names, relationship text and supplementary color; another company and private membership/family/leave facts stay excluded.
+- [x] Administrators can edit memberships from the table; employees/leads cannot acquire edit access through direct routes or controls.
+- [x] Company workspace/at-a-glance precede organization configuration, then clearly separated structure; booleans use accessible switches without losing inherited/null states.
+- [x] Admin department/team creation dialogs validate, preserve drafts on failure, await server saves, refresh counts and restore focus; non-admin/foreign company calls remain denied.
+- [x] Calendar/planner preferences apply immediately for the current account and survive navigation/reload without sign-out.
+- [x] Focused frontend/backend tests, TypeScript/build and desktop/mobile/API/browser verification are recorded.
+
+### Sources and decisions
+
+- [Product charter](../product/product-charter.md), [request rules](VAC-31-leave-request-accounting-transactions.md), [frontend ADR](../adr/0005-frontend-capability-architecture.md).
+- D1 · 2026-11-12 · Owner: implement the seven feedback items above. This authorizes frontend structure creation and shared directory presentation, superseding earlier API-only/create exclusions for departments/teams only.
+- D2 · 2026-11-12 · Owner confirmed: keep past dates allowed with warnings. Invalid dates and reversed ranges remain blocking errors.
+
+### Journey and responsibilities
+
+Employee: current calendar → colleagues/relationships → request → field correction/preview/warnings → server-confirmed save. Admin: shared People table → membership editor → focus return; Settings → workspace/summary → switches → create structure dialog → server-confirmed counts; System → select layout → immediate workspace update.
+
+Backend/contracts: sanitized directory structure projection only; existing create/authorization/lifecycle APIs reused. Database/infrastructure: no new schema or provisioning required. UI validation supports the server and does not replace it.
+
+### Comments
+
+- C1 · 2026-11-12 · Assistant: began from staged VAC-42 documentation on VAC-42-release-evidence; preserve those changes and their index state.
+
+### Work log
+
+- W1 · 2026-11-12 · Assistant recorded: source inspection, implementation and verification; duration unmeasured. Human actual: Unknown.
+
+### History
+
+- 2026-11-12 · Assistant: created In progress for explicit owner feedback.
+
+### Verification
+
+Implementation and functional checks passed. [Verification, file manifest, journeys and screenshots](media/VAC-42/owner-feedback/verification.md). Native trusted keyboard input remains unavailable in this environment; manual keyboard QA is still required. No release claim.
+
+### Open questions
+
+None for the accepted feedback scope.
+
+### Additional owner feedback · 2026-11-12
+
+- [x] Vacate logo navigates to workspace home.
+- [x] Expired authenticated API sessions navigate to login and resume the previous internal page after successful authentication; unsafe external redirects and stale-account responses are rejected.
+
+- [ ] Manual native keyboard QA: Space toggles, Tab sequence, Escape and focus return. Automated trusted input delivery was unavailable in both headless/visible Chrome; source semantics and functional focus are verified separately.
+
+- 2026-11-12 · Assistant: reopened the released baseline for the owner-feedback subtask; implementation moved to QA after functional/browser/API checks. No separate issue/story, commit or deployment. Original staged release evidence preserved.
+
+## CI fixture-date regression · 2026-11-12
+
+Owner supplied runner failure after the trusted native readiness checks passed: `keyboardClick` attempted to focus absent `[data-date="2026-10-01"]`. Source confirms native acceptance opened a month view without a date, while the accepted current-date refinement now opens the current month. The historical fixture journey now requests `date=2026-10-01` explicitly; keyboard target readiness and missing-selector diagnostics are added without bypassing trusted-event checks. Root will verify rendered October target and preserve the current-month default. Native runner rerun remains a separate check from local synthetic interaction. Tracked here as the existing UI-refinement subtask, not a new story.
+
+
+2026-11-13 · Assistant / QA follow-up: found and corrected the second historical functional calendar load as well as the native load. Both explicitly request `date=2026-10-01`; default month remains today. The route regression passes in the 85-test Angular suite; rendered October target presence and DOM focus pass in admin browser acceptance. The isolated trusted native keyboard suite now passes locally on Chrome 150 / Node 22.22.3 / macOS, including readiness, October date activation, Escape/focus return, shortlist and avatar navigation. This verifies the reported absent-target regression locally; it does not claim a rerun of the supplied Linux CI job or every new administrator keyboard journey. [Shared evidence](media/VAC-43/verification.md).
+
+
+### Upcoming-request CI follow-up · 2026-11-13
+
+The owner reported `leah own upcoming entries`: the assertion still treated October 2026 fixture leave as upcoming after its dates passed. Owner direction: create real future leave and verify visualization, rather than reimplement upcoming filtering or pin time for that assertion. The new journey selects a future working date through server preview, submits through the rendered form, reloads, verifies the saved request in upcoming/calendar/details on desktop/mobile and checks another employee's own view. Admin-only permanent deletion (VAC-31 subtask) supplies `finally` teardown with balance/list/calendar checks and session revocation; cleanup errors fail the test. Verification pending.
+
+
+2026-11-13 · Assistant verification update: API build and 72 integration checks passed, with 25 actual-SQL cases explicitly skipped. The real future-request UI journey and deliberate post-save assertion-failure journey both passed exact request/calendar/balance restoration and session revocation. Independent QA reviewed cleanup/preservation. [Follow-up evidence](media/VAC-43/upcoming-request-deletion.md). Full functional rerun result is recorded there; existing issue status remains QA.
+
+### Native runner follow-up · 2026-11-13
+
+The owner's pushed `171134e` failed paired CI before keyboard activation: Chrome 157/Linux headless acknowledged preparation but delivered no pointer/key events. Retrieved logs and screenshot confirm the failure layer. The existing refinement subtask now tracks a headed Chrome/Xvfb CI execution correction, enhanced failure diagnostics and correction of obsolete dropdown-style interactions with Settings switches. No product behavior or permissions change. Local headed native and 4× CPU runs passed; Linux CI remains the required gate. [Evidence and limits](media/VAC-42/native-input-2026-11-13.md). Assistant work unmeasured; human actual Unknown. Issue/backlog status remains QA.

@@ -17,7 +17,8 @@ public sealed record UserRecord(int Id, Guid Guid, string Username, string First
     DateTimeOffset? DeleteRequestedAt, DateTimeOffset? DeletedAt);
 
 public sealed record DirectoryUserRecord(string Username, string Email, string FirstName, string? MiddleName,
-    string LastName, string Gender, string? JobTitle, string? SystemRole);
+    string LastName, string Gender, string? JobTitle, string? SystemRole, Guid Guid,
+    Guid? DepartmentId, string? DepartmentName, Guid? TeamId, string? TeamName);
 
 public sealed record PersonRecord(string Id, string PersonId, Guid Guid, string CompanyId, string Name, string Title,
     string DepartmentId, string TeamId, string Team, string Capability, string Role, string Initials, string Username, string Email);

@@ -5,7 +5,7 @@ namespace Vacate.Infrastructure.Persistence.Sql;
 
 internal static class ResourceModel
 {
-    internal static readonly string[] Sequences = ["UserIds", "MembershipIds", "OrganizationIds", "DepartmentIds", "TeamIds", "JobRoleIds", "WorkScheduleIds"];
+    internal static readonly string[] Sequences = ["UserIds", "MembershipIds", "OrganizationIds", "DepartmentIds", "TeamIds", "JobRoleIds", "WorkScheduleIds", "CompanyHolidayIds", "CompanyClosureIds", "CompanyApproverIds"];
 
     public static void Configure(ModelBuilder model)
     {
@@ -178,6 +178,40 @@ internal static class ResourceModel
         holidays.HasKey(x => new { x.CountryCode, x.Date });
         holidays.Property(x => x.CountryCode).HasMaxLength(2);
         holidays.Property(x => x.Name).HasMaxLength(300);
+
+        requests.Property(x => x.Source).HasMaxLength(200);
+        requests.HasIndex(x => new { x.CompanyId, x.ApproverGuid });
+        requests.Property(x => x.Source).HasDefaultValue("EmployeeRequest");
+        requests.ToTable(t => t.HasCheckConstraint("CK_LeaveRequests_DecisionUtc", "[DecidedAt] IS NULL OR ([DecidedAt] >= [CreatedAt] AND DATEPART(TZOFFSET, [DecidedAt]) = 0)"));
+
+        var companyHolidays = Entity<CompanyHolidayRow>(model, "CompanyHolidays");
+        companyHolidays.Property(x => x.Name).HasMaxLength(200);
+        companyHolidays.HasIndex(x => new { x.CompanyId, x.Month, x.Day }).IsUnique().HasFilter("[DeletedAt] IS NULL");
+        companyHolidays.HasOne<OrganizationRow>().WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.NoAction);
+        companyHolidays.ToTable(t => t.HasCheckConstraint("CK_CompanyHolidays_Date", "LEN([Name]) > 0 AND [Month] BETWEEN 1 AND 12 AND [Day] BETWEEN 1 AND CASE WHEN [Month] = 2 THEN 29 WHEN [Month] IN (4,6,9,11) THEN 30 ELSE 31 END"));
+
+        var closures = Entity<CompanyClosureRow>(model, "CompanyClosures");
+        closures.Property(x => x.Name).HasMaxLength(200);
+        closures.HasAlternateKey(x => new { x.CompanyId, x.Id });
+        closures.HasIndex(x => new { x.CompanyId, x.IdempotencyKey }).IsUnique();
+        closures.HasOne<OrganizationRow>().WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.NoAction);
+        closures.ToTable(t => t.HasCheckConstraint("CK_CompanyClosures_Date", "LEN([Name]) > 0 AND [EndDate] >= [StartDate] AND DATEDIFF(day, [StartDate], [EndDate]) <= 366"));
+        var closureResults = model.Entity<CompanyClosureResultRow>();
+        closureResults.ToTable("CompanyClosureResults");
+        closureResults.HasKey(x => new { x.CompanyId, x.ClosureId, x.UserGuid });
+        closureResults.Property(x => x.DisplayName).HasMaxLength(401);
+        closureResults.Property(x => x.Outcome).HasMaxLength(24);
+        closureResults.Property(x => x.Reason).HasMaxLength(500);
+        closures.HasMany(x => x.Results).WithOne().HasForeignKey(x => new { x.CompanyId, x.ClosureId })
+            .HasPrincipalKey(x => new { x.CompanyId, x.Id }).OnDelete(DeleteBehavior.NoAction);
+        closureResults.ToTable(t => t.HasCheckConstraint("CK_CompanyClosureResults_Outcome", "[Days] >= 0 AND [Outcome] IN (N'recorded', N'skipped', N'already-covered')"));
+
+        var approvers = Entity<CompanyApproverRow>(model, "CompanyApproverAssignments");
+        approvers.Property(x => x.Scope).HasMaxLength(24);
+        approvers.HasIndex(x => new { x.CompanyId, x.Scope, x.ScopeGuid }).IsUnique().HasFilter("[DeletedAt] IS NULL");
+        approvers.HasOne<OrganizationRow>().WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.NoAction);
+        approvers.HasOne<UserRow>().WithMany().HasForeignKey(x => x.ApproverGuid).HasPrincipalKey(x => x.Guid).OnDelete(DeleteBehavior.NoAction);
+        approvers.ToTable(t => t.HasCheckConstraint("CK_CompanyApproverAssignments_Scope", "[Scope] IN (N'organization', N'department', N'team') AND [ScopeGuid] <> '00000000-0000-0000-0000-000000000000'"));
 
         var access = model.Entity<DevelopmentAccessRow>();
         access.ToTable("DevelopmentProvisioningAccess");

@@ -6,7 +6,11 @@ import { NavigationEnd, provideRouter, Router } from '@angular/router';
 import { routes } from '../../app.routes';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
-import { WorkspaceDataService } from '../../core/state/workspace-data.service';
+import {
+  currentDate,
+  dateKey,
+  WorkspaceDataService,
+} from '../../core/state/workspace-data.service';
 import { Workspace } from './workspace';
 
 describe('Workspace navigation', () => {
@@ -30,6 +34,16 @@ describe('Workspace navigation', () => {
     const page = await harness.navigateByUrl(url, Workspace);
     return { page, harness, element: harness.routeNativeElement! };
   }
+
+  it('opens today by default and renders an explicit historical date for fixture journeys', async () => {
+    const { page, harness } = await setup('/index.html?scope=self&view=month', 'maya');
+    expect(dateKey(page.state.date)).toBe(dateKey(currentDate()));
+    await harness.navigateByUrl('/index.html?scope=self&view=month&date=2026-10-01', Workspace);
+    expect(harness.routeNativeElement?.querySelector('#period')?.textContent).toContain(
+      'October 2026',
+    );
+    expect(harness.routeNativeElement?.querySelector('[data-date="2026-10-01"]')).not.toBeNull();
+  });
 
   it('has one Settings entry, no separate organization or personal balance entry and sign-out only in the profile menu', async () => {
     const { page, harness, element } = await setup('/index.html?page=settings');
@@ -119,9 +133,10 @@ describe('Workspace navigation', () => {
     }
   });
 
-  it('shows the unavailable approval inbox without revealing reference pending requests', async () => {
+  it('shows assigned inbox recovery without revealing reference pending requests', async () => {
     const { element } = await setup('/index.html?page=approvals');
-    expect(element.textContent).toContain('Approval inbox unavailable');
+    expect(element.textContent).toContain('Assigned approval requests');
+    expect(element.textContent).toContain('Assigned requests could not be loaded');
     expect(element.querySelector('main vacate-balances')).toBeNull();
     expect(element.querySelector('main .navigation-card')!.textContent).not.toContain('Maya');
   });
@@ -156,7 +171,7 @@ describe('Workspace navigation', () => {
     expect(dialog.getAttribute('aria-labelledby')).toBe('workspace-dialog-title');
     expect(dialog.querySelector('#workspace-dialog-title')?.textContent?.trim()).toBeTruthy();
     expect(dialog.textContent).toContain('YOUR REQUEST');
-    expect(dialog.textContent).toContain('Autumn leave');
+    expect(dialog.textContent).toContain('Parental leave');
 
     page.workspaceDialog.showDate(new Date(2026, 9, 26), trigger);
     harness.detectChanges();

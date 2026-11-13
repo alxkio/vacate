@@ -125,20 +125,26 @@ Backend/contracts/database are unaffected: resource paths, payloads, policy, aut
 - [frontend/src/app/features/workspace/workspace.ts](../../frontend/src/app/features/workspace/workspace.ts)
 - [frontend/src/styles.scss](../../frontend/src/styles.scss)
 
+- [docs/jira/media/VAC-42/deployment-2026-11-12.md](../jira/media/VAC-42/deployment-2026-11-12.md)
+
 Screenshots are indexed in the verification record below.
 
 ## Verification evidence
 
 [Verification record and representative screenshots](../jira/media/VAC-42/verification-2026-11-12.md): 71 tests in 17 files; app/spec TypeScript; production build; reference fixture/schema/profile/organization checks; complete real API/browser suite including native keyboard; final focused company/session feedback, failed-read recovery/focus, table/policy/membership lower controls and drilldowns. Desktop 1440px, mobile 375px and 320px checks passed without page-level overflow. Source detector returned zero findings; manual review nevertheless found substantive accessibility/state defects. Final sRGB shared-token contrasts are recorded separately from unverified legacy combinations.
 
-The complete suite preceded the last CSS/focus refinements; those received a fresh build, unit checks and targeted browser verification. Independent design and technical reviews found no blocking defect. The product lead authorized merge/deployment on 2026-11-12; VAC-42 is Done pending actual release evidence. No SQL, hosted or accessibility-conformance claim.
+The complete suite preceded the last CSS/focus refinements; those received a fresh build, unit checks and targeted browser verification. Independent design and technical reviews found no blocking defect. The product lead authorized merge/deployment on 2026-11-12. [Release evidence](../jira/media/VAC-42/deployment-2026-11-12.md) records successful full dev deployment of `9465318`, the mandatory live database gate, hosted smoke and diagnostic browser sign-in/calendar verification; VAC-42 is Released. Local review alone does not establish SQL/hosted behavior or accessibility conformance; the separate release record names the live checks.
 
 ## Remaining product questions and limits
 
 - **OPEN QUESTION:** who acts on saved pending requests before an approval inbox/assignment workflow exists? No invented handoff, permission or notification was implemented.
 - **PROPOSED:** a dedicated read-only request example could be a future workflow. Current behavior remains save-capable and is labelled honestly.
 - **OPEN QUESTION:** whether to hide unavailable Approval Requests. Existing accepted navigation is retained.
-- **UNVERIFIED:** production identity, SQL/deployed persistence behavior, real assistive technology and physical mobile devices. Browser emulation and source review cannot certify conformance.
+- **UNVERIFIED:** production identity, full SQL regression/concurrency scenarios, real assistive technology and physical mobile devices. Live schema/grants/mapped-column reads and hosted delivery/read smoke are verified separately in the release evidence. Browser emulation and source review cannot certify conformance.
 - Fixed demo date versus actual request date remains explicit; no product decision to replace the reference calendar or compute statutory entitlements is implied.
 
 Questions skipped during critique closure: user already authorized supported improvements and asked independent work to continue; the open product questions above do not block these refinements.
+
+## Owner-feedback refinement · 2026-11-12
+
+The owner prioritized current calendars, request errors/warnings, a shared company directory, settings structure/creation, immediate display preferences, workspace logo navigation and session-expiry return. Implemented as a subtask within VAC-42. [Prioritized findings, updated journey mapping, changed-file manifest, rendered evidence and verification limits](../jira/media/VAC-42/owner-feedback/verification.md). Past dates remain allowed with warnings by explicit owner confirmation. Functional/API/desktop/mobile checks pass; trusted native keyboard delivery is unavailable and remains manual QA. These changes are not released.

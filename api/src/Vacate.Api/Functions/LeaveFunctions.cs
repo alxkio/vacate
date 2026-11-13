@@ -35,6 +35,14 @@ public sealed class LeaveFunctions(LeaveService leaves, AuthenticationService au
     public Task<IActionResult> Calendar([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "organizations/{companyId}/leave/calendar")] HttpRequest request, string companyId) =>
         Execute(request, _ => Ok(leaves.Calendar(authentication.RequireActor(Token(request)), Id(companyId))));
 
+    [Function("DeletePersonalLeaveRequest")]
+    public Task<IActionResult> Delete([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "organizations/{companyId}/leave/requests/{requestId}")] HttpRequest request, string companyId, string requestId) =>
+        Execute(request, _ =>
+        {
+            leaves.Delete(authentication.RequireActor(Token(request)), Id(companyId), Id(requestId));
+            return new NoContentResult();
+        });
+
     private static LeaveDraft Draft(JsonObject body) => new(Required<string>(body, "leaveTypeId"), Required<string>(body, "unit"),
         Required<string>(body, "mode"), Required<DateOnly>(body, "startDate"), Field<DateOnly?>(body, "endDate").Or(null), Field<int?>(body, "duration").Or(null));
 }

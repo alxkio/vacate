@@ -4,7 +4,7 @@ import {
   addDays,
   dateFromKey,
   dateKey,
-  REFERENCE_TODAY,
+  currentDate,
 } from '../../core/state/workspace-data.service';
 
 const routePages: CalendarState['page'][] = [
@@ -47,10 +47,10 @@ export const workspaceViewFromRoute = (
 
 export const workspaceDateFromRoute = (value: string | null): Date => {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return new Date(REFERENCE_TODAY);
+    return currentDate();
   }
   const date = dateFromKey(value);
-  return dateKey(date) === value ? date : new Date(REFERENCE_TODAY);
+  return dateKey(date) === value ? date : currentDate();
 };
 
 export const shiftWorkspaceDate = (

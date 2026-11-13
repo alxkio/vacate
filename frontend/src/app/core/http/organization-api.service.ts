@@ -22,6 +22,19 @@ export class OrganizationApiService {
     return this.api.request<OrganizationResponse>('PATCH', `organizations/${id}`, token, fields);
   }
 
+  createNode(
+    id: string,
+    kind: 'departments' | 'teams',
+    name: string,
+    departmentId: string | null,
+    token: string,
+  ): Observable<unknown> {
+    return this.api.request('POST', `organizations/${id}/${kind}`, token, {
+      name,
+      ...(kind === 'teams' ? { departmentId } : {}),
+    });
+  }
+
   renameNode(
     id: string,
     kind: 'departments' | 'teams',
