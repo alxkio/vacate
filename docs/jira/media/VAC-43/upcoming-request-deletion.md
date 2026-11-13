@@ -49,3 +49,5 @@ The initial cross-period test failed because its fictional organization had no c
 - [Mobile saved-request details](saved-future-request-details-mobile.png)
 
 Assistant implementation/review time: unmeasured; human actual: Unknown. Shared test results are recorded here once, not rolled up across related stories.
+
+2026-11-13 · Final complete browser verification: passed against a fresh fictional InMemory API, including every trusted native assertion, twelve-account and owner-feedback journeys, actual future leave rendering and exact administrator cleanup/restoration. The stale Settings-switch interactions and asynchronous calendar/account-menu test reads were corrected without changing application behavior. [Full follow-up evidence and Linux CI gate](../VAC-42/native-input-2026-11-13.md). This supersedes the pending complete-rerun entry above; SQL-provider limits remain unchanged.

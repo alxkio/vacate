@@ -113,6 +113,10 @@ const chrome = spawn(
   { stdio: ['ignore', 'ignore', 'pipe'] },
 );
 const chromeReady = waitForChromeEndpoint(chrome, { profile, output });
+let chromeStderr = '';
+chrome.stderr.on('data', (chunk) => {
+  chromeStderr = (chromeStderr + chunk.toString()).slice(-65536);
+});
 let socket,
   nextId = 0,
   frameSequence = 0;
@@ -205,8 +209,12 @@ try {
   // Synthetic UI clicks need the same activation context as real user input.
   const click = async (selector) => {
     await waitFor(`!!document.querySelector(${JSON.stringify(selector)})`);
-    const { destination, action } = await evaluate(
-      `(()=>{const target=document.querySelector(${JSON.stringify(selector)});return {destination:target.dataset.nav||null,action:target.dataset.action||null}})()`,
+    const { destination, action, scope, view, dateBefore, expandedBefore } = await evaluate(
+      `(()=>{const target=document.querySelector(${JSON.stringify(selector)});return {
+        destination:target.dataset.nav||null,action:target.dataset.action||null,
+        scope:target.dataset.scope||null,view:target.dataset.view||null,
+        expandedBefore:target.getAttribute('aria-expanded'),
+        dateBefore:window.VacateMock?.state.date?.getTime()??null}})()`,
     );
     if (selector.includes('logout') || selector.includes('a.brand')) {
       await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`, true);
@@ -219,6 +227,26 @@ try {
     if (action === 'request') {
       await waitFor(
         `!!document.querySelector('#login-form') || (document.querySelector('#dialog')?.open && !!document.querySelector('#request-form'))`,
+      );
+    }
+    if (action === 'account') {
+      await waitFor(
+        `!!document.querySelector('#login-form') || (document.querySelector(${JSON.stringify(selector)})?.getAttribute('aria-expanded') === ${JSON.stringify(expandedBefore === 'true' ? 'false' : 'true')} && ${expandedBefore === 'true' ? '!' : '!!'}document.querySelector('#account-dropdown'))`,
+      );
+    }
+    if (scope || view) {
+      await waitFor(
+        `!!document.querySelector('#login-form') || document.querySelector(${JSON.stringify(selector)})?.getAttribute('aria-pressed') === 'true'`,
+      );
+    }
+    if (action === 'previous' || action === 'next') {
+      await waitFor(
+        `!!document.querySelector('#login-form') || (()=>{const date=window.VacateMock?.state.date?.getTime();return Number.isFinite(date) && date !== ${JSON.stringify(dateBefore)}})()`,
+      );
+    }
+    if (action === 'today') {
+      await waitFor(
+        `!!document.querySelector('#login-form') || window.VacateMock?.state.date.toDateString() === new Date().toDateString()`,
       );
     }
     if (
@@ -236,6 +264,12 @@ try {
       await waitFor(
         `!!document.querySelector('#login-form') || window.VacateMock?.state.page === ${JSON.stringify(destination)}`,
       );
+      await evaluate(
+        'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))',
+      );
+    }
+    if (scope || view || ['previous', 'next', 'today'].includes(action)) {
+      // Workspace controls validate the session over HTTP before applying their state change.
       await evaluate(
         'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))',
       );
@@ -334,6 +368,16 @@ try {
         ...(await evaluate(`({focused:document.hasFocus(), visibility:document.visibilityState,
               active:document.activeElement?.tagName, ...window.__nativeFocus})`)),
       };
+      for (const [name, method] of [
+        ['target', 'Target.getTargetInfo'],
+        ['window', 'Browser.getWindowForTarget'],
+      ]) {
+        try {
+          diagnostics[name] = await call(method);
+        } catch (error) {
+          diagnostics[name + 'Error'] = error.message || String(error);
+        }
+      }
       // Capture the failed state before closing Chrome; intentional rejection tests opt out.
       if (captureFailure) {
         try {
@@ -350,6 +394,7 @@ try {
             join(output, 'native-input-failure.json'),
             JSON.stringify(diagnostics, null, 2),
           );
+          await writeFile(join(output, 'chrome-stderr.log'), chromeStderr);
         } catch (error) {
           diagnostics.artifactError = error.message;
         }
@@ -425,8 +470,10 @@ try {
         assert.equal(evidence.keyUp, false);
         const image = await readFile(join(output, 'native-input-failure.png'));
         assert.equal(image.subarray(1, 4).toString(), 'PNG');
+        assert.equal(typeof (await readFile(join(output, 'chrome-stderr.log'), 'utf8')), 'string');
         await rm(join(output, 'native-input-failure.json'));
         await rm(join(output, 'native-input-failure.png'));
+        await rm(join(output, 'chrome-stderr.log'));
       }
     }
 
@@ -1125,7 +1172,9 @@ try {
       assert.equal(await evaluate('document.querySelector("#organization-week-6").checked'), true);
       // Employee management belongs to People.
       await click('[data-nav=people]');
-      await waitFor('!!document.querySelector("vacate-people .people-table [data-edit-membership=maya]")');
+      await waitFor(
+        '!!document.querySelector("vacate-people .people-table [data-edit-membership=maya]")',
+      );
       // Membership editor saves through the API and the API response refreshes the page.
       await click('[data-edit-membership=maya]');
       await waitFor('!!document.querySelector("#membership-form")');
@@ -1135,7 +1184,9 @@ try {
       await click('#membership-form button[type=submit]');
       await waitFor('!document.querySelector("#membership-form")');
       await navigate(baseUrl + '?page=people');
-      await waitFor('!!document.querySelector("vacate-people .people-table [data-edit-membership=maya]")');
+      await waitFor(
+        '!!document.querySelector("vacate-people .people-table [data-edit-membership=maya]")',
+      );
       await click('[data-edit-membership=maya]');
       await waitFor('!!document.querySelector("#membership-form")');
       assert.equal(
@@ -1353,10 +1404,24 @@ try {
         await signIn(account, account);
         await ready();
       };
-      const select = async (selector, index) =>
-        evaluate(
-          `(()=>{const element=document.querySelector(${JSON.stringify(selector)});element.selectedIndex=${index};element.dispatchEvent(new Event('change',{bubbles:true}));})()`,
+      const setSwitch = async (selector, checked) => {
+        await waitFor(`!!document.querySelector(${JSON.stringify(selector)})`);
+        assert.equal(
+          await evaluate(`document.querySelector(${JSON.stringify(selector)}).type`),
+          'checkbox',
+          `${selector} must be a boolean switch`,
         );
+        if (
+          (await evaluate(`document.querySelector(${JSON.stringify(selector)}).checked`)) !==
+          checked
+        )
+          await click(selector);
+        await waitFor(`document.querySelector(${JSON.stringify(selector)}).checked === ${checked}`);
+      };
+      const setScopeApproval = async (required) => {
+        await setSwitch('#scope-settings-form [name=inheritApproval]', required === null);
+        if (required !== null) await setSwitch('#scope-vacation-approval', required);
+      };
       const policy = async () => {
         await load('?page=settings&section=organization');
         await waitFor('!!document.querySelector("#organization-policy-form")');
@@ -1404,14 +1469,19 @@ try {
         const before = await evaluate(
           'JSON.stringify(window.VacateFixtures.balancesFor(window.VacateSession.currentUser()))',
         );
-        await select('#carryover-enabled', 1);
+        await setSwitch('#carryover-enabled', true);
         await evaluate(
           'document.querySelector("#carryover-years").value="2";document.querySelector("#carryover-years").dispatchEvent(new Event("input",{bubbles:true}))',
         );
-        await select('#team-lead-settings', 1);
+        await setSwitch('#team-lead-settings', false);
         await savePolicy();
         await policy();
         assert.equal(await evaluate('document.querySelector("#carryover-years").value'), '2');
+        assert.equal(
+          await evaluate('document.querySelector("#team-lead-settings").checked'),
+          false,
+          'Team delegation remains disabled after saving and reload',
+        );
         assert.equal(
           await evaluate(
             'JSON.stringify(window.VacateFixtures.balancesFor(window.VacateSession.currentUser()))',
@@ -1420,14 +1490,16 @@ try {
         );
         await login('leah');
         await load('?page=settings&section=team');
-        await waitFor('!!document.querySelector("#profile-form")');
+        await waitFor(
+          '!!document.querySelector("#profile-form") && document.querySelector("[data-settings-section=profile]")?.getAttribute("aria-current") === "page"',
+        );
         assert.equal(
           await evaluate('!!document.querySelector("[data-settings-section=team]")'),
           false,
         );
         await login('daria');
         await policy();
-        await select('#team-lead-settings', 0);
+        await setSwitch('#team-lead-settings', true);
         await evaluate(
           'document.querySelector("#carryover-years").value="0";document.querySelector("#carryover-years").dispatchEvent(new Event("input",{bubbles:true}))',
         );
@@ -1440,7 +1512,7 @@ try {
           await evaluate('document.querySelector("#settings-node").textContent'),
           /Platform/,
         );
-        await select('#scope-vacation-approval', 2);
+        await setScopeApproval(false);
         await click('#scope-settings-form button');
         await waitFor(
           'document.querySelector("#scope-settings-status").textContent.includes("saved")',
@@ -1455,7 +1527,7 @@ try {
         await load('?page=settings&section=department');
         await waitFor('!!document.querySelector("#scope-settings-form")');
         assert.equal(await evaluate('document.querySelector("#settings-node").options.length'), 1);
-        await select('#scope-vacation-approval', 2);
+        await setScopeApproval(false);
         await click('#scope-settings-form button');
         await waitFor(
           'document.querySelector("#scope-settings-status").textContent.includes("saved")',
@@ -1468,7 +1540,7 @@ try {
         );
         await login('nora');
         await policy();
-        await select('#organization-vacation-approval', 1);
+        await setSwitch('#organization-vacation-approval', false);
         await savePolicy();
         await login('maya');
         await load('?page=leave');

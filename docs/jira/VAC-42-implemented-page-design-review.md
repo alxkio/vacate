@@ -152,3 +152,7 @@ The owner reported `leah own upcoming entries`: the assertion still treated Octo
 
 
 2026-11-13 · Assistant verification update: API build and 72 integration checks passed, with 25 actual-SQL cases explicitly skipped. The real future-request UI journey and deliberate post-save assertion-failure journey both passed exact request/calendar/balance restoration and session revocation. Independent QA reviewed cleanup/preservation. [Follow-up evidence](media/VAC-43/upcoming-request-deletion.md). Full functional rerun result is recorded there; existing issue status remains QA.
+
+### Native runner follow-up · 2026-11-13
+
+The owner's pushed `171134e` failed paired CI before keyboard activation: Chrome 157/Linux headless acknowledged preparation but delivered no pointer/key events. Retrieved logs and screenshot confirm the failure layer. The existing refinement subtask now tracks a headed Chrome/Xvfb CI execution correction, enhanced failure diagnostics and correction of obsolete dropdown-style interactions with Settings switches. No product behavior or permissions change. Local headed native and 4× CPU runs passed; Linux CI remains the required gate. [Evidence and limits](media/VAC-42/native-input-2026-11-13.md). Assistant work unmeasured; human actual Unknown. Issue/backlog status remains QA.

@@ -150,7 +150,10 @@ jobs:
           node --version
           npm --version
           export MOCK_SCREENSHOT_DIR="$RUNNER_TEMP/vacate-api-browser-previews"
-          node frontend/verify.mjs
+          # Use a real browser window on a virtual display for trusted input acceptance.
+          # Headless Chrome has acknowledged input without delivering any DOM events.
+          command -v xvfb-run
+          MOCK_HEADFUL=1 xvfb-run --auto-servernum --server-args='-screen 0 1600x1250x24' node frontend/verify.mjs
           python3 scripts/verify-leave-requests.py
       - name: Paired host diagnostics
         if: failure()
