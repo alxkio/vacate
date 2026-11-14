@@ -314,6 +314,27 @@ export class WorkspaceDataService {
   }
 
   balance(id: string): Balance | null {
+    if (id === 'annual') {
+      const balance = this.profiles.read()?.membership?.balance;
+      const allocation = balance?.customAllocation ?? balance?.allocation;
+      if (!balance || allocation === null || allocation === undefined) return null;
+      const available =
+        allocation -
+        balance.used -
+        (this.api.settingsAccess?.effectiveVacationApproval === true ? 0 : balance.pending);
+      return {
+        allocation,
+        available,
+        used: balance.used,
+        pending: balance.pending,
+        percentage: allocation > 0 ? Math.round((available / allocation) * 100) : null,
+        period: `${balance.periodStart} – ${balance.periodEnd}`,
+        note:
+          balance.allocation === null
+            ? 'Configured allowance; policy minimum to confirm.'
+            : 'Saved annual balance',
+      };
+    }
     return this.decision(id).status === 'eligible' ? this.catalogue.balanceOf(id) : null;
   }
 

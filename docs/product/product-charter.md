@@ -264,6 +264,14 @@ Use boolean switches in Settings while preserving inherited/null approval choice
 
 Additional owner feedback · 2026-11-12: the Vacate brand link returns to workspace home. An expired authenticated session returns to login and resumes the previous internal page after sign-in. A failed login or permission denial does not count as session expiry; return destinations cannot leave the application.
 
+### Session and page-focus refinement · 2026-11-13
+
+The owner confirmed that the reported page-rendering problem is the large brown outline around the main content after login/refresh. Remove the page-sized outline while preserving programmatic landmark/skip-link focus and visible focus on interactive controls.
+
+The owner selected a **30-minute session lifetime**. Retain the existing absolute-expiry semantics, measured from successful sign-in; page activity does not silently extend it. An API/network failure is not evidence of expiry: retain the stored ticket, hide partially loaded/stale private state and offer reconnection without requiring credentials again. A definitive authenticated 401 still requires sign-in and preserves the original safe internal destination, including when a saved-session retry expires on Login. Permission/resource denials do not sign the user out.
+
+Accepted follow-up · 2026-11-13: after reviewing the requirements for recovery across server restarts/instances, the owner explicitly instructed “go on do it”. Store sessions in the existing SQL database when SqlServer persistence is selected, using token hashes and server-owned creation/expiry instants. Preserve the 30-minute absolute lifetime, selected-session logout and account-wide revocation. SQL outages retain the browser recovery path; they are not authentication expiry. InMemory development remains process-local. This is recorded in the [ADR-0004 amendment](../adr/0004-relational-persistence.md#product-lead-amendment--shared-sessions--2026-11-13), within the existing VAC-42 subtask. No new Azure service or production identity integration is accepted. Existing memory tickets require one fresh sign-in after cutover; migration and cross-instance execution remain verification gates.
+
 
 ## Owner decisions — administrator functionality · 2026-11-12
 
@@ -301,3 +309,13 @@ Final routing clarification · 2026-11-12: the owner selected **reroute all pend
 ## Owner decision — permanent personal-request deletion · 2026-11-13
 
 The owner requested a real delete API/functionality so test teardown can remove created leave values, and selected **Administrators only**. Active administrators of the same company may permanently delete a personal saved leave request, including approved, pending or declined dates. Remove its saved request and associated date/charge rows atomically; approved consumption and pending totals are restored through derived accounting. Employees and foreign-company actors cannot delete requests. Company-generated closure leave remains protected; closure correction/cancellation is a separate unresolved workflow. This is permanent removal of saved history, not soft deletion or a GDPR erasure claim. The request's idempotency key is removed with its record; a later submission with that key may create a fresh request. No general-purpose database reset or test-only production endpoint is introduced.
+
+## Owner refinement — leave lifecycle and unified People · 2026-11-14
+
+Source: owner's follow-up on VAC-42. My Leave combines balances above one saved all-years leave/request table with status, date-period and type filters. Balances are expandable and collapsed initially. Remove the separate fictional reference history; fictional dated examples belong in the opt-in demo database, retain fixed dates as time passes, and must not double-count opening consumption.
+
+Employees may cancel their own personal Pending or Approved dates on/after the company-local current date. Multi-date requests offer all eligible dates or a selected subset; trimming dates is supported, and moving leave uses cancellation plus a new request/preview. Past dates are immutable to employee cancellation, including expired pending dates. Cancellation retains history with Cancelled status and releases its coverage/charge; permanent deletion remains admin-only under the 2026-11-13 decision. Generated closures retain their protected lifecycle. Rejected, foreign-member and foreign-company selections fail atomically. The same control is available from calendar date/request dialogs.
+
+A Pending date strictly before the company's local current date becomes Expired, including the past portion of a mixed-date request. Expired dates do not reserve or consume leave, cover calendar dates, or remain actionable in the approval inbox. Undated imported opening totals cannot be classified as past without evidence and are not assigned invented dates. Expiry runs on server access; no background service is implied.
+
+People identifies the signed-in member as You and provides search plus My team / My department / All organization scopes. Apply supplementary relationship colour to department/team labels, retaining names and a legend; remove the separate relationship column. Administrators see annual balances, recorded dates/statuses and membership actions in the same People table, without a separate balance destination. Existing direct URLs remain usable. Employee directory privacy is unchanged. Approval Requests explains when the actor's effective approval setting is disabled; other scopes and earlier saved pending work must not be silently hidden. Refine secondary action styling/alignment across these flows.

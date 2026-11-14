@@ -36,7 +36,7 @@ paths:
       operationId: createSession
       tags: [Sessions]
       summary: Sign in with an enabled development account
-      description: Development credentials are fictional and must not be used for production authentication.
+      description: Development credentials are fictional and must not be used for production authentication. Tickets expire 30 minutes after issuance without activity renewal. SqlServer mode persists only hashed tickets shared by upgraded instances using the same database; InMemory tickets remain process-local.
       security: []
       requestBody:
         required: true
@@ -62,6 +62,7 @@ paths:
       operationId: getCurrentSession
       tags: [Sessions]
       summary: Get the current session profile
+      description: Invalid, expired or revoked tickets return 401. SQL or network unavailability is not authentication expiry; clients may retain the ticket and retry.
       security:
         - bearerAuth: []
       responses:
@@ -965,6 +966,46 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+  /organizations/{organizationId}/leave/requests/{requestId}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: requestId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: cancelOwnLeaveDates
+      tags: [Leave]
+      security: [{bearerAuth: []}]
+      summary: Cancel selected current or future dates in an own personal request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [dates]
+              properties:
+                dates:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items: {type: string, format: date}
+      responses:
+        '200':
+          description: Updated request; cancellation is retained as history and releases charges.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LeaveRequest'}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /organizations/{organizationId}/leave/calendar:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
@@ -1367,10 +1408,11 @@ components:
       properties:
         accessToken:
           type: string
-          description: Opaque bearer token; retain privately and do not log.
+          description: Opaque bearer token with a 30-minute absolute lifetime; retain privately and do not log.
         expiresAt:
           type: string
           format: date-time
+          description: Server UTC expiry, exactly 30 minutes after issuance. Activity does not renew it.
     UserCreate:
       type: object
       required: [username, firstName, lastName]
@@ -1688,8 +1730,9 @@ components:
             required: [date, status, entitlementYear]
             properties:
               date: {type: string, format: date}
-              status: {type: string, enum: [Approved, Pending, Declined]}
+              status: {type: string, enum: [Approved, Pending, Declined, Cancelled, Expired]}
               entitlementYear: {type: integer}
+              canCancel: {type: boolean, description: Server eligibility hint on own request lists; mutation rechecks state.}
     LeaveRequestList:
       type: array
       items:

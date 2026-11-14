@@ -30,6 +30,9 @@
             }
           </ul>
         }
+        @for (request of managed; track request.guid) {
+          <vacate-cancel-request [request]="request" (changed)="close()" />
+        }
         @if (content.account) {
           <button class="primary" data-action="logout">Sign out</button>
         }

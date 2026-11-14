@@ -11,6 +11,7 @@ using Vacate.Api.Functions;
 using Vacate.Application.Abstractions;
 using Vacate.Application.Common;
 using Vacate.Application.Identity;
+using Vacate.Application.Leave;
 using Vacate.Application.Memberships;
 using Vacate.Application.Organizations;
 using Vacate.Application.Users;
@@ -30,7 +31,7 @@ public sealed class ResourceEndpointTests
     [SetUp]
     public void Setup() => Configure(true);
 
-    private void Configure(bool developmentAuthentication)
+    private void Configure(bool developmentAuthentication, TimeProvider? clock = null, ISessionStore? sessionStore = null)
     {
         provider?.Dispose();
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
@@ -39,12 +40,24 @@ public sealed class ResourceEndpointTests
             ["SeedData:Enabled"] = "true"
         }).Build();
         var services = new ServiceCollection().AddSingleton<IConfiguration>(configuration).AddInMemoryPersistence();
+        if (clock is not null)
+        {
+            services.AddSingleton(clock);
+        }
+
+        if (sessionStore is not null)
+        {
+            services.AddSingleton(sessionStore);
+        }
+
         services.AddSingleton<RecordMapper>();
         services.AddSingleton<AccessPolicy>();
         services.AddSingleton<UserService>();
         services.AddSingleton<MembershipService>();
         services.AddSingleton<OrganizationService>();
         services.AddSingleton<AuthenticationService>();
+        services.AddSingleton<LeaveService>();
+        services.AddSingleton<LeaveFunctions>();
         services.AddSingleton<UserFunctions>();
         services.AddSingleton<OrganizationFunctions>();
         services.AddSingleton<SessionFunctions>();
@@ -90,13 +103,40 @@ public sealed class ResourceEndpointTests
         };
     }
 
+    [Test]
+    public async Task Employee_cancellation_http_enforces_ownership_allowlist_and_atomic_date_validation()
+    {
+        Configure(true, new CancellationClock());
+        var signed = await Call("POST", "auth/sessions", body: new { username = "maya", password = "maya" });
+        var token = signed.Json!["accessToken"]!.GetValue<string>();
+        var root = $"organizations/{Company}/leave/requests";
+        var saved = await Call("POST", root, token, new { leaveTypeId = "annual", unit = "days", mode = "range", startDate = "2026-11-09", endDate = "2026-11-10", idempotencyKey = Guid.NewGuid() });
+        Assert.That(saved.Status, Is.EqualTo(200));
+        var guid = saved.Json!["request"]!["guid"]!.GetValue<string>();
+        Assert.That((await Call("POST", root + $"/{guid}/cancel", body: new { dates = new[] { "2026-11-09" } })).Status, Is.EqualTo(401));
+        var other = await Call("POST", "auth/sessions", body: new { username = "ravi", password = "ravi" });
+        Assert.That((await Call("POST", root + $"/{guid}/cancel", other.Json!["accessToken"]!.GetValue<string>(), new { dates = new[] { "2026-11-09" } })).Status, Is.EqualTo(404));
+        Assert.That((await Call("POST", root + $"/{guid}/cancel", token, new { dates = new[] { "2026-11-09" }, status = "Approved" })).Status, Is.EqualTo(400));
+        Assert.That((await Call("POST", root + $"/{guid}/cancel", token, new { dates = new[] { "2026-11-09", "2026-01-01" } })).Status, Is.EqualTo(409));
+        var cancelled = await Call("POST", root + $"/{guid}/cancel", token, new { dates = new[] { "2026-11-09" } });
+        Assert.That(cancelled.Status, Is.EqualTo(200));
+        Assert.That(cancelled.Json!["dates"]!.AsArray().Select(d => d!["status"]!.GetValue<string>()), Is.EqualTo(new[] { "Cancelled", "Pending" }));
+        Assert.That((await Call("POST", root + $"/{guid}/cancel", token, new { dates = new[] { "2026-11-09" } })).Status, Is.EqualTo(409));
+    }
+
+    private sealed class CancellationClock : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => new(2026, 11, 6, 12, 0, 0, TimeSpan.Zero);
+    }
+
     private IEnumerable<(object Target, MethodInfo Method, string Route, string[] Methods)> HttpFunctions()
     {
         foreach (var target in new object[]
         {
             provider.GetRequiredService<SessionFunctions>(),
             provider.GetRequiredService<UserFunctions>(),
-            provider.GetRequiredService<OrganizationFunctions>()
+            provider.GetRequiredService<OrganizationFunctions>(),
+            provider.GetRequiredService<LeaveFunctions>()
         })
         {
             foreach (var method in target.GetType().GetMethods())
@@ -138,11 +178,96 @@ public sealed class ResourceEndpointTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(functions, Has.Length.EqualTo(37));
+            Assert.That(functions, Has.Length.EqualTo(43));
             Assert.That(functions.All(function => function.Methods.Length == 1), Is.True);
             Assert.That(functions.Any(function => function.Route.Contains('*')), Is.False);
             Assert.That(routeMethods, Has.Length.EqualTo(routeMethods.Distinct(StringComparer.OrdinalIgnoreCase).Count()));
         });
+    }
+
+    [Test]
+    public async Task Session_has_thirty_minute_absolute_expiry_and_authenticated_activity_does_not_extend_it()
+    {
+        var clock = new SessionClock(new(2026, 11, 13, 12, 0, 0, TimeSpan.Zero));
+        Configure(true, clock);
+        var issued = clock.GetUtcNow();
+        var response = await Call("POST", "auth/sessions", body: new { username = "maya", password = "maya" });
+        Assert.That(response.Status, Is.EqualTo(200));
+        Assert.That(DateTimeOffset.Parse(response.Json!["expiresAt"]!.ToString()), Is.EqualTo(issued.AddMinutes(30)));
+        var token = response.Json["accessToken"]!.ToString();
+        clock.Advance(TimeSpan.FromMinutes(15));
+        Assert.That((await Call("GET", "auth/sessions/current", token)).Status, Is.EqualTo(200));
+        clock.Advance(TimeSpan.FromMinutes(15) - TimeSpan.FromTicks(1));
+        Assert.That((await Call("GET", "auth/sessions/current", token)).Status, Is.EqualTo(200));
+        clock.Advance(TimeSpan.FromTicks(1));
+        Assert.That((await Call("GET", "auth/sessions/current", token)).Status, Is.EqualTo(401));
+        Assert.That((await Call("GET", $"organizations/{Company}", token)).Status, Is.EqualTo(401));
+    }
+
+    [Test]
+    public async Task Sessions_have_independent_issue_times_and_signout_revokes_only_the_selected_token()
+    {
+        var clock = new SessionClock(new(2026, 11, 13, 12, 0, 0, TimeSpan.Zero));
+        Configure(true, clock);
+        var first = await Login("maya");
+        clock.Advance(TimeSpan.FromMinutes(5));
+        var second = await Login("maya");
+        Assert.That((await Call("GET", "auth/sessions/current", first)).Status, Is.EqualTo(200));
+        Assert.That((await Call("DELETE", "auth/sessions/current", first)).Status, Is.EqualTo(204));
+        Assert.That((await Call("GET", "auth/sessions/current", first)).Status, Is.EqualTo(401));
+        Assert.That((await Call("GET", "auth/sessions/current", second)).Status, Is.EqualTo(200));
+        clock.Advance(TimeSpan.FromMinutes(25));
+        Assert.That((await Call("GET", "auth/sessions/current", second)).Status, Is.EqualTo(200));
+        clock.Advance(TimeSpan.FromMinutes(5));
+        Assert.That((await Call("GET", "auth/sessions/current", second)).Status, Is.EqualTo(401));
+    }
+
+    [Test]
+    public async Task Account_disabling_revokes_unexpired_sessions_without_giving_employee_admin_authority()
+    {
+        var clock = new SessionClock(new(2026, 11, 13, 12, 0, 0, TimeSpan.Zero));
+        Configure(true, clock);
+        var employee = await Login("maya");
+        var anotherEmployeeSession = await Login("maya");
+        var admin = await Login("nora");
+        var path = $"users/{GuidFor(4)}/account";
+        clock.Advance(TimeSpan.FromMinutes(10));
+        Assert.That((await Call("PATCH", path, employee, new { status = "disabled" })).Status, Is.EqualTo(404));
+        Assert.That((await Call("GET", "auth/sessions/current", employee)).Status, Is.EqualTo(200));
+        Assert.That((await Call("PATCH", path, admin, new { status = "disabled" })).Status, Is.EqualTo(200));
+        Assert.That((await Call("GET", "auth/sessions/current", employee)).Status, Is.EqualTo(401));
+        Assert.That((await Call("GET", "auth/sessions/current", anotherEmployeeSession)).Status, Is.EqualTo(401));
+        Assert.That((await Call("PATCH", path, admin, new { status = "active" })).Status, Is.EqualTo(200));
+        Assert.That((await Call("GET", "auth/sessions/current", employee)).Status, Is.EqualTo(401));
+        Assert.That((await Call("GET", "auth/sessions/current", admin)).Status, Is.EqualTo(200));
+    }
+
+    [Test]
+    public void Session_storage_failure_is_not_reported_as_invalid_credentials_or_an_expired_ticket()
+    {
+        Configure(true, sessionStore: new FailingSessionStore());
+        var error = Assert.ThrowsAsync<IOException>(async () => await Call("GET", "auth/sessions/current", "synthetic-ticket"));
+        Assert.That(error!.Message, Is.EqualTo("Synthetic session storage unavailable."));
+    }
+
+    private sealed class FailingSessionStore : ISessionStore
+    {
+        public SessionTicket Issue(int userId, DateTimeOffset expiresAt) => throw new IOException("Synthetic session storage unavailable.");
+
+        public int? Resolve(string token, DateTimeOffset now) => throw new IOException("Synthetic session storage unavailable.");
+
+        public void Revoke(string token) => throw new IOException("Synthetic session storage unavailable.");
+
+        public void RevokeForUser(int userId) => throw new IOException("Synthetic session storage unavailable.");
+    }
+
+    private sealed class SessionClock(DateTimeOffset now) : TimeProvider
+    {
+        private DateTimeOffset current = now;
+
+        public override DateTimeOffset GetUtcNow() => current;
+
+        public void Advance(TimeSpan elapsed) => current += elapsed;
     }
 
     private async Task<string> Login(string id)

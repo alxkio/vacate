@@ -1,3 +1,5 @@
+import { CancelRequest } from '../leave/cancel-request';
+import { LeaveRequests, SavedRequest } from '../leave/data-access/leave-requests';
 import {
   ChangeDetectorRef,
   Component,
@@ -31,8 +33,14 @@ type DialogContent = {
 
 @Component({
   selector: 'vacate-workspace-dialog',
-  imports: [Request],
+  imports: [Request, CancelRequest],
   templateUrl: './workspace-dialog.html',
+  styles: `
+    #workspace-dialog-title {
+      padding-right: 40px;
+      overflow-wrap: anywhere;
+    }
+  `,
 })
 export class WorkspaceDialog {
   @Input({ required: true }) sessionUserId!: string;
@@ -49,6 +57,8 @@ export class WorkspaceDialog {
   readonly data = inject(WorkspaceDataService);
   readonly changeDetector = inject(ChangeDetectorRef);
   modal: DialogContent | null = null;
+  readonly leave = inject(LeaveRequests);
+  managed: SavedRequest[] = [];
   private trigger: HTMLElement | null = null;
 
   showDate(date: Date, trigger: HTMLElement): void {
@@ -58,6 +68,9 @@ export class WorkspaceDialog {
     this.selectedDateChange.emit(date);
     const key = dateKey(date);
     const selected = this.visibleEntries.filter((entry) => key >= entry.start && key <= entry.end);
+    this.managed = this.leave.requests.filter((request) =>
+      request.dates.some((day) => day.date === key && day.canCancel),
+    );
     this.open(
       {
         kind: 'info',
@@ -79,6 +92,7 @@ export class WorkspaceDialog {
     if (!this.ensureSession()) {
       return;
     }
+    this.managed = [];
     const personal = this.entries.find((entry) => entry.id === id);
     const own = !!personal && (this.scope === 'self' || !!trigger?.closest('.insights'));
     const entry = own ? personal : this.visibleEntries.find((candidate) => candidate.id === id);
@@ -95,6 +109,9 @@ export class WorkspaceDialog {
       );
       return;
     }
+    this.managed = own
+      ? this.leave.requests.filter((request) => entry.id.startsWith(`saved:${request.guid}:`))
+      : [];
     this.open(
       {
         kind: 'info',
@@ -108,7 +125,7 @@ export class WorkspaceDialog {
           entry.id.startsWith('saved:')
             ? entry.type === 'company-closure'
               ? 'Automatically recorded company closure · No balance impact · changes are not available here.'
-              : 'Saved request · changes are not available here.'
+              : 'Saved request · past entries cannot be changed. Eligible dates can be cancelled below.'
             : 'Fictional sample · no changes can be made here.',
         ],
       },
@@ -120,6 +137,7 @@ export class WorkspaceDialog {
     if (!this.ensureSession()) {
       return;
     }
+    this.managed = [];
     const selected = this.data.catalogue.getType(type);
     const decision = this.data.decision(type);
     if (!selected || selected.shape === 'supplement' || decision.status === 'not-eligible') {
@@ -137,19 +155,21 @@ export class WorkspaceDialog {
       );
       return;
     }
+    this.managed = [];
     this.modal = null;
     this.changeDetector.detectChanges();
     this.open({ kind: 'request', type, example }, trigger);
   }
 
   showHelp(trigger: HTMLElement): void {
+    this.managed = [];
     this.open(
       {
         kind: 'info',
         title: 'A little guide',
         paragraphs: [
-          'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the current local date. Reference examples retain their labelled historical dates.',
-          'Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. Reference examples are fictional. Submitted requests and settings are saved through the API. Assigned administrators can decide pending requests in Approval Requests. Hourly requests and editing saved requests are unavailable.',
+          'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the current local date. Your own calendar shows saved requests; shared colleague availability includes labelled reference examples.',
+          'Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. Reference examples are fictional. Submitted requests and settings are saved through the API. Assigned administrators can decide pending requests in Approval Requests. Cancel eligible dates in your own requests from My Leave or a calendar date. Past entries cannot be changed. Moving leave requires a new request after cancelling the affected dates. Hourly requests are unavailable.',
         ],
       },
       trigger,
@@ -157,6 +177,7 @@ export class WorkspaceDialog {
   }
 
   showAccountDetails(trigger: HTMLElement): void {
+    this.managed = [];
     this.open(
       {
         kind: 'info',
@@ -178,6 +199,7 @@ export class WorkspaceDialog {
 
   closed(): void {
     this.trigger?.focus();
+    this.managed = [];
   }
 
   private ensureSession(): boolean {

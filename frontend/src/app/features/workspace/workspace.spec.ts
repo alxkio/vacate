@@ -141,16 +141,31 @@ describe('Workspace navigation', () => {
     expect(element.querySelector('main .navigation-card')!.textContent).not.toContain('Maya');
   });
 
-  it('opens My Leave from its route with own request history and a personal balances link', async () => {
+  it('opens My Leave from its route with own request history and collapsed balances', async () => {
     const { page, element } = await setup('/leave', 'maya');
     expect(page.state.page).toBe('leave');
-    expect(element.querySelector('vacate-my-leave')!.textContent).toContain('My requests');
-    expect(element.querySelector('.navigation-card [data-nav="balances"]')).not.toBeNull();
+    expect(element.querySelector('vacate-my-leave')!.textContent).toContain('Leave and requests');
+    expect(element.querySelector('vacate-my-leave details')?.hasAttribute('open')).toBe(false);
     expect(element.querySelector('vacate-organization')).toBeNull();
   });
 
   it('opens request details and selected-date details in the dialog and restores focus on close', async () => {
     const { page, harness, element } = await setup('/index.html', 'maya');
+    Object.defineProperty(page.leave, 'entries', {
+      get: () => [
+        {
+          id: 'saved:own:2099-10-26',
+          person: 'maya',
+          companyId: 'northstar',
+          start: '2099-10-26',
+          end: '2099-10-26',
+          type: 'annual',
+          title: 'Annual leave',
+          status: 'Pending',
+        },
+      ],
+    });
+    harness.detectChanges();
     const dialog = element.querySelector<HTMLDialogElement>('#dialog')!;
     Object.defineProperty(dialog, 'showModal', {
       configurable: true,
@@ -171,12 +186,12 @@ describe('Workspace navigation', () => {
     expect(dialog.getAttribute('aria-labelledby')).toBe('workspace-dialog-title');
     expect(dialog.querySelector('#workspace-dialog-title')?.textContent?.trim()).toBeTruthy();
     expect(dialog.textContent).toContain('YOUR REQUEST');
-    expect(dialog.textContent).toContain('Parental leave');
+    expect(dialog.textContent).toContain('Annual leave');
 
-    page.workspaceDialog.showDate(new Date(2026, 9, 26), trigger);
+    page.workspaceDialog.showDate(new Date(2099, 9, 26), trigger);
     harness.detectChanges();
-    expect(page.selectedDate).toEqual(new Date(2026, 9, 26));
-    expect(dialog.textContent).toContain('26 October 2026');
+    expect(page.selectedDate).toEqual(new Date(2099, 9, 26));
+    expect(dialog.textContent).toContain('26 October 2099');
     expect(dialog.textContent).toContain('Annual leave · Pending');
 
     page.workspaceDialog.close();

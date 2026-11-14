@@ -50,6 +50,21 @@ export class Login implements OnDestroy {
     this.error = '';
   }
 
+  async retrySession(): Promise<void> {
+    if (this.busy) return;
+    this.busy = true;
+    try {
+      if (await this.data.api.restoreSession()) {
+        location.replace(safeReturnUrl(new URLSearchParams(location.search).get('returnUrl')));
+        return;
+      }
+      this.error = this.data.api.error;
+    } finally {
+      this.busy = false;
+      this.detector.markForCheck();
+    }
+  }
+
   async submit(
     event: Event,
     username: HTMLInputElement,

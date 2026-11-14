@@ -4,7 +4,7 @@ type: task
 summary: Review and refine every implemented Vacate page
 status: qa
 created: 2026-11-11
-updated: 2026-11-13
+updated: 2026-11-14
 parent: null
 depends_on: []
 ---
@@ -156,3 +156,65 @@ The owner reported `leah own upcoming entries`: the assertion still treated Octo
 ### Native runner follow-up · 2026-11-13
 
 The owner's pushed `171134e` failed paired CI before keyboard activation: Chrome 157/Linux headless acknowledged preparation but delivered no pointer/key events. Retrieved logs and screenshot confirm the failure layer. The existing refinement subtask now tracks a headed Chrome/Xvfb CI execution correction, enhanced failure diagnostics and correction of obsolete dropdown-style interactions with Settings switches. No product behavior or permissions change. Local headed native and 4× CPU runs passed; Linux CI remains the required gate. [Evidence and limits](media/VAC-42/native-input-2026-11-13.md). Assistant work unmeasured; human actual Unknown. Issue/backlog status remains QA.
+
+### Page outline and session recovery subtask · 2026-11-13
+
+Owner screenshot/clarification confirms the unwanted large brown outline is main-landmark focus, not a requested layout redesign. Preserve navigation/skip-link focus and control indicators while removing the frame. Owner selects 30 minutes for the existing absolute session lifetime. Source review additionally finds false sign-out after startup/Settings refresh failures and permission/resource denials; recovery must retain the ticket, hide partial/stale account state, retry without credentials and preserve the destination if retry subsequently expires.
+
+- [x] Rendered login/refresh/navigation/skip-link checks at desktop/mobile, including warm brown administrator People/Settings and interactive/negative-tabindex focus indicators.
+- [x] Network/current-user/summary failure recovery, 401 while reconnecting, safe return navigation, stale-account rejection and overlapping restore verification.
+- [x] Controlled-clock HTTP tests verify exact 30-minute expiry, no activity renewal, separate sessions, logout and account revocation; existing actor/company authorization remains enforced.
+- [x] Complete relevant frontend/backend and rendered regressions, independent QA review and evidence.
+
+[Accepted duration/recovery behavior](../product/product-charter.md#session-and-page-focus-refinement--2026-11-13). The owner subsequently approved shared SQL sessions on 2026-11-13 after reviewing the required storage/migration/revocation work. The [ADR-0004 amendment](../adr/0004-relational-persistence.md#product-lead-amendment--shared-sessions--2026-11-13) records this bounded extension; production identity remains separate. Implementation remains the existing refinement subtask, with status QA unchanged. Unrelated untracked `docs/review-43.md` is preserved. Assistant implementation/review time unmeasured; human actual Unknown. [Evidence and remaining gates](media/VAC-42/page-session-recovery-2026-11-13.md).
+
+- [x] Shared SQL adapter, hashed-ticket mapping, forward migration and limited runtime grant implementation; no target application implied.
+- [x] Cross-scope/provider expiry, logout, account-revocation and identity-isolation coverage added; offline checks passed and actual SQL execution is explicitly skipped.
+- [ ] Actual SQL execution and final independent release review; requires an authorized migrated test target. Coordinated API/database documentation and QA-authored scenarios are complete; PR verification is recorded in the linked evidence.
+
+2026-11-14 · Assistant verification: 79 integration and 10 unit tests passed; 31 actual-SQL cases skipped. Offline migration/model checks and real local HTTP checks passed. SQL application/cross-instance execution and deployment remain unverified. [Shared-session implementation and gates](media/VAC-42/shared-session-recovery-2026-11-13.md). No issue summary/type/status/dependency change; backlog row remains unchanged.
+
+
+## Leave and People review improvements · 2026-11-14 · QA
+
+Owner instruction: implement this follow-up under VAC-42 as review/improvements to previous work. Accepted behavior is recorded in the [product charter](../product/product-charter.md#owner-refinement--leave-lifecycle-and-unified-people--2026-11-14) and [API contract](../contracts/api.md#employee-cancellation-and-expiry--vac-42--2026-11-14). This extends D1's previous preserve-transactions boundary only for explicitly requested own cancellation and expiry; permanent deletion remains admin-only. No commit/push/deployment authorization is inferred for this follow-up.
+
+- [x] My Leave: collapsed expandable balances first; one all-years saved-history table with combined status/type/date filters; no separate reference-history block.
+- [x] Own multi-date requests: cancel all eligible dates or selected dates from history and calendar dialogs; server protects past dates, other people/companies and generated closures. Retain cancelled history and UTC lifecycle.
+- [x] Past Pending dates expire in company timezone; pending totals, coverage and assigned inbox release them without affecting approved history or future pending dates.
+- [x] People: identify You; relationship colours on structure labels; search and team/department/organization filters. Administrators see annual balances, history and membership actions together; preserve direct legacy routes and employee privacy.
+- [x] Explain disabled approval configuration; align secondary buttons.
+- [x] Prepared idempotent fixed-date demo-history import preserves existing data and total approved consumption; distinguish prepared import from actual SQL execution.
+- [x] Frontend/backend/contracts, focused lifecycle/isolation tests, build and rendered desktop/mobile checks documented with limits.
+
+Work log: W1 · 2026-11-14 · Assistant recorded · inspection, design, implementation and verification · duration unmeasured; human actual Unknown. Unrelated untracked `docs/review-43.md` preserved. No configured local SQL connection or local API settings was found; actual database import/migration remains unverified until a target is available. No unresolved product decision for the requested scope; moving a request is implemented as trimming plus a new authoritative preview/submission.
+
+History: QA → In progress for the owner's new review scope. Prior release/QA evidence above remains historical and does not verify this change.
+
+
+Verification update · 2026-11-14 · Assistant: In progress → QA after 96 frontend tests, 86 integration + 10 unit tests, production build, both TypeScript projects, schema/fixture scripts, offline migration/model parity, real local API/browser desktop/mobile journey and existing trusted keyboard regression passed. [Journeys, screenshots, commands, scope and remaining gates](media/VAC-42/leave-people/verification.md). Actual SQL migration/import and 32 SQL-provider cases remain unverified; the database target/access question is pending. No production, commit or deployment claim.
+
+- [ ] Apply and verify the forward migration and fictional import on the selected demo SQL target; execute durable SQL cancellation/expiry tests. Existing shared-session SQL gates above remain open.
+
+
+Final local regression · 2026-11-14 · Assistant: complete functional browser acceptance passed on a separate disposable API, alongside the targeted final seeded-history/cancellation/People run. The suite now verifies saved ledger amounts after its own submissions and preserves inner balance expansion across navigation; zero/unknown states still have explicit checks. [Final evidence and screenshots](media/VAC-42/leave-people/verification.md). Status remains QA with live SQL and owner acceptance outstanding.
+
+Review preparation · 2026-11-14 · Product lead authorized committing this follow-up and explicitly selected combining session recovery and leave/People improvements in existing [PR #7](https://github.com/alxkio/vacate/pull/7), on `VAC-42-page-session-recovery` targeting `master`. This supersedes the assistant's proposed separate branch/stacked PR. No merge or deployment is part of this instruction. Full SQL deployment applies forward migrations before API/frontend publication; `seed-fictional-history` remains a separate explicit operation afterward. Unrelated `docs/next-up.md` and `docs/review-43.md` changes are excluded. Status remains QA; no issue metadata/backlog change.
+
+Work log: W2 · 2026-11-14 · Assistant recorded · branch isolation, commit and PR preparation · duration unmeasured; human actual Unknown. Existing local verification is linked above; hosted CI and SQL execution are separate checks.
+
+CI follow-up · 2026-11-14 · Assistant: combined head `0c29c82` passed backend/frontend jobs, but [CI run 43578824965](https://github.com/alxkio/vacate/actions/runs/43578824965) failed the first native readiness probe on both the original attempt and one unchanged retry (43/40 attempts, 5057/5016 ms). Chrome 157.0.8103.50 / Node 24.22.2 / Ubuntu headed under Xvfb reported focus/visibility and an unobstructed H1, but observed zero pointer/key events. Downloaded screenshot confirms a rendered calendar without a page overlay. D-Bus stderr errors do not establish cause. The native probe implementation was unchanged apart from formatting in the combined head; no application handler failure is demonstrated.
+
+Candidate verification change: Linux Chrome chooses its compositor instead of forcing `--disable-gpu`; macOS keeps its existing flag. A new application-free document probe distinguishes browser delivery from the later app journey. All trusted-event/adversarial checks, five-second readiness deadline and complete CI mode remain required. Local headed native acceptance and six startup regressions passed; Linux verification and precise cause remain open. Backend/API/contracts and tenant permissions are unaffected. Work log W3 · Assistant recorded · CI log/artifact investigation, unchanged rerun and bounded launcher experiment · duration unmeasured; human actual Unknown. Status remains QA.
+
+CI verification update · 2026-11-14 · Assistant: candidate `559257b` passed all three jobs in [CI run 43591960174](https://github.com/alxkio/vacate/actions/runs/43591960174), using merge revision `be3b88d1206f280e48cf4b63cddad176133bd0b2`. Linux Chrome 157.0.8103.50 / Node 24.22.2 passed the application-free probe, dropped-probe recovery, missing/synthetic/partial-input and overlay rejection, trusted keyboard/calendar/dialog/chooser/avatar journeys, complete twelve-account functional suite, recovery/focus regression and final HTTP leave checks. This supersedes the candidate's pending Linux verification above. The two-part launch/probe adjustment has a passing runner result; exact Chromium cause and recurrence risk remain unverified. No application/API behavior changed in this follow-up. SQL-provider and release gates remain open; no merge or deployment. Work log W4 · Assistant recorded · CI result inspection and PR/evidence update · duration unmeasured; human actual Unknown.
+
+### Shared tables and feedback-release preparation · 2026-11-14
+
+Owner clarified that the requests-table refinement applies to My Leave and requested a common table component/design across pages. Added shared `DataTable` presentation for My Leave, People and administrator tables; features retain their existing data, decisions, filters and authorization. My Leave has a visible all-years caption, consistent status labels and aligned actions. People and the legacy administrator-balances route now share one rendering block; Nora's balance/history/membership tools remain together under People. Acceptance: personal filters/cancellation still work; Nora can search People, inspect balances/history on that page and use the legacy URL without a second table/page implementation; employee and cross-company denials remain intact.
+
+Verified locally: 96 frontend tests, both TypeScript projects and production build passed. Real API/browser checks passed for personal history/filters, partial/calendar cancellation and accounting restoration, People scopes/search/You/privacy, Nora's consolidated balances/history, the legacy URL, and matched computed table spacing/type at desktop/mobile widths. Administrator acceptance passed holidays, closures, routing, decisions, personnel and employee/foreign-tenant denials. Its fixture now expects the authoritative `canCancel:false` closure field, and login activation avoids awaiting rendered frames in a document that navigation destroys. Source review/functional checks are not new trusted-keyboard or screen-reader evidence.
+
+Live read-only check confirmed web config and API health both at `30a0206`, while PR #7 remained unmerged at `559257b`; the screenshot's older layout was not proof of a missing branch fix. Owner then explicitly authorized deploying all changes for the next feedback round. Prepared a default-off, full-dev-only `import_demo_history` deployment option that invokes the existing idempotent demo-history operator after migration, app publication and endpoint verification. Unsupported selections fail before Azure writes. Four offline deployment-gate tests and workflow YAML parsing passed. No new cloud resource, secret, paid fallback or startup import.
+
+Work log W5 · Assistant recorded · shared table implementation, local/browser verification, live revision comparison and release preparation · duration unmeasured; human actual Unknown. Status remains QA until actual release verification. Unrelated `docs/next-up.md` and `docs/review-43.md` edits remain excluded.

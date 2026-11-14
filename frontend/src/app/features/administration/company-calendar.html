@@ -25,7 +25,7 @@
       Publish automatic company closure leave, with or without an annual leave deduction. Employees
       with insufficient annual balance are skipped and reported.
     </p>
-    <div class="admin-table" role="region" tabindex="0" aria-label="Company closures">
+    <vacate-data-table class="admin-table" label="Company closures">
       <table>
         <thead>
           <tr>
@@ -54,7 +54,7 @@
           }
         </tbody>
       </table>
-    </div>
+    </vacate-data-table>
     @if (report) {
       <section class="admin-review" aria-labelledby="closure-results-heading">
         <h3 #reportHeading id="closure-results-heading" tabindex="-1">
@@ -69,7 +69,7 @@
         <p class="admin-hint">
           Recorded outcomes are the saved result for this closure, including any employees skipped.
         </p>
-        <div class="admin-table" role="region" tabindex="0" aria-label="Closure employee results">
+        <vacate-data-table class="admin-table" label="Closure employee results">
           <table>
             <thead>
               <tr>
@@ -94,7 +94,7 @@
               }
             </tbody>
           </table>
-        </div>
+        </vacate-data-table>
       </section>
     }
     <div class="admin-heading">
@@ -107,7 +107,7 @@
       Fixed month and day, every year, for the whole company. These dates are excluded from leave
       calculations. A 29 February holiday applies only in leap years.
     </p>
-    <div class="admin-table" role="region" tabindex="0" aria-label="Recurring company holidays">
+    <vacate-data-table class="admin-table" label="Recurring company holidays">
       <table>
         <thead>
           <tr>
@@ -133,7 +133,7 @@
           }
         </tbody>
       </table>
-    </div>
+    </vacate-data-table>
   }
   <p role="status" class="admin-success">{{ message }}</p>
 </section>

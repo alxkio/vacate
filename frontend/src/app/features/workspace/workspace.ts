@@ -18,10 +18,8 @@ import { Calendar } from '../calendar/calendar';
 import { UnifiedSettings } from '../settings/settings';
 import { resolveSettingsSection } from '../settings/settings-navigation';
 import { People } from '../people/people';
-import { AdminBalances } from '../leave/admin-balances';
 import { MyLeave } from '../leave/my-leave';
 import { LeaveRequests } from '../leave/data-access/leave-requests';
-import { composeOwnCalendar } from '../leave/data-access/calendar-projection';
 import {
   dateFromKey,
   dateKey,
@@ -55,7 +53,6 @@ import { WorkspaceView } from './workspace-view';
     BalanceBar,
     UnifiedSettings,
     People,
-    AdminBalances,
     MyLeave,
     WorkspaceDialog,
   ],
@@ -75,7 +72,7 @@ export class Workspace implements OnInit, OnDestroy {
 
   readonly displayPreferences = this.data.displayPreferences(this.user);
   get entries(): Entry[] {
-    return composeOwnCalendar(this.data.fixtures.ownEntries(this.user), this.leave.entries);
+    return this.leave.entries;
   }
 
   get scopes(): string[] {
@@ -103,7 +100,6 @@ export class Workspace implements OnInit, OnDestroy {
     { id: 'leave', name: 'My Leave', icon: '☀', admin: false },
     { id: 'people', name: 'People', icon: '♧', admin: false },
     { id: 'approvals', name: 'Approval Requests', icon: '☑', admin: true },
-    { id: 'admin-balances', name: 'Leave balances', icon: '▤', admin: true },
     { id: 'settings', name: 'Settings', icon: '⚙', admin: false },
   ];
   settingsSection = 'profile';
@@ -159,6 +155,10 @@ export class Workspace implements OnInit, OnDestroy {
     return this.view.period;
   }
 
+  get skipLink(): string {
+    return this.router.url.split('#')[0] + '#main';
+  }
+
   ngOnInit(): void {
     void this.refreshSavedLeave();
     this.subscription = this.route.queryParamMap.subscribe((params) => {
@@ -209,10 +209,12 @@ export class Workspace implements OnInit, OnDestroy {
   }
 
   ensureSession(): boolean {
-    if (this.data.currentUser()?.id === this.initialUser.id) {
+    const currentUser = this.data.currentUser();
+    if (currentUser?.id === this.initialUser.id) {
       return true;
     }
-    location.replace(loginUrl(this.router.url));
+    // A replacement account starts with its own defaults; an ended session can resume its page.
+    location.replace(currentUser ? '/index.html' : loginUrl(this.router.url));
     return false;
   }
 

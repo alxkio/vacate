@@ -6,7 +6,7 @@ public sealed record LeaveDraft(string LeaveTypeId, string Unit, string Mode, Da
 
 public sealed record LeaveEntitlement(string LeaveTypeId, int Year, decimal Allocation, decimal Used = 0, decimal Pending = 0);
 
-public sealed record LeaveDateRecord(DateOnly Date, string Status, int EntitlementYear);
+public sealed record LeaveDateRecord(DateOnly Date, string Status, int EntitlementYear, bool CanCancel = false);
 
 public sealed record LeaveRequestRecord(Guid Guid, string LeaveTypeId, DateTimeOffset CreatedAt, IReadOnlyList<LeaveDateRecord> Dates, Guid? ApproverGuid = null, DateTimeOffset? DecidedAt = null,
     string Source = "EmployeeRequest", Guid? ClosureGuid = null, DateTimeOffset? UpdatedAt = null);

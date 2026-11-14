@@ -3,66 +3,67 @@ import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { MyLeave } from './my-leave';
 
-describe('My Leave summary', () => {
+const requests = [
+  {
+    guid: 'old',
+    leaveTypeId: 'annual',
+    createdAt: '2025-01-01T00:00:00Z',
+    dates: [{ date: '2025-01-06', status: 'Approved' as const, entitlementYear: 2025 }],
+  },
+  {
+    guid: 'pending',
+    leaveTypeId: 'study',
+    createdAt: '2026-01-01T00:00:00Z',
+    dates: [{ date: '2026-11-20', status: 'Pending' as const, entitlementYear: 2026 }],
+  },
+  {
+    guid: 'expired',
+    leaveTypeId: 'annual',
+    createdAt: '2026-01-01T00:00:00Z',
+    dates: [{ date: '2026-01-06', status: 'Expired' as const, entitlementYear: 2026 }],
+  },
+];
+
+describe('My Leave history', () => {
   beforeEach(() => {
     sessionStorage.clear();
     TestBed.configureTestingModule({ imports: [MyLeave], providers: [fixtureWorkspaceProvider] });
+    TestBed.inject(WorkspaceDataService).environment.VacateSession.login('maya', 'maya');
   });
-
   afterEach(() => sessionStorage.clear());
 
-  it('shows used recurring types, excludes event entitlements, retains pending history and sorts newest first', () => {
-    const data = TestBed.inject(WorkspaceDataService);
-    data.environment.VacateSession.login('maya', 'maya');
+  it('puts collapsed balances before one all-years saved history table, with no separate reference history', () => {
     const fixture = TestBed.createComponent(MyLeave);
+    fixture.componentRef.setInput('savedRequests', requests);
     fixture.detectChanges();
-    const page = fixture.componentInstance;
-    expect(page.usedTypes.map((type) => type.id)).toEqual(['annual', 'carer', 'school']);
-    expect(page.entries.map((entry) => entry.start)).toEqual(
-      [...page.entries.map((entry) => entry.start)].sort().reverse(),
-    );
-    expect(fixture.nativeElement.textContent).toContain('Pending approval');
-    expect(fixture.nativeElement.querySelector('[data-used-balance="parental"]')).toBeNull();
-    expect(
-      fixture.nativeElement.querySelector('[data-used-balance="annual"]').textContent,
-    ).toContain('17');
-    expect(data.balance('annual')?.pending).toBe(3);
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.querySelector('details')?.open).toBe(false);
+    expect(element.querySelector('#saved-leave-requests tbody')?.children.length).toBe(3);
+    expect(element.textContent).not.toContain('Fictional reference history');
+    expect(fixture.componentInstance.rows.map((row) => row.day.date)).toEqual([
+      '2026-11-20',
+      '2026-01-06',
+      '2025-01-06',
+    ]);
   });
 
-  it('excludes other years from the used-type summary', () => {
-    const data = TestBed.inject(WorkspaceDataService);
-    data.environment.VacateSession.login('maya', 'maya');
+  it('combines status, type and inclusive date filters and resets them', () => {
     const fixture = TestBed.createComponent(MyLeave);
-    const records = [
-      {
-        id: 'past',
-        person: 'maya',
-        companyId: 'northstar',
-        start: '2025-01-01',
-        end: '2025-01-02',
-        type: 'study',
-        status: 'Approved',
-        title: 'Past',
-      },
-      {
-        id: 'current',
-        person: 'maya',
-        companyId: 'northstar',
-        start: '2026-01-01',
-        end: '2026-01-02',
-        type: 'annual',
-        status: 'Approved',
-        title: 'Own',
-      },
-    ];
-    Object.defineProperty(data, 'fixtures', {
-      value: { ...data.fixtures, ownEntries: () => records },
-    });
+    fixture.componentRef.setInput('savedRequests', requests);
+    const page = fixture.componentInstance;
+    page.status = 'Approved';
+    page.type = 'annual';
+    page.from = '2025-01-06';
+    page.to = '2025-01-06';
     fixture.detectChanges();
-    expect(fixture.componentInstance.usedTypes.map((type) => type.id)).toEqual(['annual']);
+    expect(page.rows.map((row) => row.request.guid)).toEqual(['old']);
+    page.type = 'study';
+    expect(page.rows).toEqual([]);
+    page.reset();
+    expect(page.rows.length).toBe(3);
   });
-  it('distinguishes loading, unavailable and empty saved history with an actionable retry', () => {
-    TestBed.inject(WorkspaceDataService).environment.VacateSession.login('maya', 'maya');
+
+  it('distinguishes loading, unavailable and empty history with retry', () => {
     const fixture = TestBed.createComponent(MyLeave);
     fixture.componentRef.setInput('savedLoading', true);
     fixture.detectChanges();
@@ -79,26 +80,5 @@ describe('My Leave summary', () => {
     fixture.componentRef.setInput('savedError', '');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('No saved requests');
-  });
-  it('labels automatic non-deducting closure records without suggesting an entitlement charge', () => {
-    const data = TestBed.inject(WorkspaceDataService);
-    data.environment.VacateSession.login('maya', 'maya');
-    const fixture = TestBed.createComponent(MyLeave);
-    fixture.componentRef.setInput('savedRequests', [
-      {
-        guid: 'closure-record',
-        closureGuid: 'closure',
-        source: 'CompanyClosure',
-        leaveTypeId: 'company-closure',
-        createdAt: '2026-11-12T00:00:00Z',
-        dates: [{ date: '2027-01-04', status: 'Approved', entitlementYear: 2027 }],
-      },
-    ]);
-    fixture.detectChanges();
-    const saved = fixture.nativeElement.querySelector('#saved-leave-requests').textContent;
-    expect(saved).toContain('Company closure');
-    expect(saved).toContain('Automatically recorded company closure');
-    expect(saved).toContain('No balance impact');
-    expect(saved).not.toContain('Entitlement 2027');
   });
 });

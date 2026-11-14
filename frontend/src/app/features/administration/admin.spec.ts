@@ -142,7 +142,10 @@ describe('Assigned approval decisions', () => {
       owner: 'company:admin:1',
       approvals: vi.fn().mockResolvedValue([request]),
       decide: vi.fn().mockRejectedValueOnce({ status: 409 }).mockResolvedValueOnce(request),
-      data: { typeName: () => 'Annual leave' },
+      data: {
+        typeName: () => 'Annual leave',
+        api: { settingsAccess: { effectiveVacationApproval: false } },
+      },
     };
     TestBed.configureTestingModule({
       imports: [Approvals],
@@ -169,7 +172,10 @@ describe('Personnel report ownership', () => {
     const api = {
       owner: 'company:admin:1',
       personnel: vi.fn(() => new Promise((resolve) => pending.push(resolve))),
-      data: { typeName: () => 'Annual leave' },
+      data: {
+        typeName: () => 'Annual leave',
+        api: { settingsAccess: { effectiveVacationApproval: false } },
+      },
     };
     TestBed.configureTestingModule({
       imports: [PersonnelOverview],

@@ -58,6 +58,7 @@ export const fixtureWorkspaceProvider = {
         return environment.VacateEligibility;
       },
       api: {
+        restoreSession: async () => !!environment.VacateSession.currentUser(),
         directory: async () =>
           fixtures.people
             .filter((p) => p.companyId === environment.VacateSession.currentUser()?.companyId)

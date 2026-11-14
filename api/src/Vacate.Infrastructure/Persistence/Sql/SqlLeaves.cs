@@ -21,7 +21,7 @@ internal sealed class SqlLeaves(SqlSession session) : ILeaveRepository
         return session.Context.Set<LeaveRequestRow>().Where(x => x.CompanyId == companyId && x.MembershipId == membershipId).ToArray()
             .Select(r => new StoredLeaveRequest(companyId, membershipId, r.IdempotencyKey, r.Fingerprint,
                 new(r.Guid, r.LeaveTypeId, r.CreatedAt, dates.Where(d => d.RequestId == r.Id).OrderBy(d => d.StartDate)
-                    .Select(d => new LeaveDateRecord(d.StartDate!.Value, d.Status == "Used" ? "Approved" : d.Status == "Cancelled" ? "Declined" : d.Status, d.EntitlementYear!.Value)).ToArray(),
+                    .Select(d => new LeaveDateRecord(d.StartDate!.Value, d.Status == "Used" ? "Approved" : d.Status == "Cancelled" ? "Declined" : d.Status == "Withdrawn" ? "Cancelled" : d.Status, d.EntitlementYear!.Value)).ToArray(),
                     r.ApproverGuid, r.DecidedAt, r.Source, r.ClosureGuid, r.UpdatedAt))).ToArray();
     }
 
@@ -72,7 +72,7 @@ internal sealed class SqlLeaves(SqlSession session) : ILeaveRepository
         foreach (var date in session.Context.Set<LeaveRow>().Where(d => d.CompanyId == request.CompanyId && d.MembershipId == request.MembershipId && d.RequestId == row.Id))
         {
             var updated = request.Request.Dates.Single(d => d.Date == date.StartDate);
-            date.Status = updated.Status == "Approved" ? "Used" : updated.Status == "Declined" ? "Cancelled" : updated.Status;
+            date.Status = updated.Status == "Approved" ? "Used" : updated.Status == "Declined" ? "Cancelled" : updated.Status == "Cancelled" ? "Withdrawn" : updated.Status;
             date.UpdatedAt = row.UpdatedAt;
         }
     }

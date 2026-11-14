@@ -251,7 +251,7 @@ export async function runAdminAcceptance({
       assert.equal(record.source, 'CompanyClosure');
       assert.equal(record.leaveTypeId, 'company-closure');
       assert.deepEqual(record.dates, [
-        { date: '2026-12-23', status: 'Approved', entitlementYear: 2026 },
+        { date: '2026-12-23', status: 'Approved', entitlementYear: 2026, canCancel: false },
       ]);
     }
   }
@@ -293,13 +293,12 @@ export async function runAdminAcceptance({
 
   await navigate(page('?page=people'));
   await waitFor('!!document.querySelector("vacate-people")');
-  await button('Personnel leave overview');
   await waitFor(
-    '!!document.querySelector("#personnel-heading") && document.querySelectorAll("vacate-personnel tbody tr").length===12',
+    'document.querySelectorAll("vacate-people [data-person]").length===12 && document.querySelector("vacate-people table").textContent.includes("Allocation")',
   );
   await screenshotWidths('admin-personnel');
-  await button('View recorded leave', 'document.querySelector("vacate-personnel")');
-  await waitFor('!!document.querySelector("#personnel-detail-heading")');
+  await button('Recorded leave', 'document.querySelector("vacate-people")');
+  await waitFor('!!document.querySelector("#person-history")');
   await screenshot('admin-personnel-recorded-history-mobile.png');
 
   assert.equal(

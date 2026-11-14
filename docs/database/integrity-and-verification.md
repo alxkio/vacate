@@ -81,7 +81,7 @@ Use NUnit with actual SQL Server provider and two independent DbContexts/connect
 | V15 | Future same-link concurrent acceptance, expiry boundary, wrong email, resend-old-link, revoke/accept race: exactly one permitted outcome; rejected attempts create no account/member and don't consume valid invitation |
 | V16 | Future submit/decide/cancel/retry/reverse preserves balanced totals and request state; day/hour separated, whole-day submission boundary; unknown approval/carryover cases remain blocked pending decisions |
 | V17 | Migration on empty SQL + representative synthetic fixtures preserves IDs/GUIDs/counts/precision, rejects dangling references before writes, repeat deployment applies no duplicate seeds; rollback/restore drill in authorized environment |
-| V18 | Existing HTTP host, shared schemas and browser settings paths work after repository swap; sessions/dev sign-in stay opt-in; multi-worker limitations stated. No application change is validated by empty infrastructure alone |
+| V18 | Existing HTTP host, shared schemas and browser settings paths work after repository swap; dev sign-in stays opt-in; InMemory sessions remain process-local. The 2026-11-13 shared SQL session amendment additionally requires cross-provider resolution, exact expiry, selected-ticket logout, account-wide revocation/rollback, concurrent sign-in versus disable and foreign-company denial. No application change is validated by empty infrastructure alone |
 
 ## Design review
 

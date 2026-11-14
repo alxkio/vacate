@@ -40,7 +40,8 @@ public sealed class AdminLeaveTests
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["SeedData:Enabled"] = "true", ["DevelopmentAuthentication:Enabled"] = "true"
+            ["SeedData:Enabled"] = "true",
+            ["DevelopmentAuthentication:Enabled"] = "true"
         }).Build();
         var services = new ServiceCollection().AddSingleton<IConfiguration>(config).AddInMemoryPersistence();
         services.AddSingleton<AccessPolicy>();
@@ -324,6 +325,30 @@ public sealed class AdminLeaveTests
     }
 
     [Test]
+    public void Expired_pending_dates_leave_the_assigned_inbox_while_future_dates_remain_actionable()
+    {
+        var request = new LeaveRequestRecord(Guid.NewGuid(), "annual", new(2026, 11, 1, 0, 0, 0, TimeSpan.Zero),
+            [new(new(2026, 11, 5), "Pending", 2026), new(new(2026, 11, 9), "Pending", 2026)], database.Users[nora].Guid);
+        provider.GetRequiredService<ILeaveRepository>().Add(new(companyId, Member(maya).Id, Guid.NewGuid(), "synthetic-expiry-inbox", request));
+        var inbox = admin.Inbox(nora, company).Single();
+        Assert.That(inbox.Dates.Select(d => d.Status), Is.EqualTo(new[] { "Expired", "Pending" }));
+        admin.Decide(nora, company, request.Guid, "approve");
+        Assert.That(leave.Requests(maya, company).Single().Dates.Select(d => d.Status), Is.EqualTo(new[] { "Expired", "Approved" }));
+        Assert.That(admin.Inbox(nora, company), Is.Empty);
+    }
+
+    [Test]
+    public void Cancellation_migration_matches_model_and_preserves_legacy_declines()
+    {
+        using var context = new VacateDbContext(new DbContextOptionsBuilder<VacateDbContext>()
+            .UseSqlServer("Server=localhost;Database=OfflineOnly;Integrated Security=true;Encrypt=true").Options);
+        Assert.That(context.Database.HasPendingModelChanges(), Is.False);
+        var script = context.GetService<IMigrator>().GenerateScript("20261113214204_SharedApiSessions", "20261114090000_LeaveCancellationExpiry", MigrationsSqlGenerationOptions.Idempotent);
+        Assert.That(script.Replace("''", "'"), Does.Contain("N'Withdrawn'").And.Contain("N'Expired'").And.Contain("N'Cancelled'"));
+        Assert.That(script, Does.Not.Contain("DELETE FROM").And.Not.Contain("DROP TABLE"));
+    }
+
+    [Test]
     public void SQL_model_and_forward_script_include_normalized_company_tables_and_decision_columns()
     {
         using var context = new VacateDbContext(new DbContextOptionsBuilder<VacateDbContext>()
@@ -492,13 +517,16 @@ public sealed class AdminLeaveTests
         var unrelated = database.LeaveRequests.Where(r => r.Request.Guid != target.Guid).ToArray();
         leave.Delete(nora, company, target.Guid);
         Assert.That(database.LeaveRequests, Is.EquivalentTo(unrelated));
-        Assert.That(leave.Requests(maya, company).Single(), Is.EqualTo(retained));
+        Assert.That(leave.Requests(maya, company).Single().Guid, Is.EqualTo(retained.Guid));
+        Assert.That(leave.Requests(maya, company).Single().Dates.Select(d => (d.Date, d.Status, d.EntitlementYear)), Is.EqualTo(retained.Dates.Select(d => (d.Date, d.Status, d.EntitlementYear))));
         Assert.That(leave.Calendar(maya, company).Select(d => d.Date), Is.EqualTo(new[] { new DateOnly(2026, 11, 3) }));
         Assert.That(Member(maya).Balance.Used, Is.EqualTo(mayaBefore.Used - 1));
         Assert.That(Member(maya).Balance.Pending, Is.EqualTo(mayaBefore.Pending));
-        Assert.That(leave.Requests(nora, company).Single(), Is.EqualTo(colleague));
+        Assert.That(leave.Requests(nora, company).Single().Guid, Is.EqualTo(colleague.Guid));
+        Assert.That(leave.Requests(nora, company).Single().Dates.Select(d => (d.Date, d.Status, d.EntitlementYear)), Is.EqualTo(colleague.Dates.Select(d => (d.Date, d.Status, d.EntitlementYear))));
         Assert.That(Member(nora).Balance, Is.EqualTo(noraBefore));
-        Assert.That(leave.Requests(foreignUser.Id, foreign.Guid).Single(), Is.EqualTo(foreignRequest));
+        Assert.That(leave.Requests(foreignUser.Id, foreign.Guid).Single().Guid, Is.EqualTo(foreignRequest.Guid));
+        Assert.That(leave.Requests(foreignUser.Id, foreign.Guid).Single().Dates.Select(d => (d.Date, d.Status, d.EntitlementYear)), Is.EqualTo(foreignRequest.Dates.Select(d => (d.Date, d.Status, d.EntitlementYear))));
         Assert.That(foreignMember.Balance, Is.EqualTo(foreignBefore));
         Assert.Throws<ServiceException>(() => leave.Delete(nora, company, foreignRequest.Guid));
     }

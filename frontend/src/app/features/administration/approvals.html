@@ -5,6 +5,12 @@
       {{ error ? 'Retry assigned requests' : 'Refresh requests' }}
     </button>
   </div>
+  @if (api.data.api.settingsAccess?.effectiveVacationApproval === false) {
+    <p class="admin-hint" role="status">
+      Approval is disabled for your scope. New requests in that scope are recorded automatically.
+      Requests from other scopes or earlier configuration may still need your decision.
+    </p>
+  }
   <p class="admin-hint">
     Pending requests explicitly assigned to you. Approval charges the applicable leave balance;
     decline changes only pending dates. Previously approved dates are preserved.
@@ -19,12 +25,10 @@
   <p id="approval-table-hint" class="admin-hint admin-scroll-hint">
     Scroll the table horizontally to see all columns and review actions.
   </p>
-  <div
+  <vacate-data-table
     class="admin-table"
-    role="region"
-    tabindex="0"
-    aria-label="Assigned pending leave requests"
-    aria-describedby="approval-table-hint"
+    label="Assigned pending leave requests"
+    describedBy="approval-table-hint"
   >
     <table>
       <caption>
@@ -66,7 +70,7 @@
         }
       </tbody>
     </table>
-  </div>
+  </vacate-data-table>
   @if (selected; as record) {
     <section class="admin-review" aria-labelledby="approval-review-heading">
       <h3 #reviewHeading id="approval-review-heading" tabindex="-1">

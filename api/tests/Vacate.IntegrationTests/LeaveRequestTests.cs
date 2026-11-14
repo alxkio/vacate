@@ -187,6 +187,83 @@ public sealed class LeaveRequestTests
         Assert.That(error!.Kind, Is.EqualTo(ServiceError.NotFound));
     }
 
+    [Test]
+    public void Employee_can_cancel_selected_own_future_dates_and_preserve_other_dates_and_timestamps()
+    {
+        var original = service.Submit(actor, company, Range("2026-11-09", "2026-11-11"), Guid.NewGuid()).Request!;
+        var before = database.Memberships.Single(m => m.Id == membership).Balance.Pending;
+        var updated = service.Cancel(actor, company, original.Guid, [new(2026, 11, 10)]);
+        Assert.Multiple(() =>
+        {
+            Assert.That(updated.Dates.Select(d => d.Status), Is.EqualTo(new[] { "Pending", "Cancelled", "Pending" }));
+            Assert.That(updated.CreatedAt, Is.EqualTo(original.CreatedAt));
+            Assert.That(updated.UpdatedAt, Is.Not.Null);
+            Assert.That(database.Memberships.Single(m => m.Id == membership).Balance.Pending, Is.EqualTo(before - 1));
+            Assert.That(service.Calendar(actor, company).Select(d => d.Date), Does.Not.Contain(new DateOnly(2026, 11, 10)));
+            Assert.That(service.Requests(actor, company).Single().Dates[1].CanCancel, Is.False);
+        });
+    }
+
+    [Test]
+    public void Cancellation_rejects_foreign_people_companies_past_dates_and_generated_closures_atomically()
+    {
+        var own = service.Submit(actor, company, Range("2026-11-04", "2026-11-09"), Guid.NewGuid()).Request!;
+        var other = database.Users.Values.Single(x => x.Username.StartsWith("nora")).Id;
+        Assert.Throws<ServiceException>(() => service.Cancel(other, company, own.Guid, [new(2026, 11, 9)]));
+        var now = DateTimeOffset.UtcNow;
+        var foreignOrg = new Organization(900009, Guid.NewGuid(), "Foreign", 5, now);
+        var foreignUser = new Vacate.Domain.Users.User(900009, Guid.NewGuid(), "cancel-foreign@example.invalid", new("Foreign", null, "Member"), "unspecified", new(false, 0, false), now);
+        database.Organizations.Add(foreignOrg.Id, foreignOrg);
+        database.Users.Add(foreignUser.Id, foreignUser);
+        database.Memberships.Add(new(900009, Guid.NewGuid(), foreignUser.Id, foreignOrg.Id,
+            new(Vacate.Domain.Memberships.SystemRoles.Employee, 900009), new(new(2026, 1, 1), new(2026, 12, 31), new(2026, 1, 1), null, null, 22, 0, 0), now));
+        var foreign = foreignUser.Id;
+        Assert.Throws<ServiceException>(() => service.Cancel(foreign, company, own.Guid, [new(2026, 11, 9)]));
+        Assert.Throws<DomainConflictException>(() => service.Cancel(actor, company, own.Guid, [new(2026, 11, 4), new(2026, 11, 9)]));
+        Assert.That(service.Requests(actor, company).Single().Dates.All(d => d.Status is "Approved" or "Pending"), Is.True);
+        var repository = provider.GetRequiredService<ILeaveRepository>();
+        var stored = repository.Find(database.Memberships.Single(m => m.Id == membership).CompanyId, own.Guid)!;
+        repository.Update(stored with { Request = stored.Request with { Source = "CompanyClosure", ClosureGuid = Guid.NewGuid() } });
+        Assert.Throws<DomainConflictException>(() => service.Cancel(actor, company, own.Guid, [new(2026, 11, 9)]));
+    }
+
+    [Test]
+    public void Past_pending_dates_expire_in_company_timezone_and_release_balance_and_calendar()
+    {
+        var member = database.Memberships.Single(m => m.Id == membership);
+        var repository = provider.GetRequiredService<ILeaveRepository>();
+        var request = new LeaveRequestRecord(Guid.NewGuid(), "annual", DateTimeOffset.UtcNow,
+            [new(new(2026, 11, 4), "Pending", 2026), new(new(2026, 11, 5), "Pending", 2026), new(new(2026, 11, 6), "Pending", 2026)]);
+        repository.Add(new(member.CompanyId, member.Id, Guid.NewGuid(), "expiry-test", request));
+        var before = member.Balance.Pending;
+        var org = database.Organizations[member.CompanyId];
+        org.Update(org.Name, 5, DateTimeOffset.UtcNow, new VacationSettings(timeZone: "Europe/Athens", countryCode: "GR"));
+        var result = service.Requests(actor, company).Single();
+        Assert.That(result.Dates.Select(d => d.Status), Is.EqualTo(new[] { "Expired", "Expired", "Pending" }));
+        Assert.That(member.Balance.Pending, Is.EqualTo(before - 2));
+        Assert.That(service.Calendar(actor, company).Select(d => d.Date), Is.EqualTo(new[] { new DateOnly(2026, 11, 6) }));
+        Assert.That(service.Requests(actor, company).Single().Dates.Take(2).All(d => !d.CanCancel), Is.True);
+        Assert.That(service.Requests(actor, company).Single().Dates.Select(d => d.Status), Is.EqualTo(result.Dates.Select(d => d.Status)));
+    }
+
+    [Test]
+    public void Fictional_dated_import_is_repeatable_and_preserves_known_opening_consumption()
+    {
+        var before = database.Memberships.ToDictionary(m => m.Id, m => (m.Balance.Used, m.Balance.Pending));
+        FictionalLeaveHistory.Apply(database);
+        var records = database.LeaveRequests.ToArray();
+        Assert.That(records.Length, Is.GreaterThan(0));
+        Assert.That(records.SelectMany(r => r.Request.Dates).All(d => d.Date.Year == 2026 && d.Status is "Approved" or "Pending"), Is.True);
+        Assert.That(database.Memberships.ToDictionary(m => m.Id, m => (m.Balance.Used, m.Balance.Pending)), Is.EquivalentTo(before));
+        FictionalLeaveHistory.Apply(database);
+        Assert.That(database.LeaveRequests, Is.EquivalentTo(records));
+        Assert.That(database.Memberships.ToDictionary(m => m.Id, m => (m.Balance.Used, m.Balance.Pending)), Is.EquivalentTo(before));
+        var history = service.Requests(actor, company);
+        Assert.That(history.SelectMany(r => r.Dates).Count(d => d.Status == "Expired"), Is.EqualTo(3));
+        Assert.That(database.Memberships.Single(m => m.Id == membership).Balance.Pending, Is.Zero);
+        Assert.That(database.Memberships.Single(m => m.Id == membership).Balance.Used, Is.EqualTo(before[membership].Used));
+    }
+
     private sealed class FixedClock(DateTimeOffset instant) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => instant;

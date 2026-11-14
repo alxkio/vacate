@@ -1,3 +1,4 @@
+import { DataTable } from '../../shared/data-table/data-table';
 import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -11,7 +12,7 @@ import {
 
 @Component({
   selector: 'vacate-company-calendar',
-  imports: [FormsModule],
+  imports: [DataTable, FormsModule],
   templateUrl: './company-calendar.html',
   styleUrl: './admin.scss',
 })

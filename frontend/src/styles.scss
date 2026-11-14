@@ -132,7 +132,12 @@ router-outlet { display: none; }
 }
 
 /* Shared task feedback, readable supporting text and keyboard access. */
-:where(summary, [tabindex]):focus-visible {
+/* The page landmark receives navigation focus without drawing a frame around the workspace. */
+main#main:focus {
+  outline: none;
+}
+
+:where(summary, [tabindex]):not(main):focus-visible {
   outline: 3px solid var(--blue);
   outline-offset: 3px;
 }
@@ -244,7 +249,7 @@ vacate-my-leave .secondary,
 vacate-people .secondary {
   min-height: 44px;
   padding: 11px 16px;
-  margin-top: 12px;
+  margin-top: 0;
   background: white;
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -339,4 +344,45 @@ input[aria-invalid="true"] {
 .topbar a.brand {
   color: inherit;
   text-decoration: none;
+}
+
+/* Align secondary actions with primary controls and form fields. */
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.action-row h2, .action-row h3 { margin-right: auto; }
+button.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper, white);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.3;
+  text-align: center;
+  cursor: pointer;
+}
+button.secondary:hover:not(:disabled) { border-color: currentColor; }
+button.secondary:disabled { opacity: .6; cursor: default; }
+
+/* Expanded balances form one surface with the personal summary. */
+.personal-balances .leave-balances {
+  margin: 16px 0 0;
+  padding: 20px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+}
+.personal-balances .type-balance {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
 }
