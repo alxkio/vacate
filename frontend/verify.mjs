@@ -110,7 +110,8 @@ const chrome = spawn(
     // Suppress browser-owned prompts, including password-save UI after fixture sign-in.
     '--enable-automation',
     '--allow-pre-commit-input',
-    '--disable-gpu',
+    // Let Linux Chrome select its compositor under Xvfb; keep the older macOS launcher.
+    ...(process.platform === 'linux' ? [] : ['--disable-gpu']),
     '--disable-background-networking',
     '--no-first-run',
     '--disable-renderer-backgrounding',
@@ -1894,6 +1895,11 @@ try {
       assert.equal(await evaluate('!!sessionStorage.getItem("vacate.session.token")'), true);
       // Run trusted keyboard input before history traversal can leave a hidden Chrome renderer.
       const nativeAcceptance = async () => {
+        // Separate browser delivery from application/login/navigation behavior.
+        await navigate('data:text/html,<main><h1>Native input delivery probe</h1></main>');
+        await prepareNativeFocus();
+        console.log('PASS: trusted pointer and keyboard delivery on an application-free document');
+        await load('?scope=self&view=month&date=2026-10-01');
         await signOut();
         await signIn('user', 'user');
         await ready();
