@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Vacate API",
-    "description": "Postman requests for all documented Vacate API operations. Import this collection and run the local API with DevelopmentAuthentication__Enabled=true and SeedData__Enabled=true. Sign in first. Requests use fictional development accounts and seeded sample GUIDs only. Run create requests before examples that use their captured IDs; sign out and soft-delete requests are ordered last. Inspect cleanup URLs before sending. Do not use the development credentials or fixture data in production. See docs/contracts/openapi.yaml.",
+    "description": "Postman requests for all documented Vacate API operations. Import this collection and run the explicit disposable test host documented in api/testing/README.md, or provision SQL test accounts separately. Sign in first. Requests use fictional development accounts and seeded sample GUIDs only. Run create requests before examples that use their captured IDs; sign out and soft-delete requests are ordered last. Inspect cleanup URLs before sending. Do not use the development credentials or fixture data in production. See docs/contracts/openapi.yaml.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {

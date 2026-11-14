@@ -36,8 +36,13 @@ export class ProfileSettings {
       this.data.fixtures.departments.find((item) => item.id === this.person?.departmentId)?.name
     );
   }
-  get systemRole(): "Admin" | "Employee" {
+  get systemRole(): 'Admin' | 'Employee' {
     return this.person?.capability === 'admin' ? 'Admin' : 'Employee';
+  }
+
+  get manager(): string {
+    const id = this.profile?.membership?.managerUserId;
+    return id ? this.data.fixtures.person(id)?.name || 'Assigned' : 'Not assigned';
   }
 
   private fields(): OwnProfileFields {
@@ -65,7 +70,9 @@ export class ProfileSettings {
   }
 
   async submit(): Promise<void> {
-    if (this.busy) {return;}
+    if (this.busy) {
+      return;
+    }
     this.message = '';
     if (this.data.currentUser()?.id !== this.accountId) {
       this.error = 'Your account changed. Reopen settings before saving.';

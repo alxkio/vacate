@@ -31,7 +31,7 @@ internal static partial class RuntimeAccess
             Execute(context, $"GRANT SELECT, INSERT, UPDATE ON OBJECT::[dbo].[{table}] TO [vacate_resource_runtime]");
         }
 
-        foreach (var table in new[] { "SystemRoles", "WorkSchedules", "LeaveEntitlementPeriods", "PublicHolidays" })
+        foreach (var table in new[] { "SystemRoles", "WorkSchedules", "LeaveEntitlementPeriods", "PublicHolidays", "DevelopmentLogins" })
         {
             Execute(context, $"GRANT SELECT ON OBJECT::[dbo].[{table}] TO [vacate_resource_runtime]");
         }

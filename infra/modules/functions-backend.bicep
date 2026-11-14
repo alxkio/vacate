@@ -84,7 +84,6 @@ resource api 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
         { name: 'AzureWebJobsStorage__clientId', value: identity.properties.clientId }
         { name: 'DevelopmentAuthentication__Enabled', value: enableDevelopmentData ? 'true' : 'false' }
-        { name: 'SeedData__Enabled', value: enableDevelopmentData ? 'true' : 'false' }
         { name: 'Persistence__Provider', value: enableSqlPersistence ? 'SqlServer' : 'InMemory' }
         { name: 'ConnectionStrings__Vacate', value: enableSqlPersistence ? 'Server=tcp:${sqlServerHostname},1433;Database=${sqlDatabaseName};Authentication=Active Directory Managed Identity;User Id=${identity.properties.clientId};Encrypt=True;TrustServerCertificate=False;Connection Timeout=90;ConnectRetryCount=3;ConnectRetryInterval=5;' : '' }
       ]

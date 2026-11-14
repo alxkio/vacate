@@ -31,6 +31,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+  /auth/development-accounts:
+    get:
+      operationId: getDevelopmentAccounts
+      tags: [Sessions]
+      summary: List public test account hints when development authentication is enabled
+      description: SQL requires explicitly enabled DevelopmentLogins and active memberships in database-marked IsDemo organizations. Returns id (public login alias), name, label (stored settings role), and team. No passwords or private profiles. Disabled development authentication returns 404. Not production account discovery.
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonData"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /organizations/{companyId}/workspace:
+    parameters:
+      - $ref: "#/components/parameters/OrganizationId"
+    get:
+      operationId: getMemberWorkspace
+      tags: [Organizations]
+      summary: Read company-scoped directory, structure and saved availability
+      description: Requires current membership. Returns companyId, countryCode, departments, teams, people (directory projection), and availability (userGuid and date only). Includes active approved/pending dates, excludes cancelled/declined/expired dates. No colleague leave types, statuses, request IDs, private profile or employment fields. Public GUIDs remain unchanged in client view models.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonData"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /auth/sessions:
     post:
       operationId: createSession

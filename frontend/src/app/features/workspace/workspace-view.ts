@@ -1,7 +1,6 @@
 import { Balance, CalendarState, Entry, Person } from '../../core/models/workspace.models';
 import {
   addDays,
-  dateFromKey,
   dateKey,
   monthName,
   currentDate,

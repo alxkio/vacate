@@ -121,8 +121,3 @@ public sealed class ProvisioningAccess(InMemoryDatabase database) : IProvisionin
 
     public bool CanProvision(int userId, int companyId) => database.ProvisioningGrants.Contains((userId, companyId));
 }
-
-public sealed class UserPresentationCatalog(InMemoryDatabase database) : IUserPresentationCatalog
-{
-    public UserPresentation? Find(int userId) => database.Presentation.GetValueOrDefault(userId);
-}

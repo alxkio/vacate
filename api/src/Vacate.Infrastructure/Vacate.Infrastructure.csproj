@@ -1,12 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <EmbeddedResource Include="Persistence/Seeds/fictional-users.json" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Vacate.Application\Vacate.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(VacateTestFixtures)' == 'true'">
+    <InternalsVisibleTo Include="Vacate.Api" />
   </ItemGroup>
 
 </Project>

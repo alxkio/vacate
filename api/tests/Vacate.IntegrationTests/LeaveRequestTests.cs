@@ -7,6 +7,7 @@ using Vacate.Application.Leave;
 using Vacate.Domain.Common;
 using Vacate.Domain.Organizations;
 using Vacate.Infrastructure;
+using Vacate.Testing;
 using Vacate.Infrastructure.Persistence;
 
 namespace Vacate.IntegrationTests;
@@ -23,8 +24,8 @@ public sealed class LeaveRequestTests
     [SetUp]
     public void Setup()
     {
-        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["SeedData:Enabled"] = "true" }).Build();
-        var services = new ServiceCollection().AddSingleton<IConfiguration>(config).AddInMemoryPersistence();
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
+        var services = new ServiceCollection().AddSingleton<IConfiguration>(config).AddInMemoryPersistence().AddInMemoryTestFixtures();
         services.AddSingleton<AccessPolicy>();
         services.AddSingleton<LeaveService>();
         services.AddSingleton<TimeProvider>(new FixedClock(new DateTimeOffset(2026, 11, 5, 23, 30, 0, TimeSpan.Zero)));
@@ -244,24 +245,6 @@ public sealed class LeaveRequestTests
         Assert.That(service.Calendar(actor, company).Select(d => d.Date), Is.EqualTo(new[] { new DateOnly(2026, 11, 6) }));
         Assert.That(service.Requests(actor, company).Single().Dates.Take(2).All(d => !d.CanCancel), Is.True);
         Assert.That(service.Requests(actor, company).Single().Dates.Select(d => d.Status), Is.EqualTo(result.Dates.Select(d => d.Status)));
-    }
-
-    [Test]
-    public void Fictional_dated_import_is_repeatable_and_preserves_known_opening_consumption()
-    {
-        var before = database.Memberships.ToDictionary(m => m.Id, m => (m.Balance.Used, m.Balance.Pending));
-        FictionalLeaveHistory.Apply(database);
-        var records = database.LeaveRequests.ToArray();
-        Assert.That(records.Length, Is.GreaterThan(0));
-        Assert.That(records.SelectMany(r => r.Request.Dates).All(d => d.Date.Year == 2026 && d.Status is "Approved" or "Pending"), Is.True);
-        Assert.That(database.Memberships.ToDictionary(m => m.Id, m => (m.Balance.Used, m.Balance.Pending)), Is.EquivalentTo(before));
-        FictionalLeaveHistory.Apply(database);
-        Assert.That(database.LeaveRequests, Is.EquivalentTo(records));
-        Assert.That(database.Memberships.ToDictionary(m => m.Id, m => (m.Balance.Used, m.Balance.Pending)), Is.EquivalentTo(before));
-        var history = service.Requests(actor, company);
-        Assert.That(history.SelectMany(r => r.Dates).Count(d => d.Status == "Expired"), Is.EqualTo(3));
-        Assert.That(database.Memberships.Single(m => m.Id == membership).Balance.Pending, Is.Zero);
-        Assert.That(database.Memberships.Single(m => m.Id == membership).Balance.Used, Is.EqualTo(before[membership].Used));
     }
 
     private sealed class FixedClock(DateTimeOffset instant) : TimeProvider

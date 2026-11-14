@@ -930,7 +930,9 @@
         "departmentLeadSettingsEnabled": true,
         "teamLeadSettingsEnabled": true,
         "carryoverEnabled": false,
-        "carryoverYears": 0
+        "carryoverYears": 0,
+        "timeZone": "Europe/Athens",
+        "countryCode": "GR"
       }
     }
   ],

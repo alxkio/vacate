@@ -1,15 +1,30 @@
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Vacate.Application.Abstractions;
+using Vacate.Infrastructure.Persistence;
 using Vacate.Domain.Memberships;
 using Vacate.Domain.Organizations;
 using Vacate.Domain.Users;
 
-namespace Vacate.Infrastructure.Persistence;
+namespace Vacate.Testing;
 
-internal static class DevelopmentDataSeeder
+internal static class InMemoryFixture
 {
-    public static void Apply(InMemoryDatabase database)
+    public static IServiceCollection AddInMemoryTestFixtures(this IServiceCollection services)
     {
-        using var stream = typeof(InMemoryDatabase).Assembly.GetManifestResourceStream("Vacate.Infrastructure.Persistence.Seeds.fictional-users.json")!;
+        var database = new InMemoryDatabase();
+        var aliases = new Dictionary<string, int>();
+        Apply(database, aliases);
+        services.AddSingleton(database);
+        services.AddSingleton<ICredentialValidator>(provider => new FixtureCredentials(database,
+            provider.GetRequiredService<IConfiguration>(), provider.GetRequiredService<IUserRepository>(), aliases));
+        return services;
+    }
+
+    private static void Apply(InMemoryDatabase database, Dictionary<string, int> aliases)
+    {
+        using var stream = typeof(InMemoryFixture).Assembly.GetManifestResourceStream("Vacate.Testing.fictional-users.json")!;
         var seed = JsonNode.Parse(stream)!;
 
         static int Id(JsonNode n, string key = "id") => n[key]!.GetValue<int>();
@@ -27,7 +42,8 @@ internal static class DevelopmentDataSeeder
             {
                 org.Update(org.Name, org.WorkWeekDays, now, new(settings["requireVacationApproval"]!.GetValue<bool>(),
                     settings["departmentLeadSettingsEnabled"]!.GetValue<bool>(), settings["teamLeadSettingsEnabled"]!.GetValue<bool>(),
-                    settings["carryoverEnabled"]!.GetValue<bool>(), settings["carryoverYears"]!.GetValue<int>()));
+                    settings["carryoverEnabled"]!.GetValue<bool>(), settings["carryoverYears"]!.GetValue<int>(),
+                    settings["timeZone"]?.ToString() ?? "UTC", settings["countryCode"]?.ToString()));
             }
             foreach (var d in n["departments"]!.AsArray().Select(x => x!))
             {
@@ -59,8 +75,7 @@ internal static class DevelopmentDataSeeder
                 p["gender"]!.ToString(), new(p["married"]?.GetValue<bool>(), p["dependentChildren"]?.GetValue<int>(), p["soleCare"]?.GetValue<bool>()), now);
             database.Users.Add(user.Id, user);
             var alias = item["alias"]!.ToString();
-            database.CredentialAliases.Add(alias, user.Id);
-            database.Presentation.Add(user.Id, new(alias, item["person"]!["capability"]!.ToString() == "lead"));
+            aliases.Add(alias, user.Id);
             if (p["membership"] is not { } m)
             {
                 continue;

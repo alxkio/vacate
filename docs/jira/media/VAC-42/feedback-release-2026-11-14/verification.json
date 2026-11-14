@@ -1,0 +1,19 @@
+{
+  "revision": "1aa57070aba213cf4d4bebb3ace5c0eab448276e",
+  "web": "https://lemon-beach-02f7a7103.4.azurestaticapps.net",
+  "api": "https://vacate-dev-sc-wv5pdctnrzamu-api.azurewebsites.net/api",
+  "actors": [
+    {
+      "actor": "maya",
+      "recordedDates": 17,
+      "expired": true,
+      "outline": "none"
+    },
+    {
+      "actor": "nora",
+      "recordedDates": 3,
+      "expired": true,
+      "outline": "none"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
+import { AdminApi } from '../administration/admin-api';
 import { People } from './people';
 
 describe('Directory recovery', () => {
@@ -70,5 +71,52 @@ describe('Directory recovery', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.people).toEqual([]);
     expect(fixture.nativeElement.textContent).not.toContain('Previous session');
+  });
+});
+
+describe('People annual report ownership', () => {
+  it('keeps the loaded year truthful while another year is entered and rejects a stale session response', async () => {
+    const pending: ((value: unknown[]) => void)[] = [];
+    let generation = 1;
+    const api = { personnel: vi.fn(() => new Promise((resolve) => pending.push(resolve))) };
+    TestBed.configureTestingModule({
+      imports: [People],
+      providers: [
+        { provide: AdminApi, useValue: api },
+        {
+          provide: WorkspaceDataService,
+          useValue: {
+            currentUser: () => ({ id: 'admin', capability: 'admin' }),
+            api: {
+              refresh: async () => {},
+              directory: async () => [],
+              get sessionGeneration() {
+                return generation;
+              },
+            },
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(People);
+    fixture.detectChanges();
+    await vi.waitFor(() => expect(pending).toHaveLength(1));
+    const loadedYear = fixture.componentInstance.year;
+    fixture.componentInstance.year = loadedYear + 1;
+    await fixture.componentInstance.loadPeople();
+    expect(api.personnel).toHaveBeenCalledTimes(1);
+    pending[0]([{ userGuid: 'saved', displayName: 'Saved report' }]);
+    await vi.waitFor(() => expect(fixture.componentInstance.loading).toBe(false));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.loadedYear).toBe(loadedYear);
+    expect(fixture.componentInstance.balances[0].displayName).toBe('Saved report');
+    const next = fixture.componentInstance.loadPeople();
+    await vi.waitFor(() => expect(pending).toHaveLength(2));
+    generation++;
+    pending[1]([{ userGuid: 'stale', displayName: 'Stale session' }]);
+    await next;
+    expect(fixture.componentInstance.balances[0].displayName).toBe('Saved report');
+    expect(fixture.componentInstance.loadedYear).toBe(loadedYear);
   });
 });

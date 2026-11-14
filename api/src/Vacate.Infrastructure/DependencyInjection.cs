@@ -15,17 +15,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInMemoryPersistence(this IServiceCollection services)
     {
         services.AddSingleton(TimeProvider.System);
-        services.AddSingleton(provider =>
-        {
-            var configuration = provider.GetRequiredService<IConfiguration>();
-            var database = new InMemoryDatabase(bool.TryParse(configuration["SeedData:Enabled"], out var seed) && seed);
-            if (seed && bool.TryParse(configuration["SeedData:LeaveHistoryEnabled"], out var history) && history)
-            {
-                FictionalLeaveHistory.Apply(database);
-            }
-
-            return database;
-        });
+        services.AddSingleton<InMemoryDatabase>();
         services.AddSingleton<IUnitOfWork, InMemoryUnitOfWork>();
         services.AddSingleton<ILeaveRepository, InMemoryLeaves>();
         services.AddSingleton<ICompanyCalendarRepository, InMemoryCompanyCalendar>();
@@ -34,8 +24,7 @@ public static class DependencyInjection
         services.AddSingleton<IOrganizationRepository, OrganizationRepository>();
         services.AddSingleton<IRoleCatalog, RoleCatalog>();
         services.AddSingleton<IProvisioningAccess, ProvisioningAccess>();
-        services.AddSingleton<IUserPresentationCatalog, UserPresentationCatalog>();
-        services.AddSingleton<ICredentialValidator, DevelopmentCredentials>();
+        services.AddSingleton<ICredentialValidator, DisabledDevelopmentCredentials>();
         services.AddSingleton<ISessionStore, InMemorySessionStore>();
         return services;
     }
@@ -66,10 +55,8 @@ public static class DependencyInjection
         }
 
         services.AddSingleton(TimeProvider.System);
-        services.AddSingleton(_ => new InMemoryDatabase(bool.TryParse(configuration["SeedData:Enabled"], out var seed) && seed));
         services.AddScoped<ISessionStore, SqlSessionStore>();
-        services.AddSingleton<IUserPresentationCatalog, UserPresentationCatalog>();
-        services.AddScoped<ICredentialValidator, DevelopmentCredentials>();
+        services.AddScoped<ICredentialValidator, SqlDevelopmentCredentials>();
         services.AddDbContext<VacateDbContext>(options => options.UseSqlServer(connection));
         services.AddScoped<SqlSession>();
         services.AddScoped<ILeaveRepository, SqlLeaves>();

@@ -227,3 +227,14 @@ internal sealed class SessionRow
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
 }
+
+// Explicit public test-login allowlist, managed by database operators rather than API callers.
+internal sealed class DevelopmentLoginRow
+{
+    public string Alias { get; set; } = "";
+    public int UserId { get; set; }
+    public bool Enabled { get; set; }
+    public bool Advertise { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}

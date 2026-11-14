@@ -14,6 +14,20 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { waitForChromeEndpoint } from './testing/chrome-startup.mjs';
 const root = dirname(fileURLToPath(import.meta.url));
+// Test expectations use the disposable local fixture; deployed UI reads only the API.
+const seed = JSON.parse(
+  await readFile(new URL('../api/testing/fixtures/fictional-users.json', import.meta.url), 'utf8'),
+);
+const publicIds = new Map([
+  ...seed.users.map((u) => [u.alias, u.profile.guid]),
+  ...seed.organizations
+    .flatMap((o) => [...o.departments, ...o.teams])
+    .map((g) => [g.name.toLowerCase(), g.guid]),
+]);
+const fixtureGuid = (alias) => {
+  assert.ok(publicIds.has(alias), 'Known test fixture alias: ' + alias);
+  return publicIds.get(alias);
+};
 const profile = await mkdtemp(join(tmpdir(), 'vacate-mock-qa-'));
 const output = process.env.MOCK_SCREENSHOT_DIR || join(root, 'previews');
 await mkdir(output, { recursive: true });
@@ -811,18 +825,16 @@ try {
       'Login overflows on mobile',
     );
     await viewport(1600, 1250);
-    const loginPersonas = [
-      ['maya', 'Employee'],
-      ['leah', 'Team lead'],
-      ['ella', 'Department lead'],
-      ['nora', 'Organization admin'],
-    ];
+    await waitFor(
+      'Array.from(document.querySelectorAll("#demo-account option")).filter(option=>option.value).length === 12',
+    );
+    const loginPersonas = seed.users.map((u) => [u.alias, u.settingsRole]);
     assert.deepEqual(
       await evaluate(
         'Array.from(document.querySelectorAll("#demo-account option")).filter(option=>option.value).map(option=>option.value)',
       ),
       loginPersonas.map(([id]) => id),
-      'Exactly one advertised login per review persona',
+      'Test chooser accounts come from the API',
     );
     for (const [id, label] of loginPersonas) {
       await evaluate(
@@ -838,8 +850,8 @@ try {
     }
     assert.equal(
       await evaluate('window.VacateFixtures.people.length'),
-      12,
-      'Retain the full fictional roster',
+      0,
+      'No company roster is loaded before authentication',
     );
     const signIn = async (username, password) => {
       await waitFor(
@@ -1171,7 +1183,7 @@ try {
         ledgerBefore,
       );
       await screenshot('organization-desktop.png');
-      await click('[data-org-department=technology]');
+      await click('[data-org-department="20000000-0000-4000-8000-000000000300"]');
       await evaluate(
         'document.querySelector("#org-node-name").value="Engineering";document.querySelector("#org-node-name").dispatchEvent(new Event("input"))',
       );
@@ -1179,7 +1191,7 @@ try {
       await waitFor(
         'document.querySelector("#org-view-heading")?.textContent.trim()==="Engineering"',
       );
-      await click('[data-org-team=platform]');
+      await click('[data-org-team="20000000-0000-4000-8000-000000000400"]');
       assert.equal(await evaluate('document.querySelectorAll(".org-members li").length'), 3);
       assert.doesNotMatch(
         await evaluate('document.querySelector(".org-members").textContent'),
@@ -1196,20 +1208,20 @@ try {
       await click('.org-breadcrumb button:first-child');
       assert.equal(
         await evaluate(
-          'document.querySelector("[data-org-department=technology]").textContent.includes("Engineering")',
+          'document.querySelector("[data-org-department=\'20000000-0000-4000-8000-000000000300\']").textContent.includes("Engineering")',
         ),
         true,
       );
       assert.equal(
         await evaluate(
-          'document.querySelector("[data-org-team=platform]").textContent.includes("Core Platform")',
+          'document.querySelector("[data-org-team=\'20000000-0000-4000-8000-000000000400\']").textContent.includes("Core Platform")',
         ),
         true,
       );
       await viewport(375, 1100);
       assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'), true);
       await screenshot('organization-mobile.png');
-      await click('[data-org-team=platform]');
+      await click('[data-org-team="20000000-0000-4000-8000-000000000400"]');
       assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'), true);
       await screenshot('organization-team-mobile.png');
       await viewport(1600, 1250);
@@ -1339,7 +1351,7 @@ try {
       await ready();
       assert.equal(
         await evaluate('window.VacateSession.currentUser().id'),
-        'nora',
+        fixtureGuid('nora'),
         'History restored prior account after switch',
       );
       assert.equal(
@@ -1503,7 +1515,13 @@ try {
         evaluate(
           `fetch(window.__vacateAcceptanceApiBase+'/organizations/20000000-0000-4000-8000-000000000100'+${JSON.stringify(path)},{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')},body:JSON.stringify(${JSON.stringify(body)})}).then(response=>response.status)`,
         );
+      let previousCountry;
       try {
+        await login('nora');
+        previousCountry = await evaluate(
+          `fetch(window.__vacateAcceptanceApiBase+'/organizations/20000000-0000-4000-8000-000000000100',{headers:{Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')}}).then(r=>r.json()).then(o=>o.settings.countryCode)`,
+        );
+        assert.equal(await patch('', { countryCode: null }), 200);
         await login('maya');
         await load('?page=leave');
         assert.equal(
@@ -1636,6 +1654,7 @@ try {
           }),
           200,
         );
+        assert.equal(await patch('', { countryCode: previousCountry }), 200);
         assert.equal(
           await patch('/teams/20000000-0000-4000-8000-000000000400', {
             requireVacationApproval: null,
@@ -1854,9 +1873,9 @@ try {
         clickCount: 1,
       });
       await screenshot('organization-keyboard-start.png');
-      await keyboardClick('[data-org-department=technology]');
+      await keyboardClick('[data-org-department="20000000-0000-4000-8000-000000000300"]');
       await waitFor('!!document.querySelector("#org-rename-form")');
-      await keyboardClick('[data-org-team=platform]');
+      await keyboardClick('[data-org-team="20000000-0000-4000-8000-000000000400"]');
       assert.equal(await evaluate('document.querySelectorAll(".org-members li").length'), 3);
       await keyboardClick('.org-breadcrumb button:first-child');
       await keyboardClick('[data-nav=calendar]');
@@ -1891,7 +1910,7 @@ try {
         await evaluate(
           'window.VacateSession.currentUser().id || window.VacateSession.currentUser().personId',
         ),
-        'maya',
+        fixtureGuid('maya'),
       );
       assert.equal(await evaluate('!!sessionStorage.getItem("vacate.session.token")'), true);
       // Run trusted keyboard input before history traversal can leave a hidden Chrome renderer.
@@ -2139,7 +2158,7 @@ try {
           await evaluate(
             'window.VacateSession.currentUser().id || window.VacateSession.currentUser().personId',
           ),
-          'nora',
+          fixtureGuid('nora'),
         );
         await signOut();
         for (const [id, team, department, role] of expected) {
@@ -2149,7 +2168,7 @@ try {
             await evaluate(
               'window.VacateSession.currentUser().id || window.VacateSession.currentUser().personId',
             ),
-            id,
+            fixtureGuid(id),
           );
           const landing = role === 'admin' ? 'org' : role === 'lead' ? 'department' : 'self';
           assert.equal(
@@ -2181,11 +2200,13 @@ try {
           );
           await click('[data-action="account-details"]');
           await waitFor(
-            `document.querySelector('#dialog')?.open && document.querySelector('#dialog-content')?.textContent.includes(${JSON.stringify('Signed in as ' + id + '.')})`,
+            `document.querySelector('#dialog')?.open && document.querySelector('#dialog-content')?.textContent.includes(${JSON.stringify('Signed in as ' + seed.users.find((u) => u.alias === id).profile.username + '.')})`,
           );
           assert.match(
             await evaluate('document.querySelector("#dialog-content").textContent'),
-            new RegExp('Signed in as ' + id + '\\.'),
+            new RegExp(
+              'Signed in as ' + seed.users.find((u) => u.alias === id).profile.username + '\\.',
+            ),
           );
           await closeDialog();
           assert.equal(
@@ -2295,7 +2316,7 @@ try {
           );
           await click('[data-nav=calendar]');
           const expectedBalance = await evaluate(
-            `window.VacateFixtures.balancesFor(window.VacateFixtures.person(${JSON.stringify(id)})).annual`,
+            `window.VacateFixtures.balancesFor(window.VacateSession.currentUser()).annual`,
           );
           assert.match(
             await evaluate('document.querySelector("#annual-overview").textContent'),
@@ -2335,7 +2356,7 @@ try {
                   : expected;
             assert.deepEqual(
               await evaluate('window.VacateMock.visiblePeople().map(person=>person.id).sort()'),
-              members.map((row) => row[0]).sort(),
+              members.map((row) => fixtureGuid(row[0])).sort(),
               id + '/' + scope + ' member roster',
             );
             if (scope === 'team' || scope === 'department') {
@@ -2355,16 +2376,16 @@ try {
                 await evaluate(
                   'Array.from(document.querySelector("#scope-group").options).map(option=>option.value).sort()',
                 ),
-                expectedGroups.sort(),
+                expectedGroups.map(fixtureGuid).sort(),
                 id + '/' + scope + ' selectable groups',
               );
               for (const group of expectedGroups) {
                 await evaluate(
-                  `document.querySelector('#scope-group').value=${JSON.stringify(group)};document.querySelector('#scope-group').dispatchEvent(new Event('change'))`,
+                  `document.querySelector('#scope-group').value=${JSON.stringify(fixtureGuid(group))};document.querySelector('#scope-group').dispatchEvent(new Event('change'))`,
                 );
                 const groupMembers = expected
                   .filter((row) => row[scope === 'team' ? 1 : 2].toLowerCase() === group)
-                  .map((row) => row[0])
+                  .map((row) => fixtureGuid(row[0]))
                   .sort();
                 assert.deepEqual(
                   await evaluate('window.VacateMock.visiblePeople().map(person=>person.id).sort()'),
@@ -2416,9 +2437,7 @@ try {
             0,
             id + ' query leaked availability',
           );
-          const foreignEvent = await evaluate(
-            `window.VacateFixtures.entries.find(entry=>entry.person!==${JSON.stringify(id)}).id`,
-          );
+          const foreignEvent = await evaluate(`'saved:guessed-foreign-request:2026-08-10'`);
           await click('[data-scope="self"]');
           await evaluate(
             `{const forged=document.createElement('button');forged.id='forged-event';forged.dataset.event=${JSON.stringify(foreignEvent)};document.body.append(forged);forged.click();forged.remove();}`,
@@ -2628,8 +2647,14 @@ try {
         );
         assert.match(
           await evaluate('document.querySelector("[data-balance=parental]").textContent'),
-          /2 \/ 4 months available/,
+          /No available balance is assumed/,
         );
+        assert.equal(
+          await evaluate('document.querySelector("[data-balance=parental] .type-bar")'),
+          null,
+          'No fictional parental allocation is presented as a saved personal balance',
+        );
+        assert.equal(await evaluate('window.VacateLeave.balanceOf("parental")'), null);
         assert.match(
           await evaluate('document.querySelector("[data-balance=dependent-illness]").textContent'),
           /Eligibility to confirm/,
@@ -2753,7 +2778,8 @@ try {
           );
         }
         await evaluate('document.querySelector("#dialog").close()');
-        await click('[data-scope="team"]');
+        // Use the real February request saved above; shared views have no generated October event.
+        await load('?scope=team&view=month&date=2026-02-01');
         await click('#calendar-content [data-event]');
         assert.doesNotMatch(
           await evaluate('document.querySelector("#dialog-content").textContent'),
@@ -2771,9 +2797,13 @@ try {
         await click('[data-action="request"]');
         await waitFor('!!document.querySelector("#request-form")');
         await closeDialog();
-        const currentAccount = await evaluate(
+        const currentUserId = await evaluate(
           'window.VacateSession.currentUser().id || window.VacateSession.currentUser().personId',
         );
+        const currentAccount = seed.users.find(
+          (user) => user.profile.guid === currentUserId,
+        )?.alias;
+        assert.ok(currentAccount, 'Current test account has a known login alias');
         assert.equal(await evaluate('!!document.querySelector(".directions")'), false);
         for (const preference of [
           { layout: 'calendar', colorScheme: 'a', name: 'calendar' },
@@ -3025,6 +3055,8 @@ try {
   server?.close();
   await Promise.race([new Promise((resolve) => chrome.once('exit', resolve)), pause(3000)]);
   if (chrome.exitCode === null) chrome.kill('SIGKILL');
+  // Chrome helpers can retain the stderr pipe after the browser exits.
+  chrome.stderr.destroy();
   await rm(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 }).catch(
     () => {},
   );

@@ -10,9 +10,10 @@ targets:
   - copilot
 dependencies:
   apm:
-    - git: figma/mcp-server-guide
-      skills:
-        - figma-use
+    - figma/mcp-server-guide/skills/figma-use
+    - figma/mcp-server-guide/skills/figma-generate-design
+    - figma/mcp-server-guide/skills/figma-design-to-code
+    - figma/mcp-server-guide/skills/figma-create-new-file
     - pbakaus/impeccable
   mcp: []
 includes: auto

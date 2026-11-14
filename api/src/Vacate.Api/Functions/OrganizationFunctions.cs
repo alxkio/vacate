@@ -32,6 +32,10 @@ public sealed class OrganizationFunctions(
             return Created($"organizations/{organization.Guid}", organization);
         });
 
+    [Function("GetMemberWorkspace")]
+    public Task<IActionResult> Workspace([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "organizations/{companyId}/workspace")] HttpRequest request, string companyId) =>
+        WithActor(request, (_, actor) => Ok(organizations.Workspace(actor, Id(companyId))));
+
     [Function("GetOrganization")]
     public Task<IActionResult> Get([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "organizations/{companyId}")] HttpRequest request, string companyId) =>
         WithActor(request, (_, actor) => Ok(organizations.Get(actor, Id(companyId))));

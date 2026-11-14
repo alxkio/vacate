@@ -62,8 +62,7 @@ public sealed class SqlPersistenceTests
         {
             ["Persistence:Provider"] = "SqlServer",
             ["ConnectionStrings:Vacate"] = Environment.GetEnvironmentVariable("VACATE_SQL_TEST_CONNECTION"),
-            ["DevelopmentAuthentication:Enabled"] = "true",
-            ["SeedData:Enabled"] = "false"
+            ["DevelopmentAuthentication:Enabled"] = "true"
         }).Build();
         var services = new ServiceCollection().AddSingleton<IConfiguration>(configuration).AddPersistence(configuration);
         if (leaveClock is not null)
@@ -101,6 +100,7 @@ public sealed class SqlPersistenceTests
         var companyIds = context.Set<OrganizationRow>().Where(x => ownedOrganizations.Contains(x.Guid)).Select(x => x.Id).ToArray();
         var userIds = context.Set<MembershipRow>().Where(x => companyIds.Contains(x.CompanyId)).Select(x => x.UserId)
             .Concat(context.Set<DevelopmentAccessRow>().Where(x => companyIds.Contains(x.CompanyId)).Select(x => x.UserId)).Distinct().ToArray();
+        context.Set<DevelopmentLoginRow>().Where(x => userIds.Contains(x.UserId)).ExecuteDelete();
         context.Set<DevelopmentAccessRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<CompanyClosureResultRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<CompanyHolidayRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
@@ -123,6 +123,42 @@ public sealed class SqlPersistenceTests
         provider.Dispose();
         provider = null!;
         ownedOrganizations.Clear();
+    }
+
+    [Test]
+    public void Development_accounts_come_from_active_marked_test_tenants_and_not_embedded_ids()
+    {
+        var username = Use(s => s.GetRequiredService<IUserRepository>().Find(a.MemberId)!.Username);
+        var alias = username.Split('@')[0];
+        Assert.That(Use(s => s.GetRequiredService<ICredentialValidator>().Validate(alias, alias)), Is.Null);
+        using (var scope = provider.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<VacateDbContext>();
+            context.Set<OrganizationRow>().Single(o => o.Id == a.CompanyId).IsDemo = true;
+            context.SaveChanges();
+        }
+
+        Assert.That(Use(s => s.GetRequiredService<ICredentialValidator>().Validate(alias, alias)), Is.Null, "A test marker alone never enables public credentials.");
+        using (var scope = provider.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<VacateDbContext>();
+            var now = DateTimeOffset.UtcNow;
+            context.Add(new DevelopmentLoginRow { Alias = alias, UserId = a.MemberId, Enabled = true, Advertise = true, CreatedAt = now, UpdatedAt = now });
+            context.SaveChanges();
+        }
+
+        Assert.That(Use(s => s.GetRequiredService<ICredentialValidator>().Validate(alias, alias)), Is.EqualTo(a.MemberId));
+        Assert.That(Use(s => s.GetRequiredService<ICredentialValidator>().Accounts()).Any(account => account.Id == alias), Is.True);
+        var foreign = Use(s => s.GetRequiredService<IUserRepository>().Find(b.MemberId)!.Username.Split('@')[0]);
+        Assert.That(Use(s => s.GetRequiredService<ICredentialValidator>().Validate(foreign, foreign)), Is.Null);
+        using (var scope = provider.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<VacateDbContext>();
+            context.Set<OrganizationRow>().Single(o => o.Id == a.CompanyId).IsDemo = false;
+            context.SaveChanges();
+        }
+
+        Assert.That(Use(s => s.GetRequiredService<ICredentialValidator>().Validate(alias, alias)), Is.Null);
     }
 
     [Test]

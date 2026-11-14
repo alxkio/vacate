@@ -9,12 +9,7 @@ const schema = JSON.parse(
   await readFile(new URL('../docs/contracts/user.schema.json', import.meta.url)),
 );
 const seed = JSON.parse(
-  await readFile(
-    new URL(
-      '../api/src/Vacate.Infrastructure/Persistence/Seeds/fictional-users.json',
-      import.meta.url,
-    ),
-  ),
+  await readFile(new URL('../api/testing/fixtures/fictional-users.json', import.meta.url)),
 );
 const ajv = new Ajv({ strict: false, allErrors: true });
 formats(ajv);

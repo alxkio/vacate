@@ -1,6 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { Entry } from '../../../core/models/workspace.models';
-import { apiId } from '../../../core/state/workspace-api.service';
 import { WorkspaceDataService } from '../../../core/state/workspace-data.service';
 
 export type LeaveDraft = {
@@ -89,7 +88,7 @@ export class LeaveRequests {
     return this.data.api.authenticatedRequest<T>(
       actor.id,
       method,
-      `organizations/${apiId(actor.companyId)}/leave/${resource}`,
+      `organizations/${actor.companyId}/leave/${resource}`,
       body,
     );
   }
@@ -125,6 +124,7 @@ export class LeaveRequests {
           'GET',
           'calendar',
         ),
+        this.data.api.refreshWorkspace?.(),
       ]);
       if (owner !== this.owner || sequence !== this.refreshSequence) {
         return;

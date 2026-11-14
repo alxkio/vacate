@@ -24,7 +24,7 @@ The [2026-11-13 ADR-0004 amendment](../adr/0004-relational-persistence.md#produc
 
 `api/tools/Vacate.Database` is a tooling executable, not another application. `script` generates idempotent SQL without connecting. `inspect` reports table names/counts only. `migrate` requires an explicit VACATE_SQL_CONNECTION, rejects unknown migration history and refuses to baseline a nonempty unrelated database. It runs reviewed forward migrations only; no downgrade/reset command is exposed. Repeat migration applies no duplicate seeds.
 
-`seed-fictional --empty-only` is a separate explicit import of all twelve existing fixture accounts/catalogues, only into empty resource tables. It refuses existing data rather than merging/overwriting. Fixture identities/lifecycle/balance values are preserved; sequence restarts only advance. Production credentials/session tokens are never copied. No export of ephemeral hosted memory state is claimed.
+Historical implementation: `seed-fictional --empty-only` imported the original fictional accounts into empty tables. Product lead superseded this approach on 2026-11-14: the command and SQL seeder are removed; occasional test-company creation/updates use explicit, versioned SQL scripts. See [current test-data ownership](test-data.md). Existing saved data is unaffected by removing the command.
 
 Example (the value is an Entra connection template, not a credential):
 

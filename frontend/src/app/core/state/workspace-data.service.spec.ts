@@ -4,7 +4,10 @@ import { WorkspaceApiService } from './workspace-api.service';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
 import { WorkspaceDataService } from './workspace-data.service';
 
-type WorkspaceApiTestDouble = Pick<WorkspaceApiService, 'profiles' | 'currentUser' | 'logout'> & {
+type WorkspaceApiTestDouble = Pick<
+  WorkspaceApiService,
+  'profiles' | 'currentUser' | 'logout' | 'workspace'
+> & {
   organization: ReturnType<typeof fixtureWorkspaceProvider.useFactory>['organization'];
   login: ReturnType<
     typeof fixtureWorkspaceProvider.useFactory
@@ -23,6 +26,36 @@ describe('Angular demo data boundary', () => {
           useFactory: (): WorkspaceApiTestDouble => {
             const fixture = fixtureWorkspaceProvider.useFactory();
             return {
+              get workspace() {
+                return {
+                  companyId: fixture.fixtures.company.id,
+                  countryCode: fixture.fixtures.company.countryCode,
+                  teams: fixture.fixtures.teams.map((t) => ({
+                    guid: t.id,
+                    name: t.name,
+                    departmentId: t.departmentId || null,
+                  })),
+                  departments: fixture.fixtures.departments.map((d) => ({
+                    guid: d.id,
+                    name: d.name,
+                  })),
+                  people: fixture.fixtures.people.map((p) => ({
+                    guid: p.id,
+                    firstName: p.name,
+                    lastName: 'Example',
+                    middleName: null,
+                    gender: 'unspecified',
+                    username: p.email,
+                    email: p.email,
+                    jobTitle: p.title,
+                    systemRole: p.capability,
+                    teamId: p.teamId,
+                    teamName: p.team,
+                    departmentId: p.departmentId,
+                  })),
+                  availability: [],
+                };
+              },
               profiles: fixture.profiles,
               organization: fixture.organization,
               currentUser: fixture.currentUser,
@@ -103,34 +136,27 @@ describe('Angular demo data boundary', () => {
     const original = data.currentUser()!;
     const moved = { ...original, teamId: 'platform', team: 'Platform' };
     vi.spyOn(data.api, 'currentUser').mockReturnValue(moved);
-    Object.defineProperty(data.api, 'teamMembers', {
+    const workspace = data.api.workspace!;
+    Object.defineProperty(data.api, 'workspace', {
       configurable: true,
-      value: [
-        {
-          username: 'maya@example.invalid',
-          email: 'maya@example.invalid',
-          firstName: 'Maya',
-          middleName: null,
-          lastName: 'Example',
-          jobTitle: 'Engineer',
-          systemRole: 'employee',
-        },
-        {
-          username: 'ravi@example.invalid',
-          email: 'ravi@example.invalid',
-          firstName: 'Ravi',
-          middleName: null,
-          lastName: 'Example',
-          jobTitle: 'Engineer',
-          systemRole: 'employee',
-        },
-      ],
+      value: {
+        ...workspace,
+        people: workspace.people
+          .filter((p) => ['maya', 'ravi'].includes(p.guid!))
+          .map((p) => ({ ...p, teamId: 'platform' })),
+        availability: [
+          { userGuid: 'maya', date: '2026-07-13' },
+          { userGuid: 'ravi', date: '2026-07-14' },
+        ],
+      },
     });
-    expect(data.myTeamPeople.map((person) => person.id)).toEqual(['maya', 'ravi']);
-    expect(data.fixtures.peopleFor(moved, 'team').map((person) => person.id)).toEqual([
-      'maya',
-      'ravi',
-    ]);
+    expect(data.myTeamPeople.map((person) => person.id).sort()).toEqual(['maya', 'ravi']);
+    expect(
+      data.fixtures
+        .peopleFor(moved, 'team')
+        .map((person) => person.id)
+        .sort(),
+    ).toEqual(['maya', 'ravi']);
     expect(data.fixtures.allowedTeams(moved).map((team) => team.id)).toContain('platform');
     expect(data.fixtures.peopleFor(moved, 'self')).toEqual([moved]);
     expect(data.balance('annual')?.available).toBe(14);

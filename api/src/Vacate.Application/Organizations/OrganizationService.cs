@@ -1,5 +1,6 @@
 using Vacate.Application.Abstractions;
 using Vacate.Application.Common;
+using Vacate.Application.Leave;
 using Vacate.Application.Organizations.Commands;
 using Vacate.Domain.Common;
 using Vacate.Domain.Organizations;
@@ -12,7 +13,7 @@ public enum StructureKind
 }
 
 public sealed class OrganizationService(IOrganizationRepository organizations, IUserRepository users, IMembershipRepository memberships,
-    IRoleCatalog roles, IProvisioningAccess provisioning, IUnitOfWork unitOfWork, AccessPolicy access, RecordMapper mapper, TimeProvider clock)
+    IRoleCatalog roles, IProvisioningAccess provisioning, IUnitOfWork unitOfWork, AccessPolicy access, RecordMapper mapper, TimeProvider clock, ILeaveRepository leaves)
 {
     public IReadOnlyList<OrganizationRecord> List(int actorId) => unitOfWork.Execute(() =>
     {
@@ -43,6 +44,20 @@ public sealed class OrganizationService(IOrganizationRepository organizations, I
     {
         var org = access.RequireMember(actorId, guid);
         return (IReadOnlyList<DirectoryUserRecord>)memberships.ForOrganization(org.Id).Select(m => users.Find(m.UserId)).Where(u => u is { IsDeleted: false }).Select(u => mapper.Directory(u!)).ToArray();
+    });
+
+    public MemberWorkspace Workspace(int actorId, Guid guid) => unitOfWork.Execute(() =>
+    {
+        var org = access.RequireMember(actorId, guid);
+        var activeMembers = memberships.ForOrganization(org.Id).Where(m => users.Find(m.UserId) is { IsDeleted: false }).ToArray();
+        var availability = activeMembers.SelectMany(member => leaves.Requests(org.Id, member.Id)
+            .SelectMany(request => request.Request.Dates.Where(date => date.Status is "Approved" or "Pending")
+                .Select(date => new MemberAvailability(users.Find(member.UserId)!.Guid, date.Date))))
+            .Distinct().OrderBy(date => date.Date).ToArray();
+        return new MemberWorkspace(org.Guid, org.Settings.CountryCode,
+            org.Departments.Where(d => !d.IsDeleted).Select(RecordMapper.Department).ToArray(),
+            org.Teams.Where(t => !t.IsDeleted).Select(t => RecordMapper.Team(org, t)).ToArray(),
+            activeMembers.Select(m => mapper.Directory(users.Find(m.UserId)!)).ToArray(), availability);
     });
 
     public OrganizationReferences References(int actorId, Guid guid) => unitOfWork.Execute(() =>
@@ -206,3 +221,8 @@ public sealed class OrganizationService(IOrganizationRepository organizations, I
     private static int NodeId(Organization org, StructureKind kind, Guid guid) => (kind == StructureKind.Team ? org.Teams.Where(n => !n.IsDeleted && n.Guid == guid).Select(n => (int?)n.Id).SingleOrDefault() :
         org.Departments.Where(n => !n.IsDeleted && n.Guid == guid).Select(n => (int?)n.Id).SingleOrDefault()) ?? throw new ServiceException(ServiceError.NotFound, "Structure node unavailable.");
 }
+
+// Shared availability deliberately excludes request IDs, types, status and private membership/profile fields.
+public sealed record MemberAvailability(Guid UserGuid, DateOnly Date);
+public sealed record MemberWorkspace(Guid CompanyId, string? CountryCode, IReadOnlyList<DepartmentRecord> Departments,
+    IReadOnlyList<TeamRecord> Teams, IReadOnlyList<DirectoryUserRecord> People, IReadOnlyList<MemberAvailability> Availability);

@@ -4,7 +4,7 @@ type: story
 summary: Engineer and maintain repository AI context
 status: in-progress
 created: 2026-10-30
-updated: 2026-11-11
+updated: 2026-11-14
 parent: null
 depends_on: []
 ---
@@ -168,3 +168,13 @@ Verification: profile/root `applyTo` scopes remain aligned; relative references 
 - **W7 · Assistant recorded:** inspected APM/context/issue guidance, previewed installation, interrupted the first slow clone attempt, installed over explicit HTTPS, and checked deployment and audits. Duration: Unknown (total not measured); human actual: Unknown. The successful APM invocation reported automation elapsed of 347.4 seconds; this is included in the unmeasured iteration, not an additional assistant-time total.
 - **H8 · Assistant:** remains In progress; backlog summary, type, status and dependencies are unchanged.
 - **Verification:** installation exited successfully; the skill header reports version 4.8.2, and its launcher is executable. `apm audit pbakaus/impeccable` exited 0 with two informational unusual-character findings. `apm audit --ci` replayed both dependencies without drift and passed lockfile/ref/deployment checks, but exited 1 because the pre-existing `figma/mcp-server-guide` subset entry `figma-use` was not found in that package tree. That separate configuration remains unchanged. Fresh-session discovery and launcher execution on macOS 12 are **UNVERIFIED**. Application/API/frontend contracts and tenant isolation are unaffected; no application tests were needed.
+
+
+## Figma APM dependency repair · 2026-11-14
+
+- **C12 · Product lead / assistant:** requested checking apm.yml and fixing the incorrectly added Figma skills during the ongoing VAC-42 application cleanup. The four requested skill names are valid; the repository-root dependency resolved as an agent plugin and its subset produced no deployed skill files. Replace it with four direct skills/figma-* folder dependencies, preserving Codex/Copilot targets and Impeccable.
+- **D12 · Assistant:** APM 0.35.0 installed the four standalone skills and their reference files under .agents/skills and refreshed apm.lock.yaml. Figma resolves to 5f3024c3decd83ff6f0bfb3ef36a2c4cfbff961d; Impeccable remains at f37ae34f2aba824b1e9a8e1d22ef75b08516642a. Sources: [Figma skill tree](https://github.com/figma/mcp-server-guide/tree/5f3024c3decd83ff6f0bfb3ef36a2c4cfbff961d/skills), [APM direct skill dependency example](https://github.com/microsoft/apm#readme), checked 2026-11-14. No Figma file or design was edited. This is a bounded config repair during already-active application work, with no branch switch that could disturb pending edits.
+- **W11 · Assistant recorded:** inspect config/lock/local package and upstream paths, replace plugin-root subset with skill-folder dependencies, install and audit. Duration unmeasured; human actual Unknown. APM reported 39.4 seconds automation elapsed for the successful install; included in the unmeasured iteration, not an additional time total.
+- **H12 · Assistant:** status/summary/dependencies and backlog remain unchanged. Installation exited 0; all four skill folders, lockfile virtual paths and resource hashes are checked. Audit result is recorded below. Org policy discovery could not find/read the optional private policy repository; no org-policy enforcement is claimed. Fresh-session skill discovery remains UNVERIFIED; start a new session to reload skills. No user-global MCP reconfiguration or application changes were required for this config repair; concurrent application changes are recorded under VAC-42.
+
+- **Verification result:** apm audit --ci exited 0; all ten lockfile/ref/ledger/installed-file/subset/config/integrity/consent/drift checks passed. This resolves the Figma subset failure recorded in C8. The optional org-policy lookup warning remains an external discovery/access limit, not a failed skill installation.

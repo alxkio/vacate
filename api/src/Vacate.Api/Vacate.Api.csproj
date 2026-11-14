@@ -1,4 +1,14 @@
 <Project Sdk="Azure.Functions.Sdk/1.0.0">
+  <PropertyGroup Condition="'$(VacateTestFixtures)' == 'true'">
+    <DefineConstants>$(DefineConstants);VACATE_TEST_FIXTURES</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(VacateTestFixtures)' == 'true'">
+    <Compile Include="../../testing/*.cs" Link="Testing/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../../testing/fixtures/fictional-users.json" LogicalName="Vacate.Testing.fictional-users.json" />
+  </ItemGroup>
+  <Target Name="RejectPublishingTestFixtures" BeforeTargets="PrepareForPublish" Condition="'$(VacateTestFixtures)' == 'true'">
+    <Error Text="Test fixture builds cannot be published. Publish without VacateTestFixtures=true." />
+  </Target>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" />

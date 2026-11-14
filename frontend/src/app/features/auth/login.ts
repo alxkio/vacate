@@ -1,4 +1,6 @@
 import { ChangeDetectorRef, Component, inject, OnDestroy } from '@angular/core';
+import { SessionApiService } from '../../core/http/session-api.service';
+import { firstValueFrom } from 'rxjs';
 import { safeReturnUrl } from '../../core/http/session-navigation';
 import {
   addDays,
@@ -12,12 +14,10 @@ import {
 export class Login implements OnDestroy {
   readonly data = inject(WorkspaceDataService);
   readonly detector = inject(ChangeDetectorRef);
-  readonly personas = [
-    { id: 'maya', label: 'Employee', name: 'Maya' },
-    { id: 'leah', label: 'Team lead', name: 'Leah' },
-    { id: 'ella', label: 'Department lead', name: 'Ella' },
-    { id: 'nora', label: 'Organization admin', name: 'Nora' },
-  ];
+  private readonly sessions = inject(SessionApiService);
+  personas: { id: string; label: string; name: string; team: string }[] = [];
+  accountsError = '';
+
   readonly today = currentDate();
   readonly month = monthName(this.today);
   readonly days = Array.from({ length: 7 }, (_, i) => addDays(weekStart(this.today), i));
@@ -28,6 +28,18 @@ export class Login implements OnDestroy {
   constructor() {
     document.body.classList.add('login-page');
     document.title = 'Sign in · Vacate demo';
+    void this.loadAccounts();
+  }
+
+  async loadAccounts(): Promise<void> {
+    this.accountsError = '';
+    try {
+      this.personas = await firstValueFrom(this.sessions.accounts());
+    } catch {
+      this.personas = [];
+      this.accountsError = 'Test accounts could not be loaded. Retry or enter your credentials.';
+    }
+    this.detector.markForCheck();
   }
 
   ngOnDestroy(): void {
@@ -41,12 +53,11 @@ export class Login implements OnDestroy {
     description: HTMLElement,
   ): void {
     const persona = this.personas.find((option) => option.id === id);
-    const person = this.data.fixtures.person(id);
-    if (!persona || !person) {
+    if (!persona) {
       return;
     }
-    username.value = password.value = person.username;
-    description.textContent = `${persona.label} · ${person.team} · ${person.username}`;
+    username.value = password.value = persona.id;
+    description.textContent = `${persona.label} · ${persona.team} · ${persona.id}`;
     this.error = '';
   }
 
