@@ -19,6 +19,8 @@ The `deploy RUNTIME_NAME RUNTIME_CLIENT_ID` operator command:
 
 Any failure blocks both application publications. If migrations succeeded but grants or schema verification fail, the schema changes remain applied; repair permissions or add a forward correction and retry. No automatic `Down`, reset, fictional import, entitlement configuration or holiday seeding runs during deployment. Migration history checks do not detect every kind of manual schema drift; mapped-column reads catch missing objects/columns, not every altered constraint or unexpected data value.
 
+For the owner's explicit VAC-42 dev feedback refresh, `import_demo_history=true` opts into the existing idempotent `seed-fictional-history` operator after both publications and endpoint verification. It defaults to false; preview, frontend-only and non-dev selections are rejected before deployment. The import uses the same designated SQL database already validated by the migration gate and exposes the migration secret only to that separate operator step. It converts recognized fictional openings for known demo memberships without a reset. Import failure fails the run after publication; inspect and retry the idempotent operation rather than claiming an application rollback. Normal deployments still perform no fictional import.
+
 ### Transient unavailability before migration
 
 The founder reported SQL 40613 on the first migration-history connection on 2026-11-06, before migration writes began. Serverless auto-resume is a likely explanation, not a confirmed diagnosis from that log alone. The availability probe uses EF's SQL Server retry strategy in a separate, read-only context. It leaves the operator's migration and explicit grant transactions unchanged and does not retry the whole deployment command. Errors the provider classifies as nontransient fail immediately; transient errors that outlast the probe's bounded attempts still block publication. The total wait includes connection/command attempts as well as retry delays, not just the 15-second delay cap.
@@ -35,7 +37,7 @@ An administrator must provision a dedicated Entra service principal as a databas
 
 Set the GitHub Actions repository secret for the selected environment: `AZURE_SQL_MIGRATION_CONNECTION_DEV`, `AZURE_SQL_MIGRATION_CONNECTION_STAGING` or `AZURE_SQL_MIGRATION_CONNECTION_PROD`, using the connection template in the infrastructure setup guide. GitHub secret lookup is case-insensitive.
 
-The connection is passed only to the database step as `VACATE_SQL_CONNECTION`, never as a command argument or log entry. Missing credentials, wrong targets, runtime-identity reuse and SQL-password authentication fail deployment. Other environments require their own matching connection and existing SQL target. Rotate expiring client secrets through the same repository secret. Keep the migration identity's elevated database authority separate from the API's limited runtime permissions.
+The connection is passed only to the database-operator steps as `VACATE_SQL_CONNECTION`, never as a command argument or log entry. Missing credentials, wrong targets, runtime-identity reuse and SQL-password authentication fail deployment. Other environments require their own matching connection and existing SQL target. Rotate expiring client secrets through the same repository secret. Keep the migration identity's elevated database authority separate from the API's limited runtime permissions.
 
 ## Compatibility and failure recovery
 

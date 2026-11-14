@@ -41,12 +41,10 @@
   <p id="personnel-table-hint" class="admin-hint admin-scroll-hint">
     Scroll the table horizontally to see balances and recorded-leave actions.
   </p>
-  <div
+  <vacate-data-table
     class="admin-table"
-    role="region"
-    tabindex="0"
-    aria-label="Personnel annual balances"
-    aria-describedby="personnel-table-hint"
+    label="Personnel annual balances"
+    describedBy="personnel-table-hint"
   >
     <table>
       <caption>
@@ -97,7 +95,7 @@
         }
       </tbody>
     </table>
-  </div>
+  </vacate-data-table>
   @if (selected; as person) {
     <section class="admin-review" aria-labelledby="personnel-detail-heading">
       <h3 #detailHeading id="personnel-detail-heading" tabindex="-1">
@@ -108,7 +106,7 @@
         dated leave. Request status is shown for each recorded date; pending or declined dates are
         not taken leave.
       </p>
-      <div class="admin-table" role="region" tabindex="0" aria-label="Employee recorded leave">
+      <vacate-data-table class="admin-table" label="Employee recorded leave">
         <table>
           <thead>
             <tr>
@@ -135,7 +133,7 @@
             }
           </tbody>
         </table>
-      </div>
+      </vacate-data-table>
       <button class="secondary" type="button" (click)="close()">Close recorded leave</button>
     </section>
   }

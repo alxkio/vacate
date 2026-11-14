@@ -234,7 +234,8 @@ try {
     if (
       selector.includes('logout') ||
       selector.includes('a.brand') ||
-      selector === '#retry-session'
+      selector === '#retry-session' ||
+      selector === '#login-form button[type=submit]'
     ) {
       await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`, true);
       return;

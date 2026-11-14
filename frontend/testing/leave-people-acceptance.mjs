@@ -105,6 +105,17 @@ export async function runLeavePeopleAcceptance({
     await waitFor(`document.querySelectorAll('[data-saved-request="${guid}"]').length===2`);
     assert.equal(await evaluate('document.querySelector("vacate-my-leave > details").open'), false);
     assert.equal(await evaluate('!!document.querySelector("#reference-history")'), false);
+    const tablePresentation = async () =>
+      evaluate(`(()=>{
+      const table=document.querySelector('vacate-data-table table');
+      const heading=table.querySelector('thead th');
+      const cell=table.querySelector('tbody td');
+      const header=getComputedStyle(heading), row=getComputedStyle(cell);
+      return {collapse:getComputedStyle(table).borderCollapse,headerFont:header.fontSize,
+        headerPadding:header.padding,rowFont:row.fontSize,rowPadding:row.padding,
+        region:table.parentElement.getAttribute('role'),tabindex:table.parentElement.tabIndex};
+    })()`);
+    const leaveTablePresentation = await tablePresentation();
     if (expired.length)
       assert.equal(
         await evaluate(
@@ -113,6 +124,10 @@ export async function runLeavePeopleAcceptance({
         true,
       );
     await shots('my-leave-collapsed');
+    await evaluate(
+      'document.querySelector("#saved-leave-requests").scrollIntoView({block:"center"})',
+    );
+    await shots('my-leave-table');
     await click('vacate-my-leave > details > summary');
     await waitFor('document.querySelector("vacate-my-leave > details").open');
     await shots('my-leave-expanded');
@@ -187,6 +202,11 @@ export async function runLeavePeopleAcceptance({
     await waitFor(
       'document.querySelectorAll("vacate-people [data-person]").length===12 && !document.querySelector("vacate-people [role=status]")',
     );
+    assert.deepEqual(
+      await tablePresentation(),
+      leaveTablePresentation,
+      'Nora’s combined directory/balances and My Leave use the same table design',
+    );
     assert.equal(
       await evaluate('!!document.querySelector("nav [data-nav=admin-balances]")'),
       false,
@@ -198,6 +218,8 @@ export async function runLeavePeopleAcceptance({
     await shots('people-admin-balances-history');
     await navigate(page('page=admin-balances'));
     await waitFor('!!document.querySelector("vacate-people")');
+    assert.equal(await evaluate('document.querySelectorAll("vacate-people").length'), 1);
+    assert.equal(await evaluate('!!document.querySelector("vacate-admin-balances")'), false);
     console.log(
       'PASS: unified history/filtering, collapsed/expanded balances, partial and calendar cancellation, balance restoration, You/scope/search, unified admin balances/history, legacy route and desktop/mobile layouts.',
     );

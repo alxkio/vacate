@@ -321,10 +321,7 @@
         (staleSession)="ensureSession()"
       />
     }
-    @if (state.page === 'people') {
-      <vacate-people />
-    }
-    @if (state.page === 'admin-balances') {
+    @if (state.page === 'people' || state.page === 'admin-balances') {
       @if (!state.denied) {
         <vacate-people />
       } @else {

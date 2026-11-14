@@ -42,5 +42,20 @@ class DatabaseDeploymentWorkflowTests(unittest.TestCase):
             self.assertIn("name: database-package", workflow)
 
 
+    def test_demo_import_is_explicit_dev_only_and_follows_verified_publication(self):
+        option = self.workflow[self.workflow.index("      import_demo_history:"):self.workflow.index("permissions:")]
+        self.assertIn("default: false", option)
+        guard = self.workflow.index("- name: Reject unsupported demo import selection")
+        self.assertLess(guard, self.workflow.index("- name: Check deployment target"))
+        self.assertIn("inputs.import_demo_history && (!inputs.apply || !inputs.deploy_backend || inputs.environment != 'dev')", self.workflow)
+        position = self.workflow.index("- name: Import explicitly requested demo history")
+        self.assertGreater(position, self.workflow.index("- name: Verify deployed endpoints"))
+        self.assertGreater(position, self.workflow.index("- name: Publish Angular"))
+        section = self.workflow[position:self.workflow.index("- name: Deployment summary")]
+        self.assertIn("inputs.apply && inputs.deploy_backend && inputs.environment == 'dev' && inputs.import_demo_history", section)
+        self.assertIn('test "$SQL_ENABLED" = \'true\'', section)
+        self.assertIn("Vacate.Database.dll seed-fictional-history", section)
+
+
 if __name__ == "__main__":
     unittest.main()

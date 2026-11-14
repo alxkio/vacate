@@ -1,8 +1,10 @@
+import { DataTable } from '../../shared/data-table/data-table';
 import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { AdminApi, adminError, Approval } from './admin-api';
 
 @Component({
   selector: 'vacate-approvals',
+  imports: [DataTable],
   templateUrl: './approvals.html',
   styleUrl: './admin.scss',
 })

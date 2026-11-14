@@ -1,0 +1,75 @@
+// Projected native tables share one visual treatment and retain their own semantics.
+vacate-data-table {
+  display: block;
+  position: relative;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  margin-top: 18px;
+  color: var(--ink);
+
+  table {
+    width: 100%;
+    min-width: var(--table-min-width, 640px);
+    border-collapse: collapse;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+  }
+
+  caption {
+    text-align: left;
+    padding: 12px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  th,
+  td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  thead th {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  th[scope='row'] {
+    font-weight: 600;
+  }
+
+  small {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  .table-actions {
+    text-align: right;
+  }
+
+  .table-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 5px;
+    background: var(--canvas);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .table-status[data-status='Approved'] {
+    background: var(--pale);
+    color: var(--accent);
+  }
+
+  .table-status[data-status='Pending'] {
+    background: color-mix(in srgb, var(--amber) 12%, var(--canvas));
+    color: var(--amber);
+  }
+}

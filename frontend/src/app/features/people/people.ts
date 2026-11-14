@@ -1,3 +1,4 @@
+import { DataTable } from '../../shared/data-table/data-table';
 import { AdminApi, Personnel } from '../administration/admin-api';
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
@@ -8,7 +9,7 @@ import { OrganizationSettings } from '../organizations/organization-settings';
 
 @Component({
   selector: 'vacate-people',
-  imports: [OrganizationSettings, FormsModule],
+  imports: [DataTable, OrganizationSettings, FormsModule],
   template: `
     <section class="navigation-card" aria-labelledby="people-heading">
       <h2 id="people-heading">{{ isAdmin ? 'People and leave' : 'Company directory' }}</h2>
@@ -56,7 +57,7 @@ import { OrganizationSettings } from '../organizations/organization-settings';
         ><span class="colleague-tag same-department">Your department</span>
       </p>
       <p class="people-scroll-hint">Scroll the table horizontally to see all columns.</p>
-      <div class="people-table" role="region" tabindex="0" aria-label="Company colleagues">
+      <vacate-data-table class="people-table" label="Company colleagues">
         <table>
           <caption>
             {{
@@ -150,7 +151,7 @@ import { OrganizationSettings } from '../organizations/organization-settings';
             }
           </tbody>
         </table>
-      </div>
+      </vacate-data-table>
     </section>
     @if (isAdmin && selected; as record) {
       <section class="navigation-card" aria-labelledby="person-history">
@@ -163,7 +164,7 @@ import { OrganizationSettings } from '../organizations/organization-settings';
           </button>
         </div>
         <p>Opening used: {{ record.openingUsed }} days. Opening totals have no dated history.</p>
-        <div class="people-table" role="region" tabindex="0" aria-label="Employee recorded leave">
+        <vacate-data-table class="people-table" label="Employee recorded leave">
           <table>
             <thead>
               <tr>
@@ -190,7 +191,7 @@ import { OrganizationSettings } from '../organizations/organization-settings';
               }
             </tbody>
           </table>
-        </div>
+        </vacate-data-table>
       </section>
     }
     @if (isAdmin && editing) {
@@ -247,34 +248,6 @@ import { OrganizationSettings } from '../organizations/organization-settings';
       color: var(--muted);
       font-size: 12px;
       line-height: 1.6;
-    }
-    .people-table {
-      position: relative;
-      overflow-x: auto;
-      margin-top: 20px;
-    }
-    table {
-      width: 100%;
-      min-width: 780px;
-      border-collapse: collapse;
-      text-align: left;
-    }
-    th,
-    td {
-      padding: 12px;
-      border-bottom: 1px solid var(--line);
-      vertical-align: middle;
-    }
-    th small {
-      display: block;
-      margin-top: 6px;
-      color: var(--muted);
-      font-weight: 400;
-    }
-    caption {
-      text-align: left;
-      padding: 12px;
-      color: var(--muted);
     }
     .people-legend {
       margin-top: 20px;

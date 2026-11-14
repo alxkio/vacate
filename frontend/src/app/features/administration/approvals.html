@@ -25,12 +25,10 @@
   <p id="approval-table-hint" class="admin-hint admin-scroll-hint">
     Scroll the table horizontally to see all columns and review actions.
   </p>
-  <div
+  <vacate-data-table
     class="admin-table"
-    role="region"
-    tabindex="0"
-    aria-label="Assigned pending leave requests"
-    aria-describedby="approval-table-hint"
+    label="Assigned pending leave requests"
+    describedBy="approval-table-hint"
   >
     <table>
       <caption>
@@ -72,7 +70,7 @@
         }
       </tbody>
     </table>
-  </div>
+  </vacate-data-table>
   @if (selected; as record) {
     <section class="admin-review" aria-labelledby="approval-review-heading">
       <h3 #reviewHeading id="approval-review-heading" tabindex="-1">

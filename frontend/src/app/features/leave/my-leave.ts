@@ -1,3 +1,4 @@
+import { DataTable } from '../../shared/data-table/data-table';
 import {
   ChangeDetectorRef,
   Component,
@@ -17,7 +18,7 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 
 @Component({
   selector: 'vacate-my-leave',
-  imports: [FormsModule, BalanceBar, Balances, CancelRequest],
+  imports: [DataTable, FormsModule, BalanceBar, Balances, CancelRequest],
   template: `
     <details
       #balanceSummary
@@ -95,27 +96,31 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
         <p role="alert">{{ savedError }}</p>
       }
       <p id="saved-history-hint" class="history-hint">
-        All years · {{ rows.length }} recorded dates. Expired dates never deduct; pending approval
-        is counted separately. Scroll the table horizontally for all columns.
+        Expired dates never deduct; pending approval is counted separately. Scroll the table
+        horizontally for all columns.
       </p>
-      <div
+      <vacate-data-table
         class="history-table"
-        role="region"
-        tabindex="0"
-        aria-label="Leave and request history"
-        aria-describedby="saved-history-hint"
+        label="Leave and request history"
+        describedBy="saved-history-hint"
       >
         <table id="saved-leave-requests">
-          <caption class="sr-only">
-            Saved leave and request dates
+          <caption>
+            @if (savedLoading) {
+              Loading saved requests…
+            } @else if (savedError) {
+              Saved leave and request dates
+            } @else {
+              All years · {{ rows.length }} recorded {{ rows.length === 1 ? 'date' : 'dates' }}
+            }
           </caption>
           <thead>
             <tr>
               <th scope="col">Date</th>
               <th scope="col">Leave type</th>
               <th scope="col">Status</th>
-              <th scope="col">Entitlement</th>
-              <th scope="col">Request</th>
+              <th scope="col">Entitlement year</th>
+              <th scope="col" class="table-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -128,7 +133,11 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
                     <small>Automatically recorded company closure</small>
                   }
                 </td>
-                <td>{{ row.day.status === 'Pending' ? 'Pending approval' : row.day.status }}</td>
+                <td>
+                  <span class="table-status" [attr.data-status]="row.day.status">{{
+                    row.day.status === 'Pending' ? 'Pending approval' : row.day.status
+                  }}</span>
+                </td>
                 <td>
                   {{
                     row.request.leaveTypeId === 'company-closure'
@@ -136,7 +145,7 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
                       : row.day.entitlementYear
                   }}
                 </td>
-                <td>
+                <td class="table-actions">
                   @if (row.day.canCancel) {
                     <button class="secondary" type="button" (click)="manage(row.request.guid)">
                       Cancel / modify<span class="sr-only"> {{ row.day.date }}</span>
@@ -159,7 +168,7 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
             }
           </tbody>
         </table>
-      </div>
+      </vacate-data-table>
       @for (request of savedRequests; track request.guid) {
         @if (editing === request.guid) {
           <section class="request-editor">
@@ -246,30 +255,9 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
     }
     .history-hint {
       margin: 16px 0;
-    }
-    .history-table {
-      position: relative;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      min-width: 640px;
-      border-collapse: collapse;
-      text-align: left;
-      font-variant-numeric: tabular-nums;
-    }
-    th,
-    td {
-      padding: 12px;
-      border-bottom: 1px solid var(--line);
-    }
-    caption {
-      text-align: left;
       color: var(--muted);
-      padding: 12px 0;
-    }
-    td small {
-      display: block;
+      font-size: 13px;
+      line-height: 1.6;
     }
     .request-editor {
       margin-top: 24px;

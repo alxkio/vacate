@@ -251,7 +251,7 @@ export async function runAdminAcceptance({
       assert.equal(record.source, 'CompanyClosure');
       assert.equal(record.leaveTypeId, 'company-closure');
       assert.deepEqual(record.dates, [
-        { date: '2026-12-23', status: 'Approved', entitlementYear: 2026 },
+        { date: '2026-12-23', status: 'Approved', entitlementYear: 2026, canCancel: false },
       ]);
     }
   }

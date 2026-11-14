@@ -1,10 +1,11 @@
+import { DataTable } from '../../shared/data-table/data-table';
 import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminApi, adminError, Personnel } from './admin-api';
 
 @Component({
   selector: 'vacate-personnel',
-  imports: [FormsModule],
+  imports: [DataTable, FormsModule],
   templateUrl: './personnel.html',
   styleUrl: './admin.scss',
 })
