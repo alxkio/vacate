@@ -36,7 +36,7 @@ paths:
       operationId: createSession
       tags: [Sessions]
       summary: Sign in with an enabled development account
-      description: Development credentials are fictional and must not be used for production authentication.
+      description: Development credentials are fictional and must not be used for production authentication. Tickets expire 30 minutes after issuance without activity renewal. SqlServer mode persists only hashed tickets shared by upgraded instances using the same database; InMemory tickets remain process-local.
       security: []
       requestBody:
         required: true
@@ -62,6 +62,7 @@ paths:
       operationId: getCurrentSession
       tags: [Sessions]
       summary: Get the current session profile
+      description: Invalid, expired or revoked tickets return 401. SQL or network unavailability is not authentication expiry; clients may retain the ticket and retry.
       security:
         - bearerAuth: []
       responses:

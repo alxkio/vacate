@@ -4,7 +4,7 @@ type: task
 summary: Review and refine every implemented Vacate page
 status: qa
 created: 2026-11-11
-updated: 2026-11-13
+updated: 2026-11-14
 parent: null
 depends_on: []
 ---
@@ -166,4 +166,10 @@ Owner screenshot/clarification confirms the unwanted large brown outline is main
 - [x] Controlled-clock HTTP tests verify exact 30-minute expiry, no activity renewal, separate sessions, logout and account revocation; existing actor/company authorization remains enforced.
 - [x] Complete relevant frontend/backend and rendered regressions, independent QA review and evidence.
 
-[Accepted duration/recovery behavior](../product/product-charter.md#session-and-page-focus-refinement--2026-11-13). Shared SQL session persistence remains a separately requested owner decision under ADR-0004. Implementation remains the existing refinement subtask, with status QA unchanged. Unrelated untracked `docs/review-43.md` is preserved. Assistant implementation/review time unmeasured; human actual Unknown. [Evidence and remaining gate](media/VAC-42/page-session-recovery-2026-11-13.md).
+[Accepted duration/recovery behavior](../product/product-charter.md#session-and-page-focus-refinement--2026-11-13). The owner subsequently approved shared SQL sessions on 2026-11-13 after reviewing the required storage/migration/revocation work. The [ADR-0004 amendment](../adr/0004-relational-persistence.md#product-lead-amendment--shared-sessions--2026-11-13) records this bounded extension; production identity remains separate. Implementation remains the existing refinement subtask, with status QA unchanged. Unrelated untracked `docs/review-43.md` is preserved. Assistant implementation/review time unmeasured; human actual Unknown. [Evidence and remaining gates](media/VAC-42/page-session-recovery-2026-11-13.md).
+
+- [x] Shared SQL adapter, hashed-ticket mapping, forward migration and limited runtime grant implementation; no target application implied.
+- [x] Cross-scope/provider expiry, logout, account-revocation and identity-isolation coverage added; offline checks passed and actual SQL execution is explicitly skipped.
+- [ ] Actual SQL execution and final independent release review; requires an authorized migrated test target. Coordinated API/database documentation and QA-authored scenarios are complete; PR verification is recorded in the linked evidence.
+
+2026-11-14 · Assistant verification: 79 integration and 10 unit tests passed; 31 actual-SQL cases skipped. Offline migration/model checks and real local HTTP checks passed. SQL application/cross-instance execution and deployment remain unverified. [Shared-session implementation and gates](media/VAC-42/shared-session-recovery-2026-11-13.md). No issue summary/type/status/dependency change; backlog row remains unchanged.

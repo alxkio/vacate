@@ -213,6 +213,18 @@ internal static class ResourceModel
         approvers.HasOne<UserRow>().WithMany().HasForeignKey(x => x.ApproverGuid).HasPrincipalKey(x => x.Guid).OnDelete(DeleteBehavior.NoAction);
         approvers.ToTable(t => t.HasCheckConstraint("CK_CompanyApproverAssignments_Scope", "[Scope] IN (N'organization', N'department', N'team') AND [ScopeGuid] <> '00000000-0000-0000-0000-000000000000'"));
 
+        var sessions = model.Entity<SessionRow>();
+        sessions.ToTable("ApiSessions", table =>
+        {
+            table.HasCheckConstraint("CK_ApiSessions_Expiry", "[ExpiresAt] > [CreatedAt] AND DATEPART(TZOFFSET, [CreatedAt]) = 0 AND DATEPART(TZOFFSET, [ExpiresAt]) = 0");
+            table.HasCheckConstraint("CK_ApiSessions_Hash", "LEN([TokenHash]) = 64 AND [TokenHash] NOT LIKE '%[^0-9A-F]%' COLLATE Latin1_General_100_BIN2");
+        });
+        sessions.HasKey(row => row.TokenHash);
+        sessions.Property(row => row.TokenHash).HasColumnType("char(64)").UseCollation("Latin1_General_100_BIN2");
+        sessions.HasIndex(row => row.UserId);
+        sessions.HasIndex(row => row.ExpiresAt);
+        sessions.HasOne<UserRow>().WithMany().HasForeignKey(row => row.UserId).OnDelete(DeleteBehavior.NoAction);
+
         var access = model.Entity<DevelopmentAccessRow>();
         access.ToTable("DevelopmentProvisioningAccess");
         access.HasKey(x => new { x.UserId, x.CompanyId });

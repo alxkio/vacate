@@ -30,7 +30,7 @@ public sealed class ResourceEndpointTests
     [SetUp]
     public void Setup() => Configure(true);
 
-    private void Configure(bool developmentAuthentication, TimeProvider? clock = null)
+    private void Configure(bool developmentAuthentication, TimeProvider? clock = null, ISessionStore? sessionStore = null)
     {
         provider?.Dispose();
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
@@ -42,6 +42,11 @@ public sealed class ResourceEndpointTests
         if (clock is not null)
         {
             services.AddSingleton(clock);
+        }
+
+        if (sessionStore is not null)
+        {
+            services.AddSingleton(sessionStore);
         }
 
         services.AddSingleton<RecordMapper>();
@@ -205,6 +210,25 @@ public sealed class ResourceEndpointTests
         Assert.That((await Call("PATCH", path, admin, new { status = "active" })).Status, Is.EqualTo(200));
         Assert.That((await Call("GET", "auth/sessions/current", employee)).Status, Is.EqualTo(401));
         Assert.That((await Call("GET", "auth/sessions/current", admin)).Status, Is.EqualTo(200));
+    }
+
+    [Test]
+    public void Session_storage_failure_is_not_reported_as_invalid_credentials_or_an_expired_ticket()
+    {
+        Configure(true, sessionStore: new FailingSessionStore());
+        var error = Assert.ThrowsAsync<IOException>(async () => await Call("GET", "auth/sessions/current", "synthetic-ticket"));
+        Assert.That(error!.Message, Is.EqualTo("Synthetic session storage unavailable."));
+    }
+
+    private sealed class FailingSessionStore : ISessionStore
+    {
+        public SessionTicket Issue(int userId, DateTimeOffset expiresAt) => throw new IOException("Synthetic session storage unavailable.");
+
+        public int? Resolve(string token, DateTimeOffset now) => throw new IOException("Synthetic session storage unavailable.");
+
+        public void Revoke(string token) => throw new IOException("Synthetic session storage unavailable.");
+
+        public void RevokeForUser(int userId) => throw new IOException("Synthetic session storage unavailable.");
     }
 
     private sealed class SessionClock(DateTimeOffset now) : TimeProvider

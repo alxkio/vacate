@@ -1,12 +1,12 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Vacate.Infrastructure.Persistence;
-using Vacate.Infrastructure.Identity;
-using Vacate.Infrastructure.Persistence.Sql;
 using Vacate.Application.Abstractions;
 using Vacate.Application.Leave;
+using Vacate.Infrastructure.Identity;
+using Vacate.Infrastructure.Persistence;
+using Vacate.Infrastructure.Persistence.Sql;
 
 namespace Vacate.Infrastructure;
 
@@ -57,7 +57,7 @@ public static class DependencyInjection
 
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton(_ => new InMemoryDatabase(bool.TryParse(configuration["SeedData:Enabled"], out var seed) && seed));
-        services.AddSingleton<ISessionStore, InMemorySessionStore>();
+        services.AddScoped<ISessionStore, SqlSessionStore>();
         services.AddSingleton<IUserPresentationCatalog, UserPresentationCatalog>();
         services.AddScoped<ICredentialValidator, DevelopmentCredentials>();
         services.AddDbContext<VacateDbContext>(options => options.UseSqlServer(connection));

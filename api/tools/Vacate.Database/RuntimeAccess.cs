@@ -25,7 +25,7 @@ internal static partial class RuntimeAccess
                 CREATE ROLE [vacate_resource_runtime] AUTHORIZATION [dbo];
             """);
 
-        // Only personal leave request/date removal is allowed physically; other resources retain operator-only deletion.
+        // Physical deletion is limited to personal leave requests/dates and credential tickets; other resources remain operator-only.
         foreach (var table in new[] { "Users", "UserPrivateProfiles", "Organizations", "Departments", "Teams", "Memberships", "MembershipEntitlements", "JobRoles", "DevelopmentProvisioningAccess", "CompanyHolidays", "CompanyClosures", "CompanyClosureResults", "CompanyApproverAssignments" })
         {
             Execute(context, $"GRANT SELECT, INSERT, UPDATE ON OBJECT::[dbo].[{table}] TO [vacate_resource_runtime]");
@@ -46,6 +46,8 @@ internal static partial class RuntimeAccess
             Execute(context, $"GRANT UPDATE, DELETE ON OBJECT::[dbo].[{table}] TO [vacate_resource_runtime]");
         }
 
+        Execute(context, "GRANT SELECT, INSERT, DELETE ON OBJECT::[dbo].[ApiSessions] TO [vacate_resource_runtime]");
+
         foreach (var sequence in new[] { "UserIds", "MembershipIds", "OrganizationIds", "DepartmentIds", "TeamIds", "JobRoleIds", "CompanyHolidayIds", "CompanyClosureIds", "CompanyApproverIds" })
         {
             Execute(context, $"GRANT UPDATE ON OBJECT::[dbo].[{sequence}] TO [vacate_resource_runtime]");
@@ -64,6 +66,11 @@ internal static partial class RuntimeAccess
             EXECUTE AS USER = N'{name}';
             BEGIN TRY
             {string.Join("\n", checks)}
+            IF COALESCE(HAS_PERMS_BY_NAME(N'dbo.ApiSessions', N'OBJECT', N'SELECT'), 0) <> 1
+                OR COALESCE(HAS_PERMS_BY_NAME(N'dbo.ApiSessions', N'OBJECT', N'INSERT'), 0) <> 1
+                OR COALESCE(HAS_PERMS_BY_NAME(N'dbo.ApiSessions', N'OBJECT', N'DELETE'), 0) <> 1
+                OR COALESCE(HAS_PERMS_BY_NAME(N'dbo.ApiSessions', N'OBJECT', N'UPDATE'), 0) <> 0
+                THROW 51000, 'Shared session runtime permission boundary failed.', 1;
             IF COALESCE(HAS_PERMS_BY_NAME(N'dbo.LeaveRequests', N'OBJECT', N'DELETE'), 0) <> 1
                 THROW 51000, 'Personal request deletion runtime permission missing.', 1;
             IF COALESCE(HAS_PERMS_BY_NAME(N'dbo.CoveredLeaveSubmissions', N'OBJECT', N'DELETE'), 0) <> 0
@@ -101,7 +108,7 @@ internal static partial class RuntimeAccess
         }
 
         transaction.Commit();
-        Console.WriteLine("Resolved Entra principal granted resource DML/sequence access; db_owner, DDL and migration writes denied; personal request/leave deletion and assigned decisions permitted.");
+        Console.WriteLine("Resolved Entra principal granted resource DML/sequence access; db_owner, DDL and migration writes denied; personal request/leave deletion, assigned decisions and shared session access permitted.");
     }
 
     private static void Execute(VacateDbContext context, string sql)

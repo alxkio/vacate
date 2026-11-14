@@ -1,9 +1,12 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Vacate.Application.Abstractions;
 using Vacate.Application.Common;
+using Vacate.Application.Identity;
 using Vacate.Application.Leave;
 using Vacate.Application.Memberships;
 using Vacate.Application.Memberships.Commands;
@@ -37,10 +40,17 @@ public sealed class SqlPersistenceTests
             Assert.Ignore("Set VACATE_SQL_TEST_CONNECTION to an authorized migrated SQL test target.");
         }
 
+        provider = BuildProvider();
+        a = CreateTenant();
+        b = CreateTenant();
+    }
+
+    private static ServiceProvider BuildProvider(int? credentialUser = null)
+    {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["Persistence:Provider"] = "SqlServer",
-            ["ConnectionStrings:Vacate"] = connection,
+            ["ConnectionStrings:Vacate"] = Environment.GetEnvironmentVariable("VACATE_SQL_TEST_CONNECTION"),
             ["DevelopmentAuthentication:Enabled"] = "true",
             ["SeedData:Enabled"] = "false"
         }).Build();
@@ -52,9 +62,13 @@ public sealed class SqlPersistenceTests
         services.AddScoped<OrganizationService>();
         services.AddScoped<LeaveService>();
         services.AddScoped<AdminLeaveService>();
-        provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
-        a = CreateTenant();
-        b = CreateTenant();
+        services.AddScoped<AuthenticationService>();
+        if (credentialUser is not null)
+        {
+            services.AddSingleton<ICredentialValidator>(new SessionTestCredentials(credentialUser.Value));
+        }
+
+        return services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
     }
 
     [TearDown]
@@ -86,6 +100,7 @@ public sealed class SqlPersistenceTests
         context.Set<TeamRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<DepartmentRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
         context.Set<JobRoleRow>().Where(x => companyIds.Contains(x.CompanyId)).ExecuteDelete();
+        context.Set<SessionRow>().Where(x => userIds.Contains(x.UserId)).ExecuteDelete();
         context.Set<PrivateProfileRow>().Where(x => userIds.Contains(x.UserId)).ExecuteDelete();
         context.Set<UserRow>().Where(x => userIds.Contains(x.Id)).ExecuteDelete();
         context.Set<OrganizationRow>().Where(x => companyIds.Contains(x.Id)).ExecuteDelete();
@@ -570,6 +585,180 @@ public sealed class SqlPersistenceTests
         }));
         Assert.That(Use(s => s.GetRequiredService<IMembershipRepository>().Current(a.MemberId)!.Balance.Used), Is.EqualTo(1));
         Assert.That(Use(s => s.GetRequiredService<LeaveService>().Requests(a.MemberId, a.CompanyGuid)).Single().Guid, Is.EqualTo(saved.Guid));
+    }
+
+    [Test]
+    public void Shared_sessions_survive_new_scopes_and_provider_recreation_without_storing_bearer_credentials()
+    {
+        var expiry = DateTimeOffset.UtcNow.AddMinutes(30);
+        var ticket = Use(s => s.GetRequiredService<ISessionStore>().Issue(a.MemberId, expiry));
+        Assert.That(Use(s => s.GetRequiredService<ISessionStore>().Resolve(ticket.AccessToken, DateTimeOffset.UtcNow)), Is.EqualTo(a.MemberId));
+        using (var anotherInstance = BuildProvider())
+        {
+            using var scope = anotherInstance.CreateScope();
+            var actor = scope.ServiceProvider.GetRequiredService<AuthenticationService>().RequireActor(ticket.AccessToken);
+            Assert.That(actor, Is.EqualTo(a.MemberId));
+            var denied = Assert.Throws<ServiceException>(() => scope.ServiceProvider.GetRequiredService<OrganizationService>().Get(actor, b.CompanyGuid));
+            Assert.That(denied!.Kind, Is.EqualTo(ServiceError.NotFound));
+            var context = scope.ServiceProvider.GetRequiredService<VacateDbContext>();
+            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(ticket.AccessToken)));
+            var row = context.Set<SessionRow>().Single(r => r.TokenHash == hash);
+            Assert.That(row.UserId, Is.EqualTo(a.MemberId));
+            Assert.That(row.ExpiresAt, Is.EqualTo(expiry));
+            Assert.That(row.CreatedAt.Offset, Is.EqualTo(TimeSpan.Zero));
+            Assert.That(row.CreatedAt, Is.LessThan(row.ExpiresAt));
+            Assert.That(row.TokenHash == ticket.AccessToken, Is.False, "The database must not contain the bearer credential.");
+            Assert.That(context.Entry(row).Properties.Any(p => Equals(p.CurrentValue, ticket.AccessToken)), Is.False, "No session column may persist the bearer credential.");
+        }
+
+        // A new service provider has no access to the prior instance's process-local session objects.
+        using var restartedInstance = BuildProvider();
+        using var restartedScope = restartedInstance.CreateScope();
+        Assert.That(restartedScope.ServiceProvider.GetRequiredService<AuthenticationService>().RequireActor(ticket.AccessToken), Is.EqualTo(a.MemberId));
+        var missing = Assert.Throws<ServiceException>(() => restartedScope.ServiceProvider.GetRequiredService<AuthenticationService>().RequireActor(Guid.NewGuid().ToString("N")));
+        Assert.That(missing!.Kind, Is.EqualTo(ServiceError.Unauthenticated));
+    }
+
+    [Test]
+    public void Shared_session_expiry_and_selected_or_all_user_revocation_apply_across_instances()
+    {
+        var expiry = DateTimeOffset.UtcNow.AddMinutes(30);
+        var first = Use(s => s.GetRequiredService<ISessionStore>().Issue(a.MemberId, expiry));
+        var second = Use(s => s.GetRequiredService<ISessionStore>().Issue(a.MemberId, expiry));
+        var otherCompany = Use(s => s.GetRequiredService<ISessionStore>().Issue(b.MemberId, expiry));
+        using var anotherInstance = BuildProvider();
+        using var scope = anotherInstance.CreateScope();
+        var sessions = scope.ServiceProvider.GetRequiredService<ISessionStore>();
+        Assert.That(sessions.Resolve(first.AccessToken, expiry.AddTicks(-1)), Is.EqualTo(a.MemberId));
+        Assert.That(sessions.Resolve(first.AccessToken, expiry), Is.Null);
+        Assert.That(sessions.Resolve(first.AccessToken, expiry.AddTicks(1)), Is.Null);
+        scope.ServiceProvider.GetRequiredService<AuthenticationService>().SignOut(first.AccessToken);
+        Assert.That(Use(s => s.GetRequiredService<ISessionStore>().Resolve(first.AccessToken, DateTimeOffset.UtcNow)), Is.Null);
+        Assert.That(Use(s => s.GetRequiredService<ISessionStore>().Resolve(second.AccessToken, DateTimeOffset.UtcNow)), Is.EqualTo(a.MemberId));
+        sessions.RevokeForUser(a.MemberId);
+        Assert.That(Use(s => s.GetRequiredService<ISessionStore>().Resolve(second.AccessToken, DateTimeOffset.UtcNow)), Is.Null);
+        Assert.That(Use(s => s.GetRequiredService<ISessionStore>().Resolve(otherCompany.AccessToken, DateTimeOffset.UtcNow)), Is.EqualTo(b.MemberId));
+    }
+
+    [Test]
+    public void Shared_session_revocation_rolls_back_with_failed_account_change_and_commits_with_disabling()
+    {
+        var expiry = DateTimeOffset.UtcNow.AddMinutes(30);
+        var first = Use(s => s.GetRequiredService<ISessionStore>().Issue(a.MemberId, expiry));
+        var second = Use(s => s.GetRequiredService<ISessionStore>().Issue(a.MemberId, expiry));
+        var other = Use(s => s.GetRequiredService<ISessionStore>().Issue(b.MemberId, expiry));
+        Assert.Throws<DomainValidationException>(() => Use<bool>(s =>
+        {
+            s.GetRequiredService<UserService>().UpdateAccount(a.AdminId, new(a.MemberGuid, Status: new(true, "disabled")));
+            throw new DomainValidationException("Force rollback after revocation.");
+        }));
+        using var anotherInstance = BuildProvider();
+        using (var scope = anotherInstance.CreateScope())
+        {
+            var authentication = scope.ServiceProvider.GetRequiredService<AuthenticationService>();
+            Assert.That(authentication.RequireActor(first.AccessToken), Is.EqualTo(a.MemberId));
+            Assert.That(authentication.RequireActor(second.AccessToken), Is.EqualTo(a.MemberId));
+        }
+
+        Use(s => s.GetRequiredService<UserService>().UpdateAccount(a.AdminId, new(a.MemberGuid, Status: new(true, "disabled"))));
+        using (var scope = anotherInstance.CreateScope())
+        {
+            var sessions = scope.ServiceProvider.GetRequiredService<ISessionStore>();
+            Assert.That(sessions.Resolve(first.AccessToken, DateTimeOffset.UtcNow), Is.Null);
+            Assert.That(sessions.Resolve(second.AccessToken, DateTimeOffset.UtcNow), Is.Null);
+            Assert.That(sessions.Resolve(other.AccessToken, DateTimeOffset.UtcNow), Is.EqualTo(b.MemberId));
+        }
+
+        Use(s => s.GetRequiredService<UserService>().UpdateAccount(a.AdminId, new(a.MemberGuid, Status: new(true, "active"))));
+        Assert.That(Use(s => s.GetRequiredService<ISessionStore>().Resolve(first.AccessToken, DateTimeOffset.UtcNow)), Is.Null);
+        Assert.That(Use(s => s.GetRequiredService<ISessionStore>().Resolve(second.AccessToken, DateTimeOffset.UtcNow)), Is.Null);
+    }
+
+    [Test]
+    public void Deleting_an_account_revokes_its_shared_tickets_without_revoking_another_company()
+    {
+        var expiry = DateTimeOffset.UtcNow.AddMinutes(30);
+        var first = Use(s => s.GetRequiredService<ISessionStore>().Issue(a.MemberId, expiry));
+        var second = Use(s => s.GetRequiredService<ISessionStore>().Issue(a.MemberId, expiry));
+        var other = Use(s => s.GetRequiredService<ISessionStore>().Issue(b.MemberId, expiry));
+        Use(s =>
+        {
+            s.GetRequiredService<UserService>().Delete(a.AdminId, new(a.MemberGuid));
+            return true;
+        });
+        using var anotherInstance = BuildProvider();
+        using var scope = anotherInstance.CreateScope();
+        var sessions = scope.ServiceProvider.GetRequiredService<ISessionStore>();
+        Assert.That(sessions.Resolve(first.AccessToken, DateTimeOffset.UtcNow), Is.Null);
+        Assert.That(sessions.Resolve(second.AccessToken, DateTimeOffset.UtcNow), Is.Null);
+        Assert.That(scope.ServiceProvider.GetRequiredService<AuthenticationService>().RequireActor(other.AccessToken), Is.EqualTo(b.MemberId));
+        var error = Assert.Throws<ServiceException>(() => scope.ServiceProvider.GetRequiredService<AuthenticationService>().RequireActor(first.AccessToken));
+        Assert.That(error!.Kind, Is.EqualTo(ServiceError.Unauthenticated));
+    }
+
+    [Test]
+    public async Task Concurrent_signin_and_account_disable_cannot_leave_an_authenticating_shared_ticket()
+    {
+        using var signinInstance = BuildProvider(a.MemberId);
+        using var barrier = new Barrier(2);
+        string? issuedToken = null;
+        var signIn = Task.Run(() =>
+        {
+            using var scope = signinInstance.CreateScope();
+            barrier.SignalAndWait();
+            try
+            {
+                issuedToken = scope.ServiceProvider.GetRequiredService<AuthenticationService>().SignIn("synthetic", "synthetic").AccessToken;
+            }
+            catch (ServiceException error) when (error.Kind == ServiceError.Unauthenticated)
+            {
+                // Disabling acquired the transaction lock first, so sign-in must be rejected.
+            }
+        });
+        var disable = Task.Run(() =>
+        {
+            barrier.SignalAndWait();
+            Use(s => s.GetRequiredService<UserService>().UpdateAccount(a.AdminId, new(a.MemberGuid, Status: new(true, "disabled"))));
+        });
+        await Task.WhenAll(signIn, disable);
+        if (issuedToken is not null)
+        {
+            var error = Assert.Throws<ServiceException>(() => Use(s => s.GetRequiredService<AuthenticationService>().RequireActor(issuedToken)));
+            Assert.That(error!.Kind, Is.EqualTo(ServiceError.Unauthenticated));
+        }
+
+        using var check = provider.CreateScope();
+        Assert.That(check.ServiceProvider.GetRequiredService<VacateDbContext>().Set<SessionRow>().Any(r => r.UserId == a.MemberId), Is.False);
+    }
+
+    [Test]
+    public void Revoking_a_new_ticket_in_the_issuing_transaction_cannot_publish_it_after_commit()
+    {
+        var expiry = DateTimeOffset.UtcNow.AddMinutes(30);
+        var tickets = Use(s =>
+        {
+            var sessions = s.GetRequiredService<ISessionStore>();
+            var selected = sessions.Issue(a.MemberId, expiry);
+            Assert.That(sessions.Resolve(selected.AccessToken, DateTimeOffset.UtcNow), Is.EqualTo(a.MemberId));
+            sessions.Revoke(selected.AccessToken);
+            Assert.That(sessions.Resolve(selected.AccessToken, DateTimeOffset.UtcNow), Is.Null);
+            var allUser = sessions.Issue(a.MemberId, expiry);
+            var other = sessions.Issue(b.MemberId, expiry);
+            sessions.RevokeForUser(a.MemberId);
+            Assert.That(sessions.Resolve(allUser.AccessToken, DateTimeOffset.UtcNow), Is.Null);
+            Assert.That(sessions.Resolve(other.AccessToken, DateTimeOffset.UtcNow), Is.EqualTo(b.MemberId));
+            return (Selected: selected, AllUser: allUser, Other: other);
+        });
+        Assert.That(Use(s => s.GetRequiredService<ISessionStore>().Resolve(tickets.Selected.AccessToken, DateTimeOffset.UtcNow)), Is.Null);
+        Assert.That(Use(s => s.GetRequiredService<ISessionStore>().Resolve(tickets.AllUser.AccessToken, DateTimeOffset.UtcNow)), Is.Null);
+        Assert.That(Use(s => s.GetRequiredService<ISessionStore>().Resolve(tickets.Other.AccessToken, DateTimeOffset.UtcNow)), Is.EqualTo(b.MemberId));
+    }
+
+    private sealed class SessionTestCredentials(int userId) : ICredentialValidator
+    {
+        public bool Enabled => true;
+
+        public int? Validate(string username, string password) => userId;
     }
 
     private Tenant CreateTenant() => Use(s =>

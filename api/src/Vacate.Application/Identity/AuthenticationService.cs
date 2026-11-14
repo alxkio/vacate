@@ -41,9 +41,10 @@ public sealed class AuthenticationService(ICredentialValidator credentials, ISes
         return new CurrentSession(mapper.Person(user), mapper.User(user));
     });
 
-    public void SignOut(string token)
+    public void SignOut(string token) => unitOfWork.Execute(() =>
     {
         RequireActor(token);
         sessions.Revoke(token);
-    }
+        return true;
+    });
 }

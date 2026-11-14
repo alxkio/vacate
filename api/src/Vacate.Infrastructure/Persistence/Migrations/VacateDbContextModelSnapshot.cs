@@ -906,6 +906,35 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                     b.ToTable("PublicHolidays", (string)null);
                 });
 
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.SessionRow", b =>
+                {
+                    b.Property<string>("TokenHash")
+                        .HasColumnType("char(64)")
+                        .UseCollation("Latin1_General_100_BIN2");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TokenHash");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ApiSessions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ApiSessions_Expiry", "[ExpiresAt] > [CreatedAt] AND DATEPART(TZOFFSET, [CreatedAt]) = 0 AND DATEPART(TZOFFSET, [ExpiresAt]) = 0");
+
+                            t.HasCheckConstraint("CK_ApiSessions_Hash", "LEN([TokenHash]) = 64 AND [TokenHash] NOT LIKE '%[^0-9A-F]%' COLLATE Latin1_General_100_BIN2");
+                        });
+                });
+
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.SystemRoleRow", b =>
                 {
                     b.Property<int>("Id")
@@ -1340,6 +1369,15 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                     b.HasOne("Vacate.Infrastructure.Persistence.Sql.UserRow", null)
                         .WithOne("PrivateProfile")
                         .HasForeignKey("Vacate.Infrastructure.Persistence.Sql.PrivateProfileRow", "UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.SessionRow", b =>
+                {
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.UserRow", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
                 });
