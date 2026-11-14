@@ -1,5 +1,10 @@
 using Microsoft.Data.SqlClient;
 using Vacate.Database;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Vacate.Application.Abstractions;
+using Vacate.Infrastructure;
+using Vacate.Infrastructure.Persistence;
 
 namespace Vacate.IntegrationTests;
 
@@ -20,6 +25,48 @@ public sealed class DatabaseDeploymentTests
         Encrypt = SqlConnectionEncryptOption.Mandatory,
         TrustServerCertificate = false
     };
+
+    [Test]
+    public void Ordinary_inmemory_hosting_has_no_fixture_accounts_even_with_retired_seed_setting()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["SeedData:Enabled"] = "true",
+            ["TestFixtures:Enabled"] = "true",
+            ["DevelopmentAuthentication:Enabled"] = "true"
+        }).Build();
+        using var provider = new ServiceCollection().AddSingleton<IConfiguration>(configuration)
+            .AddPersistence(configuration).BuildServiceProvider();
+        Assert.That(provider.GetRequiredService<IUserRepository>().All(), Is.Empty);
+        var credentials = provider.GetRequiredService<ICredentialValidator>();
+        Assert.That(credentials.Enabled, Is.False);
+        Assert.That(credentials.Accounts(), Is.Empty);
+        Assert.That(credentials.Validate("maya", "maya"), Is.Null);
+        foreach (var assembly in new[] { typeof(InMemoryDatabase).Assembly, typeof(Vacate.Api.Functions.SessionFunctions).Assembly })
+        {
+            Assert.That(assembly.GetManifestResourceNames().Any(name => name.Contains("fictional-users")), Is.False);
+            Assert.That(assembly.GetTypes().Any(type => type.Namespace == "Vacate.Testing"), Is.False);
+        }
+    }
+
+    [Test]
+    public void SQL_startup_does_not_load_fixtures_and_disabled_test_login_never_queries_accounts()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Persistence:Provider"] = "SqlServer",
+            ["ConnectionStrings:Vacate"] = Connection().ConnectionString,
+            ["SeedData:Enabled"] = "true",
+            ["DevelopmentAuthentication:Enabled"] = "false"
+        }).Build();
+        var services = new ServiceCollection().AddSingleton<IConfiguration>(configuration).AddPersistence(configuration);
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        Assert.That(scope.ServiceProvider.GetService<InMemoryDatabase>(), Is.Null);
+        var credentials = scope.ServiceProvider.GetRequiredService<ICredentialValidator>();
+        Assert.That(credentials.Validate("anything", "anything"), Is.Null);
+        Assert.That(credentials.Accounts(), Is.Empty);
+    }
 
     [Test]
     public void Operator_assembly_must_match_the_application_release_revision()

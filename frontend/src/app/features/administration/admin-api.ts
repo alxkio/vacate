@@ -1,6 +1,5 @@
 import { inject, Injectable } from '@angular/core';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
-import { apiId } from '../../core/state/workspace-api.service';
 import { SavedRequest } from '../leave/data-access/leave-requests';
 
 export type Holiday = { guid: string; name: string; month: number; day: number };
@@ -83,7 +82,7 @@ export class AdminApi {
     return this.data.api.authenticatedRequest<T>(
       actor.id,
       method,
-      `organizations/${apiId(actor.companyId)}/admin/${resource}`,
+      `organizations/${actor.companyId}/admin/${resource}`,
       body,
     );
   }

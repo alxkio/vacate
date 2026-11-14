@@ -1,6 +1,6 @@
 // Explicit component-test double. The application never falls back to these local write stores.
 import { WorkspaceDataService } from '../src/app/core/state/workspace-data.service';
-import { createFixtures } from '../src/app/core/reference-data/fixtures.js';
+import { createFixtures } from './fixtures/leave.js';
 import { createSession } from './fixtures/session.js';
 import { createProfiles } from './fixtures/profiles.js';
 import { createOrganization } from './fixtures/organization.js';

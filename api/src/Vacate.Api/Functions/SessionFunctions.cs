@@ -9,6 +9,10 @@ namespace Vacate.Api.Functions;
 
 public sealed class SessionFunctions(AuthenticationService authentication)
 {
+    [Function("GetDevelopmentAccounts")]
+    public Task<IActionResult> Accounts([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "auth/development-accounts")] HttpRequest request) =>
+        Execute(request, _ => Ok(authentication.Accounts()));
+
     [Function("CreateSession")]
     public Task<IActionResult> Create([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/sessions")] HttpRequest request) =>
         Execute(request, body =>

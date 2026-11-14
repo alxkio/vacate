@@ -7,8 +7,8 @@ const factories = await Promise.all(
     (
       await readFile(
         new URL(
-          name === 'session'
-            ? './testing/fixtures/session.js'
+          ['session', 'fixtures'].includes(name)
+            ? `./testing/fixtures/${name === 'fixtures' ? 'leave' : name}.js`
             : `./src/app/core/reference-data/${name}.js`,
           import.meta.url,
         ),

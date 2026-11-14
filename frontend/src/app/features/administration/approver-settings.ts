@@ -1,7 +1,6 @@
 import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminApi, AdminCalendar, adminError, Approver } from './admin-api';
-import { apiId } from '../../core/state/workspace-api.service';
 
 @Component({
   selector: 'vacate-approver-settings',
@@ -88,19 +87,19 @@ export class ApproverSettings implements OnInit {
         key: 'organization',
         name: 'Organization default',
         scope: 'organization' as const,
-        guid: apiId(actor?.companyId || ''),
+        guid: actor?.companyId || '',
       },
       ...(org?.departments || []).map((node) => ({
         key: `department:${node.id}`,
         name: `Department · ${node.name}`,
         scope: 'department' as const,
-        guid: apiId(node.id),
+        guid: node.id,
       })),
       ...(org?.teams || []).map((node) => ({
         key: `team:${node.id}`,
         name: `Team · ${node.name}`,
         scope: 'team' as const,
-        guid: apiId(node.id),
+        guid: node.id,
       })),
     ];
   }
@@ -113,12 +112,10 @@ export class ApproverSettings implements OnInit {
     if (selected.scope === 'team') {
       const actor = this.api.data.currentUser();
       const org = this.api.data.organization.read(actor?.companyId || '');
-      const team = org?.teams.find((team) => apiId(team.id) === selected.guid);
+      const team = org?.teams.find((team) => team.id === selected.guid);
       const department =
         team?.departmentId &&
-        this.scopes.find(
-          (node) => node.scope === 'department' && node.guid === apiId(team.departmentId!),
-        );
+        this.scopes.find((node) => node.scope === 'department' && node.guid === team.departmentId!);
       if (department) chain.push(department);
     }
     if (selected.scope !== 'organization') chain.push(organization);

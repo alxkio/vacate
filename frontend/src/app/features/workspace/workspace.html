@@ -188,9 +188,7 @@
             </span>
           </div>
           @if (leave.loading()) {
-            <p class="load-feedback" role="status">
-              Loading saved leave… Reference examples remain visible.
-            </p>
+            <p class="load-feedback" role="status">Loading saved leave…</p>
           }
           @if (leave.error()) {
             <div class="load-feedback">

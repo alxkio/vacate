@@ -16,7 +16,11 @@ describe('Own profile settings', async () => {
     sessionStorage.clear();
     localStorage.clear();
   });
-  function setup(id = 'maya'): { data: WorkspaceDataService; fixture: ComponentFixture<ProfileSettings>; page: ProfileSettings; } {
+  function setup(id = 'maya'): {
+    data: WorkspaceDataService;
+    fixture: ComponentFixture<ProfileSettings>;
+    page: ProfileSettings;
+  } {
     const data = TestBed.inject(WorkspaceDataService);
     data.environment.VacateSession.login(id, id);
     const fixture = TestBed.createComponent(ProfileSettings);
@@ -38,7 +42,7 @@ describe('Own profile settings', async () => {
     expect(page.draft.firstName).toBe('Updated');
   });
   it('renders membership without editing controls even for administrators and handles unassigned membership', async () => {
-    const { fixture, page } = setup('nora');
+    const { data, fixture, page } = setup('nora');
     await fixture.whenStable();
     expect(
       fixture.nativeElement.querySelector(
@@ -46,7 +50,43 @@ describe('Own profile settings', async () => {
       ),
     ).toBeNull();
     expect(fixture.nativeElement.querySelector('.membership-card').textContent).toContain('Admin');
+    page.profile = {
+      ...page.profile!,
+      membership: {
+        ...page.profile!.membership!,
+        managerUserId: 'maya',
+        balance: {
+          ...page.profile!.membership!.balance,
+          periodStart: '2031-01-01',
+          periodEnd: '2031-12-31',
+          customAllocation: null,
+          allocation: 0,
+          policyMinimum: null,
+        },
+      },
+    };
+    page.detector.markForCheck();
+    fixture.detectChanges();
+    expect(page.manager).toBe(data.fixtures.person('maya')!.name);
+    const balance = fixture.nativeElement.querySelector('.membership-balance').textContent;
+    expect(balance).toContain('2031-01-01');
+    expect(balance).toContain('2031-12-31');
+    expect(balance).toContain('0');
+    expect(balance).not.toContain('2026');
+    page.profile = {
+      ...page.profile!,
+      membership: {
+        ...page.profile!.membership!,
+        balance: { ...page.profile!.membership!.balance, allocation: null },
+      },
+    };
+    page.detector.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.membership-balance').textContent).toContain(
+      'Allocation not configured',
+    );
     page.profile = { ...page.profile!, membership: null };
+    page.detector.markForCheck();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.membership-card').textContent).toContain(
       'No company membership assigned',

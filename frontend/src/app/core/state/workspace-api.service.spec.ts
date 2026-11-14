@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { RUNTIME_CONFIG } from '../http/runtime-config';
 import { WorkspaceApiService } from './workspace-api.service';
-import { createFixtures } from '../reference-data/fixtures.js';
+import { createFixtures } from '../../../../testing/fixtures/leave.js';
 import { createProfiles } from '../../../../testing/fixtures/profiles.js';
 import { OwnProfile, Person } from '../models/workspace.models';
 import { SessionNavigation } from '../http/session-navigation';
@@ -58,6 +58,15 @@ describe('API-backed demo state', () => {
     http
       .expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/summary')
       .flush({ name: 'From API', workWeekDays: 6 });
+    await tick();
+    http.expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/workspace').flush({
+      companyId: '20000000-0000-4000-8000-000000000100',
+      countryCode: 'GR',
+      people: [],
+      teams: [],
+      departments: [],
+      availability: [],
+    });
     expect(await result).toBe(true);
   }
   it('uses server sign-in, bearer authorization and own response instead of browser account keys', async () => {
@@ -69,6 +78,15 @@ describe('API-backed demo state', () => {
     expect(api.organization.summary()?.workWeekDays).toBe(6);
     expect(api.organization.read('northstar')).toBeNull();
   });
+  it('hides cached profile and workspace when the browser ticket changes', async () => {
+    await signIn();
+    expect(api.workspace).not.toBeNull();
+    sessionStorage.setItem('vacate.session.token', 'another-ticket');
+    expect(api.currentUser()).toBeNull();
+    expect(api.profiles.read()).toBeNull();
+    expect(api.workspace).toBeNull();
+  });
+
   it('does not commit failed saves locally and exposes the server validation error', async () => {
     await signIn();
     const result = api.profiles.update('maya', { firstName: 'Lost', soleCare: true });
@@ -93,6 +111,15 @@ describe('API-backed demo state', () => {
     http
       .expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/summary')
       .flush({ name: 'From API', workWeekDays: 6 });
+    await tick();
+    http.expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/workspace').flush({
+      companyId: '20000000-0000-4000-8000-000000000100',
+      countryCode: 'GR',
+      people: [],
+      teams: [],
+      departments: [],
+      availability: [],
+    });
     expect((await result).ok).toBe(true);
     expect(api.profiles.read()?.firstName).toBe('Edited');
     expect(api.profiles.read()?.membership?.companyId).toBe(response.profile.membership!.companyId);
@@ -141,6 +168,15 @@ describe('API-backed demo state', () => {
       http
         .expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/summary')
         .flush({ name: 'Restored' });
+      await tick();
+      http.expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/workspace').flush({
+        companyId: '20000000-0000-4000-8000-000000000100',
+        countryCode: 'GR',
+        people: [],
+        teams: [],
+        departments: [],
+        availability: [],
+      });
       expect(await recovery).toBe(true);
       expect(api.currentUser()?.id).toBe('maya');
       expect(api.sessionRecoveryAvailable).toBe(false);
@@ -220,6 +256,15 @@ describe('API-backed demo state', () => {
     http
       .expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/summary')
       .flush({ name: 'Ravi company' });
+    await tick();
+    http.expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/workspace').flush({
+      companyId: '20000000-0000-4000-8000-000000000100',
+      countryCode: 'GR',
+      people: [],
+      teams: [],
+      departments: [],
+      availability: [],
+    });
     expect(await replacement).toBe(true);
     oldRequest.flush({}, { status: 503, statusText: 'Unavailable' });
     expect(await oldRestore).toBe(false);
@@ -239,6 +284,15 @@ describe('API-backed demo state', () => {
     http
       .expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/summary')
       .flush({ name: 'Restored' });
+    await tick();
+    http.expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/workspace').flush({
+      companyId: '20000000-0000-4000-8000-000000000100',
+      countryCode: 'GR',
+      people: [],
+      teams: [],
+      departments: [],
+      availability: [],
+    });
     expect(await first).toBe(true);
     expect(await second).toBe(true);
     expect(api.currentUser()?.id).toBe('maya');

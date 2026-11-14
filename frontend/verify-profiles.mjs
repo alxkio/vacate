@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { createFixtures } from './src/app/core/reference-data/fixtures.js';
+import { createFixtures } from './testing/fixtures/leave.js';
 import { createProfiles } from './testing/fixtures/profiles.js';
 import { createCatalogue } from './src/app/core/reference-data/catalogue.js';
 import { createEligibility } from './src/app/core/reference-data/eligibility.js';

@@ -1,6 +1,6 @@
 // Same in-memory factory as Angular; synthetic permission checks do not prove server isolation.
 import assert from 'node:assert/strict';
-import { createFixtures } from './src/app/core/reference-data/fixtures.js';
+import { createFixtures } from './testing/fixtures/leave.js';
 import { createOrganization } from './testing/fixtures/organization.js';
 const fixtures = createFixtures();
 let actor = null;

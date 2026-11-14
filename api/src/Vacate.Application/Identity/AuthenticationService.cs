@@ -7,6 +7,16 @@ namespace Vacate.Application.Identity;
 public sealed class AuthenticationService(ICredentialValidator credentials, ISessionStore sessions,
     IUserRepository users, IUnitOfWork unitOfWork, RecordMapper mapper, TimeProvider clock)
 {
+    public IReadOnlyList<DevelopmentAccount> Accounts() => unitOfWork.Execute(() =>
+    {
+        if (!credentials.Enabled)
+        {
+            throw new ServiceException(ServiceError.Unavailable, "Development sign-in is unavailable.");
+        }
+
+        return credentials.Accounts();
+    });
+
     public SignInResult SignIn(string username, string password) => unitOfWork.Execute(() =>
     {
         if (!credentials.Enabled)

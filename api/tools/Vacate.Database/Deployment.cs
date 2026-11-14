@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Vacate.Infrastructure.Persistence;
+using Vacate.Infrastructure.Persistence.Sql;
 
 namespace Vacate.Database;
 
@@ -77,6 +78,25 @@ internal static class Deployment
         });
         command.CommandText = $"EXECUTE AS USER = N'{runtimeName}'; BEGIN TRY {string.Join("\n", reads)} REVERT; END TRY BEGIN CATCH REVERT; THROW; END CATCH;";
         command.ExecuteNonQuery();
+        if (bool.TryParse(Environment.GetEnvironmentVariable("VACATE_REQUIRE_DEVELOPMENT_LOGINS"), out var required) && required)
+        {
+            var ready = (
+                from login in context.Set<DevelopmentLoginRow>()
+                join user in context.Set<UserRow>() on login.UserId equals user.Id
+                join member in context.Set<MembershipRow>() on user.Id equals member.UserId
+                join company in context.Set<OrganizationRow>() on member.CompanyId equals company.Id
+                where login.Enabled && login.Advertise && user.Status == "active" && user.DeletedAt == null
+                    && member.DeletedAt == null && company.IsDemo && company.DeletedAt == null
+                select login.Alias
+            ).Any();
+            if (!ready)
+            {
+                throw new InvalidOperationException("Provision explicit database development logins before publishing the enabled dev API. No application was published by this gate.");
+            }
+
+            Console.WriteLine("Verified an explicit active advertised database development login; no test accounts were created by deployment.");
+        }
+
         Console.WriteLine($"Verified migration {context.Database.GetMigrations().Last()} and runtime access to all mapped columns.");
     }
 

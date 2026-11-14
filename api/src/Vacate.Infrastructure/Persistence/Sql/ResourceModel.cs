@@ -225,6 +225,18 @@ internal static class ResourceModel
         sessions.HasIndex(row => row.ExpiresAt);
         sessions.HasOne<UserRow>().WithMany().HasForeignKey(row => row.UserId).OnDelete(DeleteBehavior.NoAction);
 
+        var logins = model.Entity<DevelopmentLoginRow>();
+        logins.ToTable("DevelopmentLogins", t =>
+        {
+            t.HasCheckConstraint("CK_DevelopmentLogins_Alias", "LEN([Alias]) > 0 AND [Alias] = LOWER(LTRIM(RTRIM([Alias]))) COLLATE Latin1_General_100_BIN2");
+            t.HasCheckConstraint("CK_DevelopmentLogins_Utc", "[UpdatedAt] >= [CreatedAt] AND DATEPART(TZOFFSET, [CreatedAt]) = 0 AND DATEPART(TZOFFSET, [UpdatedAt]) = 0");
+        });
+        logins.HasKey(row => row.Alias);
+        logins.Property(row => row.Alias).HasMaxLength(200).UseCollation("Latin1_General_100_BIN2");
+        logins.Property(row => row.Enabled).HasDefaultValue(false);
+        logins.Property(row => row.Advertise).HasDefaultValue(false);
+        logins.HasOne<UserRow>().WithMany().HasForeignKey(row => row.UserId).OnDelete(DeleteBehavior.NoAction);
+
         var access = model.Entity<DevelopmentAccessRow>();
         access.ToTable("DevelopmentProvisioningAccess");
         access.HasKey(x => new { x.UserId, x.CompanyId });

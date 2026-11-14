@@ -6,7 +6,7 @@ using Vacate.Domain.Users;
 
 namespace Vacate.Infrastructure.Persistence;
 
-// Shared tracked aggregate storage and transaction gate. Swap repository adapters for durable storage later.
+// Empty process-local repository storage and transaction gate.
 public sealed class InMemoryDatabase
 {
     internal Dictionary<(int CompanyId, int MembershipId, Guid Key), string> CoveredReceipts { get; } = [];
@@ -23,14 +23,4 @@ public sealed class InMemoryDatabase
     internal Dictionary<int, int> Invitations { get; } = [];
 
     internal HashSet<(int UserId, int OrganizationId)> ProvisioningGrants { get; } = [];
-    internal Dictionary<int, UserPresentation> Presentation { get; } = [];
-    internal Dictionary<string, int> CredentialAliases { get; } = [];
-
-    public InMemoryDatabase(bool seedDevelopmentData = false)
-    {
-        if (seedDevelopmentData)
-        {
-            DevelopmentDataSeeder.Apply(this);
-        }
-    }
 }

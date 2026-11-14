@@ -16,6 +16,7 @@ using Vacate.Application.Leave;
 using Vacate.Domain.Common;
 using Vacate.Domain.Memberships;
 using Vacate.Infrastructure;
+using Vacate.Testing;
 using Vacate.Infrastructure.Persistence;
 using Vacate.Infrastructure.Persistence.Sql;
 
@@ -40,10 +41,9 @@ public sealed class AdminLeaveTests
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["SeedData:Enabled"] = "true",
             ["DevelopmentAuthentication:Enabled"] = "true"
         }).Build();
-        var services = new ServiceCollection().AddSingleton<IConfiguration>(config).AddInMemoryPersistence();
+        var services = new ServiceCollection().AddSingleton<IConfiguration>(config).AddInMemoryPersistence().AddInMemoryTestFixtures();
         services.AddSingleton<AccessPolicy>();
         services.AddSingleton<RecordMapper>();
         services.AddSingleton<AuthenticationService>();
@@ -57,8 +57,8 @@ public sealed class AdminLeaveTests
         leave = provider.GetRequiredService<LeaveService>();
         authentication = provider.GetRequiredService<AuthenticationService>();
         functions = provider.GetRequiredService<AdminLeaveFunctions>();
-        nora = database.CredentialAliases["nora"];
-        maya = database.CredentialAliases["maya"];
+        nora = database.Users.Values.Single(user => user.Username == "nora@example.invalid").Id;
+        maya = database.Users.Values.Single(user => user.Username == "maya@example.invalid").Id;
         companyId = database.Memberships.Single(m => m.UserId == nora).CompanyId;
         var secondary = database.Memberships.First(m => m.CompanyId == companyId && m.UserId != nora && m.UserId != maya);
         secondary.Update(secondary.Configuration with { SystemRoleId = SystemRoles.Admin }, secondary.Balance.CustomAllocation, DateTimeOffset.UtcNow);

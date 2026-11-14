@@ -80,17 +80,12 @@ public interface IUnitOfWork
     T Execute<T>(Func<T> operation);
 }
 
-public sealed record UserPresentation(string DisplayKey, bool IsTeamLead);
-
-public interface IUserPresentationCatalog
-{
-    UserPresentation? Find(int userId);
-}
-
 public interface ICredentialValidator
 {
     bool Enabled { get; }
     int? Validate(string username, string password);
+
+    IReadOnlyList<DevelopmentAccount> Accounts() => [];
 }
 
 public sealed record SessionTicket(string AccessToken, DateTimeOffset ExpiresAt);
@@ -105,3 +100,5 @@ public interface ISessionStore
 
     void RevokeForUser(int userId);
 }
+
+public sealed record DevelopmentAccount(string Id, string Name, string Label, string Team);

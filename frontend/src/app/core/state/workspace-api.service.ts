@@ -22,24 +22,16 @@ import { OrganizationApiService } from '../http/organization-api.service';
 import { SessionApiService } from '../http/session-api.service';
 import { ApiClient } from '../http/api-client';
 
-const aliases = new Map<string, string>(
-  [
-    [100, 'northstar'],
-    [300, 'technology'],
-    [301, 'business'],
-    [400, 'platform'],
-    [401, 'applications'],
-    [402, 'product'],
-    [403, 'operations'],
-  ].map(([number, alias]) => [
-    `20000000-0000-4000-8000-${String(number).padStart(12, '0')}`,
-    String(alias),
-  ]),
-);
-export const displayId = (id: string | null | undefined): string =>
-  id ? aliases.get(id) || id : '';
-export const apiId = (id: string): string =>
-  [...aliases].find(([, alias]): boolean => alias === id)?.[0] || id;
+// Public GUIDs stay unchanged across the HTTP and view-model boundaries.
+
+export type MemberWorkspace = {
+  companyId: string;
+  countryCode: string | null;
+  departments: { guid: string; name: string }[];
+  teams: { guid: string; name: string; departmentId: string | null }[];
+  people: DirectoryUser[];
+  availability: { userGuid: string; date: string }[];
+};
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceApiService {
@@ -59,6 +51,11 @@ export class WorkspaceApiService {
   }
   private actor: Person | null = null;
   private profile: OwnProfile | null = null;
+  private workspaceRecord: MemberWorkspace | null = null;
+
+  get workspace(): MemberWorkspace | null {
+    return this.currentUser() ? this.workspaceRecord : null;
+  }
   private org: OrganizationRecord | null = null;
   private summaryRecord: OrganizationSummary | null = null;
   members: MemberRecord[] = [];
@@ -161,6 +158,7 @@ export class WorkspaceApiService {
   private clearWorkspace(): void {
     this.actor = null;
     this.profile = null;
+    this.workspaceRecord = null;
     this.org = null;
     this.summaryRecord = null;
     this.members = [];
@@ -195,6 +193,25 @@ export class WorkspaceApiService {
     return token === this.token && !!this.currentUser();
   }
 
+  async refreshWorkspace(): Promise<void> {
+    const actor = this.currentUser();
+    const generation = this.generation;
+    if (!actor) return;
+    try {
+      const workspace = await this.authenticatedRequest<MemberWorkspace>(
+        actor.id,
+        'GET',
+        `organizations/${actor.companyId}/workspace`,
+      );
+      if (this.currentUser()?.id === actor.id && generation === this.generation)
+        this.workspaceRecord = workspace;
+    } catch (error) {
+      if (this.currentUser()?.id === actor.id && generation === this.generation)
+        this.workspaceRecord = null;
+      throw error;
+    }
+  }
+
   async directory(): Promise<DirectoryUser[]> {
     const token = this.token;
     const people = await firstValueFrom(this.users.list(token));
@@ -221,7 +238,7 @@ export class WorkspaceApiService {
     patch: unknown,
   ): Promise<{ ok: boolean; error?: undefined } | { ok: boolean; error: any }> {
     return this.writeOrganization(this.actor?.companyId || '', actorId, (token) =>
-      firstValueFrom(this.organizations.update(apiId(this.actor!.companyId), patch, token)),
+      firstValueFrom(this.organizations.update(this.actor!.companyId, patch, token)),
     );
   }
 
@@ -233,13 +250,7 @@ export class WorkspaceApiService {
   ): Promise<{ ok: boolean; error?: undefined } | { ok: boolean; error: any }> {
     return this.write(actorId, (token) =>
       firstValueFrom(
-        this.organizations.updateApproval(
-          apiId(this.actor!.companyId),
-          kind,
-          nodeId,
-          required,
-          token,
-        ),
+        this.organizations.updateApproval(this.actor!.companyId, kind, nodeId, required, token),
       ),
     );
   }
@@ -251,6 +262,15 @@ export class WorkspaceApiService {
     const companyId = response.profile.membership?.companyId;
     const summary = companyId
       ? await firstValueFrom(this.organizations.summary(companyId, token))
+      : null;
+    const workspace = companyId
+      ? await firstValueFrom(
+          this.client.request<MemberWorkspace>(
+            'GET',
+            `organizations/${companyId}/workspace`,
+            token,
+          ),
+        )
       : null;
     let org: OrganizationRecord | null = null;
     let members: MemberRecord[] = [];
@@ -273,12 +293,12 @@ export class WorkspaceApiService {
       });
       org = {
         ...record,
-        companyId: displayId(record.guid),
-        departments: record.departments.map((x) => ({ ...x, id: displayId(x.guid) })),
+        companyId: record.guid || '',
+        departments: record.departments.map((x) => ({ ...x, id: x.guid || '' })),
         teams: record.teams.map((x) => ({
           ...x,
-          id: displayId(x.guid),
-          departmentId: x.departmentId ? displayId(x.departmentId) : null,
+          id: x.guid || '',
+          departmentId: x.departmentId ? x.departmentId || '' : null,
           members: members.filter((m) => m.membership.teamId === x.guid).map(member),
         })),
         members: members.map(member),
@@ -293,11 +313,12 @@ export class WorkspaceApiService {
     }
     this.actor = {
       ...response.person,
-      companyId: displayId(companyId),
-      departmentId: displayId(response.profile.membership?.departmentId),
-      teamId: displayId(response.profile.membership?.teamId),
+      companyId: companyId || '',
+      departmentId: response.profile.membership?.departmentId || '',
+      teamId: response.profile.membership?.teamId || '',
     };
     this.profile = response.profile;
+    this.workspaceRecord = workspace;
     this.summaryRecord = summary;
     this.org = org;
     this.members = members;
@@ -346,7 +367,7 @@ export class WorkspaceApiService {
   }
 
   readonly profiles: OwnProfiles = {
-    read: () => (this.profile ? structuredClone(this.profile) : null),
+    read: () => (this.currentUser() && this.profile ? structuredClone(this.profile) : null),
     update: (actorId, patch) =>
       this.write(actorId, (token) =>
         firstValueFrom(this.users.updateProfile(this.profile?.guid || '', patch, token)),
@@ -374,15 +395,15 @@ export class WorkspaceApiService {
     },
     update: (id, actor, patch) =>
       this.writeOrganization(id, actor, (token) =>
-        firstValueFrom(this.organizations.update(apiId(id), patch, token)),
+        firstValueFrom(this.organizations.update(id, patch, token)),
       ),
     rename: (id, actor, kind, nodeId, name) =>
       this.writeOrganization(id, actor, (token) =>
         firstValueFrom(
           this.organizations.renameNode(
-            apiId(id),
+            id,
             kind === 'department' ? 'departments' : 'teams',
-            apiId(nodeId),
+            nodeId,
             name,
             token,
           ),
@@ -400,13 +421,7 @@ export class WorkspaceApiService {
   ) {
     return this.writeOrganization(id, actor, (token) =>
       firstValueFrom(
-        this.organizations.createNode(
-          apiId(id),
-          kind,
-          name,
-          departmentId ? apiId(departmentId) : null,
-          token,
-        ),
+        this.organizations.createNode(id, kind, name, departmentId ? departmentId : null, token),
       ),
     );
   }

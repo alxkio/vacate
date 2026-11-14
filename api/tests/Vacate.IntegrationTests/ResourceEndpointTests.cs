@@ -16,6 +16,7 @@ using Vacate.Application.Memberships;
 using Vacate.Application.Organizations;
 using Vacate.Application.Users;
 using Vacate.Infrastructure;
+using Vacate.Testing;
 
 namespace Vacate.IntegrationTests;
 
@@ -36,10 +37,9 @@ public sealed class ResourceEndpointTests
         provider?.Dispose();
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["DevelopmentAuthentication:Enabled"] = developmentAuthentication.ToString(),
-            ["SeedData:Enabled"] = "true"
+            ["DevelopmentAuthentication:Enabled"] = developmentAuthentication.ToString()
         }).Build();
-        var services = new ServiceCollection().AddSingleton<IConfiguration>(configuration).AddInMemoryPersistence();
+        var services = new ServiceCollection().AddSingleton<IConfiguration>(configuration).AddInMemoryPersistence().AddInMemoryTestFixtures();
         if (clock is not null)
         {
             services.AddSingleton(clock);
@@ -101,6 +101,49 @@ public sealed class ResourceEndpointTests
             StatusCodeResult status => (status.StatusCode, null),
             _ => throw new InvalidOperationException("Unexpected result")
         };
+    }
+
+    [Test]
+    public async Task Shared_workspace_uses_saved_dates_and_exposes_no_private_request_details()
+    {
+        Configure(true, new CancellationClock());
+        var employee = await Login("maya");
+        var admin = await Login("nora");
+        var member = memberships.Current(users.FindByGuid(Guid.Parse(GuidFor(4)))!.Id)!;
+        var key = Guid.NewGuid();
+        provider.GetRequiredService<IUnitOfWork>().Execute(() =>
+        {
+            provider.GetRequiredService<ILeaveRepository>().Add(new(member.CompanyId, member.Id, key, "test",
+                new(key, "sick", DateTimeOffset.UtcNow,
+                    [new(new(2026, 7, 13), "Approved", 2026), new(new(2026, 11, 25), "Pending", 2026),
+                     new(new(2026, 7, 14), "Cancelled", 2026), new(new(2026, 7, 15), "Pending", 2026)])));
+            return true;
+        });
+        var response = await Call("GET", $"organizations/{Company}/workspace", employee);
+        Assert.That(response.Status, Is.EqualTo(200));
+        Assert.That(response.Json!["people"]!.AsArray(), Has.Count.EqualTo(12));
+        var dates = response.Json["availability"]!.AsArray();
+        Assert.That(dates, Has.Count.EqualTo(2));
+        foreach (var date in dates)
+        {
+            Assert.That(date!.AsObject().Select(p => p.Key), Is.EquivalentTo(new[] { "userGuid", "date" }));
+        }
+
+        Assert.That(response.Json.ToJsonString(), Does.Not.Contain("hireDate").And.Not.Contain("priorService").And.Not.Contain("leaveTypeId").And.Not.Contain("dependentChildren"));
+        var foreign = await Call("POST", "organizations", admin, new { name = "Other test company" });
+        Assert.That((await Call("GET", $"organizations/{foreign.Json!["guid"]}/workspace", employee)).Status, Is.EqualTo(404));
+        Assert.That((await Call("GET", $"organizations/{Company}/workspace")).Status, Is.EqualTo(401));
+    }
+
+    [Test]
+    public async Task Session_identity_uses_public_guid_and_database_membership_role()
+    {
+        var token = await Login("leah");
+        var current = await Call("GET", "auth/sessions/current", token);
+        Assert.That(current.Json!["person"]!["id"]!.GetValue<string>(), Is.EqualTo(GuidFor(1)));
+        Assert.That(current.Json["person"]!["capability"]!.GetValue<string>(), Is.EqualTo("lead"));
+        Configure(false);
+        Assert.That((await Call("GET", "auth/development-accounts")).Status, Is.EqualTo(404));
     }
 
     [Test]
@@ -178,7 +221,7 @@ public sealed class ResourceEndpointTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(functions, Has.Length.EqualTo(43));
+            Assert.That(functions, Has.Length.EqualTo(45));
             Assert.That(functions.All(function => function.Methods.Length == 1), Is.True);
             Assert.That(functions.Any(function => function.Route.Contains('*')), Is.False);
             Assert.That(routeMethods, Has.Length.EqualTo(routeMethods.Distinct(StringComparer.OrdinalIgnoreCase).Count()));
@@ -353,6 +396,7 @@ public sealed class ResourceEndpointTests
         var admin = await Login("nora");
         var path = $"organizations/{Company}";
         var balance = (await Call("GET", path + $"/memberships/{GuidFor(4)}", admin)).Json!["membership"]!["balance"]!.ToJsonString();
+        Assert.That((await Call("PATCH", path, admin, new { countryCode = (string?)null })).Status, Is.EqualTo(200), "Legacy carryover configuration is tested outside the fixed Greek deadline.");
         foreach (var years in new[] { 0, 2 })
         {
             var result = await Call("PATCH", path, admin, new { carryoverEnabled = true, carryoverYears = years });

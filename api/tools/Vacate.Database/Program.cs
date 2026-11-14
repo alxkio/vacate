@@ -94,17 +94,7 @@ else if (operation == "grant-runtime" && args.Length == 3 && Environment.GetEnvi
 {
     RuntimeAccess.Grant(context, args[1], args[2]);
 }
-else if (operation == "seed-fictional-history" && Environment.GetEnvironmentVariable("VACATE_SQL_CONNECTION") is not null)
-{
-    var imported = SqlDevelopmentSeeder.ImportHistory(context);
-    Console.WriteLine($"Imported {imported} fictional dated requests into known demo memberships; opening used totals preserved. Existing requests were not overwritten.");
-}
-else if (operation == "seed-fictional" && args.Contains("--empty-only") && Environment.GetEnvironmentVariable("VACATE_SQL_CONNECTION") is not null)
-{
-    SqlDevelopmentSeeder.Import(context);
-    Console.WriteLine("Fictional fixtures imported into empty resource tables; no existing data overwritten.");
-}
 else
 {
-    throw new ArgumentException("Use script, inspect, migrate, deploy RUNTIME_NAME RUNTIME_CLIENT_ID, verify-derived-migration, configure-leave-entitlement ORGANIZATION_GUID MEMBERSHIP_GUID TYPE YEAR ALLOCATION, grant-runtime NAME CLIENT_ID, or seed-fictional --empty-only with VACATE_SQL_CONNECTION. No downgrade or automatic seed is supported.");
+    throw new ArgumentException("Use script, inspect, migrate, deploy RUNTIME_NAME RUNTIME_CLIENT_ID, verify-derived-migration, configure-leave-entitlement ORGANIZATION_GUID MEMBERSHIP_GUID TYPE YEAR ALLOCATION, grant-runtime NAME CLIENT_ID. No downgrade or automatic data import is supported.");
 }

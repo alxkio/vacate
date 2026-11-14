@@ -127,10 +127,10 @@
       </div>
       @if (profile?.membership; as membership) {
         <div class="membership-company">
-          <span class="membership-symbol" aria-hidden="true">N</span>
+          <span class="membership-symbol" aria-hidden="true">{{ data.companyName[0] }}</span>
           <div>
             <strong>{{ data.companyName }}</strong>
-            <p>Fictional company membership</p>
+            <p>Company membership</p>
           </div>
         </div>
         <dl class="membership-details">
@@ -154,7 +154,7 @@
           </div>
           <div>
             <dt>Manager</dt>
-            <dd>Not assigned</dd>
+            <dd>{{ manager }}</dd>
           </div>
           <div>
             <dt>Hire date</dt>
@@ -175,28 +175,33 @@
             </dd>
           </div>
           <div>
-            <dt>Work schedule</dt>
-            <dd>{{ data.companyWorkWeekDays }} days per week · demo</dd>
+            <dt>Company workweek</dt>
+            <dd>{{ data.companyWorkWeekDays }} days per week</dd>
           </div>
           <div>
             <dt>Holiday calendar</dt>
-            <dd>Not configured</dd>
+            <dd>{{ membership.holidayCalendarId ? 'Assigned' : 'Not configured' }}</dd>
           </div>
           <div>
             <dt>Experience policy</dt>
-            <dd>Not configured</dd>
+            <dd>{{ membership.leavePolicyId ? 'Assigned' : 'Not configured' }}</dd>
           </div>
         </dl>
         <div class="membership-balance">
-          <h3>Annual allocation · 2026</h3>
+          <h3>Annual allocation</h3>
+          <p>{{ membership.balance.periodStart }} – {{ membership.balance.periodEnd }}</p>
           <p>
-            <strong>{{ membership.balance.customAllocation }}</strong> configured working days
+            @if ((membership.balance.customAllocation ?? membership.balance.allocation) !== null) {
+              <strong>{{
+                membership.balance.customAllocation ?? membership.balance.allocation
+              }}</strong>
+              working days
+            } @else {
+              Allocation not configured
+            }
           </p>
-          <p>Policy minimum: to confirm</p>
-          <p class="settings-hint">
-            This existing fictional allocation is not an experience-policy calculation. Your leave
-            ledger is shown in My balances.
-          </p>
+          <p>Policy minimum: {{ membership.balance.policyMinimum ?? 'to confirm' }}</p>
+          <p class="settings-hint">Your leave ledger is shown in My Leave.</p>
         </div>
         <p class="settings-hint">
           Your company admin manages membership, roles, employment details and allocation.

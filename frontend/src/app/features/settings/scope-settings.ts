@@ -1,7 +1,6 @@
 import { ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
-import { apiId } from '../../core/state/workspace-api.service';
 import { ApiDepartment } from '../../core/http/contracts';
 
 @Component({
@@ -95,12 +94,11 @@ export class ScopeSettings implements OnChanges {
   }
 
   get ownTeam(): string {
-    return apiId(this.data.currentUser()?.teamId || '');
+    return this.data.currentUser()?.teamId || '';
   }
 
   ngOnChanges(): void {
-    const own =
-      this.kind === 'teams' ? this.ownTeam : apiId(this.data.currentUser()?.departmentId || '');
+    const own = this.kind === 'teams' ? this.ownTeam : this.data.currentUser()?.departmentId || '';
     this.selectedId = this.nodes.find((n) => n.guid === own)?.guid || this.nodes[0]?.guid || '';
     this.reset();
   }

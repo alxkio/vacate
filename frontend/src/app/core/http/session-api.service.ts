@@ -6,6 +6,10 @@ import { CurrentSession, SignInResult } from './contracts';
 export class SessionApiService {
   private readonly api = inject(ApiClient);
 
+  accounts(): Observable<{ id: string; name: string; label: string; team: string }[]> {
+    return this.api.request('GET', 'auth/development-accounts', '');
+  }
+
   signIn(username: string, password: string): Observable<SignInResult> {
     return this.api.request<SignInResult>('POST', 'auth/sessions', '', { username, password });
   }

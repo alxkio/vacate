@@ -369,6 +369,44 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                     b.ToTable("DevelopmentProvisioningAccess", (string)null);
                 });
 
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.DevelopmentLoginRow", b =>
+                {
+                    b.Property<string>("Alias")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .UseCollation("Latin1_General_100_BIN2");
+
+                    b.Property<bool>("Advertise")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Alias");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DevelopmentLogins", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DevelopmentLogins_Alias", "LEN([Alias]) > 0 AND [Alias] = LOWER(LTRIM(RTRIM([Alias]))) COLLATE Latin1_General_100_BIN2");
+
+                            t.HasCheckConstraint("CK_DevelopmentLogins_Utc", "[UpdatedAt] >= [CreatedAt] AND DATEPART(TZOFFSET, [CreatedAt]) = 0 AND DATEPART(TZOFFSET, [UpdatedAt]) = 0");
+                        });
+                });
+
             modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.JobRoleRow", b =>
                 {
                     b.Property<int>("Id")
@@ -1243,6 +1281,15 @@ namespace Vacate.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("Vacate.Infrastructure.Persistence.Sql.UserRow", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vacate.Infrastructure.Persistence.Sql.DevelopmentLoginRow", b =>
+                {
                     b.HasOne("Vacate.Infrastructure.Persistence.Sql.UserRow", null)
                         .WithMany()
                         .HasForeignKey("UserId")

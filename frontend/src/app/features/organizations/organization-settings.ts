@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
-import { apiId } from '../../core/state/workspace-api.service';
 import { MemberRecord, Roles } from '../../core/http/contracts';
 import {
   OrganizationNode,
@@ -29,7 +28,6 @@ import { CompanyCalendar } from '../administration/company-calendar';
 export class OrganizationSettings implements OnChanges {
   readonly data = inject(WorkspaceDataService);
   readonly detector = inject(ChangeDetectorRef);
-  readonly apiId = apiId;
   selectedMember: MemberRecord | null = null;
   memberDraft = {
     systemRoleId: '',

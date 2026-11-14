@@ -145,7 +145,7 @@ There is no atomic rollback across Functions and Static Web Apps. If publishing 
 
 ### Fictional demo sign-in in dev
 
-GitHub deployments to `dev` with `apply=true` set `DevelopmentAuthentication__Enabled=true` and `SeedData__Enabled=true` through Bicep. A preview with `apply=false` does not change settings. Staging and production deployments set both to `false`. The current dev target uses subscription `07d79495-1f4f-40fd-9fdf-84605214e5e6`, resource group `rg-vacate-dev`, and Function App `vacate-dev-sc-wv5pdctnrzamu-api` (API URL: `https://vacate-dev-sc-wv5pdctnrzamu-api.azurewebsites.net`). After a successful dev deployment/restart, try a seeded fictional account such as `maya` / `maya` or `nora` / `nora`; every seeded demo user uses their lowercase first name as both username and password.
+GitHub deployments to `dev` with `apply=true` enable `DevelopmentAuthentication__Enabled` through Bicep. Published builds contain no fixture loader or test roster. SQL hosts read existing database records; ordinary InMemory hosts start empty. The obsolete `SeedData__Enabled` setting is no longer read or provisioned. A preview with `apply=false` does not change settings. Staging and production deployments disable development authentication. The current dev target uses subscription `07d79495-1f4f-40fd-9fdf-84605214e5e6`, resource group `rg-vacate-dev`, and Function App `vacate-dev-sc-wv5pdctnrzamu-api` (API URL: `https://vacate-dev-sc-wv5pdctnrzamu-api.azurewebsites.net`). The public dev accounts require explicitly provisioned DevelopmentLogins rows for active users in a marked test organization; deployment/restart does not create them. See the [database test-data runbook](../docs/database/test-data.md).
 
 To check the active settings in the VS Code integrated terminal:
 
@@ -154,11 +154,11 @@ az account set --subscription 07d79495-1f4f-40fd-9fdf-84605214e5e6
 az functionapp config appsettings list \
   --resource-group rg-vacate-dev \
   --name vacate-dev-sc-wv5pdctnrzamu-api \
-  --query "[?name=='DevelopmentAuthentication__Enabled' || name=='SeedData__Enabled'].[name,value]" \
+  --query "[?name=='DevelopmentAuthentication__Enabled'].[name,value]" \
   --output table
 ```
 
-This deliberately enables shared, predictable demo credentials on a publicly reachable API. Use only for fictional dev data; never enable these settings in staging or production. A subsequent Bicep deployment to dev re-applies the settings. Newly API-created users have no demo password. The dev API uses SQL for resource data and the explicitly imported fictional fixtures; host startup does not migrate or reseed SQL. Sessions remain in-memory and process-local, so session continuity across Flex Consumption instances is not guaranteed. Shared session storage or an accepted hosting design is required before treating this as reliable multi-instance authentication.
+This deliberately enables shared, predictable demo credentials on a publicly reachable API. Use only for fictional dev data; never enable these settings in staging or production. A subsequent Bicep deployment to dev re-applies the settings. Newly API-created users have no development login until an operator explicitly adds an enabled DevelopmentLogins row for an active marked test organization. The dev API uses SQL for resource data and the explicitly imported fictional fixtures; host startup does not migrate or reseed SQL. SQL mode persists hashed shared sessions in the same database; production identity remains separate. Database development login provisioning and the one-time business-data update must precede publication of this cleanup; see [test data cutover](../docs/database/test-data.md).
 
 ## Acceptance and verification
 
@@ -176,7 +176,7 @@ Sources checked 2026-10-21: [isolated .NET worker](https://learn.microsoft.com/e
 
 Frontend source and lockfile live in `frontend/`. CI publishes the built Angular index directly; `scripts/prepare-frontend.py` stamps revision metadata without overwriting it. The earlier static-gallery packaging pipeline is retired by VAC-10.
 
-The API-backed fictional settings iteration (VAC-13) requires development sign-in and seed adapters, which are enabled only in dev through the environment-specific settings above. The original iteration used memory resource adapters; current dev resources persist in SQL, while sessions remain process-local; this remains a fictional demo configuration, not a real-data or production authentication setup. Full CI also verifies built Angular against a running Functions host with fictional seed data; an explicitly selected frontend-only deployment skips that paired job and cannot validate API-backed changes.
+The API-backed fictional settings iteration (VAC-13) requires development sign-in and seed adapters, which are enabled only in dev through the environment-specific settings above. The original iteration used memory resource adapters; current dev resources and hashed shared sessions persist in SQL; this remains a fictional demo configuration, not a real-data or production authentication setup. Full CI also verifies built Angular against a running Functions host with fictional seed data; an explicitly selected frontend-only deployment skips that paired job and cannot validate API-backed changes.
 
 ## Current dev target and entry points · VAC-35
 

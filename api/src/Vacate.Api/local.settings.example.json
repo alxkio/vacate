@@ -3,7 +3,6 @@
   "Values": {
     "AzureWebJobsStorage": "",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "DevelopmentAuthentication__Enabled": "true",
-    "SeedData__Enabled": "true"
+    "DevelopmentAuthentication__Enabled": "false"
   }
 }

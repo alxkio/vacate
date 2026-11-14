@@ -30,7 +30,11 @@
   <section class="login-card" aria-labelledby="login-title">
     <span class="eyebrow">VACATE DEMO</span>
     <h2 id="login-title">Welcome back.</h2>
-    <p>Choose one of four test personas. Explore all 12 fictional colleagues.</p>
+    <p>Choose a test account from the organization’s saved data.</p>
+    @if (accountsError) {
+      <p role="status">{{ accountsError }}</p>
+      <button type="button" class="secondary" (click)="loadAccounts()">Retry test accounts</button>
+    }
     <label for="demo-account">Choose a test persona</label
     ><select
       #account

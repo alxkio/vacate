@@ -22,10 +22,6 @@ on:
         description: Build, test and publish API (required for API-backed feature changes)
         type: boolean
         default: true
-      import_demo_history:
-        description: Explicitly import dated fictional history after a full dev SQL deployment
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -76,11 +72,6 @@ jobs:
       DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v7
-      - name: Reject unsupported demo import selection
-        if: inputs.import_demo_history && (!inputs.apply || !inputs.deploy_backend || inputs.environment != 'dev')
-        run: |
-          echo 'Demo history import requires an applied full backend deployment to dev.' >&2
-          exit 1
       - name: Check deployment target
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
@@ -154,6 +145,7 @@ jobs:
           VACATE_SQL_SERVER: ${{ steps.infrastructure.outputs.sql_server }}
           VACATE_SQL_DATABASE: ${{ steps.infrastructure.outputs.sql_database }}
           VACATE_DEPLOY_REVISION: ${{ github.sha }}
+          VACATE_REQUIRE_DEVELOPMENT_LOGINS: ${{ inputs.environment == 'dev' }}
           RUNTIME_NAME: ${{ steps.infrastructure.outputs.runtime_name }}
           RUNTIME_CLIENT_ID: ${{ steps.infrastructure.outputs.runtime_client_id }}
         shell: bash
@@ -237,18 +229,6 @@ jobs:
           API_URL: ${{ steps.infrastructure.outputs.function_url }}
           WEB_URL: ${{ steps.infrastructure.outputs.web_url }}
         run: python3 scripts/cloud-smoke.py --api-base-url "$API_URL/api" --web-base-url "$WEB_URL" --revision "$GITHUB_SHA" --frontend-only
-      - name: Import explicitly requested demo history
-        if: inputs.apply && inputs.deploy_backend && inputs.environment == 'dev' && inputs.import_demo_history
-        env:
-          VACATE_SQL_CONNECTION: ${{ secrets[format('AZURE_SQL_MIGRATION_CONNECTION_{0}', inputs.environment)] }}
-          SQL_ENABLED: ${{ steps.infrastructure.outputs.sql_enabled }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "$SQL_ENABLED" = 'true'
-          test -n "$VACATE_SQL_CONNECTION"
-          dotnet artifacts/database/Vacate.Database.dll seed-fictional-history
-          printf 'Explicit fictional history import completed for the dev database.\n' >> "$GITHUB_STEP_SUMMARY"
       - name: Deployment summary
         if: inputs.apply
         env:

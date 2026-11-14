@@ -168,7 +168,7 @@ export class WorkspaceDialog {
         kind: 'info',
         title: 'A little guide',
         paragraphs: [
-          'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the current local date. Your own calendar shows saved requests; shared colleague availability includes labelled reference examples.',
+          'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the current local date. Your own calendar shows saved requests; shared colleague availability comes from saved leave.',
           'Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. Reference examples are fictional. Submitted requests and settings are saved through the API. Assigned administrators can decide pending requests in Approval Requests. Cancel eligible dates in your own requests from My Leave or a calendar date. Past entries cannot be changed. Moving leave requires a new request after cancelling the affected dates. Hourly requests are unavailable.',
         ],
       },

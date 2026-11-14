@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
+import { of } from 'rxjs';
+import { SessionApiService } from '../../core/http/session-api.service';
 import { Login } from './login';
 
 const personas = [
@@ -13,15 +15,28 @@ const personas = [
 describe('Test persona chooser', () => {
   beforeEach(() => {
     sessionStorage.clear();
-    TestBed.configureTestingModule({ imports: [Login], providers: [fixtureWorkspaceProvider] });
+    TestBed.configureTestingModule({
+      imports: [Login],
+      providers: [
+        fixtureWorkspaceProvider,
+        {
+          provide: SessionApiService,
+          useValue: {
+            accounts: () =>
+              of(personas.map(([id, label]) => ({ id, label, name: id, team: 'Saved team' }))),
+          },
+        },
+      ],
+    });
   });
 
   afterEach(() => sessionStorage.clear());
 
-  it('offers one option per scenario while retaining all twelve people and their fixture data', () => {
+  it('offers one option per scenario while retaining all twelve people and their fixture data', async () => {
     const data = TestBed.inject(WorkspaceDataService);
     const before = JSON.stringify({ people: data.fixtures.people, entries: data.fixtures.entries });
     const fixture = TestBed.createComponent(Login);
+    await fixture.whenStable();
     fixture.detectChanges();
     const options = [
       ...fixture.nativeElement.querySelectorAll('#demo-account option'),
@@ -43,9 +58,10 @@ describe('Test persona chooser', () => {
 
   it.each(personas)(
     'fills the existing credentials for %s (%s) without changing its permissions',
-    (id, label, capability) => {
+    async (id, label, capability) => {
       const data = TestBed.inject(WorkspaceDataService);
       const fixture = TestBed.createComponent(Login);
+      await fixture.whenStable();
       fixture.detectChanges();
       const element = fixture.nativeElement as HTMLElement;
       const select = element.querySelector('#demo-account') as HTMLSelectElement;
@@ -59,8 +75,9 @@ describe('Test persona chooser', () => {
       expect(data.fixtures.peopleFor(data.fixtures.person(id)!, 'org', 'foreign-company')).toEqual(
         [],
       );
-      if (capability === 'lead')
-        {expect(data.fixtures.allowedScopes(data.fixtures.person(id)!)).toContain('department');}
+      if (capability === 'lead') {
+        expect(data.fixtures.allowedScopes(data.fixtures.person(id)!)).toContain('department');
+      }
     },
   );
 });

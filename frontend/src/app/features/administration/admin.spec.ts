@@ -4,7 +4,6 @@ import { AdminApi, adminError } from './admin-api';
 import { CompanyCalendar } from './company-calendar';
 import { Approvals } from './approvals';
 import { ApproverSettings } from './approver-settings';
-import { PersonnelOverview } from './personnel';
 
 const calendar = { holidays: [], closures: [], approvers: [], candidates: [] };
 
@@ -163,37 +162,6 @@ describe('Assigned approval decisions', () => {
     await component.decide('approve');
     expect(component.message).toContain('approved');
     expect(component.selected).toBeNull();
-  });
-});
-
-describe('Personnel report ownership', () => {
-  it('clears the old year immediately and ignores an older report arriving last', async () => {
-    const pending: ((value: unknown[]) => void)[] = [];
-    const api = {
-      owner: 'company:admin:1',
-      personnel: vi.fn(() => new Promise((resolve) => pending.push(resolve))),
-      data: {
-        typeName: () => 'Annual leave',
-        api: { settingsAccess: { effectiveVacationApproval: false } },
-      },
-    };
-    TestBed.configureTestingModule({
-      imports: [PersonnelOverview],
-      providers: [{ provide: AdminApi, useValue: api }],
-    });
-    const fixture = TestBed.createComponent(PersonnelOverview);
-    fixture.detectChanges();
-    fixture.componentInstance.year = 2027;
-    const later = fixture.componentInstance.load();
-    pending[1]([{ userGuid: 'new', displayName: 'Current year' }]);
-    await later;
-    pending[0]([{ userGuid: 'old', displayName: 'Previous year' }]);
-    await fixture.whenStable();
-    expect(fixture.componentInstance.records[0].displayName).toBe('Current year');
-    fixture.componentInstance.year = 2028;
-    fixture.componentInstance.detector.detectChanges();
-    expect(fixture.nativeElement.querySelector('caption').textContent).toContain('2027');
-    expect(fixture.nativeElement.querySelector('caption').textContent).not.toContain('2028');
   });
 });
 

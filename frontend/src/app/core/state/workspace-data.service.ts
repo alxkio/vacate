@@ -1,18 +1,15 @@
 import { inject, Injectable } from '@angular/core';
-import { createFixtures } from '../reference-data/fixtures.js';
+import { createWorkspaceReadModel } from './workspace-read-model';
 import { createCatalogue } from '../reference-data/catalogue.js';
 import { createEligibility } from '../reference-data/eligibility.js';
 import { WorkspaceApiService } from './workspace-api.service';
 import {
-  Allocation,
   Balance,
   Catalogue,
   Decision,
   DisplayPreferences,
   Eligibility,
-  Entry,
   Fixtures,
-  Group,
   LeaveType,
   OrganizationStore,
   OwnProfiles,
@@ -25,7 +22,6 @@ export const currentDate = (): Date => {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 };
 
-export const REFERENCE_TODAY = new Date(2026, 9, 22);
 const displayPreferencesKey = (person: Person): string =>
   `vacate.display-preferences.v1.${encodeURIComponent(person.companyId)}.${encodeURIComponent(person.id)}`;
 const defaultDisplayPreferences: DisplayPreferences = { layout: 'calendar', colorScheme: 'a' };
@@ -69,107 +65,16 @@ export class WorkspaceDataService {
   readonly organization: OrganizationStore;
 
   constructor() {
-    const fixtures = createFixtures() as unknown as Fixtures;
+    this.profiles = this.api.profiles;
+    this.organization = this.api.organization;
     this.environment = {
-      VacateFixtures: fixtures,
+      VacateFixtures: createWorkspaceReadModel(this.api),
       VacateSession: {
         currentUser: () => this.api.currentUser(),
         login: (username, password) => this.api.login(username, password),
         logout: () => this.api.logout(),
       },
     } as WorkspaceEnvironment;
-    this.profiles = this.api.profiles;
-    this.organization = this.api.organization;
-    this.environment.VacateFixtures = {
-      ...fixtures,
-      allowedScopes: (person): string[] =>
-        this.isCurrentActor(person)
-          ? [...new Set([...fixtures.allowedScopes(person), 'self', 'team', 'org'])]
-          : fixtures.allowedScopes(person),
-      allowedTeams: (person): Group[] => {
-        const teams = fixtures.allowedTeams(person);
-        if (
-          !this.isCurrentActor(person) ||
-          !person.teamId ||
-          teams.some((team) => team.id === person.teamId)
-        ) {
-          return teams;
-        }
-        return [
-          ...teams,
-          {
-            id: person.teamId,
-            companyId: person.companyId,
-            name: this.groupName('team', person.teamId) || person.team,
-          },
-        ];
-      },
-      ownEntries: (person): Entry[] => fixtures.ownEntries(this.referencePerson(person)),
-      balancesFor: (person): Record<string, Allocation> | null =>
-        fixtures.balancesFor(person ? this.referencePerson(person) : null),
-      peopleFor: (person, scope, group): Person[] => {
-        if (this.isCurrentActor(person) && scope === 'self') {
-          return group && group !== person.id ? [] : [person];
-        }
-        if (
-          this.isCurrentActor(person) &&
-          scope === 'team' &&
-          (!group || group === person.teamId) &&
-          this.api.teamMembers
-        ) {
-          return this.myTeamPeople;
-        }
-        return fixtures.peopleFor(person, scope, group);
-      },
-      availabilityFor: (
-        person,
-        scope,
-        group,
-      ): { id: string; person: string; companyId: string; start: string; end: string }[] => {
-        if (
-          this.isCurrentActor(person) &&
-          scope === 'team' &&
-          (!group || group === person.teamId) &&
-          this.api.teamMembers
-        ) {
-          const ids = new Set(this.myTeamPeople.map((member) => member.id));
-          return fixtures.entries
-            .filter((entry) => entry.companyId === person.companyId && ids.has(entry.person))
-            .map(({ id, person: personId, companyId, start, end }) => ({
-              id,
-              person: personId,
-              companyId,
-              start,
-              end,
-            }));
-        }
-        return fixtures.availabilityFor(person, scope, group);
-      },
-      eligibilityProfileFor: (
-        person: import('../models/workspace.models').Person,
-      ): Record<string, unknown> | null => {
-        const base = fixtures.eligibilityProfileFor(this.referencePerson(person)) as Record<
-          string,
-          unknown
-        > | null;
-        const own = this.profiles.read();
-        if (!base || !own || person.id !== this.currentUser()?.id) {
-          return base;
-        }
-        return {
-          ...base,
-          gender: own.gender,
-          married: own.married,
-          maritalStatus: own.married
-            ? 'married'
-            : base['maritalStatus'] === 'married'
-              ? 'unspecified'
-              : base['maritalStatus'],
-          hasDependentChildren: own.dependentChildren > 0,
-          soleCare: own.soleCare,
-        };
-      },
-    };
 
     this.environment.VacateLeave = createCatalogue(
       this.environment,
@@ -194,54 +99,13 @@ export class WorkspaceDataService {
     }
   }
 
-  private referencePerson(person: Person): Person {
-    const reference = this.environment.VacateFixtures.people.find(
-      (item) => item.id === person.id && item.companyId === person.companyId,
-    );
-    return this.isCurrentActor(person) && reference ? reference : person;
-  }
-
-  private isCurrentActor(person: Person | null): boolean {
-    const actor = this.api.currentUser();
-    return (
-      !!actor &&
-      !!person &&
-      actor.id === person.id &&
-      actor.companyId === person.companyId &&
-      actor.teamId === person.teamId &&
-      actor.departmentId === person.departmentId
-    );
-  }
-
   get myTeamPeople(): Person[] {
     const actor = this.currentUser();
-    if (!actor?.teamId) {
-      return [];
-    }
-    const members = this.api.teamMembers;
-    if (!members) {
-      return this.fixtures.peopleFor(actor, 'team');
-    }
-    return members.map((member) => {
-      const reference = this.fixtures.people.find((person) => person.email === member.email);
-      return {
-        ...actor,
-        id: member.email === actor.email ? actor.id : reference?.id || member.username,
-        personId:
-          member.email === actor.email ? actor.personId : reference?.personId || member.username,
-        name: [member.firstName, member.middleName, member.lastName].filter(Boolean).join(' '),
-        title: member.jobTitle || '',
-        username: member.username,
-        email: member.email,
-        capability: member.systemRole === 'admin' ? 'admin' : 'employee',
-        role: member.systemRole === 'admin' ? 'Admin' : 'Employee',
-        initials: (member.firstName[0] + member.lastName[0]).toUpperCase(),
-      };
-    });
+    return actor ? this.fixtures.peopleFor(actor, 'team') : [];
   }
 
   get companyName(): string {
-    return this.organization.summary()?.name || this.fixtures.company.name;
+    return this.organization.summary()?.name || 'Organization unavailable';
   }
   get companyWorkWeekDays(): number {
     return this.organization.summary()?.workWeekDays || 5;
@@ -335,7 +199,7 @@ export class WorkspaceDataService {
             : 'Saved annual balance',
       };
     }
-    return this.decision(id).status === 'eligible' ? this.catalogue.balanceOf(id) : null;
+    return null;
   }
 
   label(type: LeaveType): string {

@@ -3,7 +3,6 @@ import { AdminApi, Personnel } from '../administration/admin-api';
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
-import { apiId } from '../../core/state/workspace-api.service';
 import { DirectoryUser } from '../../core/http/contracts';
 import { OrganizationSettings } from '../organizations/organization-settings';
 
@@ -310,8 +309,8 @@ export class People implements OnInit {
             .includes(query)) &&
         (this.scope === 'all' ||
           (this.scope === 'team'
-            ? !!actor?.teamId && person.teamId === apiId(actor.teamId)
-            : !!actor?.departmentId && person.departmentId === apiId(actor.departmentId))),
+            ? !!actor?.teamId && person.teamId === actor.teamId
+            : !!actor?.departmentId && person.departmentId === actor.departmentId)),
     );
   }
 
@@ -321,9 +320,8 @@ export class People implements OnInit {
 
   relationship(person: DirectoryUser): string {
     const actor = this.data.currentUser();
-    if (actor?.teamId && person.teamId === apiId(actor.teamId)) return 'same-team';
-    if (actor?.departmentId && person.departmentId === apiId(actor.departmentId))
-      return 'same-department';
+    if (actor?.teamId && person.teamId === actor.teamId) return 'same-team';
+    if (actor?.departmentId && person.departmentId === actor.departmentId) return 'same-department';
     return 'company-colleague';
   }
 

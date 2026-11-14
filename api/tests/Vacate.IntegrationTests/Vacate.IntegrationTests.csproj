@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <Using Include="NUnit.Framework" />
+    <Compile Include="../../testing/*.cs" Link="Testing/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../../testing/fixtures/fictional-users.json" LogicalName="Vacate.Testing.fictional-users.json" />
   </ItemGroup>
 
   <ItemGroup>

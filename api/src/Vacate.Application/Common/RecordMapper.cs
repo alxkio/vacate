@@ -6,7 +6,7 @@ using Vacate.Domain.Users;
 namespace Vacate.Application.Common;
 
 public sealed class RecordMapper(IUserRepository users, IMembershipRepository memberships, IRoleCatalog roles,
-    IOrganizationRepository organizations, IUserPresentationCatalog presentation)
+    IOrganizationRepository organizations)
 {
     public UserRecord User(User user) => new(user.Id, user.Guid, user.Username, user.Name.FirstName, user.Name.MiddleName, user.Name.LastName, user.Gender,
         user.Family.Married, user.Family.DependentChildren, user.Family.SoleCare, user.Status, memberships.Current(user.Id) is { } m ? Membership(m) : null,
@@ -42,14 +42,13 @@ public sealed class RecordMapper(IUserRepository users, IMembershipRepository me
     public PersonRecord Person(User user)
     {
         var m = memberships.Current(user.Id);
-        var metadata = presentation.Find(user.Id);
-        var key = metadata?.DisplayKey ?? user.Guid.ToString();
+        var key = user.Guid.ToString();
         var org = m is null ? null : organizations.Find(m.CompanyId);
         var dept = org?.Departments.SingleOrDefault(d => !d.IsDeleted && d.Id == m?.Configuration.DepartmentId);
         var team = org?.Teams.SingleOrDefault(t => !t.IsDeleted && t.Id == m?.Configuration.TeamId);
-        var capability = m?.IsAdmin == true ? "admin" : m is not null && metadata?.IsTeamLead == true ? "lead" : "employee";
+        var capability = m?.IsAdmin == true ? "admin" : m?.SettingsRole is SettingsRole.TeamLead or SettingsRole.DepartmentLead ? "lead" : "employee";
         return new(key, key, user.Guid, org?.Guid.ToString() ?? "", user.Name.FirstName, JobTitle(m) ?? "", dept?.Guid.ToString() ?? "", team?.Guid.ToString() ?? "", team?.Name ?? "",
-            capability, capability == "admin" ? "Admin" : capability == "lead" ? "Team lead" : "Employee", string.Concat(user.Name.FirstName.Take(2)).ToUpperInvariant(), key, user.Username);
+            capability, capability == "admin" ? "Admin" : capability == "lead" ? "Team lead" : "Employee", string.Concat(user.Name.FirstName.Take(2)).ToUpperInvariant(), user.Username, user.Username);
     }
 
     public MembershipDetails Member(User user, Membership m) => new(user.Id, user.Guid, Person(user), Membership(m));
