@@ -11,6 +11,7 @@ using Vacate.Api.Functions;
 using Vacate.Application.Abstractions;
 using Vacate.Application.Common;
 using Vacate.Application.Identity;
+using Vacate.Application.Leave;
 using Vacate.Application.Memberships;
 using Vacate.Application.Organizations;
 using Vacate.Application.Users;
@@ -55,6 +56,8 @@ public sealed class ResourceEndpointTests
         services.AddSingleton<MembershipService>();
         services.AddSingleton<OrganizationService>();
         services.AddSingleton<AuthenticationService>();
+        services.AddSingleton<LeaveService>();
+        services.AddSingleton<LeaveFunctions>();
         services.AddSingleton<UserFunctions>();
         services.AddSingleton<OrganizationFunctions>();
         services.AddSingleton<SessionFunctions>();
@@ -100,13 +103,40 @@ public sealed class ResourceEndpointTests
         };
     }
 
+    [Test]
+    public async Task Employee_cancellation_http_enforces_ownership_allowlist_and_atomic_date_validation()
+    {
+        Configure(true, new CancellationClock());
+        var signed = await Call("POST", "auth/sessions", body: new { username = "maya", password = "maya" });
+        var token = signed.Json!["accessToken"]!.GetValue<string>();
+        var root = $"organizations/{Company}/leave/requests";
+        var saved = await Call("POST", root, token, new { leaveTypeId = "annual", unit = "days", mode = "range", startDate = "2026-11-09", endDate = "2026-11-10", idempotencyKey = Guid.NewGuid() });
+        Assert.That(saved.Status, Is.EqualTo(200));
+        var guid = saved.Json!["request"]!["guid"]!.GetValue<string>();
+        Assert.That((await Call("POST", root + $"/{guid}/cancel", body: new { dates = new[] { "2026-11-09" } })).Status, Is.EqualTo(401));
+        var other = await Call("POST", "auth/sessions", body: new { username = "ravi", password = "ravi" });
+        Assert.That((await Call("POST", root + $"/{guid}/cancel", other.Json!["accessToken"]!.GetValue<string>(), new { dates = new[] { "2026-11-09" } })).Status, Is.EqualTo(404));
+        Assert.That((await Call("POST", root + $"/{guid}/cancel", token, new { dates = new[] { "2026-11-09" }, status = "Approved" })).Status, Is.EqualTo(400));
+        Assert.That((await Call("POST", root + $"/{guid}/cancel", token, new { dates = new[] { "2026-11-09", "2026-01-01" } })).Status, Is.EqualTo(409));
+        var cancelled = await Call("POST", root + $"/{guid}/cancel", token, new { dates = new[] { "2026-11-09" } });
+        Assert.That(cancelled.Status, Is.EqualTo(200));
+        Assert.That(cancelled.Json!["dates"]!.AsArray().Select(d => d!["status"]!.GetValue<string>()), Is.EqualTo(new[] { "Cancelled", "Pending" }));
+        Assert.That((await Call("POST", root + $"/{guid}/cancel", token, new { dates = new[] { "2026-11-09" } })).Status, Is.EqualTo(409));
+    }
+
+    private sealed class CancellationClock : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => new(2026, 11, 6, 12, 0, 0, TimeSpan.Zero);
+    }
+
     private IEnumerable<(object Target, MethodInfo Method, string Route, string[] Methods)> HttpFunctions()
     {
         foreach (var target in new object[]
         {
             provider.GetRequiredService<SessionFunctions>(),
             provider.GetRequiredService<UserFunctions>(),
-            provider.GetRequiredService<OrganizationFunctions>()
+            provider.GetRequiredService<OrganizationFunctions>(),
+            provider.GetRequiredService<LeaveFunctions>()
         })
         {
             foreach (var method in target.GetType().GetMethods())
@@ -148,7 +178,7 @@ public sealed class ResourceEndpointTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(functions, Has.Length.EqualTo(37));
+            Assert.That(functions, Has.Length.EqualTo(43));
             Assert.That(functions.All(function => function.Methods.Length == 1), Is.True);
             Assert.That(functions.Any(function => function.Route.Contains('*')), Is.False);
             Assert.That(routeMethods, Has.Length.EqualTo(routeMethods.Distinct(StringComparer.OrdinalIgnoreCase).Count()));

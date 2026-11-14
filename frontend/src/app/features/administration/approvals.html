@@ -5,6 +5,12 @@
       {{ error ? 'Retry assigned requests' : 'Refresh requests' }}
     </button>
   </div>
+  @if (api.data.api.settingsAccess?.effectiveVacationApproval === false) {
+    <p class="admin-hint" role="status">
+      Approval is disabled for your scope. New requests in that scope are recorded automatically.
+      Requests from other scopes or earlier configuration may still need your decision.
+    </p>
+  }
   <p class="admin-hint">
     Pending requests explicitly assigned to you. Approval charges the applicable leave balance;
     decline changes only pending dates. Previously approved dates are preserved.

@@ -10,7 +10,7 @@ using Vacate.Domain.Users;
 
 namespace Vacate.Infrastructure.Persistence.Sql;
 
-internal sealed class SqlSession(VacateDbContext context) : IUnitOfWork
+internal sealed class SqlSession(VacateDbContext context, TimeProvider? clock = null) : IUnitOfWork
 {
     private readonly Dictionary<int, (User Value, UserRow Row)> users = [];
     private readonly Dictionary<int, (Membership Value, MembershipRow Row)> members = [];
@@ -86,6 +86,26 @@ internal sealed class SqlSession(VacateDbContext context) : IUnitOfWork
         if (companies.Add(id))
         {
             Lock($"vacate:company:{id}");
+            var zone = Context.Set<OrganizationRow>().Where(o => o.Id == id).Select(o => o.TimeZone).SingleOrDefault();
+            if (zone is not null)
+            {
+                var now = (clock ?? TimeProvider.System).GetUtcNow();
+                var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, TimeZoneInfo.FindSystemTimeZoneById(zone)).DateTime);
+                var expired = Context.Set<LeaveRow>().Where(d => d.CompanyId == id && d.Status == "Pending" && d.StartDate < today).ToArray();
+                foreach (var date in expired)
+                {
+                    date.Status = "Expired";
+                    date.UpdatedAt = now;
+                }
+
+                var requestIds = expired.Select(d => d.RequestId).ToArray();
+                foreach (var request in Context.Set<LeaveRequestRow>().Where(r => r.CompanyId == id && requestIds.Contains(r.Id)))
+                {
+                    request.UpdatedAt = now;
+                }
+
+                Context.SaveChanges();
+            }
         }
     }
 

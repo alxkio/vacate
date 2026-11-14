@@ -1,3 +1,4 @@
+using Vacate.Domain.Leave;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -21,12 +22,46 @@ public sealed class LeaveService(IUnitOfWork work, AccessPolicy access, IMembers
     public IReadOnlyList<LeaveRequestRecord> Requests(int actor, Guid company) => work.Execute(() =>
     {
         var (organization, member) = Own(actor, company);
-        return leaves.Requests(organization.Id, member.Id).Select(x => x.Request).OrderByDescending(x => x.CreatedAt).ToArray();
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(clock.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(organization.Settings.TimeZone)).DateTime);
+        return leaves.Requests(organization.Id, member.Id).Select(x => x.Request with
+        {
+            Dates = x.Request.Dates.Select(d => d with { CanCancel = x.Request.Source == "EmployeeRequest" && x.Request.ClosureGuid is null && LeaveLifecycle.CanCancel(d.Status, d.Date, today) }).ToArray()
+        }).OrderByDescending(x => x.CreatedAt).ToArray();
     });
 
     public IReadOnlyList<LeaveCalendarDate> Calendar(int actor, Guid company) => Requests(actor, company)
         .SelectMany(request => request.Dates.Where(d => d.Status is "Approved" or "Pending")
             .Select(d => new LeaveCalendarDate(request.Guid, request.LeaveTypeId, d.Date, d.Status))).ToArray();
+
+    public LeaveRequestRecord Cancel(int actor, Guid company, Guid requestGuid, IReadOnlyList<DateOnly> dates) => work.Execute(() =>
+    {
+        var (organization, member) = Own(actor, company);
+        var stored = leaves.Find(organization.Id, requestGuid);
+        if (stored is null || stored.MembershipId != member.Id)
+        {
+            throw new ServiceException(ServiceError.NotFound, "Leave request unavailable.");
+        }
+
+        if (stored.Request.Source != "EmployeeRequest" || stored.Request.ClosureGuid is not null)
+        {
+            throw new DomainConflictException("Company closure leave cannot be changed here.");
+        }
+
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(clock.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(organization.Settings.TimeZone)).DateTime);
+        if (dates.Count == 0 || dates.Distinct().Count() != dates.Count || dates.Any(date =>
+            !stored.Request.Dates.Any(d => d.Date == date && LeaveLifecycle.CanCancel(d.Status, d.Date, today))))
+        {
+            throw new DomainConflictException("Select current or future approved or pending dates. Past entries cannot be changed.");
+        }
+
+        var updated = stored.Request with
+        {
+            Dates = stored.Request.Dates.Select(d => dates.Contains(d.Date) ? d with { Status = "Cancelled" } : d).ToArray(),
+            UpdatedAt = clock.GetUtcNow()
+        };
+        leaves.Update(stored with { Request = updated });
+        return updated;
+    });
 
     public void Delete(int actor, Guid company, Guid requestGuid) => work.Execute(() =>
     {

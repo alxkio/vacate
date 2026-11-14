@@ -59,7 +59,7 @@ public sealed class SessionStoreTests
         Assert.That(userKey.DeleteBehavior, Is.EqualTo(DeleteBehavior.NoAction));
         Assert.That(entity.GetIndexes().Select(index => string.Join(",", index.Properties.Select(property => property.Name))), Is.EquivalentTo(new[] { "UserId", "ExpiresAt" }));
 
-        var migration = context.Database.GetMigrations().Last();
+        var migration = context.Database.GetMigrations().Single(name => name.EndsWith("_SharedApiSessions"));
         Assert.That(migration, Does.EndWith("_SharedApiSessions"));
         var script = context.GetService<IMigrator>().GenerateScript("20261112210758_CompanyAdministration", migration, MigrationsSqlGenerationOptions.Idempotent);
         Assert.That(script, Does.Contain("CREATE TABLE [ApiSessions]"));

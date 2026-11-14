@@ -1,3 +1,4 @@
+import { runLeavePeopleAcceptance } from './testing/leave-people-acceptance.mjs';
 import { runUpcomingAcceptance } from './testing/upcoming-acceptance.mjs';
 import { runAdminAcceptance } from './testing/admin-acceptance.mjs';
 import { runFeedbackAcceptance } from './testing/feedback-acceptance.mjs';
@@ -24,13 +25,13 @@ if (!baseUrl) {
   server = createServer(async (request, response) => {
     if (request.url.startsWith('/api/')) {
       if (request.method === 'GET' && apiResponseFault?.path === request.url) {
-        const { status } = apiResponseFault;
+        const { status, body } = apiResponseFault;
         apiResponseFault = undefined;
         response.writeHead(status, {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-store',
         });
-        response.end(JSON.stringify({ error: 'Injected acceptance connection failure' }));
+        response.end(JSON.stringify(body ?? { error: 'Injected acceptance connection failure' }));
         return;
       }
       try {
@@ -745,7 +746,19 @@ try {
       },
     });
   };
-  if (process.env.MOCK_PAGE_FOCUS_ONLY === '1') {
+  if (process.env.MOCK_LEAVE_PEOPLE_ONLY === '1') {
+    await runLeavePeopleAcceptance({
+      evaluate,
+      click,
+      waitFor,
+      navigate,
+      viewport,
+      screenshot,
+      baseUrl,
+      apiUrl: process.env.MOCK_API_URL || 'http://127.0.0.1:7071',
+    });
+    assert.deepEqual(errors, [], 'Unexpected leave/People browser errors');
+  } else if (process.env.MOCK_PAGE_FOCUS_ONLY === '1') {
     await pageFocusAcceptance();
   } else if (process.env.MOCK_SESSION_RECOVERY_ONLY === '1') {
     await sessionRecoveryAcceptance();
@@ -1380,7 +1393,7 @@ try {
       const calendarHistory = await call('Page.getNavigationHistory');
       await click('[data-nav=leave]');
       await waitForRetainedPeriod('leave');
-      await click('.navigation-card [data-nav=balances]');
+      await load('?page=balances&scope=team&view=week&date=2026-11-05');
       await waitForRetainedPeriod('balances');
       assert.equal(await evaluate('new URLSearchParams(location.search).get("page")'), 'balances');
       assert.equal(await evaluate('document.querySelector("#calendar-page").hidden'), true);
@@ -1491,22 +1504,26 @@ try {
       try {
         await login('maya');
         await load('?page=leave');
-        assert.deepEqual(
+        assert.equal(
+          await evaluate('document.querySelector("vacate-my-leave > details").open'),
+          false,
+        );
+        const annualLedger = await evaluate(
+          `fetch(window.__vacateAcceptanceApiBase+'/auth/sessions/current',{headers:{Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')}}).then(response=>response.json()).then(response=>response.profile.membership.balance)`,
+        );
+        const annualAllocation = annualLedger.customAllocation ?? annualLedger.allocation;
+        assert.match(
           await evaluate(
-            'Array.from(document.querySelectorAll("[data-used-balance]"),element=>element.dataset.usedBalance)',
+            'document.querySelector("vacate-my-leave > details > summary").textContent',
           ),
-          ['annual', 'carer', 'school'],
+          new RegExp(
+            `${annualAllocation - annualLedger.used} / ${annualAllocation}.*Used ${annualLedger.used}.*Pending ${annualLedger.pending}`,
+            's',
+          ),
         );
-        assert.match(
-          await evaluate('document.querySelector("[data-used-balance=annual]").textContent'),
-          /17.*Pending 3/s,
-        );
-        assert.match(
-          await evaluate('document.querySelector("vacate-my-leave").textContent'),
-          /Pending approval/,
-        );
+        assert.equal(await evaluate('!!document.querySelector("#reference-history")'), false);
         const dates = await evaluate(
-          'Array.from(document.querySelectorAll("[data-request-start]"),element=>element.dataset.requestStart)',
+          'Array.from(document.querySelectorAll("#saved-leave-requests tbody tr[data-saved-request]"), row => row.cells[0].textContent.trim())',
         );
         assert.deepEqual(dates, [...dates].sort().reverse());
         await click('[data-action=account]');
@@ -1597,8 +1614,13 @@ try {
         await login('maya');
         await load('?page=leave');
         assert.match(
-          await evaluate('document.querySelector("[data-used-balance=annual]").textContent'),
-          /14.*Pending 3/s,
+          await evaluate(
+            'document.querySelector("vacate-my-leave > details > summary").textContent',
+          ),
+          new RegExp(
+            `${annualAllocation - annualLedger.used - annualLedger.pending} / ${annualAllocation}.*Pending ${annualLedger.pending}`,
+            's',
+          ),
         );
       } finally {
         await login('nora');
@@ -1688,18 +1710,22 @@ try {
       await waitFor('document.querySelectorAll("[data-edit-membership]").length === 12');
       await click('[data-edit-membership=maya]');
       await waitFor('!!document.querySelector("#membership-form")');
-      await click('[data-nav=admin-balances]');
-      await waitFor('document.querySelectorAll(".overview-table tbody tr").length === 12');
+      await load('?page=admin-balances');
+      await waitFor(
+        'document.querySelectorAll("vacate-people .people-table tbody tr").length === 12',
+      );
       assert.match(
-        await evaluate('document.querySelector(".overview-table").textContent'),
-        /To confirm/,
+        await evaluate('document.querySelector("vacate-people .people-table").textContent'),
+        /Allocation.*Used.*Pending.*Available/s,
       );
       await evaluate(
         'document.querySelector("input[type=search]").value="Maya";document.querySelector("input[type=search]").dispatchEvent(new Event("input",{bubbles:true}))',
       );
-      await waitFor('document.querySelectorAll(".overview-table tbody tr").length === 1');
+      await waitFor(
+        'document.querySelectorAll("vacate-people .people-table tbody tr").length === 1',
+      );
       assert.match(
-        await evaluate('document.querySelector(".overview-table tbody").textContent'),
+        await evaluate('document.querySelector("vacate-people .people-table tbody").textContent'),
         /Maya/,
       );
       await screenshot('admin-balances-desktop.png');
@@ -1721,9 +1747,9 @@ try {
       await waitFor('!!document.querySelector("vacate-my-leave")');
       assert.match(
         await evaluate('document.querySelector("vacate-my-leave").textContent'),
-        /My requests/,
+        /Leave and requests/,
       );
-      await click('.navigation-card [data-nav=balances]');
+      await click('vacate-my-leave > details > summary');
       await waitFor('!!document.querySelector("vacate-balances")');
       await signOut();
       await signIn('maya', 'maya');
@@ -2232,7 +2258,7 @@ try {
           assert.deepEqual(await balanceTypes(), [], id + ' calendar must not render all balances');
           assert.equal(await evaluate('document.querySelector("#balances-page").hidden'), true);
           await click('[data-nav=leave]');
-          await click('.navigation-card [data-nav=balances]');
+          await click('vacate-my-leave > details > summary');
           await waitFor(
             '!document.querySelector("#balances-page").hidden && document.querySelectorAll("[data-balance]").length > 0',
           );
@@ -2272,20 +2298,19 @@ try {
             id + ' own annual balance',
           );
           await click('[data-nav="leave"]');
-          const ownTitles = await evaluate(
-            `window.VacateFixtures.ownEntries(window.VacateFixtures.person(${JSON.stringify(id)})).map(entry=>entry.title)`,
+          await waitFor(
+            '!!document.querySelector("#saved-leave-requests") && !Array.from(document.querySelectorAll("vacate-my-leave [role=status]")).some(el=>el.textContent.includes("Loading saved requests"))',
           );
-          const personalDialog = await evaluate(
-            'document.querySelector("vacate-my-leave").textContent',
+          const savedDates = await evaluate(
+            `fetch(window.__vacateAcceptanceApiBase+'/organizations/20000000-0000-4000-8000-000000000100/leave/requests',{headers:{Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')}}).then(response=>response.json()).then(records=>records.flatMap(request=>request.dates.map(day=>request.guid+':'+day.date)).sort())`,
           );
-          for (const title of ownTitles)
-            assert.ok(personalDialog.includes(title), id + ' own request missing');
-          const foreignTitles = await evaluate(
-            `window.VacateFixtures.entries.filter(entry=>entry.person!==${JSON.stringify(id)}).map(entry=>entry.title)`,
+          assert.deepEqual(
+            await evaluate(
+              'Array.from(document.querySelectorAll("#saved-leave-requests tbody tr[data-saved-request]"),row=>row.dataset.savedRequest+":"+row.cells[0].textContent.trim()).sort()',
+            ),
+            savedDates,
+            id + ' own saved history only',
           );
-          for (const title of foreignTitles)
-            if (!ownTitles.includes(title))
-              assert.ok(!personalDialog.includes(title), id + ' foreign private request shown');
           if (id === 'sam')
             assert.match(
               await evaluate('document.querySelector(".upcoming-card").textContent'),
@@ -2501,33 +2526,49 @@ try {
           30,
         );
         assert.deepEqual(await balanceTypes(), [], 'Calendar contains annual overview only');
-        const zeroAnnual = await evaluate(
-          `(async()=>{const original=window.VacateFixtures;try{window.VacateFixtures={...original,balancesFor:candidate=>{const balances=original.balancesFor(candidate);return balances?{...balances,annual:{...balances.annual,allocation:0,used:0,pending:0}}:null;}};document.querySelector('[data-scope=self]').click();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));const annual=document.querySelector('#annual-overview');return {text:annual.textContent,bar:!!annual.querySelector('.type-bar'),percentage:!!annual.querySelector('.annual-percentage'),html:annual.innerHTML};}finally{window.VacateFixtures=original;document.querySelector('[data-scope=self]').click();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));}})()`,
-        );
-        assert.match(
-          zeroAnnual.text,
-          /0 \/ 0 working days available/,
-          'Known zero allocation must stay distinct from unknown',
-        );
-        assert.equal(
-          zeroAnnual.bar,
-          false,
-          'Zero allocation must not render divided-by-zero bar widths',
-        );
-        assert.equal(
-          zeroAnnual.percentage,
-          false,
-          'Zero allocation has no meaningful availability percentage',
-        );
-        assert.doesNotMatch(
-          zeroAnnual.html,
-          /NaN|Infinity|null%/,
-          'Annual zero allocation must not expose invalid numbers',
-        );
+        if (server) {
+          // Intercept one local current-user read; reference fixtures no longer own annual balances.
+          const zeroProfile = await evaluate(
+            `fetch(window.__vacateAcceptanceApiBase+'/auth/sessions/current',{headers:{Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')}}).then(response=>response.json())`,
+          );
+          Object.assign(zeroProfile.profile.membership.balance, {
+            customAllocation: 0,
+            allocation: 0,
+            used: 0,
+            pending: 0,
+            available: 0,
+          });
+          apiResponseFault = { path: '/api/auth/sessions/current', status: 200, body: zeroProfile };
+          try {
+            await load('?scope=self&view=month');
+            const zeroAnnual = await evaluate(
+              '(()=>{const annual=document.querySelector("#annual-overview");return {text:annual.textContent,bar:!!annual.querySelector(".type-bar"),percentage:!!annual.querySelector(".annual-percentage"),html:annual.innerHTML};})()',
+            );
+            assert.match(
+              zeroAnnual.text,
+              /0 \/ 0 working days available/,
+              'Known zero allocation stays distinct from unknown',
+            );
+            assert.equal(
+              zeroAnnual.bar,
+              false,
+              'Zero allocation must not render divided-by-zero widths',
+            );
+            assert.equal(
+              zeroAnnual.percentage,
+              false,
+              'Zero allocation has no availability percentage',
+            );
+            assert.doesNotMatch(zeroAnnual.html, /NaN|Infinity|null%/);
+          } finally {
+            apiResponseFault = undefined;
+            await load('?scope=self&view=month');
+          }
+        }
         assert.match(
           await evaluate('document.querySelector("#annual-overview").textContent'),
           /17 \/ 25 working days available/,
-          'Restore original annual fixture after zero-allocation regression',
+          'Restore actual annual balance after zero-allocation regression',
         );
         await click('[data-page-link=balances]');
         assert.deepEqual(await balanceTypes(), mayaBalanceTypes);
@@ -2562,7 +2603,7 @@ try {
         assert.equal(await evaluate('document.querySelector("[data-balance=carer]").open'), true);
         await click('[data-nav=calendar]');
         await click('[data-nav=leave]');
-        await click('.navigation-card [data-nav=balances]');
+        await click('vacate-my-leave > details > summary');
         assert.equal(
           await evaluate('document.querySelector("[data-balance=carer]").open'),
           true,
@@ -2690,10 +2731,20 @@ try {
         );
         await closeDialog();
         await click('[data-date="2026-10-26"]');
-        assert.match(
-          await evaluate('document.querySelector("#dialog").textContent'),
-          /Annual leave · Pending/,
+        const recordedOctoberDates = await evaluate(
+          `fetch(window.__vacateAcceptanceApiBase+'/organizations/20000000-0000-4000-8000-000000000100/leave/calendar',{headers:{Authorization:'Bearer '+sessionStorage.getItem('vacate.session.token')}}).then(response=>response.json()).then(days=>days.filter(day=>day.date==='2026-10-26'))`,
         );
+        const dateDialog = await evaluate('document.querySelector("#dialog").textContent');
+        if (recordedOctoberDates.length) {
+          for (const day of recordedOctoberDates)
+            assert.ok(dateDialog.includes(day.status), 'Saved date status missing');
+        } else {
+          assert.match(
+            dateDialog,
+            /No leave shown/,
+            'Personal calendars must not restore static pending examples',
+          );
+        }
         await evaluate('document.querySelector("#dialog").close()');
         await click('[data-scope="team"]');
         await click('#calendar-content [data-event]');
@@ -2759,7 +2810,7 @@ try {
             `${preference.name} mobile calendar must precede annual balance`,
           );
           await click('[data-nav=leave]');
-          await click('.navigation-card [data-nav=balances]');
+          await click('vacate-my-leave > details > summary');
           await click('#balance-toggle');
           await click('[data-action="request"]');
           await click('#request-type-toggle');

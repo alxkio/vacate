@@ -58,10 +58,14 @@
             class="nav-item"
             [attr.data-nav]="item.id"
             [class.selected]="
-              state.page === item.id || (item.id === 'leave' && state.page === 'balances')
+              state.page === item.id ||
+              (item.id === 'leave' && state.page === 'balances') ||
+              (item.id === 'people' && state.page === 'admin-balances')
             "
             [attr.aria-current]="
-              state.page === item.id || (item.id === 'leave' && state.page === 'balances')
+              state.page === item.id ||
+              (item.id === 'leave' && state.page === 'balances') ||
+              (item.id === 'people' && state.page === 'admin-balances')
                 ? 'page'
                 : null
             "
@@ -322,7 +326,7 @@
     }
     @if (state.page === 'admin-balances') {
       @if (!state.denied) {
-        <vacate-admin-balances />
+        <vacate-people />
       } @else {
         <p role="alert">Organization unavailable.</p>
       }
@@ -340,9 +344,11 @@
     @if (state.page === 'leave') {
       <vacate-my-leave
         [savedRequests]="leave.requests"
+        [balanceViewState]="balanceViewState"
         [savedError]="leave.error()"
         [savedLoading]="leave.loading()"
         (retry)="refreshSavedLeave()"
+        (example)="workspaceDialog.request($event.type, $event.trigger, true)"
       />
     }
     @if (state.page === 'balances') {
@@ -350,7 +356,7 @@
         [viewState]="balanceViewState"
         (example)="workspaceDialog.request($event.type, $event.trigger, true)"
       />
-    } @else {
+    } @else if (state.page !== 'leave') {
       <section id="balances-page" hidden></section>
     }
     <p class="prototype-note">

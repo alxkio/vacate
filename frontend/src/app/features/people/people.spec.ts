@@ -22,9 +22,15 @@ describe('Directory recovery', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
+    await vi.waitFor(() =>
+      expect(fixture.componentInstance.error).toContain('People could not be loaded'),
+    );
+    fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('People could not be loaded');
     fixture.nativeElement.querySelector('button').click();
     await fixture.whenStable();
+    fixture.detectChanges();
+    await vi.waitFor(() => expect(fixture.componentInstance.loading).toBe(false));
     fixture.detectChanges();
     expect(directory).toHaveBeenCalledTimes(2);
     expect(fixture.nativeElement.textContent).toContain('No people available');

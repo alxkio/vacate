@@ -94,6 +94,11 @@ else if (operation == "grant-runtime" && args.Length == 3 && Environment.GetEnvi
 {
     RuntimeAccess.Grant(context, args[1], args[2]);
 }
+else if (operation == "seed-fictional-history" && Environment.GetEnvironmentVariable("VACATE_SQL_CONNECTION") is not null)
+{
+    var imported = SqlDevelopmentSeeder.ImportHistory(context);
+    Console.WriteLine($"Imported {imported} fictional dated requests into known demo memberships; opening used totals preserved. Existing requests were not overwritten.");
+}
 else if (operation == "seed-fictional" && args.Contains("--empty-only") && Environment.GetEnvironmentVariable("VACATE_SQL_CONNECTION") is not null)
 {
     SqlDevelopmentSeeder.Import(context);

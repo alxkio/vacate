@@ -9,7 +9,7 @@ export const workspacePageTitle = (page: CalendarState['page']): string =>
     leave: 'My Leave',
     people: 'People',
     approvals: 'Approval Requests',
-    'admin-balances': 'Leave balances overview',
+    'admin-balances': 'People',
   })[page];
 
 export const workspaceSubtitle = (
@@ -23,7 +23,7 @@ export const workspaceSubtitle = (
         ? 'A shared view of time away. A little easier to plan together.'
         : 'Plan your next break. Keep your team in the picture.',
     balances:
-      'Fictional reference allowances, eligibility and rules, separate from saved request balances.',
+      'Saved annual balance, with reference allowances and eligibility guidance for other types.',
     settings:
       user.capability === 'admin'
         ? 'Organization, department, team, profile and system settings in one place.'
@@ -32,8 +32,8 @@ export const workspaceSubtitle = (
     leave: 'Your requests and personal leave balances.',
     people:
       user.capability === 'admin'
-        ? 'Colleagues, membership management and recorded personnel leave.'
+        ? 'Colleagues, annual balances, recorded leave and membership management.'
         : 'Your organization’s directory.',
     approvals: 'Review and decide saved requests assigned to you.',
-    'admin-balances': 'Review employee annual leave balances across your organization.',
+    'admin-balances': 'Colleagues, annual balances, recorded leave and membership management.',
   })[page];

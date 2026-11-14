@@ -120,7 +120,7 @@ internal static class ResourceModel
         {
             t.HasCheckConstraint("CK_Leaves_Identity", "[Id] > 0 AND [Guid] <> '00000000-0000-0000-0000-000000000000'");
             t.HasCheckConstraint("CK_Leaves_Quantity", "[QuantityDays] > 0");
-            t.HasCheckConstraint("CK_Leaves_Origin", "LEN([Source]) > 0 AND (([EntryKind] = N'ImportedOpening' AND [Status] IN (N'Used', N'Pending') AND [StartDate] IS NULL AND [EndDate] IS NULL) OR ([EntryKind] = N'RecordedLeave' AND [Status] IN (N'Used', N'Pending', N'Cancelled') AND [StartDate] IS NOT NULL AND [EndDate] IS NOT NULL AND [EndDate] >= [StartDate]))");
+            t.HasCheckConstraint("CK_Leaves_Origin", "LEN([Source]) > 0 AND (([EntryKind] = N'ImportedOpening' AND [Status] IN (N'Used', N'Pending') AND [StartDate] IS NULL AND [EndDate] IS NULL) OR ([EntryKind] = N'RecordedLeave' AND [Status] IN (N'Used', N'Pending', N'Cancelled', N'Withdrawn', N'Expired') AND [StartDate] IS NOT NULL AND [EndDate] IS NOT NULL AND [EndDate] >= [StartDate]))");
             t.HasCheckConstraint("CK_Leaves_Utc", "[UpdatedAt] >= [CreatedAt] AND DATEPART(TZOFFSET, [CreatedAt]) = 0 AND DATEPART(TZOFFSET, [UpdatedAt]) = 0");
         });
         leaves.HasKey(x => x.Id);

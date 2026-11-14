@@ -15,7 +15,17 @@ public static class DependencyInjection
     public static IServiceCollection AddInMemoryPersistence(this IServiceCollection services)
     {
         services.AddSingleton(TimeProvider.System);
-        services.AddSingleton(provider => new InMemoryDatabase(bool.TryParse(provider.GetRequiredService<IConfiguration>()["SeedData:Enabled"], out var seed) && seed));
+        services.AddSingleton(provider =>
+        {
+            var configuration = provider.GetRequiredService<IConfiguration>();
+            var database = new InMemoryDatabase(bool.TryParse(configuration["SeedData:Enabled"], out var seed) && seed);
+            if (seed && bool.TryParse(configuration["SeedData:LeaveHistoryEnabled"], out var history) && history)
+            {
+                FictionalLeaveHistory.Apply(database);
+            }
+
+            return database;
+        });
         services.AddSingleton<IUnitOfWork, InMemoryUnitOfWork>();
         services.AddSingleton<ILeaveRepository, InMemoryLeaves>();
         services.AddSingleton<ICompanyCalendarRepository, InMemoryCompanyCalendar>();

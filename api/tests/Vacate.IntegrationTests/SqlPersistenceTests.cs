@@ -45,7 +45,18 @@ public sealed class SqlPersistenceTests
         b = CreateTenant();
     }
 
-    private static ServiceProvider BuildProvider(int? credentialUser = null)
+    private sealed class LeaveFixtureClock(DateTimeOffset? instant = null) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => instant ?? new DateTimeOffset(2026, 1, 5, 0, 0, 0, TimeSpan.Zero);
+    }
+
+    private void UseLeaveFixtureClock()
+    {
+        provider.Dispose();
+        provider = BuildProvider(leaveClock: new LeaveFixtureClock());
+    }
+
+    private static ServiceProvider BuildProvider(int? credentialUser = null, TimeProvider? leaveClock = null)
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
@@ -55,6 +66,10 @@ public sealed class SqlPersistenceTests
             ["SeedData:Enabled"] = "false"
         }).Build();
         var services = new ServiceCollection().AddSingleton<IConfiguration>(configuration).AddPersistence(configuration);
+        if (leaveClock is not null)
+        {
+            services.AddSingleton<TimeProvider>(leaveClock);
+        }
         services.AddScoped<RecordMapper>();
         services.AddScoped<AccessPolicy>();
         services.AddScoped<UserService>();
@@ -288,6 +303,7 @@ public sealed class SqlPersistenceTests
     [Test]
     public void Balance_is_derived_from_leave_rows_and_configuration_edits_do_not_rewrite_consumption()
     {
+        UseLeaveFixtureClock();
         using (var scope = provider.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<VacateDbContext>();
@@ -443,6 +459,47 @@ public sealed class SqlPersistenceTests
     }
 
     [Test]
+    public void Own_cancellation_and_company_local_expiry_survive_new_scopes_without_charging_twice()
+    {
+        UseLeaveFixtureClock();
+        var guid = Guid.NewGuid();
+        Use(s =>
+        {
+            var member = s.GetRequiredService<IMembershipRepository>().Current(a.MemberId)!;
+            s.GetRequiredService<ILeaveRepository>().Add(new(a.CompanyId, member.Id, Guid.NewGuid(), "synthetic-cancellation-expiry",
+                new(guid, "annual", new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                    [new(new(2026, 1, 4), "Pending", 2026), new(new(2026, 1, 5), "Pending", 2026), new(new(2026, 1, 6), "Approved", 2026)])));
+            return true;
+        });
+        Assert.That(Use(s => s.GetRequiredService<LeaveService>().Requests(a.MemberId, a.CompanyGuid)).Single().Dates.Select(d => d.Status), Is.EqualTo(new[] { "Expired", "Pending", "Approved" }));
+        Assert.Throws<ServiceException>(() => Use(s => s.GetRequiredService<LeaveService>().Cancel(b.MemberId, a.CompanyGuid, guid, [new(2026, 1, 6)])));
+        Use(s => s.GetRequiredService<LeaveService>().Cancel(a.MemberId, a.CompanyGuid, guid, [new(2026, 1, 6)]));
+        using (var another = BuildProvider(leaveClock: new LeaveFixtureClock()))
+        using (var scope = another.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            var record = services.GetRequiredService<IUnitOfWork>().Execute(() => services.GetRequiredService<LeaveService>().Requests(a.MemberId, a.CompanyGuid)).Single();
+            Assert.That(record.Dates.Select(d => d.Status), Is.EqualTo(new[] { "Expired", "Pending", "Cancelled" }));
+        }
+
+        using (var nextDay = BuildProvider(leaveClock: new LeaveFixtureClock(new(2026, 1, 6, 0, 0, 0, TimeSpan.Zero))))
+        using (var scope = nextDay.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            services.GetRequiredService<IUnitOfWork>().Execute(() =>
+            {
+                var service = services.GetRequiredService<LeaveService>();
+                Assert.That(service.Requests(a.MemberId, a.CompanyGuid).Single().Dates.Select(d => d.Status), Is.EqualTo(new[] { "Expired", "Expired", "Cancelled" }));
+                Assert.That(service.Calendar(a.MemberId, a.CompanyGuid), Is.Empty);
+                var balance = services.GetRequiredService<IMembershipRepository>().Current(a.MemberId)!.Balance;
+                Assert.That(balance.Pending, Is.Zero);
+                Assert.That(balance.Used, Is.Zero);
+                return true;
+            });
+        }
+    }
+
+    [Test]
     public void Request_dates_are_durable_authorized_and_concurrent_overlap_is_charged_once()
     {
         var draft = new LeaveDraft("annual", "days", "range", new(2026, 1, 4), new(2026, 1, 6), null);
@@ -480,6 +537,7 @@ public sealed class SqlPersistenceTests
     [Test]
     public void Company_closure_retries_and_concurrent_assigned_decisions_are_durable_exactly_once()
     {
+        UseLeaveFixtureClock();
         Use(s => s.GetRequiredService<AdminLeaveService>().SetApprover(a.AdminId, a.CompanyGuid, "organization", a.CompanyGuid, a.AdminGuid));
         var key = Guid.NewGuid();
         var draft = new ClosureDraft("Office closure", new(2026, 1, 5), new(2026, 1, 5), true);
@@ -517,6 +575,7 @@ public sealed class SqlPersistenceTests
     [TestCase("Declined")]
     public void Personal_request_deletion_is_durable_atomic_and_restores_only_its_derived_charges(string state)
     {
+        UseLeaveFixtureClock();
         Use(s => s.GetRequiredService<AdminLeaveService>().SetApprover(a.AdminId, a.CompanyGuid, "organization", a.CompanyGuid, a.AdminGuid));
         var requestGuid = Guid.NewGuid();
         var key = Guid.NewGuid();

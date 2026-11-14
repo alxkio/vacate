@@ -40,7 +40,12 @@ export type SavedRequest = {
   createdAt: string;
   source?: string;
   closureGuid?: string | null;
-  dates: { date: string; status: 'Approved' | 'Pending' | 'Declined'; entitlementYear: number }[];
+  dates: {
+    date: string;
+    status: 'Approved' | 'Pending' | 'Declined' | 'Cancelled' | 'Expired';
+    entitlementYear: number;
+    canCancel?: boolean;
+  }[];
 };
 export type SubmitResult = {
   outcome: 'created' | 'already-covered';
@@ -99,6 +104,10 @@ export class LeaveRequests {
     previewFingerprint?: string,
   ): Promise<SubmitResult> {
     return this.request('POST', 'requests', { ...draft, idempotencyKey, previewFingerprint });
+  }
+
+  cancel(guid: string, dates: string[]): Promise<SavedRequest> {
+    return this.request('POST', `requests/${guid}/cancel`, { dates });
   }
 
   async refresh(): Promise<void> {

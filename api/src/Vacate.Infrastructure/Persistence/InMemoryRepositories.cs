@@ -1,3 +1,4 @@
+using Vacate.Domain.Leave;
 using Vacate.Application.Abstractions;
 using Vacate.Domain.Common;
 using Vacate.Domain.Memberships;
@@ -6,12 +7,31 @@ using Vacate.Domain.Users;
 
 namespace Vacate.Infrastructure.Persistence;
 
-public sealed class InMemoryUnitOfWork(InMemoryDatabase database) : IUnitOfWork
+public sealed class InMemoryUnitOfWork(InMemoryDatabase database, TimeProvider? clock = null) : IUnitOfWork
 {
     public T Execute<T>(Func<T> operation)
     {
         lock (database.Gate)
         {
+            var now = (clock ?? TimeProvider.System).GetUtcNow();
+            var repository = new InMemoryLeaves(database);
+            foreach (var stored in database.LeaveRequests.ToArray())
+            {
+                var zone = database.Organizations[stored.CompanyId].Settings.TimeZone;
+                var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, TimeZoneInfo.FindSystemTimeZoneById(zone)).DateTime);
+                if (stored.Request.Dates.Any(d => LeaveLifecycle.IsExpired(d.Status, d.Date, today)))
+                {
+                    repository.Update(stored with
+                    {
+                        Request = stored.Request with
+                        {
+                            Dates = stored.Request.Dates.Select(d => LeaveLifecycle.IsExpired(d.Status, d.Date, today) ? d with { Status = "Expired" } : d).ToArray(),
+                            UpdatedAt = now
+                        }
+                    });
+                }
+            }
+
             return operation();
         }
     }

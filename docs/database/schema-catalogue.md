@@ -127,3 +127,10 @@ Explicit user request adds database-only Organizations.IsDemo (bit, required, de
 ## Derived consumption amendment — 2026-11-02
 
 The product lead explicitly selected immediate replacement of snapshots with Leaves and read-time balance calculation. VAC-36 and the ADR-0004 amendment supersede the earlier snapshot physical mapping; applied baseline migrations remain historical evidence. Known fictional aggregate amounts migrate to labeled opening rows without invented dates. No new policy evaluator, request/approval endpoint or carryover processing is implemented.
+
+
+### VAC-42 cancellation/expiry amendment · 2026-11-14
+
+Forward migration `20261114090000_LeaveCancellationExpiry` expands the recorded-leave origin constraint to accept `Withdrawn` (employee-cancelled) and `Expired`, while retaining SQL `Cancelled` for legacy declined dates. Both new states are excluded from Used/Pending sums and active coverage; request/date rows and creation instants remain. Pending dates before company-local today expire under the existing unit-of-work/company locks. No new table, grant or background service is required. Undated ImportedOpening rows retain their existing constraints and are not assigned invented expiry dates.
+
+`seed-fictional-history` is an explicit idempotent operator command, limited to known fictional membership/company GUIDs with `Organizations.IsDemo=true`. It converts up to two known fictional annual opening days per member to fixed August 2026 Approved dates and known pending opening totals to the existing October 26 onward fictional request dates, preserving total consumption, skipping overlap/insufficient opening/other-year/absent demo cases and preserving existing requests. It does not copy monthly/event reference examples into whole-day charges or seed real companies.

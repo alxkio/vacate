@@ -173,3 +173,32 @@ Owner screenshot/clarification confirms the unwanted large brown outline is main
 - [ ] Actual SQL execution and final independent release review; requires an authorized migrated test target. Coordinated API/database documentation and QA-authored scenarios are complete; PR verification is recorded in the linked evidence.
 
 2026-11-14 · Assistant verification: 79 integration and 10 unit tests passed; 31 actual-SQL cases skipped. Offline migration/model checks and real local HTTP checks passed. SQL application/cross-instance execution and deployment remain unverified. [Shared-session implementation and gates](media/VAC-42/shared-session-recovery-2026-11-13.md). No issue summary/type/status/dependency change; backlog row remains unchanged.
+
+
+## Leave and People review improvements · 2026-11-14 · QA
+
+Owner instruction: implement this follow-up under VAC-42 as review/improvements to previous work. Accepted behavior is recorded in the [product charter](../product/product-charter.md#owner-refinement--leave-lifecycle-and-unified-people--2026-11-14) and [API contract](../contracts/api.md#employee-cancellation-and-expiry--vac-42--2026-11-14). This extends D1's previous preserve-transactions boundary only for explicitly requested own cancellation and expiry; permanent deletion remains admin-only. No commit/push/deployment authorization is inferred for this follow-up.
+
+- [x] My Leave: collapsed expandable balances first; one all-years saved-history table with combined status/type/date filters; no separate reference-history block.
+- [x] Own multi-date requests: cancel all eligible dates or selected dates from history and calendar dialogs; server protects past dates, other people/companies and generated closures. Retain cancelled history and UTC lifecycle.
+- [x] Past Pending dates expire in company timezone; pending totals, coverage and assigned inbox release them without affecting approved history or future pending dates.
+- [x] People: identify You; relationship colours on structure labels; search and team/department/organization filters. Administrators see annual balances, history and membership actions together; preserve direct legacy routes and employee privacy.
+- [x] Explain disabled approval configuration; align secondary buttons.
+- [x] Prepared idempotent fixed-date demo-history import preserves existing data and total approved consumption; distinguish prepared import from actual SQL execution.
+- [x] Frontend/backend/contracts, focused lifecycle/isolation tests, build and rendered desktop/mobile checks documented with limits.
+
+Work log: W1 · 2026-11-14 · Assistant recorded · inspection, design, implementation and verification · duration unmeasured; human actual Unknown. Unrelated untracked `docs/review-43.md` preserved. No configured local SQL connection or local API settings was found; actual database import/migration remains unverified until a target is available. No unresolved product decision for the requested scope; moving a request is implemented as trimming plus a new authoritative preview/submission.
+
+History: QA → In progress for the owner's new review scope. Prior release/QA evidence above remains historical and does not verify this change.
+
+
+Verification update · 2026-11-14 · Assistant: In progress → QA after 96 frontend tests, 86 integration + 10 unit tests, production build, both TypeScript projects, schema/fixture scripts, offline migration/model parity, real local API/browser desktop/mobile journey and existing trusted keyboard regression passed. [Journeys, screenshots, commands, scope and remaining gates](media/VAC-42/leave-people/verification.md). Actual SQL migration/import and 32 SQL-provider cases remain unverified; the database target/access question is pending. No production, commit or deployment claim.
+
+- [ ] Apply and verify the forward migration and fictional import on the selected demo SQL target; execute durable SQL cancellation/expiry tests. Existing shared-session SQL gates above remain open.
+
+
+Final local regression · 2026-11-14 · Assistant: complete functional browser acceptance passed on a separate disposable API, alongside the targeted final seeded-history/cancellation/People run. The suite now verifies saved ledger amounts after its own submissions and preserves inner balance expansion across navigation; zero/unknown states still have explicit checks. [Final evidence and screenshots](media/VAC-42/leave-people/verification.md). Status remains QA with live SQL and owner acceptance outstanding.
+
+Review preparation · 2026-11-14 · Product lead authorized committing this follow-up and explicitly selected combining session recovery and leave/People improvements in existing [PR #7](https://github.com/alxkio/vacate/pull/7), on `VAC-42-page-session-recovery` targeting `master`. This supersedes the assistant's proposed separate branch/stacked PR. No merge or deployment is part of this instruction. Full SQL deployment applies forward migrations before API/frontend publication; `seed-fictional-history` remains a separate explicit operation afterward. Unrelated `docs/next-up.md` and `docs/review-43.md` changes are excluded. Status remains QA; no issue metadata/backlog change.
+
+Work log: W2 · 2026-11-14 · Assistant recorded · branch isolation, commit and PR preparation · duration unmeasured; human actual Unknown. Existing local verification is linked above; hosted CI and SQL execution are separate checks.

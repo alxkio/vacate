@@ -59,9 +59,15 @@ public static class SqlDevelopmentSeeder
                 {
                     row.Leaves.Add(new LeaveRow
                     {
-                        Guid = Guid.NewGuid(), CompanyId = membership.CompanyId, MembershipId = membership.Id,
-                        EntryKind = "ImportedOpening", Status = status, QuantityDays = quantity,
-                        Source = "fictional-fixture-opening-v1", CreatedAt = membership.CreatedAt, UpdatedAt = membership.UpdatedAt
+                        Guid = Guid.NewGuid(),
+                        CompanyId = membership.CompanyId,
+                        MembershipId = membership.Id,
+                        EntryKind = "ImportedOpening",
+                        Status = status,
+                        QuantityDays = quantity,
+                        Source = "fictional-fixture-opening-v1",
+                        CreatedAt = membership.CreatedAt,
+                        UpdatedAt = membership.UpdatedAt
                     });
                 }
             }
@@ -81,9 +87,14 @@ public static class SqlDevelopmentSeeder
             {
                 context.Add(new CompanyApproverRow
                 {
-                    Id = assignmentId++, Guid = Guid.NewGuid(), CompanyId = companyId,
-                    Scope = assignment.Scope, ScopeGuid = assignment.ScopeGuid, ApproverGuid = assignment.ApproverGuid,
-                    CreatedAt = now, UpdatedAt = now
+                    Id = assignmentId++,
+                    Guid = Guid.NewGuid(),
+                    CompanyId = companyId,
+                    Scope = assignment.Scope,
+                    ScopeGuid = assignment.ScopeGuid,
+                    ApproverGuid = assignment.ApproverGuid,
+                    CreatedAt = now,
+                    UpdatedAt = now
                 });
             }
         }
@@ -99,6 +110,55 @@ public static class SqlDevelopmentSeeder
         Restart(context, "CompanyApproverIds", assignmentId);
         transaction.Commit();
         context.ChangeTracker.Clear();
+    }
+
+    public static int ImportHistory(VacateDbContext context)
+    {
+        var fixture = new InMemoryDatabase(true);
+        var imported = 0;
+        var session = new SqlSession(context);
+        var repository = new SqlLeaves(session);
+        session.Execute(() =>
+        {
+            foreach (var record in FictionalLeaveHistory.Records(fixture))
+            {
+                var fixtureMember = fixture.Memberships.Single(m => m.Id == record.MembershipId);
+                var fixtureCompany = fixture.Organizations[record.CompanyId];
+                var company = context.Set<OrganizationRow>().SingleOrDefault(o => o.Guid == fixtureCompany.Guid && o.IsDemo && o.DeletedAt == null);
+                if (company is null)
+                {
+                    continue;
+                }
+                session.Company(company.Id);
+                var member = context.Set<MembershipRow>().SingleOrDefault(m => m.Guid == fixtureMember.Guid && m.CompanyId == company.Id && m.DeletedAt == null);
+                if (member is null || repository.Find(company.Id, record.Request.Guid) is not null)
+                {
+                    continue;
+                }
+                var covered = repository.CoveredDates(company.Id, member.Id);
+                if (record.Request.Dates.Any(d => covered.Contains(d.Date)))
+                {
+                    continue;
+                }
+                var status = record.Request.Dates[0].Status == "Approved" ? "Used" : "Pending";
+                var opening = context.Set<LeaveRow>().SingleOrDefault(d => d.CompanyId == company.Id && d.MembershipId == member.Id && d.EntryKind == "ImportedOpening" && d.Status == status && d.LeaveTypeId == "annual" && d.Source == "fictional-fixture-opening-v1");
+                var entitlement = context.Set<MembershipEntitlementRow>().Single(d => d.CompanyId == company.Id && d.MembershipId == member.Id);
+                if (entitlement.PeriodStart.Year != 2026 || opening is null || opening.QuantityDays < record.Request.Dates.Count)
+                {
+                    continue;
+                }
+                opening.QuantityDays -= record.Request.Dates.Count;
+                if (opening.QuantityDays == 0)
+                {
+                    context.Remove(opening);
+                }
+                repository.Add(record with { CompanyId = company.Id, MembershipId = member.Id });
+                imported++;
+            }
+
+            return true;
+        });
+        return imported;
     }
 
     private static void Restart(VacateDbContext context, string sequence, int next)
