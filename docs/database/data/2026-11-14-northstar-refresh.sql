@@ -8,16 +8,18 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 SET DATEFIRST 1;
 DECLARE @Apply bit=0, @Company int, @Now datetimeoffset=SYSUTCDATETIME();
-DECLARE @Today date=CONVERT(date,@Now AT TIME ZONE 'GTB Standard Time');
+-- The existing test tenant uses UTC; preserve its saved timezone.
+DECLARE @Today date=CONVERT(date,@Now);
 IF DB_NAME() <> N'vacate-dev-db' THROW 51000,'Wrong database; no data changed.',1;
 BEGIN TRANSACTION;
 BEGIN TRY
  DECLARE @Lock int;
  EXEC @Lock=sys.sp_getapplock @Resource=N'vacate:resource-use-cases',@LockMode=N'Exclusive',@LockOwner=N'Transaction',@LockTimeout=15000;
  IF @Lock<0 THROW 51000,'Resource lock unavailable.',1;
- SELECT @Company=Id FROM dbo.Organizations WHERE Guid='20000000-0000-4000-8000-000000000100' AND IsDemo=1 AND DeletedAt IS NULL AND Name=N'Northstar Example' AND CountryCode='GR' AND TimeZone='Europe/Athens' AND WorkWeekDays=5;
+ SELECT @Company=Id FROM dbo.Organizations WHERE Guid='20000000-0000-4000-8000-000000000100' AND IsDemo=1 AND DeletedAt IS NULL AND Name=N'Northstar Example' AND CountryCode='GR' AND TimeZone='UTC' AND WorkWeekDays=5;
  IF @Company IS NULL THROW 51000,'Expected marked test tenant not found; no changes applied.',1;
- DECLARE @Profiles table(UserGuid uniqueidentifier PRIMARY KEY,MemberGuid uniqueidentifier,Username nvarchar(200),HireDate date,ManagerGuid uniqueidentifier NULL,PriorYears decimal(18,8),Remaining int,SummerSlot int,OldRequestGuid uniqueidentifier,OriginalUsed int);
+ -- Match persisted identity columns rather than the database default collation.
+ DECLARE @Profiles table(UserGuid uniqueidentifier PRIMARY KEY,MemberGuid uniqueidentifier,Username nvarchar(200) COLLATE Latin1_General_100_BIN2,HireDate date,ManagerGuid uniqueidentifier NULL,PriorYears decimal(18,8),Remaining int,SummerSlot int,OldRequestGuid uniqueidentifier,OriginalUsed int);
  INSERT @Profiles VALUES
 ('20000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000600','leah@example.invalid','2017-09-04','20000000-0000-4000-8000-000000000010',6,7,0,'422f8e38-d610-09ba-de58-9c66d206e6a2',3),
 ('20000000-0000-4000-8000-000000000002','20000000-0000-4000-8000-000000000601','ravi@example.invalid','2019-02-11','20000000-0000-4000-8000-000000000001',4,8,2,'2e0e8d3f-6181-b49e-a0d6-3cb63779dbf9',4),
@@ -31,7 +33,7 @@ BEGIN TRY
 ('20000000-0000-4000-8000-000000000010','20000000-0000-4000-8000-000000000609','daria@example.invalid','2014-03-03',NULL,8,7,0,'c9097e74-75fd-6c77-66a9-edbcbba85dc4',7),
 ('20000000-0000-4000-8000-000000000011','20000000-0000-4000-8000-000000000610','nora@example.invalid','2017-02-06','20000000-0000-4000-8000-000000000010',6,6,2,'06f91317-d478-c30b-f021-37d6e9fc5e9b',1),
 ('20000000-0000-4000-8000-000000000012','20000000-0000-4000-8000-000000000611','sam@example.invalid','2024-09-02','20000000-0000-4000-8000-000000000011',0,9,5,'8beaa36f-6381-087f-51be-bfbb99245e0b',4);
- DECLARE @Members table(Id int PRIMARY KEY,UserId int,Username nvarchar(200),HireDate date,ManagerUserId int NULL,PriorYears decimal(18,8),Remaining int,SummerSlot int,OldRequestGuid uniqueidentifier,OriginalUsed int);
+ DECLARE @Members table(Id int PRIMARY KEY,UserId int,Username nvarchar(200) COLLATE Latin1_General_100_BIN2,HireDate date,ManagerUserId int NULL,PriorYears decimal(18,8),Remaining int,SummerSlot int,OldRequestGuid uniqueidentifier,OriginalUsed int);
  INSERT @Members SELECT m.Id,u.Id,p.Username,p.HireDate,manager.Id,p.PriorYears,p.Remaining,p.SummerSlot,p.OldRequestGuid,p.OriginalUsed
  FROM @Profiles p JOIN dbo.Users u ON u.Guid=p.UserGuid AND u.Username=p.Username AND u.DeletedAt IS NULL AND u.Status=N'active'
  JOIN dbo.Memberships m ON m.Guid=p.MemberGuid AND m.UserId=u.Id AND m.CompanyId=@Company AND m.DeletedAt IS NULL AND m.EmploymentEndDate IS NULL
@@ -47,7 +49,7 @@ BEGIN TRY
  THROW 51000,'Expected finite 2026 allowance unavailable.',1;
  -- Explicitly persist the already-public test logins; a company marker alone never enables them.
  IF OBJECT_ID(N'dbo.DevelopmentLogins',N'U') IS NULL THROW 51000,'Apply DatabaseDevelopmentLogins schema first, before this data update or app publication.',1;
- DECLARE @Logins table(Alias nvarchar(200),UserId int,Advertise bit);
+ DECLARE @Logins table(Alias nvarchar(200) COLLATE Latin1_General_100_BIN2,UserId int,Advertise bit);
  INSERT @Logins SELECT LEFT(Username,CHARINDEX('@',Username)-1),UserId,1 FROM @Members;
  INSERT @Logins SELECT N'user',UserId,0 FROM @Members WHERE Username=N'maya@example.invalid';
  INSERT @Logins SELECT N'admin',UserId,0 FROM @Members WHERE Username=N'nora@example.invalid';
@@ -73,7 +75,7 @@ BEGIN TRY
  DECLARE @Member int,@User int,@Remaining int,@Slot int,@Year int,@Quota decimal(12,4),@Used decimal(12,4),@Pending decimal(12,4),@Need decimal(12,4),@RequireApproval bit,@Fingerprint nvarchar(64),@Summer date,@Break int,@Request int,@Guid uniqueidentifier;
  DECLARE @Candidates table(Date date PRIMARY KEY,BreakId int,Priority int);
  DECLARE @Selected table(Date date PRIMARY KEY,BreakId int);
- DECLARE @Audit table(Username nvarchar(200),Year int,AddedDays int,SummerDays int);
+ DECLARE @Audit table(Username nvarchar(200) COLLATE Latin1_General_100_BIN2,Year int,AddedDays int,SummerDays int);
  DECLARE members CURSOR LOCAL FAST_FORWARD FOR SELECT Id,UserId,Remaining,SummerSlot FROM @Members ORDER BY Id;
  OPEN members;
  FETCH NEXT FROM members INTO @Member,@User,@Remaining,@Slot;

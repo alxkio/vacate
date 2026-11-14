@@ -4,7 +4,7 @@ type: task
 summary: Review and refine every implemented Vacate page
 status: qa
 created: 2026-11-11
-updated: 2026-11-14
+updated: 2026-11-15
 parent: null
 depends_on: []
 ---
@@ -263,3 +263,16 @@ Retained intentionally: schema constraints/defaults, canonical admin/employee re
 Verification: 89 integration tests plus 10 unit tests passed; 33 SQL-provider tests remain skipped. All 95 frontend tests passed, including alternate saved periods and zero/unknown allocation rendering. Production frontend build, strict TypeScript unused checks, real Functions HTTP acceptance for all twelve accounts and JSON Schema projections passed. Full Chrome browser acceptance passed with native pointer/keyboard checks enabled, desktop/mobile layouts, saved requests, privacy/tenant/account isolation, administration, session recovery and focus. Normal local host health returned 200 and development accounts returned 404 despite obsolete/test settings; the normal published API/Infrastructure DLLs contain no fixture loader/roster/seeder. An explicit fixture publish failed with the intended guard; a subsequent normal publish passed. Actual SQL execution, replay and hosted publication remain pending; no fixture check is SQL proof.
 
 W8 · Assistant recorded · remove remaining SQL/application seeding, isolate test tooling, review fixed values and unused code, clean confirmed leftovers, update paired CI/docs and run local verification · duration unmeasured; human actual Unknown. VAC-42 status/summary/dependencies remain unchanged; backlog remains QA. User-requested APM repair is tracked separately under VAC-21. No commits, pushes, database writes or deployment in this iteration.
+
+
+## SQL cutover and hosted feedback release · 2026-11-15 · QA
+
+Following the product lead's merged PR #8 and explicit instruction to continue the dev cutover, the assistant applied the separately authorized [test-company SQL operation](../database/data/2026-11-14-northstar-refresh.sql). The rollback previews first exposed BIN2 identity-column collation and the existing UTC company timezone; the script was corrected to match both without changing the saved timezone. The corrected preview, atomic apply, independent SQL readback and rollback-only idempotence replay passed. All twelve pre-existing employee-created leave rows retained their original values. Twelve saved hire/prior-service profiles, eleven reporting managers, two-year summer history and fourteen explicit login aliases are present. [Canonical evidence and limits](../database/test-data.md#dev-database-execution--2026-11-15).
+
+The initial deployment attempt failed the application-free native-input probe; retry passed the paired browser job. The following deployment reached the database gate but correctly refused publication with an empty development-login allowlist. Infrastructure had also removed the old API's required seed flag prematurely, causing a temporary development-sign-in outage. That compatibility setting was restored and sign-in/session revocation verified while the manual SQL cutover completed. [Deployment attempt 3](https://github.com/alxkio/vacate/actions/runs/43648689837/attempts/3) then passed schema/runtime-grant/explicit-login verification, both publications and hosted smoke. API health and frontend config independently identify `00e3c0f0cb9aaa9efc12dc3ba3de7172db2d91f9` on the existing dev targets. No startup seeding was reintroduced.
+
+OPEN QUESTION found by hosted verification: recorded usage leaves 5–9 days against each configured custom allowance, but actual allocation/available remain null because the saved policy minima are unknown. This is the explicit existing contract, not a SQL read or fixture-fallback failure. The assistant asked the product lead whether to add explicitly fictional database policy inputs for this test company; no policy decision or domain change is inferred. Numeric UI balances are not reported as verified.
+
+W9 · Assistant recorded · diagnose deployment/cutover failure, restore old-version compatibility during transition, correct/preview/apply/replay the SQL data script, preserve existing requests, retry deployment and verify hosted revision/data/access · duration unmeasured; human actual Unknown. Status/summary/dependencies remain QA/unchanged; the backlog row is unchanged. Broader SQL provider/concurrency/grant tests and independent accessibility/review gates remain separate. Unrelated next-up/review/VAC-50 work is excluded.
+
+Hosted verification checkpoint · Assistant · All twelve advertised accounts and both legacy aliases passed sign-in/revocation; the saved profiles, 2025/2026 summer request dates, twelve-person directory, sanitized availability and provisional 5–9-day remainder were read back. Unauthenticated/foreign-company reads, wrong credentials and revoked tokens were denied. The API's unknown-policy allocation/available state was explicitly verified rather than counted as numeric balance acceptance. No hosted employee requests/profile values were changed by these checks.
