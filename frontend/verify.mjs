@@ -118,6 +118,15 @@ if (!baseUrl) {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   baseUrl = `http://127.0.0.1:${server.address().port}/index.html`;
 }
+// Fictional credentials must not open browser-owned password dialogs that consume native input.
+await mkdir(join(profile, 'Default'), { recursive: true });
+await writeFile(
+  join(profile, 'Default', 'Preferences'),
+  JSON.stringify({
+    credentials_enable_service: false,
+    profile: { password_manager_leak_detection: false },
+  }),
+);
 const chrome = spawn(
   process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   [

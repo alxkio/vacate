@@ -57,6 +57,8 @@ Frontend owns routes/views and tests; Product Designer preserves existing visual
 - W3 · 2026-11-15 · Assistant recorded: PR history diagnosis, browser reproduction, owner-scoped route correction and regression verification; duration unmeasured. Human actual Unknown.
 - W4 · 2026-11-15 · Assistant recorded: broader browser regression found discarded balance presentation state; extracted leave-owned actor/company/session state and verified route retention/isolation. Duration unmeasured.
 
+- W5 · 2026-11-15 · Assistant recorded: diagnosed separate Chrome native-input failure from CI logs, retried unchanged job once, isolated browser password UI in a disposable test profile and passed local trusted-input acceptance. Linux CI remains the verification gate; duration unmeasured.
+
 ## History
 
 - H1 · 2026-11-15 · Assistant: created In progress for explicitly authorised implementation.
