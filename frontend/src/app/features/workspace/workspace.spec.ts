@@ -61,6 +61,34 @@ describe('Workspace navigation', () => {
     expect(TestBed.inject(Router).url).toBe('/settings/profile');
   });
 
+  it.each(['actor', 'company'])(
+    'resets restored navigation from another %s while retaining same-owner Calendar state',
+    async (difference) => {
+      const { harness } = await setup('/calendar');
+      const router = TestBed.inject(Router);
+      const user = TestBed.inject(WorkspaceDataService).currentUser()!;
+      const owner = `${user.companyId}:${user.id}`;
+      const previousOwner =
+        difference === 'actor' ? `${user.companyId}:other-actor` : `other-company:${user.id}`;
+      const destination = '/calendar?scope=team&view=week&date=2026-11-05';
+      await router.navigateByUrl(destination, {
+        state: { vacateNavigationOwner: previousOwner },
+      });
+      harness.detectChanges();
+      expect(router.url).toBe('/calendar');
+      let page = harness.routeDebugElement!.componentInstance as Workspace;
+      expect(page.state.scope).toBe('org');
+      expect(page.state.view).toBe('month');
+      await router.navigateByUrl(destination, { state: { vacateNavigationOwner: owner } });
+      harness.detectChanges();
+      page = harness.routeDebugElement!.componentInstance as Workspace;
+      expect(router.url).toBe(destination);
+      expect(page.state.scope).toBe('team');
+      expect(page.state.view).toBe('week');
+      expect(dateKey(page.state.date)).toBe('2026-11-05');
+    },
+  );
+
   it('opens today by default and renders an explicit historical date for fixture journeys', async () => {
     const { page, harness } = await setup('/index.html?scope=self&view=month', 'maya');
     expect(dateKey(page.state.date)).toBe(dateKey(currentDate()));

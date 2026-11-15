@@ -39,3 +39,12 @@ Backend/database source and API contracts are unaffected: this change reuses exi
 Administrator account identity remains read-only pending an approved field/permission contract. Feedback submission and Home remain deferred. Broader approval enablement visibility remains open; existing assigned work is preserved. Figma focused reorganisation and final visual/instance verification remain [VAC-51 Todo](../../VAC-51-focused-figma-follow-up.md). Existing Workspace composition remains; broader ADR-0005 service extraction is not claimed complete.
 
 Automation durations are not aggregated. Assistant implementation/verification time is unmeasured; human actual Unknown.
+
+
+## PR #10 history regression · 2026-11-15
+
+The first CI run passed backend and frontend jobs but failed the paired browser job at `Back after logout: missing target maya-two` ([run](https://github.com/alxkio/vacate/actions/runs/43699231460)). Reproduced locally with `MOCK_HISTORY_ONLY=1`. Calendar canonicalisation removed the test-only history marker from the current URL; Chrome retained it in the entry's original `userTypedURL`. The harness now resolves the fresh history entry through either URL, preserving every identity/draft/scope assertion.
+
+Once traversal reached the account-switch check, it exposed a real regression: the old account's team scope was restored from its canonical Calendar URL. Signed-in routing now stamps entries with an actor/company owner and redirects a foreign-owner restored entry to the current account's Calendar defaults. New unowned deep links and same-owner navigation retain valid state. This is client state isolation, not an authorization grant; server checks remain unchanged.
+
+Follow-up validation: all **108 unit tests** passed, including two actor/company history cases and same-owner state preservation; both TypeScript projects and the production build passed. `MOCK_HISTORY_ONLY=1` passed actual browser logout/account-switch Back/Forward, Calendar → My Leave → Balances history, reload and Calendar-period restoration. No assertions were removed or weakened. Broader functional and fresh CI results are recorded separately when available. Native keyboard and actual SQL-provider limitations above remain applicable.

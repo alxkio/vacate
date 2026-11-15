@@ -625,11 +625,13 @@ try {
     await waitFor('!window.__vacateNavigationMarker && document.readyState === "complete"');
   };
   const historyTo = async (target, label) => {
-    // Replacement redirects can change CDP entry IDs; resolve from fresh full-document history.
+    // Resolve fresh IDs after redirects; Calendar can remove test markers from its canonical URL.
     const history = await call('Page.getNavigationHistory');
     const entry = target.name
-      ? history.entries.find(
-          (item) => new URL(item.url).searchParams.get('history') === target.name,
+      ? history.entries.find((item) =>
+          [item.url, item.userTypedURL]
+            .filter(Boolean)
+            .some((url) => new URL(url).searchParams.get('history') === target.name),
         )
       : history.entries[history.currentIndex + target.delta];
     assert.ok(

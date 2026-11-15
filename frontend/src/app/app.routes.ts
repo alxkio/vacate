@@ -10,6 +10,15 @@ const signedIn: CanActivateFn = async (route, state) => {
   const router = inject(Router);
   await data.initialize();
   if (!data.currentUser()) return router.parseUrl(loginUrl(state.url));
+  const user = data.currentUser()!;
+  const owner = `${user.companyId}:${user.id}`;
+  const navigation = router.currentNavigation();
+  const previousOwner = navigation?.extras.state?.['vacateNavigationOwner'];
+  if (navigation) {
+    navigation.extras.state = { ...navigation.extras.state, vacateNavigationOwner: owner };
+  }
+  // Restored entries belong to their original account; fresh deep links have no owner.
+  if (previousOwner && previousOwner !== owner) return router.parseUrl('/calendar');
   if (route.data['page'] === 'settings') {
     if (!(await data.api.restoreSession())) return router.parseUrl(loginUrl(state.url));
     const section = route.data['section'] || 'profile';

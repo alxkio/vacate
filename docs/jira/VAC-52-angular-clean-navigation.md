@@ -42,8 +42,9 @@ Frontend owns routes/views and tests; Product Designer preserves existing visual
 ## Comments
 
 - C1 · 2026-11-15 · Owner: implement what can be done locally, starting with Angular; keep blocked Figma as future Todo.
-- C3 · 2026-11-15 · Owner: commit the ready changes and create a PR. Local acceptance evidence supports review readiness; retain QA status and outstanding gates.
 - C2 · 2026-11-15 · Owner correction: login stays at `baseUrl/login` until the custom domain is available. Confirmed existing route and session-navigation helper already use same-origin `/login`; clarified the canonical specification and charter. No runtime code change required.
+- C3 · 2026-11-15 · Owner: commit the ready changes and create a PR. Local acceptance evidence supports review readiness; retain QA status and outstanding gates.
+- C4 · 2026-11-15 · Owner reported PR browser failure. Reproduced history-marker lookup failure and then fixed exposed cross-account Calendar scope restoration. See appended [regression evidence](media/VAC-52/verification.md#pr-10-history-regression--2026-11-15).
 
 ## Decisions
 
@@ -53,6 +54,7 @@ Frontend owns routes/views and tests; Product Designer preserves existing visual
 
 - W1 · 2026-11-15 · Assistant recorded: source/contract inspection and implementation; duration unmeasured. Human actual Unknown.
 - W2 · 2026-11-15 · Assistant recorded: implementation, browser regression corrections, local verification and evidence documentation; duration unmeasured. Automation measurements are not aggregated.
+- W3 · 2026-11-15 · Assistant recorded: PR history diagnosis, browser reproduction, owner-scoped route correction and regression verification; duration unmeasured. Human actual Unknown.
 
 ## History
 
@@ -61,7 +63,7 @@ Frontend owns routes/views and tests; Product Designer preserves existing visual
 
 ## Verification and release
 
-[Local verification](media/VAC-52/verification.md): 106 unit tests, both TypeScript projects, production build, fixture/contract scripts and clean-route, navigation/history and session-recovery browser journeys passed. Responsive screenshots are attached. SQL-provider, deployed/custom-domain, full default and native keyboard/screen-reader checks were not run. QA status indicates review readiness, not release approval.
+[Local verification](media/VAC-52/verification.md): 108 unit tests, both TypeScript projects, production build, fixture/contract scripts and clean-route, navigation/history and session-recovery browser journeys passed. Responsive screenshots are attached. SQL-provider, deployed/custom-domain, full default and native keyboard/screen-reader checks were not run. QA status indicates review readiness, not release approval.
 
 ## Open questions and follow-up
 
