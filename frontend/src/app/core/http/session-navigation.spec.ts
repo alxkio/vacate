@@ -15,14 +15,14 @@ describe('Session expiry navigation', () => {
   it('retains the original internal destination when a saved-session retry expires on Login', () => {
     const destination = '/index.html?page=people&scope=org';
     const result = new URL(expiredSessionUrl(loginUrl(destination)), 'https://vacate.invalid');
-    expect(result.pathname).toBe('/login.html');
+    expect(result.pathname).toBe('/login');
     expect(result.searchParams.get('returnUrl')).toBe(destination);
     expect(result.searchParams.get('reason')).toBe('expired');
     const unsafe = new URL(
       expiredSessionUrl('/login.html?returnUrl=https://evil.invalid'),
       'https://vacate.invalid',
     );
-    expect(unsafe.searchParams.get('returnUrl')).toBe('/index.html');
+    expect(unsafe.searchParams.get('returnUrl')).toBe('/calendar');
   });
   it('preserves internal page state and rejects external, encoded or malformed redirect destinations', () => {
     expect(safeReturnUrl('/index.html?page=people&scope=org')).toBe(
@@ -40,7 +40,34 @@ describe('Session expiry navigation', () => {
       'javascript:alert(1)',
       null,
     ])
-      expect(safeReturnUrl(value)).toBe('/index.html');
+      expect(safeReturnUrl(value)).toBe('/calendar');
+  });
+
+  it('resumes only recognised GUID resource paths and clean feature paths', () => {
+    const guid = '10000000-0000-4000-8000-000000000001';
+    for (const path of [
+      `/people/${guid}`,
+      `/people/${guid}/memberships/${guid}`,
+      `/people/${guid}/leave?year=2026`,
+      `/leave/requests/${guid}`,
+      `/approvals/${guid}`,
+      '/calendar?scope=team&view=week&date=2026-11-14',
+      '/settings/profile',
+      '/help',
+    ]) {
+      expect(safeReturnUrl(path)).toBe(path);
+      const login = new URL(loginUrl(path), 'https://vacate.invalid');
+      expect(login.pathname).toBe('/login');
+      expect(login.searchParams.get('returnUrl')).toBe(path);
+    }
+    for (const path of [
+      '/people/maya',
+      '/people/42',
+      '/people/%2f%2fevil.invalid',
+      '/home',
+      '/settings/arbitrary',
+    ])
+      expect(safeReturnUrl(path)).toBe('/calendar');
   });
 
   it('redirects authenticated 401 errors, while login errors and forbidden responses remain local', () => {

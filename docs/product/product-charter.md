@@ -2,7 +2,7 @@
 
 **Status:** Confirmed intent plus proposed pilot scope
 **Owner:** Product lead / founder  
-**Last updated:** 2026-11-13
+**Last updated:** 2026-11-15
 
 ## Confirmed intent
 
@@ -319,3 +319,23 @@ Employees may cancel their own personal Pending or Approved dates on/after the c
 A Pending date strictly before the company's local current date becomes Expired, including the past portion of a mixed-date request. Expired dates do not reserve or consume leave, cover calendar dates, or remain actionable in the approval inbox. Undated imported opening totals cannot be classified as past without evidence and are not assigned invented dates. Expiry runs on server access; no background service is implied.
 
 People identifies the signed-in member as You and provides search plus My team / My department / All organization scopes. Apply supplementary relationship colour to department/team labels, retaining names and a legend; remove the separate relationship column. Administrators see annual balances, recorded dates/statuses and membership actions in the same People table, without a separate balance destination. Existing direct URLs remain usable. Employee directory privacy is unchanged. Approval Requests explains when the actor's effective approval setting is disabled; other scopes and earlier saved pending work must not be silently hidden. Refine secondary action styling/alignment across these flows.
+
+## Owner direction — focused design and clean navigation · 2026-11-15
+
+Source: owner's Figma/navigation request and explicit clarification replies, 2026-11-15. Authorised scope is **Figma and route specification first**, not Angular/API implementation or domain/hosting deployment. [Navigation specification](workspace-navigation.md) records the confirmed direction and distinguishes proposed URL details; [focused Figma plan](../design/figma-focused-areas.md) records the pending reorganisation under [VAC-50](../jira/VAC-50-modular-figma-design-structure.md).
+
+- Organise the Figma design into focused product areas, with shared shell/presentation and owned feature components easy to locate.
+- Target sign-in at `auth.vacate.gr` and the workspace at `vacate.gr`; `vacate.ht` was explicitly corrected. Actual custom-domain/auth configuration remains unimplemented and unverified by this design instruction.
+- Use clean path-based navigation for Calendar, My leave & balances, People, Settings, applicable Approval Requests and Help & feedback. Use public GUIDs for resource navigation and API requests; retain company/assignment authorization and private projections.
+- Add a person detail page for administrators, including person and membership editing. Exact editable account fields remain open; this does not grant access to family/medical data or arbitrary edits to server-derived balances.
+- **Later clarification in the same session:** keep Calendar as the signed-in landing screen for now. Home/workspace landing stays a deferred idea until designed; no current Home menu item, default `/home` redirect or implementation is requested.
+
+Preserve access to existing assigned pending work when approval settings change; the new “if enabled” navigation wording does not silently supersede the 2026-11-14 clarification. Exact enablement visibility, person account-field permissions, feedback delivery and cross-host authentication remain open implementation decisions. No commit, push or deployment is authorised.
+
+
+### Local implementation authorisation · 2026-11-15
+
+Source: owner's subsequent instruction to implement feasible local work, starting with Angular, and keep blocked Figma as future Todo. This supersedes the earlier design-only scope for this bounded implementation. [VAC-52](../jira/VAC-52-angular-clean-navigation.md) covers clean routes, GUID person/membership/request detail and Help using existing APIs; [VAC-51](../jira/VAC-51-focused-figma-follow-up.md) retains the Figma update. Calendar remains landing. Other-person identity-field editing, feedback delivery and cross-host auth remain open; custom domains and deployment are not authorised. The work continues on `VAC-52-clean-angular-navigation` at the owner's request.
+
+
+Owner correction · 2026-11-15: until the custom domain is available, login must use `baseUrl/login` on the current application origin. `auth.vacate.gr` remains a future target. This confirms the implemented same-origin `/login` route; it does not authorise a domain migration.

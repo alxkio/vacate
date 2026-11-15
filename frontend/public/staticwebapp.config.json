@@ -1,11 +1,7 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": [
-      "/api/*",
-      "/config.json",
-      "/*.{js,css,json,ico,png,svg,woff,woff2}"
-    ]
+    "exclude": ["/api/*", "/config.json", "/*.{js,css,json,ico,png,svg,woff,woff2}"]
   },
   "routes": [
     {
@@ -80,6 +76,62 @@
     },
     {
       "route": "/people",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/calendar",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/login",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/help",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/settings",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/settings/*",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/people/*",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/leave/*",
+      "rewrite": "/index.html",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "route": "/approvals/*",
       "rewrite": "/index.html",
       "headers": {
         "Cache-Control": "no-store"

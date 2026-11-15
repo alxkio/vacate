@@ -1,3 +1,4 @@
+import { runNavigationRoutesAcceptance } from './testing/navigation-routes-acceptance.mjs';
 import { runLeavePeopleAcceptance } from './testing/leave-people-acceptance.mjs';
 import { runUpcomingAcceptance } from './testing/upcoming-acceptance.mjs';
 import { runAdminAcceptance } from './testing/admin-acceptance.mjs';
@@ -762,7 +763,22 @@ try {
       },
     });
   };
-  if (process.env.MOCK_LEAVE_PEOPLE_ONLY === '1') {
+  const cleanRoutesAcceptance = () =>
+    runNavigationRoutesAcceptance({
+      evaluate,
+      click,
+      waitFor,
+      navigate,
+      viewport,
+      screenshot,
+      baseUrl,
+      apiUrl: process.env.MOCK_API_URL || 'http://127.0.0.1:7071',
+      fixtureGuid,
+    });
+  if (process.env.MOCK_CLEAN_ROUTES_ONLY === '1') {
+    await cleanRoutesAcceptance();
+    assert.deepEqual(errors, [], 'Unexpected clean-route browser errors');
+  } else if (process.env.MOCK_LEAVE_PEOPLE_ONLY === '1') {
     await runLeavePeopleAcceptance({
       evaluate,
       click,
@@ -1393,12 +1409,12 @@ try {
         const state = window.VacateMock?.state;
         return document.readyState === 'complete'
           && state?.page === ${JSON.stringify(page)}
-          && state.scope === 'team'
+          && (${JSON.stringify(page)} !== 'calendar' || (state.scope === 'team'
           && state.view === 'week'
           && state.date.getFullYear() === 2026
           && state.date.getMonth() === 10
           && state.date.getDate() === 5
-          && document.querySelector('#period')?.textContent === ${JSON.stringify(retainedPeriod)};
+          && document.querySelector('#period')?.textContent === ${JSON.stringify(retainedPeriod)}));
       })()`,
         );
       // Browser history events can precede Angular bootstrap and its first render.
@@ -1409,7 +1425,7 @@ try {
       await waitForRetainedPeriod('leave');
       await load('?page=balances&scope=team&view=week&date=2026-11-05');
       await waitForRetainedPeriod('balances');
-      assert.equal(await evaluate('new URLSearchParams(location.search).get("page")'), 'balances');
+      assert.equal(await evaluate('location.pathname'), '/leave/balances');
       assert.equal(await evaluate('document.querySelector("#calendar-page").hidden'), true);
       assert.equal(
         await evaluate('document.activeElement.id'),
@@ -1797,10 +1813,7 @@ try {
           ),
           false,
         );
-        assert.equal(
-          await evaluate('new URL(location.href).searchParams.get("section")'),
-          'profile',
-        );
+        assert.equal(await evaluate('location.pathname'), '/settings/profile');
       }
       assert.deepEqual(
         await evaluate(
@@ -3035,6 +3048,7 @@ try {
         await upcomingAcceptance();
         if (server) await sessionRecoveryAcceptance();
         await pageFocusAcceptance();
+        await cleanRoutesAcceptance();
         assert.deepEqual(errors, [], 'Unexpected browser exceptions');
         console.log(
           (process.env.MOCK_FUNCTIONAL_ONLY === '1'

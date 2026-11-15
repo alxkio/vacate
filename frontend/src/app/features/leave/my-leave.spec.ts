@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
@@ -27,7 +28,10 @@ const requests = [
 describe('My Leave history', () => {
   beforeEach(() => {
     sessionStorage.clear();
-    TestBed.configureTestingModule({ imports: [MyLeave], providers: [fixtureWorkspaceProvider] });
+    TestBed.configureTestingModule({
+      imports: [MyLeave],
+      providers: [fixtureWorkspaceProvider, provideRouter([])],
+    });
     TestBed.inject(WorkspaceDataService).environment.VacateSession.login('maya', 'maya');
   });
   afterEach(() => sessionStorage.clear());

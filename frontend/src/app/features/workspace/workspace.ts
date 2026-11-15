@@ -11,7 +11,13 @@ import {
 } from '@angular/core';
 import { loginUrl } from '../../core/http/session-navigation';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, filter } from 'rxjs';
+import { NavigationEnd } from '@angular/router';
+import { workspacePath } from '../../core/navigation/app-paths';
+import { WorkspaceNavigationState } from './workspace-navigation-state';
+import { PersonDetail } from '../people/person-detail';
+import { RequestDetail } from '../leave/request-detail';
+import { Help } from '../help/help';
 import { BalanceBar } from '../leave/balance-bar';
 import { Balances } from '../leave/balances';
 import { Calendar } from '../calendar/calendar';
@@ -47,6 +53,9 @@ import { WorkspaceView } from './workspace-view';
 @Component({
   selector: 'vacate-workspace',
   imports: [
+    PersonDetail,
+    RequestDetail,
+    Help,
     Approvals,
     Calendar,
     Balances,
@@ -64,6 +73,7 @@ export class Workspace implements OnInit, OnDestroy {
   readonly router = inject(Router);
   readonly route = inject(ActivatedRoute);
   readonly changeDetector = inject(ChangeDetectorRef);
+  readonly navigationState = inject(WorkspaceNavigationState);
   readonly initialUser = this.data.currentUser()!;
 
   get user(): Person {
@@ -97,10 +107,11 @@ export class Workspace implements OnInit, OnDestroy {
   };
   balanceViewState = { showAll: false, expanded: new Set<string>() };
   readonly navigation = [
-    { id: 'leave', name: 'My Leave', icon: '☀', admin: false },
+    { id: 'leave', name: 'My leave & balances', icon: '☀', admin: false },
     { id: 'people', name: 'People', icon: '♧', admin: false },
     { id: 'approvals', name: 'Approval Requests', icon: '☑', admin: true },
     { id: 'settings', name: 'Settings', icon: '⚙', admin: false },
+    { id: 'help', name: 'Help & feedback', icon: '?', admin: false },
   ];
   settingsSection = 'profile';
   mobileOpen = false;
@@ -161,32 +172,10 @@ export class Workspace implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void this.refreshSavedLeave();
-    this.subscription = this.route.queryParamMap.subscribe((params) => {
-      if (!this.ensureSession()) {
-        return;
-      }
-      const previousPage = this.state.page;
-      const requested = params.get('page') || this.route.snapshot.routeConfig?.path || 'calendar';
-      this.state.page = workspacePageFromRoute(requested);
-      const section = params.get('section');
-      this.settingsSection = resolveSettingsSection(
-        ['organization', 'organization-settings'].includes(requested) ? 'organization' : section,
-        this.user,
-        this.data.api.settingsAccess,
-      );
-      this.accountOpen = false;
-      this.state.scope = params.get('scope') || this.defaultScope;
-      this.state.groupId = workspaceGroupFromRoute(params, this.state.scope);
-      this.state.denied =
-        !this.scopes.includes(this.state.scope) ||
-        (params.has('company') && params.get('company') !== this.user.companyId);
-      this.state.view = workspaceViewFromRoute(params.get('view'), this.state.layout);
-      this.state.date = workspaceDateFromRoute(params.get('date'));
-      this.refresh();
-      if (previousPage !== this.state.page) {
-        queueMicrotask(() => this.main.nativeElement.focus());
-      }
-    });
+    this.readRoute();
+    this.subscription = this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => this.readRoute());
     const currentState = (): CalendarState => this.state;
     Object.defineProperty(window, 'VacateMock', {
       configurable: true,
@@ -203,6 +192,62 @@ export class Workspace implements OnInit, OnDestroy {
     });
   }
 
+  personGuid = '';
+  membershipGuid = '';
+  requestGuid = '';
+  nodeGuid = '';
+  detail = '';
+  personYear = new Date().getFullYear();
+  personListQuery: Record<string, string | number> = {};
+
+  private get navigationOwner(): string {
+    return `${this.user.companyId}:${this.user.id}`;
+  }
+
+  private readRoute(): void {
+    if (!this.ensureSession()) return;
+    const snapshot = this.route.snapshot;
+    const params = snapshot.queryParamMap;
+    this.state.page = workspacePageFromRoute(snapshot.data['page'] || 'calendar');
+    this.personGuid = snapshot.paramMap.get('personGuid') || '';
+    this.membershipGuid = snapshot.paramMap.get('membershipGuid') || '';
+    this.requestGuid = snapshot.paramMap.get('requestGuid') || '';
+    this.nodeGuid = snapshot.paramMap.get('nodeGuid') || '';
+    this.detail = snapshot.data['detail'] || '';
+    this.settingsSection = resolveSettingsSection(
+      snapshot.data['section'] || 'profile',
+      this.user,
+      this.data.api.settingsAccess,
+    );
+    const remembered = this.navigationState.read(this.navigationOwner);
+    const calendar = this.state.page === 'calendar';
+    this.state.scope =
+      (calendar ? params.get('scope') : null) || remembered?.scope || this.defaultScope;
+    this.state.groupId =
+      (calendar ? workspaceGroupFromRoute(params, this.state.scope) : null) ||
+      remembered?.groupId ||
+      null;
+    if (calendar && params.has('scope') && !params.has('group')) this.state.groupId = null;
+    this.state.view = workspaceViewFromRoute(
+      (calendar ? params.get('view') : null) || remembered?.view || null,
+      this.state.layout,
+    );
+    this.state.date =
+      calendar && params.has('date')
+        ? workspaceDateFromRoute(params.get('date'))
+        : remembered?.date || currentDate();
+    this.state.denied =
+      (this.state.page === 'calendar' && !this.scopes.includes(this.state.scope)) ||
+      (params.has('company') && params.get('company') !== this.user.companyId);
+    const year = Number(params.get('year'));
+    this.personYear =
+      Number.isInteger(year) && year > 0 && year <= 9999 ? year : new Date().getFullYear();
+    this.personListQuery = { scope: params.get('scope') || 'org', year: this.personYear };
+    this.accountOpen = false;
+    this.refresh();
+    queueMicrotask(() => this.main.nativeElement.focus());
+  }
+
   ngOnDestroy(): void {
     this.subscription?.unsubscribe();
     Object.defineProperty(window, 'VacateMock', { configurable: true, value: undefined });
@@ -214,7 +259,7 @@ export class Workspace implements OnInit, OnDestroy {
       return true;
     }
     // A replacement account starts with its own defaults; an ended session can resume its page.
-    location.replace(currentUser ? '/index.html' : loginUrl(this.router.url));
+    location.replace(currentUser ? '/calendar' : loginUrl(this.router.url));
     return false;
   }
 
@@ -225,17 +270,8 @@ export class Workspace implements OnInit, OnDestroy {
     this.changeDetector.markForCheck();
   }
 
-  private query(page: string): {
-    page: string;
-    section: string | null;
-    scope: string;
-    view: string;
-    date: string;
-    group: string | null;
-  } {
+  private calendarQuery() {
     return {
-      page,
-      section: page === 'settings' ? this.settingsSection : null,
       scope: this.state.scope,
       view: this.state.view,
       date: dateKey(this.state.date),
@@ -245,25 +281,30 @@ export class Workspace implements OnInit, OnDestroy {
 
   async navigatePage(page: string, event?: Event): Promise<void> {
     event?.preventDefault();
-    if (!this.ensureSession()) {
-      return;
+    if (!this.ensureSession()) return;
+    if (this.state.page === 'calendar') {
+      this.navigationState.save(this.navigationOwner, this.state);
+      await this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: this.calendarQuery(),
+        replaceUrl: true,
+      });
     }
-    // Save the current period before adding a new page entry to browser history.
-    await this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: this.query(this.state.page),
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-    await this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: this.query(page),
-      queryParamsHandling: 'merge',
-    });
+    const section = page === 'settings' ? this.settingsSection : 'profile';
+    const queryParams = page === 'calendar' ? this.calendarQuery() : {};
+    await this.router.navigate([workspacePath(page, section)], { queryParams });
     this.mobileOpen = false;
     this.accountOpen = false;
-    this.main.nativeElement.focus();
-    this.changeDetector.markForCheck();
+  }
+
+  private syncCalendar(): void {
+    this.navigationState.save(this.navigationOwner, this.state);
+    if (this.state.page === 'calendar')
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: this.calendarQuery(),
+        replaceUrl: true,
+      });
   }
 
   async refreshSavedLeave(): Promise<void> {
@@ -281,12 +322,14 @@ export class Workspace implements OnInit, OnDestroy {
     this.state.groupId = id;
     this.state.denied = !this.data.fixtures.peopleFor(this.user, this.state.scope, id).length;
     this.refresh();
+    this.syncCalendar();
   }
 
   chooseMonth(month: number): void {
     this.state.date = new Date(this.state.date.getFullYear(), month, 1);
     this.state.view = 'month';
     this.refresh();
+    this.syncCalendar();
     document.querySelector<HTMLButtonElement>('.views [data-view=month]')?.focus();
   }
 
@@ -304,12 +347,7 @@ export class Workspace implements OnInit, OnDestroy {
       this.state.view = 'week';
     }
     this.refresh();
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: this.query(this.state.page),
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
+    this.syncCalendar();
   }
 
   showAdminDestination(nav: string): void {
@@ -329,14 +367,21 @@ export class Workspace implements OnInit, OnDestroy {
     }
     this.accountOpen = false;
     this.mobileOpen = false;
-    await this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {
-        page: 'settings',
-        section: resolveSettingsSection(section, this.user, this.data.api.settingsAccess),
-      },
-      queryParamsHandling: 'merge',
-    });
+    const permitted = resolveSettingsSection(section, this.user, this.data.api.settingsAccess);
+    const nodes =
+      permitted === 'team'
+        ? this.data.api.settingsAccess?.teams
+        : permitted === 'department'
+          ? this.data.api.settingsAccess?.departments
+          : [];
+    const own = permitted === 'team' ? this.user.teamId : this.user.departmentId;
+    const node = nodes?.find((n) => n.guid === own) || nodes?.[0];
+    await this.router.navigate([workspacePath('settings', permitted, node?.guid)]);
+  }
+
+  selectSettingsNode(guid: string): void {
+    if (!this.ensureSession()) return;
+    void this.router.navigate([workspacePath('settings', this.settingsSection, guid)]);
   }
 
   @HostListener('click', ['$event'])
@@ -350,6 +395,7 @@ export class Workspace implements OnInit, OnDestroy {
       if (!(await this.data.api.validateSession()) || !this.ensureSession()) return;
     }
     this.handleScopeAndView(scope, view);
+    if (scope || view) this.syncCalendar();
     this.handleNavigation(nav, button);
     this.handleAction(action, button);
   }
@@ -382,6 +428,7 @@ export class Workspace implements OnInit, OnDestroy {
         'people',
         'approvals',
         'admin-balances',
+        'help',
       ].includes(nav)
     ) {
       void this.navigatePage(nav);
@@ -392,20 +439,23 @@ export class Workspace implements OnInit, OnDestroy {
     if (action === 'today') {
       this.state.date = currentDate();
       this.refresh();
+      this.syncCalendar();
     }
     if (action === 'previous' || action === 'next') {
       const delta = action === 'previous' ? -1 : 1;
       this.state.date = shiftWorkspaceDate(this.state.date, this.state.view, delta);
       this.refresh();
+      this.syncCalendar();
     }
     if (action === 'request') {
       this.workspaceDialog.request('annual', button);
     }
     if (action === 'logout') {
+      this.navigationState.clear();
       this.data.logout();
     }
     if (action === 'help') {
-      this.workspaceDialog.showHelp(button);
+      void this.navigatePage('help');
     }
     if (action === 'account') {
       this.accountOpen = !this.accountOpen;
