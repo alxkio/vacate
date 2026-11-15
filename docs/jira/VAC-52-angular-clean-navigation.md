@@ -55,6 +55,7 @@ Frontend owns routes/views and tests; Product Designer preserves existing visual
 - W1 · 2026-11-15 · Assistant recorded: source/contract inspection and implementation; duration unmeasured. Human actual Unknown.
 - W2 · 2026-11-15 · Assistant recorded: implementation, browser regression corrections, local verification and evidence documentation; duration unmeasured. Automation measurements are not aggregated.
 - W3 · 2026-11-15 · Assistant recorded: PR history diagnosis, browser reproduction, owner-scoped route correction and regression verification; duration unmeasured. Human actual Unknown.
+- W4 · 2026-11-15 · Assistant recorded: broader browser regression found discarded balance presentation state; extracted leave-owned actor/company/session state and verified route retention/isolation. Duration unmeasured.
 
 ## History
 
@@ -63,7 +64,7 @@ Frontend owns routes/views and tests; Product Designer preserves existing visual
 
 ## Verification and release
 
-[Local verification](media/VAC-52/verification.md): 108 unit tests, both TypeScript projects, production build, fixture/contract scripts and clean-route, navigation/history and session-recovery browser journeys passed. Responsive screenshots are attached. SQL-provider, deployed/custom-domain, full default and native keyboard/screen-reader checks were not run. QA status indicates review readiness, not release approval.
+[Local verification](media/VAC-52/verification.md): 112 unit tests, both TypeScript projects, production build, fixture/contract scripts and clean-route, navigation/history and session-recovery browser journeys passed. Responsive screenshots are attached. SQL-provider, deployed/custom-domain, full default and native keyboard/screen-reader checks were not run. QA status indicates review readiness, not release approval.
 
 ## Open questions and follow-up
 

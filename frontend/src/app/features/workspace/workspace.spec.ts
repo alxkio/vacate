@@ -99,6 +99,16 @@ describe('Workspace navigation', () => {
     expect(harness.routeNativeElement?.querySelector('[data-date="2026-10-01"]')).not.toBeNull();
   });
 
+  it('retains expanded balance types when clean routes recreate the workspace', async () => {
+    const { page, harness } = await setup('/leave/balances', 'maya');
+    page.balanceViewState.expanded.add('carer');
+    await harness.navigateByUrl('/calendar', Workspace);
+    const returned = await harness.navigateByUrl('/leave', Workspace);
+    expect(returned).not.toBe(page);
+    expect(returned.balanceViewState.expanded.has('carer')).toBe(true);
+    expect(returned.balanceViewState.showAll).toBe(false);
+  });
+
   it('has one Settings entry, no separate organization or personal balance entry and sign-out only in the profile menu', async () => {
     const { page, harness, element } = await setup('/index.html?page=settings');
     expect(element.querySelectorAll('nav#navigation [data-nav="settings"]').length).toBe(1);

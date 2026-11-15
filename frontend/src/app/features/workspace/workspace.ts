@@ -20,6 +20,7 @@ import { RequestDetail } from '../leave/request-detail';
 import { Help } from '../help/help';
 import { BalanceBar } from '../leave/balance-bar';
 import { Balances } from '../leave/balances';
+import { BalanceViewState } from '../leave/balance-view-state';
 import { Calendar } from '../calendar/calendar';
 import { UnifiedSettings } from '../settings/settings';
 import { resolveSettingsSection } from '../settings/settings-navigation';
@@ -105,7 +106,12 @@ export class Workspace implements OnInit, OnDestroy {
     view: 'month',
     date: currentDate(),
   };
-  balanceViewState = { showAll: false, expanded: new Set<string>() };
+  private readonly balanceViewStore = inject(BalanceViewState);
+  get balanceViewState(): { showAll: boolean; expanded: Set<string> } {
+    return this.balanceViewStore.read(
+      `${this.navigationOwner}:${this.data.api.sessionGeneration ?? 0}`,
+    );
+  }
   readonly navigation = [
     { id: 'leave', name: 'My leave & balances', icon: '☀', admin: false },
     { id: 'people', name: 'People', icon: '♧', admin: false },
