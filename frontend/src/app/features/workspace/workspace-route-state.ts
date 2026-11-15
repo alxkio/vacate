@@ -15,6 +15,7 @@ const routePages: CalendarState['page'][] = [
   'people',
   'approvals',
   'admin-balances',
+  'help',
 ];
 
 export const workspacePageFromRoute = (requested: string): CalendarState['page'] => {

@@ -310,7 +310,7 @@ export async function runAdminAcceptance({
   await waitFor('!!document.querySelector("vacate-people")');
   assert.equal(
     await evaluate(
-      'document.querySelector("vacate-people").textContent.includes("Personnel leave overview")',
+      'document.querySelector("vacate-person-detail").textContent.includes("Personnel leave overview")',
     ),
     false,
   );

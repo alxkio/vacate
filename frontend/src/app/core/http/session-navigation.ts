@@ -1,40 +1,30 @@
 import { Injectable } from '@angular/core';
+import { resumablePath } from '../navigation/app-paths';
 
 // Only known application destinations may be resumed after authentication.
 export function safeReturnUrl(value: string | null): string {
-  if (!value || /[\\\x00-\x20]/.test(value)) return '/index.html';
+  if (!value || /[\\\x00-\x20]/.test(value)) return '/calendar';
   try {
     const url = new URL(value, 'https://vacate.invalid');
-    const paths = [
-      '/index.html',
-      '/leave',
-      '/approvals',
-      '/availability',
-      '/people',
-      '/settings',
-      '/balances',
-      '/admin-balances',
-    ];
     return value.startsWith('/') &&
       url.origin === 'https://vacate.invalid' &&
-      paths.includes(url.pathname)
+      resumablePath(url.pathname)
       ? url.pathname + url.search + url.hash
-      : '/index.html';
+      : '/calendar';
   } catch {
-    return '/index.html';
+    return '/calendar';
   }
 }
 
 export function loginUrl(destination: string): string {
-  return '/login.html?returnUrl=' + encodeURIComponent(safeReturnUrl(destination));
+  return '/login?returnUrl=' + encodeURIComponent(safeReturnUrl(destination));
 }
 
 export function expiredSessionUrl(currentUrl: string): string {
   const current = new URL(currentUrl, 'https://vacate.invalid');
-  const destination =
-    current.pathname === '/login.html'
-      ? safeReturnUrl(current.searchParams.get('returnUrl'))
-      : current.pathname + current.search + current.hash;
+  const destination = ['/login', '/login.html'].includes(current.pathname)
+    ? safeReturnUrl(current.searchParams.get('returnUrl'))
+    : current.pathname + current.search + current.hash;
   return loginUrl(destination) + '&reason=expired';
 }
 

@@ -151,3 +151,20 @@ My Leave combines a collapsed annual summary/expandable leave balances with a si
 People provides You, search and organization/department/team scopes. Admin annual balances, recorded history and membership actions share the directory table. The legacy `page=admin-balances` URL opens People; the separate navigation destination is removed. Employee directory privacy remains unchanged.
 
 Run `MOCK_LEAVE_PEOPLE_ONLY=1 MOCK_API_URL=http://127.0.0.1:7076 node frontend/verify.mjs` from repository root against a disposable local built API. This checks partial cancellation, calendar cancellation, balance restoration, consolidated history, People scope/search/privacy, legacy route and 1440/375/320px layouts. It deletes only created personal requests and revokes its sessions in `finally`. Functional interaction is separate from native trusted keyboard/screen-reader evidence. The fixed-date history flag/importer is retired. Browser acceptance creates and cleans up its own saved requests; no generated reference history is mixed into live reads.
+
+
+## Clean navigation (VAC-52)
+
+Calendar remains the signed-in landing page at `/calendar`; Home is deferred. Sign-in stays same-origin at `/login` until cross-host authentication is designed. The target domains have not been provisioned by this change.
+
+| Area | Local paths |
+|---|---|
+| Personal leave | `/leave`, `/leave/balances`, `/leave/requests/{requestGuid}` |
+| People | `/people`, `/people/{personGuid}`, `/people/{personGuid}/memberships/{membershipGuid}`, `/people/{personGuid}/leave` |
+| Settings | `/settings/profile`, `/settings/system`, `/settings/organization`, `/settings/departments/{nodeGuid}`, `/settings/teams/{nodeGuid}` |
+| Approvals | `/approvals`, `/approvals/{requestGuid}` |
+| Help | `/help` |
+
+Legacy query bookmarks remain supported. Feature paths drop unrelated Calendar parameters; Calendar restores its own context through browser history and tab reload, using actor/company-scoped session storage cleared at logout. People search remains session-owner-scoped in memory. Settings and resource detail still rely on server permissions. Administrator identity fields are read-only; membership edits use existing APIs. Help explains that feedback submission is unavailable.
+
+Run `MOCK_CLEAN_ROUTES_ONLY=1 MOCK_API_URL=http://127.0.0.1:7073 node frontend/verify.mjs` from repository root against the built app and disposable local seeded API. It saves/restores a fictional membership allocation, creates/decides/deletes its own leave request and revokes captured sessions in teardown. [Verification and limitations](../docs/jira/media/VAC-52/verification.md). Figma follow-up stays [VAC-51 Todo](../docs/jira/VAC-51-focused-figma-follow-up.md).

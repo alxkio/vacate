@@ -71,6 +71,9 @@
       </tbody>
     </table>
   </vacate-data-table>
+  @if (decisionError && !selected) {
+    <p class="admin-error" role="alert">{{ decisionError }}</p>
+  }
   @if (selected; as record) {
     <section class="admin-review" aria-labelledby="approval-review-heading">
       <h3 #reviewHeading id="approval-review-heading" tabindex="-1">

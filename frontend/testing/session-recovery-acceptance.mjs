@@ -15,7 +15,7 @@ export async function runSessionRecoveryAcceptance({
 }) {
   const tickets = new Set();
   let failure;
-  const peopleUrl = new URL('/index.html?page=people', baseUrl).href;
+  const peopleUrl = new URL('/people', baseUrl).href;
   const loginUrl = new URL('/login.html?returnUrl=%2Findex.html%3Fpage%3Dpeople', baseUrl).href;
   const token = () => evaluate('sessionStorage.getItem("vacate.session.token")');
   const recovery = async (expectedToken, returnPage) => {
@@ -38,7 +38,7 @@ export async function runSessionRecoveryAcceptance({
     );
     await click('#retry-session');
     await waitFor(
-      `!document.querySelector('#login-form') && !!document.querySelector('vacate-workspace') && window.VacateMock?.state.page === ${JSON.stringify(new URL(returnPage, baseUrl).searchParams.get('page'))}`,
+      `!document.querySelector('#login-form') && !!document.querySelector('vacate-workspace') && window.VacateMock?.state.page === ${JSON.stringify(new URL(returnPage, baseUrl).pathname.startsWith('/settings') ? 'settings' : 'people')}`,
     );
     assert.ok(
       (await token()) === expectedToken,
@@ -70,7 +70,7 @@ export async function runSessionRecoveryAcceptance({
       await navigate(peopleUrl);
       await waitFor('!!document.querySelector("#retry-session")');
       await screenshot(`session-recovery-${width}.png`);
-      await recovery(saved, '/index.html?page=people');
+      await recovery(saved, '/people');
       await waitFor(
         'document.querySelectorAll(".people-table tbody tr[data-person]").length === 12',
       );
@@ -80,7 +80,7 @@ export async function runSessionRecoveryAcceptance({
     await click('[data-nav=settings]');
     await waitFor('!!document.querySelector("#retry-session")');
     const settingsReturn = await evaluate('new URLSearchParams(location.search).get("returnUrl")');
-    assert.equal(new URL(settingsReturn, baseUrl).searchParams.get('page'), 'settings');
+    assert.equal(new URL(settingsReturn, baseUrl).pathname, '/settings/profile');
     await recovery(saved, settingsReturn);
     await waitFor('!!document.querySelector("#profile-form")');
 
@@ -96,7 +96,7 @@ export async function runSessionRecoveryAcceptance({
     assert.ok(!(await token()), 'Expired tickets are removed');
     assert.equal(
       await evaluate('new URLSearchParams(location.search).get("returnUrl")'),
-      '/index.html?page=people',
+      '/people',
     );
 
     // Keep a successfully issued ticket even if the first workspace load fails after sign-in.
@@ -109,7 +109,7 @@ export async function runSessionRecoveryAcceptance({
     assert.ok(replacement);
     assert.ok(replacement !== saved, 'A new sign-in issues another ticket');
     tickets.add(replacement);
-    await recovery(replacement, '/index.html?page=people');
+    await recovery(replacement, '/people');
   } catch (error) {
     failure = error;
     throw error;

@@ -43,6 +43,8 @@ import { ScopeSettings } from './scope-settings';
           <vacate-scope-settings
             [companyId]="companyId"
             [kind]="activeSection === 'team' ? 'teams' : 'departments'"
+            [nodeGuid]="nodeGuid"
+            (nodeChanged)="nodeChanged.emit($event)"
           />
         } @else {
           <vacate-settings
@@ -60,11 +62,19 @@ export class UnifiedSettings {
   readonly data = inject(WorkspaceDataService);
   @Input() companyId = '';
   @Input() selected = 'profile';
-  get sections(): ({ readonly id: "organization"; readonly name: "Organization"; readonly admin: true; } | { readonly id: "department"; readonly name: "Department"; readonly admin: true; } | { readonly id: "team"; readonly name: "Team"; readonly admin: true; } | { readonly id: "profile"; readonly name: "Profile"; readonly admin: false; } | { readonly id: "system"; readonly name: "System"; readonly admin: false; })[] {
+  @Input() nodeGuid = '';
+  readonly nodeChanged = output<string>();
+  get sections(): (
+    | { readonly id: 'organization'; readonly name: 'Organization'; readonly admin: true }
+    | { readonly id: 'department'; readonly name: 'Department'; readonly admin: true }
+    | { readonly id: 'team'; readonly name: 'Team'; readonly admin: true }
+    | { readonly id: 'profile'; readonly name: 'Profile'; readonly admin: false }
+    | { readonly id: 'system'; readonly name: 'System'; readonly admin: false }
+  )[] {
     return settingsSections(this.data.currentUser(), this.data.api.settingsAccess);
   }
 
-  get activeSection(): "team" | "department" | "organization" | "profile" | "system" {
+  get activeSection(): 'team' | 'department' | 'organization' | 'profile' | 'system' {
     return resolveSettingsSection(
       this.selected,
       this.data.currentUser(),

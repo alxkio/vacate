@@ -133,7 +133,8 @@ export type CalendarState = {
     | 'leave'
     | 'people'
     | 'approvals'
-    | 'admin-balances';
+    | 'admin-balances'
+    | 'help';
   layout: CalendarLayout;
   colorScheme: ColorScheme;
   scope: string;

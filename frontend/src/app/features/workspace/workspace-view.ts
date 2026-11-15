@@ -142,23 +142,7 @@ export class WorkspaceView {
   }
 
   get balanceUrl(): string {
-    const url = new URL(location.href);
-    const query: Record<string, string | null> = {
-      page: 'balances',
-      section: null,
-      scope: this.state.scope,
-      view: this.state.view,
-      date: dateKey(this.state.date),
-      group: this.state.groupId,
-    };
-    for (const [key, value] of Object.entries(query)) {
-      if (value) {
-        url.searchParams.set(key, value);
-      } else {
-        url.searchParams.delete(key);
-      }
-    }
-    return url.pathname + url.search;
+    return '/leave/balances';
   }
 
   label(entry: Entry): string {

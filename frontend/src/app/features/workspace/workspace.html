@@ -6,7 +6,7 @@
   [attr.data-page]="state.page"
 >
   <header class="topbar">
-    <a class="brand" href="/index.html" aria-label="Vacate home, workspace">
+    <a class="brand" href="/calendar" aria-label="Vacate home, workspace">
       <span class="brand-symbol">v<span>•</span></span
       >vacate<span class="brand-dot">.</span>
     </a>
@@ -313,22 +313,37 @@
       <vacate-unified-settings
         [companyId]="state.denied ? 'unavailable' : user.companyId"
         [selected]="settingsSection"
+        [nodeGuid]="nodeGuid"
         (sectionChanged)="selectSettingsSection($event)"
+        (nodeChanged)="selectSettingsNode($event)"
         (saved)="changeDetector.markForCheck()"
         (displayPreferencesSaved)="applyDisplayPreferences($event)"
         (staleSession)="ensureSession()"
       />
     }
+    @if (state.page === 'help') {
+      <vacate-help />
+    }
     @if (state.page === 'people' || state.page === 'admin-balances') {
       @if (!state.denied) {
-        <vacate-people />
+        @if (personGuid) {
+          <vacate-person-detail
+            [personGuid]="personGuid"
+            [membershipGuid]="membershipGuid"
+            [mode]="detail"
+            [year]="personYear"
+            [listQuery]="personListQuery"
+          />
+        } @else {
+          <vacate-people />
+        }
       } @else {
         <p role="alert">Organization unavailable.</p>
       }
     }
     @if (state.page === 'approvals') {
       @if (user.capability === 'admin' && !state.denied) {
-        <vacate-approvals />
+        <vacate-approvals [requestGuid]="requestGuid" />
       } @else {
         <section class="navigation-card">
           <h2>Approval requests</h2>
@@ -336,7 +351,10 @@
         </section>
       }
     }
-    @if (state.page === 'leave') {
+    @if (state.page === 'leave' && requestGuid) {
+      <vacate-request-detail [requestGuid]="requestGuid" />
+    }
+    @if (state.page === 'leave' && !requestGuid) {
       <vacate-my-leave
         [savedRequests]="leave.requests"
         [balanceViewState]="balanceViewState"

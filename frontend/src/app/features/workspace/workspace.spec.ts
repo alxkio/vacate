@@ -35,6 +35,60 @@ describe('Workspace navigation', () => {
     return { page, harness, element: harness.routeNativeElement! };
   }
 
+  it('canonicalises legacy paths, keeps Calendar as landing and removes unrelated People query state', async () => {
+    const { harness } = await setup('/');
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/calendar');
+    await harness.navigateByUrl(
+      '/index.html?page=people&scope=org&view=month&date=2026-11-14',
+      Workspace,
+    );
+    expect(router.url).toBe('/people?scope=org');
+    await harness.navigateByUrl('/help', Workspace);
+    expect(harness.routeNativeElement!.textContent).toContain(
+      'Feedback submission is not available',
+    );
+    expect(harness.routeNativeElement!.querySelector('vacate-help')).not.toBeNull();
+    await harness.navigateByUrl('/home', Workspace);
+    expect(router.url).toBe('/calendar');
+  });
+
+  it('denies private person and foreign scoped settings links to ordinary members', async () => {
+    const { harness } = await setup('/people/10000000-0000-4000-8000-000000000001', 'maya');
+    expect(harness.routeNativeElement!.textContent).toContain('Person unavailable');
+    expect(harness.routeNativeElement!.querySelector('#membership-form')).toBeNull();
+    await harness.navigateByUrl('/settings/teams/40000000-0000-4000-8000-000000000099', Workspace);
+    expect(TestBed.inject(Router).url).toBe('/settings/profile');
+  });
+
+  it.each(['actor', 'company'])(
+    'resets restored navigation from another %s while retaining same-owner Calendar state',
+    async (difference) => {
+      const { harness } = await setup('/calendar');
+      const router = TestBed.inject(Router);
+      const user = TestBed.inject(WorkspaceDataService).currentUser()!;
+      const owner = `${user.companyId}:${user.id}`;
+      const previousOwner =
+        difference === 'actor' ? `${user.companyId}:other-actor` : `other-company:${user.id}`;
+      const destination = '/calendar?scope=team&view=week&date=2026-11-05';
+      await router.navigateByUrl(destination, {
+        state: { vacateNavigationOwner: previousOwner },
+      });
+      harness.detectChanges();
+      expect(router.url).toBe('/calendar');
+      let page = harness.routeDebugElement!.componentInstance as Workspace;
+      expect(page.state.scope).toBe('org');
+      expect(page.state.view).toBe('month');
+      await router.navigateByUrl(destination, { state: { vacateNavigationOwner: owner } });
+      harness.detectChanges();
+      page = harness.routeDebugElement!.componentInstance as Workspace;
+      expect(router.url).toBe(destination);
+      expect(page.state.scope).toBe('team');
+      expect(page.state.view).toBe('week');
+      expect(dateKey(page.state.date)).toBe('2026-11-05');
+    },
+  );
+
   it('opens today by default and renders an explicit historical date for fixture journeys', async () => {
     const { page, harness } = await setup('/index.html?scope=self&view=month', 'maya');
     expect(dateKey(page.state.date)).toBe(dateKey(currentDate()));
@@ -43,6 +97,16 @@ describe('Workspace navigation', () => {
       'October 2026',
     );
     expect(harness.routeNativeElement?.querySelector('[data-date="2026-10-01"]')).not.toBeNull();
+  });
+
+  it('retains expanded balance types when clean routes recreate the workspace', async () => {
+    const { page, harness } = await setup('/leave/balances', 'maya');
+    page.balanceViewState.expanded.add('carer');
+    await harness.navigateByUrl('/calendar', Workspace);
+    const returned = await harness.navigateByUrl('/leave', Workspace);
+    expect(returned).not.toBe(page);
+    expect(returned.balanceViewState.expanded.has('carer')).toBe(true);
+    expect(returned.balanceViewState.showAll).toBe(false);
   });
 
   it('has one Settings entry, no separate organization or personal balance entry and sign-out only in the profile menu', async () => {
@@ -81,8 +145,8 @@ describe('Workspace navigation', () => {
       ]) {
         const page = await harness.navigateByUrl(url, Workspace);
         const params = router.parseUrl(router.url).queryParams;
-        expect(params['page']).toBe('settings');
-        expect(params['section']).toBe('profile');
+        expect(router.url).toBe('/settings/profile');
+        expect(params['page']).toBeUndefined();
         expect(page.settingsSection).toBe('profile');
         const element = harness.routeNativeElement!;
         expect(
@@ -108,7 +172,9 @@ describe('Workspace navigation', () => {
     expect(harness.routeNativeElement!.querySelector('#profile-form, .membership-card')).toBeNull();
     await page.selectSettingsSection('team');
     harness.detectChanges();
-    expect(page.settingsSection).toBe('profile');
+    expect((harness.routeDebugElement!.componentInstance as Workspace).settingsSection).toBe(
+      'profile',
+    );
     expect(harness.routeNativeElement!.querySelector('#profile-form')).not.toBeNull();
     expect(harness.routeNativeElement!.querySelector('vacate-organization')).toBeNull();
   });
@@ -201,20 +267,27 @@ describe('Workspace navigation', () => {
   it.each(['applications', 'foreign-team'])(
     'retains the calendar period and authorized group through My Leave, balances and history (%s)',
     async (group) => {
-      const { page } = await setup(
+      const { harness } = await setup(
         `/index.html?scope=team&group=${group}&view=week&date=2026-11-05`,
         'maya',
       );
       const router = TestBed.inject(Router);
       router.setUpLocationChangeListener();
       const location = TestBed.inject(Location);
+      const activePage = () => {
+        harness.detectChanges();
+        return harness.routeDebugElement!.componentInstance as Workspace;
+      };
       const assertPeriod = (expectedPage: string): void => {
+        const page = activePage();
         expect(page.state.page).toBe(expectedPage);
         expect(page.period).toBe('2 Nov – 8 Nov 2026');
         expect(page.state.scope).toBe('team');
         expect(page.state.groupId).toBe(group);
         expect(page.visiblePeople.length).toBe(group === 'applications' ? 3 : 0);
-        expect(new URLSearchParams(router.url.split('?')[1]).get('date')).toBe('2026-11-05');
+        expect(new URLSearchParams(router.url.split('?')[1]).get('date')).toBe(
+          expectedPage === 'calendar' ? '2026-11-05' : null,
+        );
       };
       const traverse = async (direction: 'back' | 'forward'): Promise<void> => {
         const finished = firstValueFrom(
@@ -224,9 +297,9 @@ describe('Workspace navigation', () => {
         await finished;
       };
       assertPeriod('calendar');
-      await page.navigatePage('leave');
+      await activePage().navigatePage('leave');
       assertPeriod('leave');
-      await page.navigatePage('balances');
+      await activePage().navigatePage('balances');
       assertPeriod('balances');
       await traverse('back');
       assertPeriod('leave');

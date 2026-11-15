@@ -1,3 +1,6 @@
+import { PeopleListState } from './people-list-state';
+import { Router, ActivatedRoute } from '@angular/router';
+import { publicGuid } from '../../core/navigation/app-paths';
 import { DataTable } from '../../shared/data-table/data-table';
 import { AdminApi, Personnel } from '../administration/admin-api';
 import { FormsModule } from '@angular/forms';
@@ -27,10 +30,11 @@ import { OrganizationSettings } from '../organizations/organization-settings';
           >Search people<input
             type="search"
             [(ngModel)]="search"
+            (ngModelChange)="updateListUrl()"
             placeholder="Name, email, department or team"
         /></label>
         <label
-          >Show<select [(ngModel)]="scope">
+          >Show<select [(ngModel)]="scope" (ngModelChange)="updateListUrl()">
             <option value="all">All organization</option>
             <option value="team">My team</option>
             <option value="department">My department</option>
@@ -85,7 +89,13 @@ import { OrganizationSettings } from '../organizations/organization-settings';
             @for (person of filtered; track person.guid || person.username) {
               <tr [attr.data-person]="person.email.split('@')[0]">
                 <th scope="row">
-                  {{ person.firstName }} {{ person.middleName }} {{ person.lastName }}
+                  @if (isAdmin && person.guid) {
+                    <a [href]="'/people/' + person.guid" (click)="openPerson(person, $event)"
+                      >{{ person.firstName }} {{ person.middleName }} {{ person.lastName }}</a
+                    >
+                  } @else {
+                    {{ person.firstName }} {{ person.middleName }} {{ person.lastName }}
+                  }
                   @if (isMe(person)) {
                     <strong class="you-label">You</strong>
                   }
@@ -133,7 +143,7 @@ import { OrganizationSettings } from '../organizations/organization-settings';
                         class="secondary"
                         [attr.data-edit-person]="person.guid"
                         [attr.data-edit-membership]="person.email.split('@')[0]"
-                        (click)="editing = person.guid || ''"
+                        (click)="editPerson(person)"
                       >
                         Edit membership
                       </button>
@@ -259,6 +269,13 @@ import { OrganizationSettings } from '../organizations/organization-settings';
 })
 export class People implements OnInit {
   readonly data = inject(WorkspaceDataService);
+  private readonly listState = inject(PeopleListState);
+  private get listOwner(): string {
+    const actor = this.data.currentUser();
+    return actor ? `${actor.companyId}:${actor.id}:${this.data.api.sessionGeneration ?? 0}` : '';
+  }
+  private readonly router = inject(Router, { optional: true });
+  private readonly route = inject(ActivatedRoute, { optional: true });
   readonly detector = inject(ChangeDetectorRef);
   people: DirectoryUser[] = [];
   loading = false;
@@ -335,7 +352,47 @@ export class People implements OnInit {
     )[this.relationship(person)];
   }
 
+  get listQuery() {
+    return { scope: this.scope === 'all' ? 'org' : this.scope, year: this.loadedYear };
+  }
+
+  updateListUrl(): void {
+    this.listState.save(this.listOwner, this.search);
+    if (this.route)
+      void this.router?.navigate([], {
+        relativeTo: this.route,
+        queryParams: this.listQuery,
+        replaceUrl: true,
+      });
+  }
+
+  openPerson(person: DirectoryUser, event: Event): void {
+    event.preventDefault();
+    if (person.guid && publicGuid.test(person.guid))
+      void this.router?.navigate(['/people', person.guid], { queryParams: this.listQuery });
+  }
+
+  editPerson(person: DirectoryUser): void {
+    const member = this.data.api.members?.find((m) => m.userGuid === person.guid);
+    if (this.router && person.guid && publicGuid.test(person.guid)) {
+      const path = member?.membership.guid
+        ? ['/people', person.guid, 'memberships', member.membership.guid]
+        : ['/people', person.guid];
+      void this.router.navigate(path, { queryParams: this.listQuery });
+    } else this.editing = person.guid || '';
+  }
+
   async ngOnInit(): Promise<void> {
+    this.search = this.listState.read(this.listOwner);
+    const params = this.route?.snapshot.queryParamMap;
+    this.scope =
+      params?.get('scope') === 'team'
+        ? 'team'
+        : params?.get('scope') === 'department'
+          ? 'department'
+          : 'all';
+    const year = Number(params?.get('year'));
+    if (Number.isInteger(year) && year > 0 && year <= 9999) this.year = year;
     await this.loadPeople();
   }
 
@@ -362,6 +419,7 @@ export class People implements OnInit {
         this.people = people;
         this.balances = balances;
         this.loadedYear = year;
+        this.updateListUrl();
         this.selected = null;
       }
     } catch {

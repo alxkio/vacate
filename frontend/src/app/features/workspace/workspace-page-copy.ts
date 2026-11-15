@@ -3,6 +3,7 @@ import { CalendarState, Person } from '../../core/models/workspace.models';
 export const workspacePageTitle = (page: CalendarState['page']): string =>
   ({
     calendar: 'Your time, in view',
+    help: 'Help & feedback',
     balances: 'Your leave, in balance',
     settings: 'Settings',
     organization: 'Settings',
@@ -18,6 +19,7 @@ export const workspaceSubtitle = (
   user: Person,
 ): string =>
   ({
+    help: 'Guidance for planning leave and using your workspace.',
     calendar:
       layout === 'planner'
         ? 'A shared view of time away. A little easier to plan together.'

@@ -1,3 +1,4 @@
+import { runNavigationRoutesAcceptance } from './testing/navigation-routes-acceptance.mjs';
 import { runLeavePeopleAcceptance } from './testing/leave-people-acceptance.mjs';
 import { runUpcomingAcceptance } from './testing/upcoming-acceptance.mjs';
 import { runAdminAcceptance } from './testing/admin-acceptance.mjs';
@@ -117,6 +118,15 @@ if (!baseUrl) {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   baseUrl = `http://127.0.0.1:${server.address().port}/index.html`;
 }
+// Fictional credentials must not open browser-owned password dialogs that consume native input.
+await mkdir(join(profile, 'Default'), { recursive: true });
+await writeFile(
+  join(profile, 'Default', 'Preferences'),
+  JSON.stringify({
+    credentials_enable_service: false,
+    profile: { password_manager_leak_detection: false },
+  }),
+);
 const chrome = spawn(
   process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   [
@@ -624,11 +634,13 @@ try {
     await waitFor('!window.__vacateNavigationMarker && document.readyState === "complete"');
   };
   const historyTo = async (target, label) => {
-    // Replacement redirects can change CDP entry IDs; resolve from fresh full-document history.
+    // Resolve fresh IDs after redirects; Calendar can remove test markers from its canonical URL.
     const history = await call('Page.getNavigationHistory');
     const entry = target.name
-      ? history.entries.find(
-          (item) => new URL(item.url).searchParams.get('history') === target.name,
+      ? history.entries.find((item) =>
+          [item.url, item.userTypedURL]
+            .filter(Boolean)
+            .some((url) => new URL(url).searchParams.get('history') === target.name),
         )
       : history.entries[history.currentIndex + target.delta];
     assert.ok(
@@ -762,7 +774,22 @@ try {
       },
     });
   };
-  if (process.env.MOCK_LEAVE_PEOPLE_ONLY === '1') {
+  const cleanRoutesAcceptance = () =>
+    runNavigationRoutesAcceptance({
+      evaluate,
+      click,
+      waitFor,
+      navigate,
+      viewport,
+      screenshot,
+      baseUrl,
+      apiUrl: process.env.MOCK_API_URL || 'http://127.0.0.1:7071',
+      fixtureGuid,
+    });
+  if (process.env.MOCK_CLEAN_ROUTES_ONLY === '1') {
+    await cleanRoutesAcceptance();
+    assert.deepEqual(errors, [], 'Unexpected clean-route browser errors');
+  } else if (process.env.MOCK_LEAVE_PEOPLE_ONLY === '1') {
     await runLeavePeopleAcceptance({
       evaluate,
       click,
@@ -1393,12 +1420,12 @@ try {
         const state = window.VacateMock?.state;
         return document.readyState === 'complete'
           && state?.page === ${JSON.stringify(page)}
-          && state.scope === 'team'
+          && (${JSON.stringify(page)} !== 'calendar' || (state.scope === 'team'
           && state.view === 'week'
           && state.date.getFullYear() === 2026
           && state.date.getMonth() === 10
           && state.date.getDate() === 5
-          && document.querySelector('#period')?.textContent === ${JSON.stringify(retainedPeriod)};
+          && document.querySelector('#period')?.textContent === ${JSON.stringify(retainedPeriod)}));
       })()`,
         );
       // Browser history events can precede Angular bootstrap and its first render.
@@ -1409,7 +1436,7 @@ try {
       await waitForRetainedPeriod('leave');
       await load('?page=balances&scope=team&view=week&date=2026-11-05');
       await waitForRetainedPeriod('balances');
-      assert.equal(await evaluate('new URLSearchParams(location.search).get("page")'), 'balances');
+      assert.equal(await evaluate('location.pathname'), '/leave/balances');
       assert.equal(await evaluate('document.querySelector("#calendar-page").hidden'), true);
       assert.equal(
         await evaluate('document.activeElement.id'),
@@ -1797,10 +1824,7 @@ try {
           ),
           false,
         );
-        assert.equal(
-          await evaluate('new URL(location.href).searchParams.get("section")'),
-          'profile',
-        );
+        assert.equal(await evaluate('location.pathname'), '/settings/profile');
       }
       assert.deepEqual(
         await evaluate(
@@ -3035,6 +3059,7 @@ try {
         await upcomingAcceptance();
         if (server) await sessionRecoveryAcceptance();
         await pageFocusAcceptance();
+        await cleanRoutesAcceptance();
         assert.deepEqual(errors, [], 'Unexpected browser exceptions');
         console.log(
           (process.env.MOCK_FUNCTIONAL_ONLY === '1'

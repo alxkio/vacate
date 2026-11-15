@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { DataTable } from '../../shared/data-table/data-table';
 import {
   ChangeDetectorRef,
@@ -18,7 +19,7 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 
 @Component({
   selector: 'vacate-my-leave',
-  imports: [DataTable, FormsModule, BalanceBar, Balances, CancelRequest],
+  imports: [RouterLink, DataTable, FormsModule, BalanceBar, Balances, CancelRequest],
   template: `
     <details
       #balanceSummary
@@ -126,7 +127,9 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
           <tbody>
             @for (row of rows; track row.request.guid + row.day.date) {
               <tr [attr.data-saved-request]="row.request.guid">
-                <th scope="row">{{ row.day.date }}</th>
+                <th scope="row">
+                  <a [routerLink]="['/leave/requests', row.request.guid]">{{ row.day.date }}</a>
+                </th>
                 <td>
                   {{ data.typeName(row.request.leaveTypeId) }}
                   @if (row.request.closureGuid) {

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, Input, OnChanges, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { ApiDepartment } from '../../core/http/contracts';
@@ -10,7 +10,7 @@ import { ApiDepartment } from '../../core/http/contracts';
   template: `
     <section class="settings-card navigation-card">
       <h2>{{ kind === 'teams' ? 'Team settings' : 'Department settings' }}</h2>
-      @if (nodes.length && companyId === data.currentUser()?.companyId) {
+      @if (available && companyId === data.currentUser()?.companyId) {
         <form id="scope-settings-form" (ngSubmit)="save()">
           <div class="settings-fields">
             <label
@@ -19,7 +19,7 @@ import { ApiDepartment } from '../../core/http/contracts';
                 id="settings-node"
                 name="node"
                 [(ngModel)]="selectedId"
-                (ngModelChange)="reset()"
+                (ngModelChange)="reset(); nodeChanged.emit(selectedId)"
               >
                 @for (node of nodes; track node.guid) {
                   <option [value]="node.guid">{{ node.name }}</option>
@@ -82,6 +82,13 @@ export class ScopeSettings implements OnChanges {
   private readonly detector = inject(ChangeDetectorRef);
   private readonly actorId = this.data.currentUser()?.id || '';
   @Input() companyId = '';
+  @Input() nodeGuid = '';
+  readonly nodeChanged = output<string>();
+  get available(): boolean {
+    return (
+      !!this.nodes.length && (!this.nodeGuid || this.nodes.some((n) => n.guid === this.nodeGuid))
+    );
+  }
   @Input() kind: 'departments' | 'teams' = 'teams';
   selectedId = '';
   required: boolean | null = null;
@@ -99,7 +106,8 @@ export class ScopeSettings implements OnChanges {
 
   ngOnChanges(): void {
     const own = this.kind === 'teams' ? this.ownTeam : this.data.currentUser()?.departmentId || '';
-    this.selectedId = this.nodes.find((n) => n.guid === own)?.guid || this.nodes[0]?.guid || '';
+    this.selectedId =
+      this.nodeGuid || this.nodes.find((n) => n.guid === own)?.guid || this.nodes[0]?.guid || '';
     this.reset();
   }
 
