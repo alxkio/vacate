@@ -17,6 +17,58 @@ import { CalendarState, Entry, Person } from '../../core/models/workspace.models
   selector: 'vacate-calendar',
   imports: [NgTemplateOutlet],
   templateUrl: './calendar.html',
+  styles: `
+    .mobile-month-calendar,
+    .month-entry-count {
+      display: none;
+    }
+    @media (max-width: 720px) {
+      .mobile-month-calendar,
+      .month-table-wrap {
+        display: block;
+      }
+      .month-table-wrap .month-table th {
+        padding: 0 2px;
+        text-align: center;
+        font-size: 10px;
+      }
+      .month-table-wrap .month-table td {
+        height: 70px;
+        padding: 3px 1px;
+      }
+      .month-table-wrap .day-number {
+        width: 100%;
+        min-height: 44px;
+        height: auto;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        border-radius: 6px;
+      }
+      .month-entry-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 10px;
+        line-height: 14px;
+        color: var(--accent);
+      }
+      .month-entry-count::before {
+        content: '';
+        width: 4px;
+        height: 4px;
+        background: currentColor;
+        border-radius: 50%;
+      }
+      .month-table-wrap .event,
+      .month-table-wrap .more {
+        display: none;
+      }
+    }
+  `,
 })
 export class Calendar {
   readonly data = inject(WorkspaceDataService);

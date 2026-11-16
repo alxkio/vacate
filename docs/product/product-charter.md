@@ -339,3 +339,10 @@ Source: owner's subsequent instruction to implement feasible local work, startin
 
 
 Owner correction · 2026-11-15: until the custom domain is available, login must use `baseUrl/login` on the current application origin. `auth.vacate.gr` remains a future target. This confirms the implemented same-origin `/login` route; it does not authorise a domain migration.
+
+
+### Lean page and mobile refinement · 2026-11-15
+
+Owner feedback: canonical Calendar URLs omit the selected date; retain its browsing context outside the URL. Omit default organisation scope/current year on People and remove unrelated query parameters across Angular destinations. Evaluate API parameters against contracts, retaining those necessary for identity, authorisation and report periods. Remove redundant People headings/relationship legend boxes, directory cross-promotion, Calendar context card and horizontal-scroll instructions. Keep People search, You and supplementary structure-name relationship colours; offer My scopes and named department/team hierarchy filtering. Month remains a seven-column calendar on mobile, including planner-layout Month; selecting a day opens its existing accessible detail dialog. Replace “fictional” in visible UI copy with clear test/example wording without presenting reference examples as saved data. Continue existing VAC-42/VAC-52 feedback subtasks rather than duplicate issues. The owner's personal learning/setup todo list does not authorise identity/backoffice or infrastructure implementation.
+
+Owner follow-up: Settings opens Profile and orders administrator sections Profile → Organization → Departments → Teams → System, retaining permission-based visibility. Request-leave type explanations are disclosed through an info button; routine eligibility/holiday-fallback paragraphs are removed. Show excluded dates after explicit input, preserve authoritative validation and present actionable warnings/errors as persistent in-modal feedback. Keep Submit/Cancel separated on desktop and mobile.

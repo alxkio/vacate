@@ -116,11 +116,9 @@ export async function runNavigationRoutesAcceptance({
     await open('/index.html?page=people&scope=org&view=month&date=2026-11-14');
     await waitFor('!!document.querySelector("vacate-people table tbody tr[data-person]")');
     assert.equal(
-      await evaluate(
-        'location.pathname+"?scope="+new URLSearchParams(location.search).get("scope")',
-      ),
-      '/people?scope=org',
-      'Legacy People preserves its organisation scope',
+      await evaluate('location.pathname + location.search'),
+      '/people',
+      'Legacy People omits default organisation and year state',
     );
     assert.equal(
       await evaluate(
@@ -128,6 +126,22 @@ export async function runNavigationRoutesAcceptance({
       ),
       false,
       'Legacy People drops Calendar-only state',
+    );
+    assert.equal(
+      await evaluate(
+        '!!document.querySelector("vacate-people h2, .people-legend, .people-scroll-hint")',
+      ),
+      false,
+    );
+    await set('vacate-people .people-filters select', 'team:' + fixtureGuid('applications'));
+    await waitFor('document.querySelectorAll("vacate-people tbody tr[data-person]").length===3');
+    assert.equal(
+      await evaluate('new URLSearchParams(location.search).get("group")'),
+      fixtureGuid('applications'),
+    );
+    await set('vacate-people .people-filters select', 'all');
+    await waitFor(
+      'document.querySelectorAll("vacate-people tbody tr[data-person]").length===12 && !location.search',
     );
     await click(`[data-edit-person="${person}"]`);
     await waitFor('!!document.querySelector("#membership-form")');
@@ -139,6 +153,89 @@ export async function runNavigationRoutesAcceptance({
     await waitFor(
       'document.querySelector("vacate-person-detail")?.textContent.includes("Recorded leave · 2026")',
     );
+    await open('/calendar?scope=org&view=month&date=2026-11-05');
+    await waitFor(
+      'document.querySelector("#period")?.textContent.includes("November 2026") && !new URLSearchParams(location.search).has("date")',
+    );
+    for (const width of [375, 320]) {
+      await viewport(width, 1100);
+      const grid = await evaluate(`(()=>{
+        const grid=document.querySelector('.month-table-wrap');
+        const cells=[...grid.querySelectorAll('tbody tr:first-child td')];
+        return {visible:grid.getBoundingClientRect().height>0, columns:grid.querySelectorAll('thead th').length,
+          sameRow:cells.every(cell=>Math.abs(cell.getBoundingClientRect().top-cells[0].getBoundingClientRect().top)<1),
+          overflow:document.documentElement.scrollWidth>innerWidth,
+          agenda:[...document.querySelectorAll('.agenda-mobile')].some(node=>node.getBoundingClientRect().height>0),
+          context:!!document.querySelector('#date-details'),
+          promotion:document.body.textContent.includes('View all company colleagues'),
+          fictional:/fictional/i.test(document.body.innerText)};
+      })()`);
+      assert.deepEqual(grid, {
+        visible: true,
+        columns: 7,
+        sameRow: true,
+        overflow: false,
+        agenda: false,
+        context: false,
+        promotion: false,
+        fictional: false,
+      });
+      await screenshot(`lean-calendar-month-${width}.png`);
+      await click('.month-table-wrap [data-date="2026-11-05"]');
+      await waitFor('document.querySelector("#dialog")?.open');
+      await click('#dialog .dialog-close');
+      await waitFor('!document.querySelector("#dialog").open');
+    }
+    await viewport(1440, 1100);
+    await open('/settings');
+    await waitFor('!!document.querySelector("#profile-form")');
+    assert.deepEqual(
+      await evaluate(
+        'Array.from(document.querySelectorAll(".settings-navigation button"), button=>button.textContent.trim())',
+      ),
+      ['Profile', 'Organization', 'Departments', 'Teams', 'System'],
+    );
+    await click('[data-settings-section=system]');
+    await waitFor('!!document.querySelector("#display-layout")');
+    await set('#display-layout', 'planner');
+    await click('[data-nav=calendar]');
+    await waitFor('!!document.querySelector(".planner-table")');
+    await click('[data-view=month]');
+    await viewport(375, 1100);
+    assert.equal(
+      await evaluate(
+        'document.querySelector(".mobile-month-calendar .month-table-wrap").getBoundingClientRect().height>0 && document.querySelectorAll(".mobile-month-calendar thead th").length===7 && document.documentElement.scrollWidth<=innerWidth',
+      ),
+      true,
+      'Planner Month remains a seven-column mobile calendar',
+    );
+    await screenshot('lean-planner-month-375.png');
+    await open('/settings/system');
+    await waitFor('!!document.querySelector("#display-layout")');
+    await set('#display-layout', 'calendar');
+    await click('[data-nav=calendar]');
+    await waitFor('!!document.querySelector("#period")');
+    await click('[data-action=request]');
+    await waitFor(
+      '!!document.querySelector("#request-type-info") && !document.querySelector("#request-preview").getAttribute("aria-busy").includes("true")',
+    );
+    assert.equal(await evaluate('document.querySelector("#request-type-status").hidden'), true);
+    assert.equal(await evaluate('!!document.querySelector("#request-eligibility")'), false);
+    await click('#request-type-info');
+    assert.equal(await evaluate('document.querySelector("#request-type-status").hidden'), false);
+    for (const width of [375, 320]) {
+      await viewport(width, 1100);
+      assert.equal(
+        await evaluate(
+          'document.documentElement.scrollWidth<=innerWidth && parseFloat(getComputedStyle(document.querySelector(".request-actions")).gap)>=12',
+        ),
+        true,
+        'Request actions retain spacing on mobile',
+      );
+      await screenshot(`lean-request-${width}.png`);
+    }
+    await click('#dialog .dialog-close');
+    await viewport(1440, 1100);
     await open('/calendar?scope=org&view=week&date=2026-11-05');
     await waitFor('window.VacateMock?.state.view==="week"');
     await click('[data-nav=leave]');

@@ -1,5 +1,4 @@
 @if (submitted && type) {
-  <span class="eyebrow">LEAVE REQUEST</span>
   <h2 id="workspace-dialog-title">
     {{
       savedOutcome === 'already-covered'
@@ -20,20 +19,22 @@
   }
   <button class="primary" id="finish-demo" (click)="finished.emit()">Back to {{ page }}</button>
 } @else {
-  <span class="eyebrow">LEAVE REQUEST</span>
   <h2 id="workspace-dialog-title">Plan your time away.</h2>
   <p>
-    Create a request for {{ data.currentUser()?.name }}. Submitting saves a request through the API.
-    Your company working schedule and known public holidays determine the charged days.
+    Request leave for {{ data.currentUser()?.name }}. Your working schedule and known public
+    holidays determine the charged days.
   </p>
   <form #form id="request-form" (submit)="submit($event)">
     <fieldset [disabled]="saving" style="border: 0; padding: 0; margin: 0; min-width: 0">
+      @for (notification of feedback; track $index) {
+        <vacate-feedback-toast [tone]="notification.tone" [message]="notification.message" />
+      }
       <label for="leave-type">Leave type</label>
       <select
         #typeSelect
         id="leave-type"
         name="type"
-        aria-describedby="request-type-status"
+        [attr.aria-describedby]="typeInfoOpen ? 'request-type-status' : null"
         [value]="typeId"
         (change)="setType(typeSelect.value)"
       >
@@ -54,17 +55,41 @@
           </optgroup>
         }
       </select>
-      <button
-        class="inline-link type-toggle"
-        id="request-type-toggle"
-        type="button"
-        aria-controls="leave-type"
-        [attr.aria-expanded]="showAll"
-        (click)="toggleTypes(form)"
-      >
-        {{ showAll ? 'Show shortlisted types' : 'Show all leave types' }}
-      </button>
-      <p id="request-type-status" class="form-hint">{{ typeStatus }}</p>
+      <div class="request-type-controls">
+        <button
+          class="inline-link type-toggle"
+          id="request-type-toggle"
+          type="button"
+          aria-controls="leave-type"
+          [attr.aria-expanded]="showAll"
+          (click)="toggleTypes(form)"
+        >
+          {{ showAll ? 'Show shortlisted types' : 'Show all leave types' }}
+        </button>
+        <button
+          class="request-type-info"
+          id="request-type-info"
+          type="button"
+          aria-label="About leave type choices"
+          aria-controls="request-type-status"
+          [attr.aria-expanded]="typeInfoOpen"
+          (click)="typeInfoOpen = !typeInfoOpen"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 11v6M12 7v1" />
+          </svg>
+        </button>
+      </div>
+      <p id="request-type-status" class="form-hint" [hidden]="!typeInfoOpen">{{ typeStatus }}</p>
       @if (unavailable.length) {
         <details class="request-rules eligibility-unavailable">
           <summary>Unavailable types for this account ({{ unavailable.length }})</summary>
@@ -77,9 +102,11 @@
           </ul>
         </details>
       }
-      <p id="request-eligibility" class="eligibility-message">
-        {{ eligibilityLabel(decision) }}: {{ decision.reason }}
-      </p>
+      @if (decision.status !== 'eligible') {
+        <p id="request-eligibility" class="eligibility-message">
+          {{ eligibilityLabel(decision) }}: {{ decision.reason }}
+        </p>
+      }
       <details
         #rules
         id="request-rules"
@@ -136,7 +163,7 @@
             type="date"
             required
             [value]="start"
-            (input)="capture(form)"
+            (input)="capture(form, true)"
           />
           <p id="start-date-feedback" class="field-error" [hidden]="!startError">
             {{ startError }}
@@ -154,7 +181,7 @@
               type="date"
               required
               [value]="end"
-              (input)="capture(form)"
+              (input)="capture(form, true)"
             />
             <p id="end-date-feedback" class="field-error" [hidden]="!endError">{{ endError }}</p>
           </div>
@@ -172,7 +199,7 @@
               step="1"
               required
               [value]="amount"
-              (input)="capture(form)"
+              (input)="capture(form, true)"
             />
             <p id="duration-feedback" class="field-error" [hidden]="!amountError">
               {{ amountError }}
@@ -181,7 +208,7 @@
         }
       </div>
       @if (pastDateWarning) {
-        <p class="field-warning" role="status">{{ pastDateWarning }}</p>
+        <vacate-feedback-toast class="field-warning" tone="warning" [message]="pastDateWarning" />
       }
       @if (unit === 'hours') {
         <p id="request-hourly-notice" role="status">Hourly leave requests are not available yet.</p>
@@ -191,7 +218,6 @@
           <p>Calculating working dates and your balance…</p>
         }
         @if (message) {
-          <p id="request-error" role="alert">{{ message }}</p>
           @if (!startError && !endError && !amountError) {
             <button
               class="secondary"
@@ -209,24 +235,18 @@
             {{ result.amount }} new days to add · {{ result.startDate }} –
             {{ result.endDate }}
           </p>
-          <div id="request-balance" class="request-balance">
-            @for (balance of result.balances; track balance.year) {
-              <p>
-                {{ data.typeName(typeId) }} · {{ balance.year }}: {{ balance.available }} days
-                available → {{ balance.projected }} after this request. Pending:
-                {{ balance.pending }}.
-              </p>
-            } @empty {
-              <p>No configured finite balance is available for this type and period.</p>
-            }
-          </div>
-          @for (warning of result.warnings; track warning) {
-            <p class="form-hint" role="status">{{ warning }}</p>
+          @if (result.balances.length) {
+            <div id="request-balance" class="request-balance">
+              @for (balance of result.balances; track balance.year) {
+                <p>
+                  {{ data.typeName(typeId) }} · {{ balance.year }}: {{ balance.available }} days
+                  available → {{ balance.projected }} after this request. Pending:
+                  {{ balance.pending }}.
+                </p>
+              }
+            </div>
           }
-          @for (error of result.errors; track error) {
-            <p class="over-allowance" role="alert">{{ error }}</p>
-          }
-          @if (result.excludedDates.length) {
+          @if (hasDateSelection && result.excludedDates.length) {
             <details>
               <summary>Excluded dates ({{ result.excludedDates.length }})</summary>
               <ul>
@@ -247,19 +267,12 @@
           }
         }
       </div>
-      <p class="form-hint">
-        {{
-          loading
-            ? 'Wait for the calculation before submitting.'
-            : preview?.canSubmit
-              ? 'Review the dates and warnings, then submit to save.'
-              : 'Correct the highlighted fields or calculation errors before submitting.'
-        }}
-      </p>
-      <button class="primary" type="submit" [disabled]="!canSubmit">
-        {{ saving ? 'Saving…' : 'Submit leave request →' }}
-      </button>
-      <button type="button" class="secondary" (click)="finished.emit()">Cancel</button>
+      <div class="request-actions">
+        <button class="primary" type="submit" [disabled]="!canSubmit">
+          {{ saving ? 'Saving…' : 'Submit leave request →' }}
+        </button>
+        <button type="button" class="secondary" (click)="finished.emit()">Cancel</button>
+      </div>
     </fieldset>
   </form>
 }

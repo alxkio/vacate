@@ -1,5 +1,34 @@
 export const publicGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export function workspaceQuery(
+  page: string,
+  params: Record<string, string | string[]>,
+  companyId: string,
+  isAdmin: boolean,
+): Record<string, string> {
+  const allowed =
+    page === 'calendar'
+      ? ['scope', 'group', 'view', 'team', 'department']
+      : page === 'people'
+        ? ['scope', 'group', 'year']
+        : [];
+  const result: Record<string, string> = {};
+  for (const key of [...allowed, 'company']) {
+    const value = Array.isArray(params[key]) ? params[key][0] : params[key];
+    if (value) result[key] = value;
+  }
+  // A foreign-company probe remains explicit so the view denies it rather than widening scope.
+  if (result['company'] === companyId) delete result['company'];
+  if (page === 'people') {
+    if (!['team', 'department'].includes(result['scope'])) {
+      delete result['scope'];
+      delete result['group'];
+    }
+    if (!isAdmin || result['year'] === String(new Date().getFullYear())) delete result['year'];
+  }
+  return result;
+}
+
 export function workspacePath(page: string, section = 'profile', nodeGuid = ''): string {
   if (page === 'settings') {
     if (section === 'team' || section === 'department') {
