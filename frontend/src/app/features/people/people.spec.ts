@@ -120,3 +120,87 @@ describe('People annual report ownership', () => {
     expect(fixture.componentInstance.loadedYear).toBe(loadedYear);
   });
 });
+
+describe('People hierarchy navigation', () => {
+  it('filters named groups by GUID, preserving search and non-colour self identification', async () => {
+    const departmentA = '20000000-0000-4000-8000-000000000300';
+    const departmentB = '20000000-0000-4000-8000-000000000301';
+    const teamA = '20000000-0000-4000-8000-000000000400';
+    const teamB = '20000000-0000-4000-8000-000000000401';
+    const rows = [
+      {
+        guid: '10000000-0000-4000-8000-000000000001',
+        username: 'maya',
+        email: 'maya@example.invalid',
+        firstName: 'Maya',
+        middleName: null,
+        lastName: 'Example',
+        gender: '',
+        jobTitle: null,
+        systemRole: null,
+        departmentId: departmentA,
+        departmentName: 'Technology',
+        teamId: teamA,
+        teamName: 'Support',
+      },
+      {
+        guid: '10000000-0000-4000-8000-000000000002',
+        username: 'nora',
+        email: 'nora@example.invalid',
+        firstName: 'Nora',
+        middleName: null,
+        lastName: 'Example',
+        gender: '',
+        jobTitle: null,
+        systemRole: null,
+        departmentId: departmentB,
+        departmentName: 'Operations',
+        teamId: teamB,
+        teamName: 'Support',
+      },
+    ];
+    TestBed.configureTestingModule({
+      imports: [People],
+      providers: [
+        {
+          provide: WorkspaceDataService,
+          useValue: {
+            currentUser: () => ({
+              id: rows[0].guid,
+              companyId: 'company',
+              email: rows[0].email,
+              teamId: teamA,
+              departmentId: departmentA,
+              capability: 'employee',
+            }),
+            api: { directory: async () => rows, sessionGeneration: 1 },
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(People);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    await vi.waitFor(() => expect(page.people).toHaveLength(2));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.people-filters optgroup').length).toBe(2);
+    expect(fixture.nativeElement.textContent).toContain('You');
+    expect(fixture.nativeElement.querySelector('h2')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.people-legend')).toBeNull();
+    page.selectGroup('team:' + teamA);
+    expect(page.filtered.map((person) => person.firstName)).toEqual(['Maya']);
+    page.selectGroup('department:' + departmentB);
+    expect(page.filtered.map((person) => person.firstName)).toEqual(['Nora']);
+    page.search = 'Maya';
+    expect(page.filtered).toEqual([]);
+    page.selectGroup('all');
+    expect(page.filtered.map((person) => person.firstName)).toEqual(['Maya']);
+    page.search = '';
+    page.selectGroup('team:20000000-0000-4000-8000-000000000499');
+    expect(page.filtered).toEqual([]);
+    page.selectGroup('all');
+    expect(page.listQuery).toEqual({});
+  });
+});

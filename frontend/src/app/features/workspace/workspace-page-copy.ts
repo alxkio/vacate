@@ -28,7 +28,7 @@ export const workspaceSubtitle = (
       'Saved annual balance, with reference allowances and eligibility guidance for other types.',
     settings:
       user.capability === 'admin'
-        ? 'Organization, department, team, profile and system settings in one place.'
+        ? 'Profile, organization, departments, teams and system settings in one place.'
         : 'Your profile, display preferences and any delegated settings.',
     organization: 'Organization settings.',
     leave: 'Your requests and personal leave balances.',

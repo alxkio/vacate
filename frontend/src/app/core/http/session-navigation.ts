@@ -17,7 +17,8 @@ export function safeReturnUrl(value: string | null): string {
 }
 
 export function loginUrl(destination: string): string {
-  return '/login?returnUrl=' + encodeURIComponent(safeReturnUrl(destination));
+  const target = safeReturnUrl(destination);
+  return target === '/calendar' ? '/login' : '/login?returnUrl=' + encodeURIComponent(target);
 }
 
 export function expiredSessionUrl(currentUrl: string): string {
@@ -25,7 +26,8 @@ export function expiredSessionUrl(currentUrl: string): string {
   const destination = ['/login', '/login.html'].includes(current.pathname)
     ? safeReturnUrl(current.searchParams.get('returnUrl'))
     : current.pathname + current.search + current.hash;
-  return loginUrl(destination) + '&reason=expired';
+  const login = loginUrl(destination);
+  return login + (login.includes('?') ? '&' : '?') + 'reason=expired';
 }
 
 @Injectable({ providedIn: 'root' })

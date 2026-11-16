@@ -9,6 +9,7 @@ import {
   Output,
 } from '@angular/core';
 import { Allowance } from './allowance';
+import { FeedbackToast } from '../../shared/feedback-toast/feedback-toast';
 import {
   dateFromKey,
   dateKey,
@@ -20,7 +21,46 @@ import {
 import { LeaveDraft, LeavePreview, LeaveRequests } from './data-access/leave-requests';
 import { Decision, LeaveType, TypeGroup } from '../../core/models/workspace.models';
 
-@Component({ selector: 'vacate-request', imports: [Allowance], templateUrl: './request.html' })
+@Component({
+  selector: 'vacate-request',
+  imports: [Allowance, FeedbackToast],
+  templateUrl: './request.html',
+  styles: `
+    #workspace-dialog-title {
+      padding-right: 44px;
+    }
+    .request-type-controls,
+    .request-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .request-actions {
+      margin-top: 24px;
+    }
+    .request-type-controls {
+      margin: 8px 0;
+    }
+    .request-type-info {
+      min-width: 44px;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .request-type-controls .inline-link {
+      width: auto;
+    }
+    @media (max-width: 420px) {
+      .request-actions > button {
+        width: 100%;
+      }
+    }
+  `,
+})
 export class Request implements OnInit, OnDestroy {
   readonly requests = inject(LeaveRequests);
   readonly data = inject(WorkspaceDataService);
@@ -32,6 +72,8 @@ export class Request implements OnInit, OnDestroy {
   @Output() staleSession = new EventEmitter<void>();
   private viewerId = this.data.currentUser()?.id;
   showAll = false;
+  typeInfoOpen = false;
+  hasDateSelection = false;
   typeId = 'annual';
   start = dateKey(new Date());
   end = this.start;
@@ -133,7 +175,8 @@ export class Request implements OnInit, OnDestroy {
     };
   }
 
-  capture(form: HTMLFormElement): void {
+  capture(form: HTMLFormElement, datesChanged = false): void {
+    this.hasDateSelection ||= datesChanged;
     const values = new FormData(form);
     this.start = String(values.get('start') || '');
     this.end =
@@ -141,6 +184,27 @@ export class Request implements OnInit, OnDestroy {
     this.amount = this.mode === 'duration' ? String(values.get('amount') || '') : this.amount;
     this.unit = String(values.get('unit') || 'working days');
     this.queuePreview();
+  }
+
+  get feedback(): { tone: 'warning' | 'error'; message: string }[] {
+    const messages: { tone: 'warning' | 'error'; message: string }[] = [];
+    if (this.message) {
+      messages.push({ tone: 'error', message: this.message });
+    }
+    for (const error of this.preview?.errors || []) {
+      if (error === 'Select at least one working day.') {
+        if (this.hasDateSelection) {
+          messages.push({ tone: 'warning', message: 'Choose a date range with working days.' });
+        }
+      } else {
+        messages.push({ tone: 'error', message: error });
+      }
+    }
+    for (const warning of this.preview?.warnings || []) {
+      if (warning.startsWith('Public holiday data is unavailable')) continue;
+      if (this.hasDateSelection) messages.push({ tone: 'warning', message: warning });
+    }
+    return messages;
   }
 
   toggleTypes(form: HTMLFormElement): void {

@@ -140,7 +140,7 @@ export async function runPageFocusAcceptance({
       );
       await captureTicket();
       await waitFor(
-        '!!document.querySelector("#people-heading") && document.activeElement === document.querySelector("main#main")',
+        '!!document.querySelector("vacate-people section[aria-label]") && document.querySelector("main h1")?.textContent.includes("People") && document.activeElement === document.querySelector("main#main")',
       );
     };
     await signInAdmin();
@@ -176,12 +176,12 @@ export async function runPageFocusAcceptance({
         await viewport(width, 1100);
         await click('[data-nav=people]');
         await waitFor(
-          '!!document.querySelector("#people-heading") && document.activeElement === document.querySelector("main#main")',
+          '!!document.querySelector("vacate-people section[aria-label]") && document.querySelector("main h1")?.textContent.includes("People") && document.activeElement === document.querySelector("main#main")',
         );
         await noPageFrame(`Administrator People / warm brown / ${width}`);
         await navigate(await evaluate('location.href'));
         await waitFor(
-          '!!document.querySelector("#people-heading") && document.activeElement === document.querySelector("main#main")',
+          '!!document.querySelector("vacate-people section[aria-label]") && document.querySelector("main h1")?.textContent.includes("People") && document.activeElement === document.querySelector("main#main")',
         );
         assert.equal(
           await evaluate('document.querySelector(".app").dataset.colorScheme'),

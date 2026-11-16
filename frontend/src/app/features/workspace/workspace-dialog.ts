@@ -126,7 +126,7 @@ export class WorkspaceDialog {
             ? entry.type === 'company-closure'
               ? 'Automatically recorded company closure · No balance impact · changes are not available here.'
               : 'Saved request · past entries cannot be changed. Eligible dates can be cancelled below.'
-            : 'Fictional sample · no changes can be made here.',
+            : 'Example · no changes can be made here.',
         ],
       },
       trigger,
@@ -169,7 +169,7 @@ export class WorkspaceDialog {
         title: 'A little guide',
         paragraphs: [
           'Choose Calendar or Team planner in Settings, then try the scope and period controls. Select dates or leave entries for details. Today returns to the current local date. Your own calendar shows saved requests; shared colleague availability comes from saved leave.',
-          'Week and day views show all-day absences. On a small screen, detailed calendars become readable agendas. Reference examples are fictional. Submitted requests and settings are saved through the API. Assigned administrators can decide pending requests in Approval Requests. Cancel eligible dates in your own requests from My Leave or a calendar date. Past entries cannot be changed. Moving leave requires a new request after cancelling the affected dates. Hourly requests are unavailable.',
+          'Week and day views show all-day absences. Month view keeps a seven-column calendar on small screens; week and day views offer readable agendas. Reference examples are for illustration. Submitted requests and settings are saved through the API. Assigned administrators can decide pending requests in Approval Requests. Cancel eligible dates in your own requests from My Leave or a calendar date. Past entries cannot be changed. Moving leave requires a new request after cancelling the affected dates. Hourly requests are unavailable.',
         ],
       },
       trigger,
@@ -186,7 +186,7 @@ export class WorkspaceDialog {
         paragraphs: [
           `${this.user.title} · ${this.user.role} preview`,
           `${this.data.companyName} · ${this.data.groupName('team', this.user.teamId) || this.user.team}`,
-          `Signed in as ${this.user.username}. Development sign-in with a public fictional account. Reference assets are downloadable; requests and settings are saved through the API. Production identity is not available.`,
+          `Signed in as ${this.user.username}. Development sign-in with a public test account. Reference assets are downloadable; requests and settings are saved through the API. Production identity is not available.`,
         ],
       },
       trigger,

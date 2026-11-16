@@ -43,7 +43,7 @@ describe('Workspace navigation', () => {
       '/index.html?page=people&scope=org&view=month&date=2026-11-14',
       Workspace,
     );
-    expect(router.url).toBe('/people?scope=org');
+    expect(router.url).toBe('/people');
     await harness.navigateByUrl('/help', Workspace);
     expect(harness.routeNativeElement!.textContent).toContain(
       'Feedback submission is not available',
@@ -82,7 +82,7 @@ describe('Workspace navigation', () => {
       await router.navigateByUrl(destination, { state: { vacateNavigationOwner: owner } });
       harness.detectChanges();
       page = harness.routeDebugElement!.componentInstance as Workspace;
-      expect(router.url).toBe(destination);
+      expect(new URLSearchParams(router.url.split('?')[1]).has('date')).toBe(false);
       expect(page.state.scope).toBe('team');
       expect(page.state.view).toBe('week');
       expect(dateKey(page.state.date)).toBe('2026-11-05');
@@ -118,7 +118,7 @@ describe('Workspace navigation', () => {
       Array.from(element.querySelectorAll('.settings-navigation button'), (button) =>
         button.getAttribute('data-settings-section'),
       ),
-    ).toEqual(['organization', 'department', 'team', 'profile', 'system']);
+    ).toEqual(['profile', 'organization', 'department', 'team', 'system']);
     expect(element.querySelector('#workspace-organization')?.textContent).toContain(
       'Northstar Example',
     );
@@ -285,9 +285,7 @@ describe('Workspace navigation', () => {
         expect(page.state.scope).toBe('team');
         expect(page.state.groupId).toBe(group);
         expect(page.visiblePeople.length).toBe(group === 'applications' ? 3 : 0);
-        expect(new URLSearchParams(router.url.split('?')[1]).get('date')).toBe(
-          expectedPage === 'calendar' ? '2026-11-05' : null,
-        );
+        expect(new URLSearchParams(router.url.split('?')[1]).has('date')).toBe(false);
       };
       const traverse = async (direction: 'back' | 'forward'): Promise<void> => {
         const finished = firstValueFrom(

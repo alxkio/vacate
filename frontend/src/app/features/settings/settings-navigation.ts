@@ -2,10 +2,10 @@ import type { Person } from '../../core/models/workspace.models';
 import type { SettingsAccess } from '../../core/http/contracts';
 
 const sections = [
-  { id: 'organization', name: 'Organization', admin: true },
-  { id: 'department', name: 'Department', admin: true },
-  { id: 'team', name: 'Team', admin: true },
   { id: 'profile', name: 'Profile', admin: false },
+  { id: 'organization', name: 'Organization', admin: true },
+  { id: 'department', name: 'Departments', admin: true },
+  { id: 'team', name: 'Teams', admin: true },
   { id: 'system', name: 'System', admin: false },
 ] as const;
 
@@ -14,7 +14,7 @@ export type SettingsSection = (typeof sections)[number]['id'];
 export function settingsSections(
   person: Pick<Person, 'capability'> | null,
   access?: SettingsAccess,
-): ({ readonly id: "organization"; readonly name: "Organization"; readonly admin: true; } | { readonly id: "department"; readonly name: "Department"; readonly admin: true; } | { readonly id: "team"; readonly name: "Team"; readonly admin: true; } | { readonly id: "profile"; readonly name: "Profile"; readonly admin: false; } | { readonly id: "system"; readonly name: "System"; readonly admin: false; })[] {
+): (typeof sections)[number][] {
   return sections.filter(
     (section) =>
       !section.admin ||

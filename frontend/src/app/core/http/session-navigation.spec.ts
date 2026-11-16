@@ -22,7 +22,9 @@ describe('Session expiry navigation', () => {
       expiredSessionUrl('/login.html?returnUrl=https://evil.invalid'),
       'https://vacate.invalid',
     );
-    expect(unsafe.searchParams.get('returnUrl')).toBe('/calendar');
+    expect(unsafe.searchParams.has('returnUrl')).toBe(false);
+    expect(unsafe.searchParams.get('reason')).toBe('expired');
+    expect(loginUrl('/calendar')).toBe('/login');
   });
   it('preserves internal page state and rejects external, encoded or malformed redirect destinations', () => {
     expect(safeReturnUrl('/index.html?page=people&scope=org')).toBe(

@@ -13,18 +13,13 @@ import { OrganizationSettings } from '../organizations/organization-settings';
   selector: 'vacate-people',
   imports: [DataTable, OrganizationSettings, FormsModule],
   template: `
-    <section class="navigation-card" aria-labelledby="people-heading">
-      <h2 id="people-heading">{{ isAdmin ? 'People and leave' : 'Company directory' }}</h2>
-      <p>Find colleagues by team or department. Your own row is marked “You”.</p>
+    <section class="navigation-card" aria-label="People directory">
       @if (error) {
         <p role="alert">{{ error }}</p>
       }
       @if (loading) {
         <p role="status">Loading people…</p>
       }
-      <button type="button" class="secondary" (click)="loadPeople()" [attr.aria-disabled]="loading">
-        {{ error ? 'Retry loading people' : 'Refresh people' }}
-      </button>
       <div class="people-filters">
         <label
           >Search people<input
@@ -34,10 +29,20 @@ import { OrganizationSettings } from '../organizations/organization-settings';
             placeholder="Name, email, department or team"
         /></label>
         <label
-          >Show<select [(ngModel)]="scope" (ngModelChange)="updateListUrl()">
+          >Show<select [ngModel]="selection" (ngModelChange)="selectGroup($event)">
             <option value="all">All organization</option>
             <option value="team">My team</option>
             <option value="department">My department</option>
+            @for (department of hierarchy; track department.id) {
+              <optgroup [label]="department.name">
+                @if (department.id) {
+                  <option [value]="'department:' + department.id">All {{ department.name }}</option>
+                }
+                @for (team of department.teams; track team.id) {
+                  <option [value]="'team:' + team.id">{{ team.name }}</option>
+                }
+              </optgroup>
+            }
           </select></label
         >
         @if (isAdmin) {
@@ -48,6 +53,9 @@ import { OrganizationSettings } from '../organizations/organization-settings';
             Load year
           </button>
         }
+        <button type="button" class="secondary" (click)="loadPeople()" [disabled]="loading">
+          {{ error ? 'Retry loading people' : 'Refresh people' }}
+        </button>
       </div>
       @if (isAdmin) {
         <p>
@@ -55,11 +63,6 @@ import { OrganizationSettings } from '../organizations/organization-settings';
           Unknown allocations stay “To confirm”.
         </p>
       }
-      <p class="people-legend">
-        <span class="colleague-tag same-team">Your team</span
-        ><span class="colleague-tag same-department">Your department</span>
-      </p>
-      <p class="people-scroll-hint">Scroll the table horizontally to see all columns.</p>
       <vacate-data-table class="people-table" label="Company colleagues">
         <table>
           <caption>
@@ -104,6 +107,7 @@ import { OrganizationSettings } from '../organizations/organization-settings';
                 <td>{{ person.jobTitle || 'Not assigned' }}</td>
                 <td>
                   <span
+                    [attr.title]="relationshipLabel(person)"
                     [class]="
                       'colleague-tag ' +
                       (relationship(person) === 'same-department' ||
@@ -116,6 +120,7 @@ import { OrganizationSettings } from '../organizations/organization-settings';
                 </td>
                 <td>
                   <span
+                    [attr.title]="relationshipLabel(person)"
                     [class]="
                       'colleague-tag ' + (relationship(person) === 'same-team' ? 'same-team' : '')
                     "
@@ -252,19 +257,6 @@ import { OrganizationSettings } from '../organizations/organization-settings';
       gap: 12px;
       margin-bottom: 20px;
     }
-    .people-scroll-hint {
-      margin-top: 16px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-    }
-    .people-legend {
-      margin-top: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
   `,
 })
 export class People implements OnInit {
@@ -284,6 +276,7 @@ export class People implements OnInit {
   readonly admin = inject(AdminApi);
   search = '';
   scope = 'all';
+  group = '';
   year = new Date().getFullYear();
   loadedYear = this.year;
   balances: Personnel[] = [];
@@ -326,8 +319,9 @@ export class People implements OnInit {
             .includes(query)) &&
         (this.scope === 'all' ||
           (this.scope === 'team'
-            ? !!actor?.teamId && person.teamId === actor.teamId
-            : !!actor?.departmentId && person.departmentId === actor.departmentId)),
+            ? !!(this.group || actor?.teamId) && person.teamId === (this.group || actor?.teamId)
+            : !!(this.group || actor?.departmentId) &&
+              person.departmentId === (this.group || actor?.departmentId))),
     );
   }
 
@@ -352,8 +346,57 @@ export class People implements OnInit {
     )[this.relationship(person)];
   }
 
+  get hierarchy(): { id: string; name: string; teams: { id: string; name: string }[] }[] {
+    const groups = new Map<
+      string,
+      { id: string; name: string; teams: { id: string; name: string }[] }
+    >();
+    for (const person of this.people) {
+      const departmentId = person.departmentId || '';
+      if (!publicGuid.test(departmentId) && !publicGuid.test(person.teamId || '')) continue;
+      if (!groups.has(departmentId)) {
+        groups.set(departmentId, {
+          id: departmentId,
+          name: person.departmentName || 'No department',
+          teams: [],
+        });
+      }
+      const department = groups.get(departmentId)!;
+      if (
+        person.teamId &&
+        publicGuid.test(person.teamId) &&
+        !department.teams.some((team) => team.id === person.teamId)
+      ) {
+        department.teams.push({ id: person.teamId, name: person.teamName || 'Unnamed team' });
+      }
+    }
+    return [...groups.values()]
+      .map((department) => ({
+        ...department,
+        teams: department.teams.sort((a, b) => a.name.localeCompare(b.name)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  get selection(): string {
+    return this.group ? `${this.scope}:${this.group}` : this.scope;
+  }
+
+  selectGroup(value: string): void {
+    const [scope, group = ''] = value.split(':');
+    this.scope = ['team', 'department'].includes(scope) ? scope : 'all';
+    this.group = this.scope !== 'all' && publicGuid.test(group) ? group : '';
+    this.updateListUrl();
+  }
+
   get listQuery() {
-    return { scope: this.scope === 'all' ? 'org' : this.scope, year: this.loadedYear };
+    return {
+      ...(this.scope !== 'all' ? { scope: this.scope } : {}),
+      ...(this.group ? { group: this.group } : {}),
+      ...(this.isAdmin && this.loadedYear !== new Date().getFullYear()
+        ? { year: this.loadedYear }
+        : {}),
+    };
   }
 
   updateListUrl(): void {
@@ -391,6 +434,8 @@ export class People implements OnInit {
         : params?.get('scope') === 'department'
           ? 'department'
           : 'all';
+    const group = params?.get('group') || '';
+    this.group = this.scope !== 'all' && publicGuid.test(group) ? group : '';
     const year = Number(params?.get('year'));
     if (Number.isInteger(year) && year > 0 && year <= 9999) this.year = year;
     await this.loadPeople();

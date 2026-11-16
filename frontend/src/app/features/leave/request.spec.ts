@@ -107,8 +107,74 @@ describe('Leave request form', () => {
     expect(fixture.nativeElement.querySelector('#request-balance').textContent).toContain(
       '15 days available',
     );
+    expect(fixture.nativeElement.textContent).not.toContain('Sunday is not a working day');
+    const start = fixture.nativeElement.querySelector('#start-date') as HTMLInputElement;
+    start.dispatchEvent(new Event('input'));
+    await vi.advanceTimersByTimeAsync(250);
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Sunday is not a working day');
     expect(fixture.componentInstance.canSubmit).toBe(true);
+  });
+
+  it('discloses type information on demand and omits routine eligible and empty-balance copy', async () => {
+    preview.mockResolvedValue(calculated({ balances: [] }));
+    const fixture = await setup();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('#request-type-status')?.hasAttribute('hidden')).toBe(true);
+    expect(root.querySelector('#request-eligibility')).toBeNull();
+    expect(root.querySelector('#request-balance')).toBeNull();
+    expect(root.textContent).not.toContain('Correct the highlighted fields');
+    const info = root.querySelector('#request-type-info') as HTMLButtonElement;
+    info.click();
+    fixture.detectChanges();
+    expect(info.getAttribute('aria-expanded')).toBe('true');
+    expect(root.querySelector('#request-type-status')?.hasAttribute('hidden')).toBe(false);
+    info.click();
+    fixture.detectChanges();
+    expect(info.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('defers non-working-date warnings until input, suppresses routine fallback, and retains submission denial', async () => {
+    preview.mockResolvedValue(
+      calculated({
+        canSubmit: false,
+        errors: ['Select at least one working day.'],
+        warnings: [
+          'Public holiday data is unavailable for part of this range; the company working schedule is used for those dates.',
+        ],
+      }),
+    );
+    const fixture = await setup();
+    expect(fixture.componentInstance.feedback).toEqual([]);
+    expect(fixture.componentInstance.canSubmit).toBe(false);
+    const start = fixture.nativeElement.querySelector('#start-date') as HTMLInputElement;
+    start.dispatchEvent(new Event('input'));
+    await vi.advanceTimersByTimeAsync(250);
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="status"]').textContent).toContain(
+      'Choose a date range with working days.',
+    );
+    expect(fixture.nativeElement.textContent).not.toContain('Public holiday data is unavailable');
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBe(true);
+  });
+
+  it('places blocking configuration errors before the fields and preserves API denial', async () => {
+    preview.mockResolvedValue(
+      calculated({
+        canSubmit: false,
+        balances: [],
+        errors: ['Annual allocation is not configured.'],
+      }),
+    );
+    const fixture = await setup();
+    const fieldset = fixture.nativeElement.querySelector('fieldset') as HTMLFieldSetElement;
+    expect(fieldset.firstElementChild?.tagName).toBe('VACATE-FEEDBACK-TOAST');
+    expect(fieldset.querySelector('[role="alert"]')?.textContent).toContain(
+      'Annual allocation is not configured.',
+    );
+    expect(fixture.componentInstance.canSubmit).toBe(false);
   });
 
   it('uses duration mode and derived end date; Hours hides end and blocks submission', async () => {

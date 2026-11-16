@@ -60,21 +60,21 @@ Syntax-correct transition form:
 https://lemon-beach-02f7a7103.4.azurestaticapps.net/people?scope=org&view=month&date=2026-11-14
 
 Recommended canonical People link:
-https://lemon-beach-02f7a7103.4.azurestaticapps.net/people?scope=org
+https://lemon-beach-02f7a7103.4.azurestaticapps.net/people
 
 Calendar link retaining calendar state:
-https://lemon-beach-02f7a7103.4.azurestaticapps.net/calendar?scope=org&view=month&date=2026-11-14
+https://lemon-beach-02f7a7103.4.azurestaticapps.net/calendar?scope=org&view=month
 ```
 
 The Azure-host examples describe the same proposed relative paths during development; they do not provision a custom domain. Development sign-in stays same-origin at `/login`; it does not send users to production authentication.
 
-| Owner | Proposed state in the URL | Rules |
+| Owner | Current state in the URL | Rules |
 |---|---|---|
-| Calendar | `scope=self|team|department|org`, `view=year|month|week|day`, `date=YYYY-MM-DD`, `group={groupGuid}` | `group` is relevant only to a permitted team/department. Resolve current API GUIDs rather than copying fixture IDs. |
-| People | `scope=org|team|department`, optional `q`, `year` for administrator balances | Current People uses local `all` state for the organisation scope; map that deliberately. Search text may contain personal data, so persisting `q` is optional pending privacy review. |
-| Leave | Optional `status`, `type={leaveTypeId}`, `from`, `to` | Existing leave-type identifiers may be stable catalogue keys rather than GUIDs. Do not fabricate GUIDs or change catalogue contracts as part of URL cleanup. |
-| Person leave | `year` | Preserve the selected year and return-list context; do not invent dated records from opening totals. |
-| Settings | Resource GUID in scoped path; optional section/panel state only when necessary | Do not retain irrelevant Calendar date/view parameters. |
+| Calendar | `scope=self|team|department|org`, `view=year|month|week|day`, `group={groupGuid}` | Selected date stays in actor-owned history/session state. Legacy dated links remain readable. `group` identifies a permitted team/department. |
+| People | Nondefault `scope=team|department`, `group={groupGuid}`, noncurrent admin `year` | Omit org/current-year defaults; search remains session-owner-scoped memory. |
+| Leave | None | Table filters remain in-page. Catalogue keys remain stable; no fabricated GUID conversion. |
+| Person leave | Noncurrent admin `year` and relevant return-list context | Preserve the selected year; do not invent dated records from opening totals. |
+| Settings | Section and resource GUID in path | No unrelated query state. Profile opens first; admin navigation order is Profile, Organization, Departments, Teams, System. |
 
 Route state is owned by its feature. Moving from People to Calendar restores Calendar's own last view/date, without propagating unrelated query parameters through every destination. Canonicalise valid values; invalid dates/views/scopes must produce safe defaults or an explicit unavailable state, without widening access.
 
@@ -132,3 +132,8 @@ Local Angular routing, paired InMemory API journeys and responsive screenshots a
 - Help provides useful navigation guidance and explicitly says feedback submission is unavailable.
 - Calendar view/date/scope/group context is stored per actor/company in tab session storage and cleared at logout. People search remains in memory, scoped to the session owner, rather than entering URLs. No business records or authentication tickets enter navigation URLs.
 - Existing API contracts and backend/database code are unchanged. SPA deep-path rewrite configuration is included in the local build, with no deployment claim.
+
+
+## Latest owner refinement · 2026-11-15
+
+This supersedes the earlier proposed query-state table: Calendar selected dates must not appear in canonical URLs. Consume legacy dated links and retain date in actor/company-owned entry history and tab session storage. People omits default org scope/current year, retains nondefault scope/group/historical year, and keeps search out of URLs. Other pages discard unrelated state; login keeps only safe nondefault return and expiry reason. See the [complete Angular/API parameter audit](../jira/media/VAC-52/route-parameter-audit.md). API personnel `year` remains required and necessary; no API endpoint/body/authorisation change is proposed.

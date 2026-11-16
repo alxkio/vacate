@@ -1,6 +1,65 @@
-<p class="planner-description">
-  <a href="/people">View all company colleagues, departments and teams</a>
-</p>
+<ng-template #monthCalendar>
+  <div class="month-table-wrap">
+    <table class="month-table">
+      <caption class="sr-only">
+        {{
+          period
+        }}
+        ·
+        {{
+          scopeName
+        }}
+      </caption>
+      <thead>
+        <tr>
+          @for (day of weekdays; track day) {
+            <th scope="col">{{ day }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (week of weeks; track $index) {
+          <tr>
+            @for (date of week; track dateKey(date)) {
+              <td [class.weekend]="isWeekend(date)">
+                <button
+                  class="day-number"
+                  [class.today]="dateKey(date) === today"
+                  [class.outside]="date.getMonth() !== state.date.getMonth()"
+                  [attr.data-date]="dateKey(date)"
+                  [attr.aria-label]="fullDate(date) + ', ' + onDate(date).length + ' entries'"
+                  (click)="dateClick(date, $event)"
+                >
+                  {{ date.getDate() }}
+                  @if (onDate(date).length) {
+                    <span class="month-entry-count" aria-hidden="true">{{
+                      onDate(date).length
+                    }}</span>
+                  }
+                </button>
+                @for (entry of onDate(date).slice(0, 2); track entry.id) {
+                  <ng-container
+                    [ngTemplateOutlet]="eventButton"
+                    [ngTemplateOutletContext]="{ $implicit: entry }"
+                  />
+                }
+                @if (onDate(date).length > 2) {
+                  <button
+                    class="more"
+                    [attr.data-date]="dateKey(date)"
+                    (click)="dateClick(date, $event)"
+                  >
+                    +{{ onDate(date).length - 2 }} more
+                  </button>
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</ng-template>
 <ng-template #eventButton let-entry>
   <button
     [class]="'event ' + eventClass(entry)"
@@ -102,7 +161,6 @@
         ? 'Your all-day leave'
         : 'People in ' + scopeName + ' · availability only'
     }}
-    · {{ state.view === 'month' ? 'Scroll to explore the month' : 'All-day absences' }}
   </p>
   <div class="planner-scroll">
     <table
@@ -170,7 +228,11 @@
       </tbody>
     </table>
   </div>
-  <ng-container [ngTemplateOutlet]="agenda" [ngTemplateOutletContext]="{ mobile: true }" />
+  @if (state.view === 'month') {
+    <div class="mobile-month-calendar"><ng-container [ngTemplateOutlet]="monthCalendar" /></div>
+  } @else {
+    <ng-container [ngTemplateOutlet]="agenda" [ngTemplateOutletContext]="{ mobile: true }" />
+  }
 } @else if (state.view === 'week') {
   <div class="week-table">
     <table class="month-table">
@@ -219,60 +281,5 @@
   </div>
   <ng-container [ngTemplateOutlet]="agenda" [ngTemplateOutletContext]="{ mobile: true }" />
 } @else {
-  <div class="month-table-wrap">
-    <table class="month-table">
-      <caption class="sr-only">
-        {{
-          period
-        }}
-        ·
-        {{
-          scopeName
-        }}
-      </caption>
-      <thead>
-        <tr>
-          @for (day of weekdays; track day) {
-            <th scope="col">{{ day }}</th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        @for (week of weeks; track $index) {
-          <tr>
-            @for (date of week; track dateKey(date)) {
-              <td [class.weekend]="isWeekend(date)">
-                <button
-                  class="day-number"
-                  [class.today]="dateKey(date) === today"
-                  [class.outside]="date.getMonth() !== state.date.getMonth()"
-                  [attr.data-date]="dateKey(date)"
-                  [attr.aria-label]="fullDate(date) + ', ' + onDate(date).length + ' entries'"
-                  (click)="dateClick(date, $event)"
-                >
-                  {{ date.getDate() }}
-                </button>
-                @for (entry of onDate(date).slice(0, 2); track entry.id) {
-                  <ng-container
-                    [ngTemplateOutlet]="eventButton"
-                    [ngTemplateOutletContext]="{ $implicit: entry }"
-                  />
-                }
-                @if (onDate(date).length > 2) {
-                  <button
-                    class="more"
-                    [attr.data-date]="dateKey(date)"
-                    (click)="dateClick(date, $event)"
-                  >
-                    +{{ onDate(date).length - 2 }} more
-                  </button>
-                }
-              </td>
-            }
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-  <ng-container [ngTemplateOutlet]="agenda" [ngTemplateOutletContext]="{ mobile: true }" />
+  <ng-container [ngTemplateOutlet]="monthCalendar" />
 }

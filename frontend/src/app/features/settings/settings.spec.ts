@@ -15,10 +15,10 @@ describe('Settings rendering authorization', () => {
   afterEach(() => sessionStorage.clear());
 
   it.each([
-    ['leah', ['team', 'profile', 'system']],
-    ['ella', ['department', 'team', 'profile', 'system']],
-    ['nora', ['organization', 'department', 'team', 'profile', 'system']],
-    ['daria', ['organization', 'department', 'team', 'profile', 'system']],
+    ['leah', ['profile', 'team', 'system']],
+    ['ella', ['profile', 'department', 'team', 'system']],
+    ['nora', ['profile', 'organization', 'department', 'team', 'system']],
+    ['daria', ['profile', 'organization', 'department', 'team', 'system']],
   ] as const)(
     'shows the delegated sections for %s and never infers organization administration from lead labels',
     async (account, sections) => {
@@ -34,6 +34,10 @@ describe('Settings rendering authorization', () => {
           (button: any) => button.dataset.settingsSection,
         ),
       ).toEqual(sections);
+      expect(fixture.nativeElement.querySelector('#profile-form')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[aria-current="page"]').textContent.trim()).toBe(
+        'Profile',
+      );
     },
   );
 

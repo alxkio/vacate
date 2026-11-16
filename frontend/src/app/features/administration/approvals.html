@@ -22,14 +22,7 @@
     <p class="admin-error" role="alert">{{ error }}</p>
   }
   <p class="admin-success" role="status">{{ message }}</p>
-  <p id="approval-table-hint" class="admin-hint admin-scroll-hint">
-    Scroll the table horizontally to see all columns and review actions.
-  </p>
-  <vacate-data-table
-    class="admin-table"
-    label="Assigned pending leave requests"
-    describedBy="approval-table-hint"
-  >
+  <vacate-data-table class="admin-table" label="Assigned pending leave requests">
     <table>
       <caption>
         Saved requests · Pending decisions

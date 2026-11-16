@@ -71,3 +71,12 @@ Frontend owns routes/views and tests; Product Designer preserves existing visual
 ## Open questions and follow-up
 
 Other-person account editable fields/API permission; feedback delivery; cross-host auth and custom domains; independent Figma verification. None authorises a fake save or deployment.
+
+
+## Linked owner-feedback subtask · 2026-11-15
+
+Follow the [VAC-42 lean-page refinement](VAC-42-implemented-page-design-review.md#owner-feedback-subtask--lean-page-refinement--2026-11-15). New route acceptance: Calendar URLs contain no selected `date`, while entry-owned history/session state restores the period on reload and Back/Forward; legacy dates are accepted then removed. Default `/people` omits `scope=org`; nondefault scope/group/year state is retained only where relevant. Preserve public-GUID person/membership/leave pages, current `baseUrl/login`, Calendar landing and actor/company/assignment denials. No duplicate issue or runtime SQL write is required.
+
+2026-11-16 local verification: [lean-page evidence and rendered samples](media/VAC-52/lean-pages-verification.md), including the [55-operation Angular/API parameter audit](media/VAC-52/route-parameter-audit.md). Complete browser/trusted-keyboard regression and 123 Angular tests passed with build/types/schema checks. No API, database, deployment or issue-metadata/backlog change.
+
+Owner then explicitly requested local QA, commit and push. Fresh tests/build/types passed. PR #10 is already merged, so the reviewed follow-up is prepared on `VAC-52-lean-page-refinements`; unrelated local notes and separate PR #9 database work are excluded. No merge or deployment is requested. Assistant work unmeasured; human actual Unknown. [Commit preparation and QA scope](media/VAC-52/lean-pages-verification.md#commit-preparation--2026-11-16).

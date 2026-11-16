@@ -96,15 +96,7 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
       @if (savedError) {
         <p role="alert">{{ savedError }}</p>
       }
-      <p id="saved-history-hint" class="history-hint">
-        Expired dates never deduct; pending approval is counted separately. Scroll the table
-        horizontally for all columns.
-      </p>
-      <vacate-data-table
-        class="history-table"
-        label="Leave and request history"
-        describedBy="saved-history-hint"
-      >
+      <vacate-data-table class="history-table" label="Leave and request history">
         <table id="saved-leave-requests">
           <caption>
             @if (savedLoading) {
@@ -226,9 +218,38 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
     summary {
       cursor: pointer;
     }
-    summary > * {
-      display: block;
-      margin: 8px 0;
+    summary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px 24px;
+      padding-right: 24px;
+    }
+    summary strong {
+      grid-column: 1 / -1;
+    }
+    summary vacate-balance-bar {
+      grid-column: 1 / -1;
+      width: 100%;
+      max-width: 480px;
+    }
+    summary small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    summary .inline-link {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+    @media (max-width: 600px) {
+      summary {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+      }
+      summary strong {
+        font-size: 19px;
+        line-height: 1.4;
+      }
     }
     summary strong {
       font-size: 22px;
@@ -255,12 +276,6 @@ import { WorkspaceDataService } from '../../core/state/workspace-data.service';
       border: 1px solid var(--line);
       border-radius: 6px;
       background: white;
-    }
-    .history-hint {
-      margin: 16px 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.6;
     }
     .request-editor {
       margin-top: 24px;

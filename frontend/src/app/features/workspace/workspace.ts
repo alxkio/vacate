@@ -18,6 +18,7 @@ import { WorkspaceNavigationState } from './workspace-navigation-state';
 import { PersonDetail } from '../people/person-detail';
 import { RequestDetail } from '../leave/request-detail';
 import { Help } from '../help/help';
+import { Location } from '@angular/common';
 import { BalanceBar } from '../leave/balance-bar';
 import { Balances } from '../leave/balances';
 import { BalanceViewState } from '../leave/balance-view-state';
@@ -75,6 +76,7 @@ export class Workspace implements OnInit, OnDestroy {
   readonly route = inject(ActivatedRoute);
   readonly changeDetector = inject(ChangeDetectorRef);
   readonly navigationState = inject(WorkspaceNavigationState);
+  private readonly location = inject(Location);
   readonly initialUser = this.data.currentUser()!;
 
   get user(): Person {
@@ -226,6 +228,12 @@ export class Workspace implements OnInit, OnDestroy {
       this.data.api.settingsAccess,
     );
     const remembered = this.navigationState.read(this.navigationOwner);
+    const entry = (this.router.currentNavigation()?.extras.state || this.location.getState()) as {
+      vacateNavigationOwner?: string;
+      vacateCalendarDate?: string;
+    };
+    const entryDate =
+      entry.vacateNavigationOwner === this.navigationOwner ? entry.vacateCalendarDate : undefined;
     const calendar = this.state.page === 'calendar';
     this.state.scope =
       (calendar ? params.get('scope') : null) || remembered?.scope || this.defaultScope;
@@ -241,14 +249,22 @@ export class Workspace implements OnInit, OnDestroy {
     this.state.date =
       calendar && params.has('date')
         ? workspaceDateFromRoute(params.get('date'))
-        : remembered?.date || currentDate();
+        : calendar && entryDate
+          ? workspaceDateFromRoute(entryDate)
+          : remembered?.date || currentDate();
     this.state.denied =
       (this.state.page === 'calendar' && !this.scopes.includes(this.state.scope)) ||
       (params.has('company') && params.get('company') !== this.user.companyId);
     const year = Number(params.get('year'));
     this.personYear =
       Number.isInteger(year) && year > 0 && year <= 9999 ? year : new Date().getFullYear();
-    this.personListQuery = { scope: params.get('scope') || 'org', year: this.personYear };
+    this.personListQuery = {
+      ...(params.get('scope') && params.get('scope') !== 'org'
+        ? { scope: params.get('scope')! }
+        : {}),
+      ...(params.get('group') ? { group: params.get('group')! } : {}),
+      ...(this.personYear !== new Date().getFullYear() ? { year: this.personYear } : {}),
+    };
     this.accountOpen = false;
     this.refresh();
     queueMicrotask(() => this.main.nativeElement.focus());
@@ -280,7 +296,6 @@ export class Workspace implements OnInit, OnDestroy {
     return {
       scope: this.state.scope,
       view: this.state.view,
-      date: dateKey(this.state.date),
       group: this.state.groupId,
     };
   }
@@ -294,11 +309,16 @@ export class Workspace implements OnInit, OnDestroy {
         relativeTo: this.route,
         queryParams: this.calendarQuery(),
         replaceUrl: true,
+        onSameUrlNavigation: 'reload',
+        state: { vacateCalendarDate: dateKey(this.state.date) },
       });
     }
     const section = page === 'settings' ? this.settingsSection : 'profile';
     const queryParams = page === 'calendar' ? this.calendarQuery() : {};
-    await this.router.navigate([workspacePath(page, section)], { queryParams });
+    await this.router.navigate([workspacePath(page, section)], {
+      queryParams,
+      state: page === 'calendar' ? { vacateCalendarDate: dateKey(this.state.date) } : undefined,
+    });
     this.mobileOpen = false;
     this.accountOpen = false;
   }
@@ -310,6 +330,8 @@ export class Workspace implements OnInit, OnDestroy {
         relativeTo: this.route,
         queryParams: this.calendarQuery(),
         replaceUrl: true,
+        onSameUrlNavigation: 'reload',
+        state: { vacateCalendarDate: dateKey(this.state.date) },
       });
   }
 

@@ -265,6 +265,49 @@ Verification: 89 integration tests plus 10 unit tests passed; 33 SQL-provider te
 W8 · Assistant recorded · remove remaining SQL/application seeding, isolate test tooling, review fixed values and unused code, clean confirmed leftovers, update paired CI/docs and run local verification · duration unmeasured; human actual Unknown. VAC-42 status/summary/dependencies remain unchanged; backlog remains QA. User-requested APM repair is tracked separately under VAC-21. No commits, pushes, database writes or deployment in this iteration.
 
 
+## Owner feedback subtask — lean page refinement · 2026-11-15
+
+Source: owner's consolidated feedback, including its final additional bullets. Continue this existing review task rather than opening a duplicate story. Coordinate route details with [VAC-52](VAC-52-angular-clean-navigation.md); this is a related subtask, not a new dependency. Calendar remains landing and same-origin `/login` remains current; Home and custom-domain auth stay deferred.
+
+### Requirements and design before implementation
+
+| Perspective | Decision and acceptance |
+|---|---|
+| Product | Preserve one My Leave page: compact annual balance summary above collapsed balance details, then one all-years saved-request table with status/type/date filters. Keep existing server cancellation/expiry and assigned-approval behavior. |
+| UX / design | Remove duplicate People heading, relationship legend boxes, directory promotional link, Calendar context card and horizontal-scroll instructions. Keep one page title, search and a native grouped hierarchy selector; relationship colours stay on named department/team labels, with existing non-colour relationship text available. Use aligned 44px secondary controls and responsive summary spacing. |
+| Architecture | Calendar's selected date belongs to actor-owned session/history state, not the URL. Legacy dated links remain readable and canonicalise without `date`; reload/Back/Forward must preserve their period. Default People org scope is omitted; named structure selections use public GUIDs over existing authorised directory projections. No API/domain/database calculation change. |
+| Scope boundary | Existing GUID person/membership/leave pages remain. Do not restore inline private editors in the live router. Existing fixed-date database history and its cutover evidence remain PR #9; do not duplicate saved history or run SQL as a layout side effect. The owner's identity/backoffice/dev/QA learning checklist is not an instruction to implement those projects here. |
+
+### Journey and verification plan
+
+| User goal | Touchpoints and response | Evidence / success signal |
+|---|---|---|
+| Review own leave | My Leave summary → optional balance detail → saved request filters → cancel all/selected eligible future dates | Existing leave/People browser suite verifies saved data, collapsed balance defaults, partial and Calendar cancellation, past-date denial and expiry. No new policy inferred. |
+| Find colleagues | People title → search + My scope or named department/team → GUID person page → membership/recorded leave | New filter tests must cover actual GUIDs, duplicated team names, empty groups, irrelevant params and no private projection expansion. Native select keeps keyboard operation. |
+| Browse time | Calendar controls → other page → Back/Forward/reload | Date absent from URL; stored entry date and actor/company checks preserve period and prevent account-switch state reuse. Legacy dated links continue to work. |
+
+Emotional effects and faster completion are hypotheses, not measured user-research results. Rendered desktop/mobile review and regression checks are required before QA handoff.
+
+- [x] Remove requested redundant copy/panels and compact People/balance layout.
+- [x] Add named hierarchy filtering without losing My team/My department, search, You or authorisation.
+- [x] Route/date acceptance and rendered checks recorded under VAC-52; existing leave/cancellation/expiry regression remains intact.
+- [x] Review product, design and architecture outcomes plus code/verification; identify any unverified gates. These are role-based assistant reviews, not independent sign-off.
+
+Work entry · 2026-11-15 · Assistant recorded: requirements/source review and refinement design; duration unmeasured. Human actual Unknown.
+
+
+### Request-modal feedback subtask · 2026-11-15
+
+Owner: hide the shortlist explanation behind an info button beside the leave-type link/control, remove the default eligible/mock-profile paragraph, suppress routine holiday-fallback text, show excluded dates only after an actual date/duration input, and show warning/error feedback only for an actual condition. Move server configuration blockers to the top and keep them visible while they block submission. The API preview and `canSubmit` remain authoritative; reducing copy never enables a request the server rejects. Use persistent, labelled in-modal toast feedback (status for warnings, alert for errors), preserve per-field errors and add consistent spacing between Submit and Cancel. Do not introduce automatic dismissal of actionable configuration/errors. Verify default/no-input, info disclosure, non-working selection, configured/unknown balance, failed preview, successful save, keyboard disclosure and 320/375px layouts.
+
+### Settings order refinement · 2026-11-15
+
+Owner accepted order: Profile → Organization → Departments → Teams → System. Profile remains the default content. Apply the same relative order to delegated users while retaining API-owned section visibility; employees retain Profile and System. Existing route segments and GUID selections remain stable. Acceptance: both administrator fixtures render the five sections in that order and open Profile; delegated/employee authorization checks continue to pass. This is feedback on the existing settings UI, tracked here without a new issue.
+
+Implementation/review and completed local checks: [lean-page evidence](media/VAC-52/lean-pages-verification.md). On 2026-11-16, 123 Angular tests, both TypeScript projects, production build, fixture/schema scripts, complete browser/trusted-keyboard suite and focused leave/People/focus checks passed. Settings order/default Profile and request feedback are covered. Independent acceptance, Figma and provider/hosted gates remain separate; no release claim. Assistant time unmeasured; human actual Unknown. Issue metadata/backlog remains QA.
+
+2026-11-16 · Owner authorised local QA, commit and push of these refinements. Fresh tests/build/types passed; the follow-up uses `VAC-52-lean-page-refinements` because PR #10 has already merged. [Preparation evidence](media/VAC-52/lean-pages-verification.md#commit-preparation--2026-11-16). Unrelated notes remain excluded; no merge or deployment is authorised. Assistant work unmeasured; human actual Unknown.
+
 ## SQL cutover and hosted feedback release · 2026-11-15 · QA
 
 Following the product lead's merged PR #8 and explicit instruction to continue the dev cutover, the assistant applied the separately authorized [test-company SQL operation](../database/data/2026-11-14-northstar-refresh.sql). The rollback previews first exposed BIN2 identity-column collation and the existing UTC company timezone; the script was corrected to match both without changing the saved timezone. The corrected preview, atomic apply, independent SQL readback and rollback-only idempotence replay passed. All twelve pre-existing employee-created leave rows retained their original values. Twelve saved hire/prior-service profiles, eleven reporting managers, two-year summer history and fourteen explicit login aliases are present. [Canonical evidence and limits](../database/test-data.md#dev-database-execution--2026-11-15).

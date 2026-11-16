@@ -1083,7 +1083,9 @@ try {
       await set('#request-amount', '100');
       await previewReady();
       assert.match(
-        await evaluate('document.querySelector("#request-preview").textContent'),
+        await evaluate(
+          'document.querySelector("#request-form .feedback-toast[role=alert]").textContent',
+        ),
         /negative balance/,
       );
       assert.equal(
@@ -1094,7 +1096,9 @@ try {
       await set('#start-date', '2027-06-01');
       await previewReady();
       assert.match(
-        await evaluate('document.querySelector("#request-preview").textContent'),
+        await evaluate(
+          'document.querySelector("#request-form .feedback-toast[role=alert]").textContent',
+        ),
         /No finite|No configured/,
       );
       assert.equal(
@@ -1124,7 +1128,7 @@ try {
       await set('#end-date', '2026-02-03');
       await previewReady();
       assert.match(
-        await evaluate('document.querySelector("#request-preview").textContent'),
+        await evaluate('document.querySelector("#request-form").textContent'),
         /All selected working days already/,
       );
       await click('#request-form button[type=submit]');
@@ -2046,6 +2050,15 @@ try {
           );
         }
         assert.deepEqual(await requestTypes(), expectedShortlist, 'Initial chooser defaults');
+        assert.equal(await evaluate('document.querySelector("#request-type-status").hidden'), true);
+        await keyboardClick('#request-type-info');
+        assert.equal(
+          await evaluate('document.querySelector("#request-type-status").hidden'),
+          false,
+        );
+        assert.equal(await evaluate('document.activeElement.id'), 'request-type-info');
+        await keyboardClick('#request-type-info');
+        assert.equal(await evaluate('document.querySelector("#request-type-status").hidden'), true);
         assert.equal(
           await evaluate('!!document.querySelector("#leave-type option[value=marriage]")'),
           false,
@@ -2526,11 +2539,11 @@ try {
               'Array.from(document.querySelectorAll(".settings-navigation button"), button=>button.dataset.settingsSection)',
             ),
             role === 'admin'
-              ? ['organization', 'department', 'team', 'profile', 'system']
+              ? ['profile', 'organization', 'department', 'team', 'system']
               : id === 'ella'
-                ? ['department', 'team', 'profile', 'system']
+                ? ['profile', 'department', 'team', 'system']
                 : id === 'leah'
-                  ? ['team', 'profile', 'system']
+                  ? ['profile', 'team', 'system']
                   : ['profile', 'system'],
           );
           if (role !== 'admin') {
@@ -2621,6 +2634,9 @@ try {
           'Restore actual annual balance after zero-allocation regression',
         );
         await click('[data-page-link=balances]');
+        await waitFor(
+          'location.pathname === "/leave/balances" && !!document.querySelector("[data-balance=annual]")',
+        );
         assert.deepEqual(await balanceTypes(), mayaBalanceTypes);
         assert.match(
           await evaluate('document.querySelector("[data-balance=annual]").textContent'),
@@ -2652,8 +2668,12 @@ try {
         );
         assert.equal(await evaluate('document.querySelector("[data-balance=carer]").open'), true);
         await click('[data-nav=calendar]');
+        await waitFor(
+          'location.pathname === "/calendar" && !document.querySelector("vacate-my-leave")',
+        );
         await click('[data-nav=leave]');
         await click('vacate-my-leave > details > summary');
+        await waitFor('!!document.querySelector("[data-balance=carer]")');
         assert.equal(
           await evaluate('document.querySelector("[data-balance=carer]").open'),
           true,
