@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Vacate.Application.Leave;
 
 namespace Vacate.Infrastructure.Persistence.Sql;

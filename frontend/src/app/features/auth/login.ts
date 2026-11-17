@@ -46,21 +46,6 @@ export class Login implements OnDestroy {
     document.body.classList.remove('login-page');
   }
 
-  choose(
-    id: string,
-    username: HTMLInputElement,
-    password: HTMLInputElement,
-    description: HTMLElement,
-  ): void {
-    const persona = this.personas.find((option) => option.id === id);
-    if (!persona) {
-      return;
-    }
-    username.value = password.value = persona.id;
-    description.textContent = `${persona.label} · ${persona.team} · ${persona.id}`;
-    this.error = '';
-  }
-
   async retrySession(): Promise<void> {
     if (this.busy) return;
     this.busy = true;

@@ -1,6 +1,30 @@
 # Vacate API code review
 
-Scope: `api/src` (Api, Application, Domain, Infrastructure). Read-only review; build and tests were not run. Migrations, SQL row mapping, `tools/Vacate.Database` and the tests were not reviewed.
+Scope: `api/src` (Api, Application, Domain, Infrastructure). The review itself was read-only. Migrations, SQL row mapping, `tools/Vacate.Database` and the tests were not reviewed.
+
+## Status (updated 2026-11-17)
+
+Verification after the fixes: `dotnet build` has 0 warnings and 0 errors. Tests: 10 unit and 89 integration passed, 33 SQL integration tests skipped (no SQL available), so SQL paths are unverified. Changes are uncommitted.
+
+| # | Item | Status |
+|---|---|---|
+| 1.4 | Server faults reported as 400 | **Done**: only `JsonException`, `FormatException` and `OverflowException` map to 400 |
+| 1.5 | JSON null reaching the domain | **Closed, not an issue**: `DomainValue.Name` and gender validation reject null. No test added |
+| 1.7 | Strict content-type check | **Done**: parsed with `MediaTypeHeaderValue`, case-insensitive |
+| 3 | Unused usings (non-test code) | **Done**: Endpoint, Organization/Session/UserFunctions, Program, SqlLeaves, six Organization commands |
+| 3 | Unused usings in tests | Open: `AdminLeaveTests`, `LeaveRequestTests`, `SqlPersistenceTests` |
+| 3 | `IMembershipRepository.History` unused | **Closed, not an issue**: used by an integration test |
+| 3 | `HealthFunction` unused `request` | Won't fix: needed by the trigger binding (suppress) |
+| 2 | Production defaults to InMemory | **Deferred**: documented in `api/README.md` and used by local and CI runs; Bicep sets it explicitly. Product decision |
+| 1.1 | Integer `Id` in responses | Open: needs contract and frontend changes |
+| 1.2 | Global SQL lock | Open: record as a known limitation or redesign |
+| 1.3 | N+1 queries and cross-tenant scans | Open |
+| 1.6 | GUID existence oracle (403 vs 404) | Open |
+| 1 Low | Time-zone helper, `Company()` writes on read, Delete naming, Submit replay preview, dev-credential gating, session lifetime | Open |
+| 2 | Folder organisation, large methods, dual Id/Guid | Open |
+| 4 | DDD gaps 1–8 (Leave aggregate, status enums, balance source of truth, `AccessPolicy` invariants, port leaks, mapper, events, exceptions) | Open: needs a design note first |
+
+Remaining suggested order: tests' unused usings, then scoped repository queries (1.3) and the lock (1.2), then dropping `Id` (1.1) with frontend and contract updates, then the Leave aggregate (4).
 
 The layering matches ADR-0003: functions are thin, tenant checks go through `AccessPolicy`, and request bodies are allow-listed. Leave ranges are capped at 3660 days, so there is no unbounded loop.
 

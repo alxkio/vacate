@@ -30,35 +30,44 @@ import { DataTable } from '../../shared/data-table/data-table';
         </p>
       }
       @if (person && member; as record) {
-        <nav class="person-tabs" aria-label="Person sections">
-          <a
-            [routerLink]="['/people', personGuid]"
-            [queryParams]="listQuery"
-            [attr.aria-current]="mode === 'person' ? 'page' : null"
-            >Overview</a
-          >
-          <a
-            [routerLink]="['/people', personGuid, 'memberships', record.membership.guid]"
-            [queryParams]="listQuery"
-            [attr.aria-current]="mode === 'membership' ? 'page' : null"
-            >Edit membership</a
-          >
-          <a
-            [routerLink]="['/people', personGuid, 'leave']"
-            [queryParams]="listQuery"
-            [attr.aria-current]="mode === 'person-leave' ? 'page' : null"
-            >Recorded leave</a
-          >
-        </nav>
+        @if (saved) {
+          <p role="status">Membership saved.</p>
+        }
+        <dl>
+          <dt>Email</dt>
+          <dd>{{ person.email }}</dd>
+          <dt>Job role</dt>
+          <dd>{{ person.jobTitle || 'Not assigned' }}</dd>
+          <dt>Department</dt>
+          <dd>{{ person.departmentName || 'Not assigned' }}</dd>
+          <dt>Team</dt>
+          <dd>{{ person.teamName || 'Not assigned' }}</dd>
+        </dl>
+        <div class="person-switch">
+          @if (mode === 'membership') {
+            <button type="button" class="secondary" data-show-leave (click)="showLeave()">
+              Recorded leave
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="secondary"
+              data-edit-membership
+              (click)="editMembership(record.membership.guid)"
+            >
+              Edit membership
+            </button>
+          }
+        </div>
         @if (mode === 'membership') {
           <vacate-organization
             [companyId]="companyId"
             [membersOnly]="true"
             [memberGuid]="record.userGuid"
             (changed)="saved = true"
-            (memberClosed)="overview()"
+            (memberClosed)="showLeave()"
           />
-        } @else if (mode === 'person-leave') {
+        } @else {
           <h3 id="person-history">Recorded leave · {{ year }}</h3>
           @if (report; as history) {
             <p>
@@ -95,47 +104,17 @@ import { DataTable } from '../../shared/data-table/data-table';
           } @else {
             <p>No recorded leave is available.</p>
           }
-        } @else {
-          @if (saved) {
-            <p role="status">Membership saved.</p>
-          }
-          <dl>
-            <dt>Email</dt>
-            <dd>{{ person.email }}</dd>
-            <dt>Job role</dt>
-            <dd>{{ person.jobTitle || 'Not assigned' }}</dd>
-            <dt>Department</dt>
-            <dd>{{ person.departmentName || 'Not assigned' }}</dd>
-            <dt>Team</dt>
-            <dd>{{ person.teamName || 'Not assigned' }}</dd>
-          </dl>
-          <p>
-            Account identity is read-only here. Use Edit membership for roles, employment details
-            and allocation. Derived balances remain server-owned.
-          </p>
         }
       }
     </section>
   `,
   styles: `
-    .person-tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
+    .person-switch {
       margin: 24px 0;
     }
     a {
       color: var(--accent);
       text-underline-offset: 3px;
-    }
-    .person-tabs a {
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-    }
-    [aria-current='page'] {
-      background: var(--pale);
-      font-weight: 600;
     }
     dl {
       display: grid;
@@ -180,12 +159,18 @@ export class PersonDetail implements OnChanges {
     void this.load();
   }
 
-  overview(): void {
+  showLeave(): void {
     void this.router.navigate(['/people', this.personGuid], {
       queryParams: this.listQuery,
       state: this.saved
         ? { membershipSavedOwner: this.admin.owner, membershipSavedPerson: this.personGuid }
         : {},
+    });
+  }
+
+  editMembership(membershipGuid: string): void {
+    void this.router.navigate(['/people', this.personGuid, 'memberships', membershipGuid], {
+      queryParams: this.listQuery,
     });
   }
 
@@ -225,7 +210,7 @@ export class PersonDetail implements OnChanges {
       )
         return;
       const people = await this.data.api.directory();
-      const report = this.mode === 'person-leave' ? await this.admin.personnel(this.year) : [];
+      const report = this.mode !== 'membership' ? await this.admin.personnel(this.year) : [];
       if (owner !== this.admin.owner || sequence !== this.sequence) return;
       this.person = people.find((p) => p.guid?.toLowerCase() === guid.toLowerCase()) || null;
       this.member = this.person ? member : null;

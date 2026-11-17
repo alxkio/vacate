@@ -260,18 +260,18 @@ export class WorkspaceApiService {
     const generation = this.generation;
     const response = await firstValueFrom(this.sessions.current(token));
     const companyId = response.profile.membership?.companyId;
-    const summary = companyId
-      ? await firstValueFrom(this.organizations.summary(companyId, token))
-      : null;
-    const workspace = companyId
-      ? await firstValueFrom(
-          this.client.request<MemberWorkspace>(
-            'GET',
-            `organizations/${companyId}/workspace`,
-            token,
+    const [summary, workspace] = companyId
+      ? await Promise.all([
+          firstValueFrom(this.organizations.summary(companyId, token)),
+          firstValueFrom(
+            this.client.request<MemberWorkspace>(
+              'GET',
+              `organizations/${companyId}/workspace`,
+              token,
+            ),
           ),
-        )
-      : null;
+        ])
+      : [null, null];
     let org: OrganizationRecord | null = null;
     let members: MemberRecord[] = [];
     let roles = this.roles;

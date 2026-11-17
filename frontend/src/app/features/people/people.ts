@@ -4,7 +4,7 @@ import { publicGuid } from '../../core/navigation/app-paths';
 import { DataTable } from '../../shared/data-table/data-table';
 import { AdminApi, Personnel } from '../administration/admin-api';
 import { FormsModule } from '@angular/forms';
-import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { DirectoryUser } from '../../core/http/contracts';
 import { OrganizationSettings } from '../organizations/organization-settings';
@@ -138,8 +138,8 @@ import { OrganizationSettings } from '../organizations/organization-settings';
                       <button
                         type="button"
                         class="secondary"
-                        [disabled]="!balance"
-                        (click)="review(balance, $event.currentTarget)"
+                        [attr.data-person-leave]="person.guid"
+                        (click)="openPerson(person, $event)"
                       >
                         Recorded leave
                       </button>
@@ -167,47 +167,6 @@ import { OrganizationSettings } from '../organizations/organization-settings';
         </table>
       </vacate-data-table>
     </section>
-    @if (isAdmin && selected; as record) {
-      <section class="navigation-card" aria-labelledby="person-history">
-        <div class="action-row">
-          <h3 #historyHeading tabindex="-1" id="person-history">
-            Recorded leave · {{ record.displayName }}
-          </h3>
-          <button type="button" class="secondary" (click)="closeHistory()">
-            Close recorded leave
-          </button>
-        </div>
-        <p>Opening used: {{ record.openingUsed }} days. Opening totals have no dated history.</p>
-        <vacate-data-table class="people-table" label="Employee recorded leave">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Type</th>
-                <th scope="col">Status</th>
-                <th scope="col">Entitlement year</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (request of record.requests; track request.guid) {
-                @for (day of request.dates; track day.date) {
-                  <tr>
-                    <td>{{ day.date }}</td>
-                    <td>{{ data.typeName(request.leaveTypeId) }}</td>
-                    <td>{{ day.status }}</td>
-                    <td>{{ day.entitlementYear }}</td>
-                  </tr>
-                }
-              } @empty {
-                <tr>
-                  <td colspan="4">No saved leave for this year.</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </vacate-data-table>
-      </section>
-    }
     @if (isAdmin && editing) {
       <vacate-organization
         [companyId]="data.currentUser()?.companyId || ''"
@@ -280,21 +239,6 @@ export class People implements OnInit {
   year = new Date().getFullYear();
   loadedYear = this.year;
   balances: Personnel[] = [];
-  selected: Personnel | null = null;
-  @ViewChild('historyHeading') historyHeading?: ElementRef<HTMLElement>;
-  private historyTrigger: HTMLElement | null = null;
-
-  review(record: Personnel | undefined, trigger: EventTarget | null): void {
-    this.selected = record || null;
-    this.historyTrigger = trigger instanceof HTMLElement ? trigger : null;
-    this.detector.detectChanges();
-    this.historyHeading?.nativeElement.focus();
-  }
-
-  closeHistory(): void {
-    this.selected = null;
-    this.historyTrigger?.focus();
-  }
 
   isMe(person: DirectoryUser): boolean {
     return (
@@ -465,7 +409,6 @@ export class People implements OnInit {
         this.balances = balances;
         this.loadedYear = year;
         this.updateListUrl();
-        this.selected = null;
       }
     } catch {
       if (this.data.currentUser()?.id === actor && this.data.api.sessionGeneration === generation)
