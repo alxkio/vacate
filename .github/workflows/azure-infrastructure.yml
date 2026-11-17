@@ -242,3 +242,23 @@ jobs:
           else
             printf '\nBackend: build/tests/publish and API smoke skipped; existing API version retained\n' >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  cleanup-artifacts:
+    # Packages exist only to carry CI output into the deploy job; remove them once it finishes.
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.apply }}
+    needs: [checks, deploy]
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+    steps:
+      - name: Delete run artifacts
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[].id' |
+            while read -r id; do
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
+            done
