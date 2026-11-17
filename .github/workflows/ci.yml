@@ -47,14 +47,14 @@ jobs:
           printf '%s\n' "$GITHUB_SHA" > artifacts/database/revision.txt
           python3 scripts/test_database_deployment.py
       - name: Upload database package
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v7
         with:
           name: database-package
           path: artifacts/database
           if-no-files-found: error
           compression-level: 9
-          retention-days: 5
+          retention-days: 1
       - name: Publish Functions package
         run: dotnet publish api/src/Vacate.Api --configuration Release --no-restore --output artifacts/api -p:SourceRevisionId="$GITHUB_SHA"
       - name: Verify package and run Functions host from source
@@ -78,7 +78,7 @@ jobs:
         if: failure()
         run: cat "$RUNNER_TEMP/functions.log" 2>/dev/null || true
       - name: Upload Functions package
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v7
         with:
           name: functions-package
@@ -86,7 +86,7 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           compression-level: 9
-          retention-days: 5
+          retention-days: 1
   frontend:
     runs-on: ubuntu-24.04
     defaults:
@@ -181,7 +181,7 @@ jobs:
             ${{ runner.temp }}/vacate-api-browser-previews/chrome-stderr.log
           if-no-files-found: ignore
           compression-level: 9
-          retention-days: 5
+          retention-days: 1
 
   cleanup-pr-artifacts:
     if: ${{ always() && github.event_name == 'pull_request' }}
