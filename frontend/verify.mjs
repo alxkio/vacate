@@ -852,29 +852,22 @@ try {
       'Login overflows on mobile',
     );
     await viewport(1600, 1250);
-    await waitFor(
-      'Array.from(document.querySelectorAll("#demo-account option")).filter(option=>option.value).length === 12',
-    );
+    await waitFor('document.querySelectorAll(".demo-credentials p code").length === 12');
     const loginPersonas = seed.users.map((u) => [u.alias, u.settingsRole]);
     assert.deepEqual(
       await evaluate(
-        'Array.from(document.querySelectorAll("#demo-account option")).filter(option=>option.value).map(option=>option.value)',
+        'Array.from(document.querySelectorAll(".demo-credentials p code"), code=>[code.textContent.trim(),code.parentElement.querySelector("span").textContent.trim()])',
       ),
-      loginPersonas.map(([id]) => id),
-      'Test chooser accounts come from the API',
+      loginPersonas.map(([id, label]) => [`${id} / ${id}`, label]),
+      'Public credential hints match all twelve API-backed test accounts and roles',
     );
-    for (const [id, label] of loginPersonas) {
-      await evaluate(
-        `document.querySelector('#demo-account').value=${JSON.stringify(id)};document.querySelector('#demo-account').dispatchEvent(new Event('change'))`,
-      );
-      assert.equal(await evaluate('document.querySelector("#username").value'), id);
-      assert.equal(await evaluate('document.querySelector("#password").value'), id);
-      assert.ok(
-        (await evaluate('document.querySelector("#persona-description").textContent')).includes(
-          label,
-        ),
-      );
-    }
+    assert.equal(
+      await evaluate('!!document.querySelector("#demo-account, #persona-description")'),
+      false,
+      'Login has no removed persona chooser',
+    );
+    assert.equal(await evaluate('document.querySelector("#username").value'), '');
+    assert.equal(await evaluate('document.querySelector("#password").value'), '');
     assert.equal(
       await evaluate('window.VacateFixtures.people.length'),
       0,
@@ -1913,11 +1906,6 @@ try {
       assert.deepEqual(errors, [], 'Unexpected organization keyboard exceptions');
       console.log('PASS: isolated trusted keyboard department/team/organization navigation');
     } else {
-      await evaluate(
-        'document.querySelector("#demo-account").value="maya";document.querySelector("#demo-account").dispatchEvent(new Event("change"))',
-      );
-      assert.equal(await evaluate('document.querySelector("#username").value'), 'maya');
-      assert.equal(await evaluate('document.querySelector("#password").value'), 'maya');
       const expected = [
         ['leah', 'Platform', 'Technology', 'lead'],
         ['ravi', 'Platform', 'Technology', 'employee'],
