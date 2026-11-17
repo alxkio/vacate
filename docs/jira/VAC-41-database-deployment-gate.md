@@ -4,7 +4,7 @@ type: task
 summary: Gate application deployment on database migration and verification
 status: qa
 created: 2026-11-06
-updated: 2026-11-06
+updated: 2026-11-17
 parent: null
 depends_on: []
 ---
@@ -62,6 +62,8 @@ None. Existing ADR-0004 and operator tooling are present. VAC-31 is the incident
 
 - C-6 · 2026-11-06 · Codex: Committed/pushed the verified -2 correction as `1558743`, then dispatched [full dev deployment 42234078829](https://github.com/alxkio/vacate/actions/runs/42234078829). Every job passed, including database migration/grant/schema verification, API/frontend publication and hosted smoke with the dev membership/request read probe. This attempt's readiness check succeeded without a logged retry; actual cold-start retry recovery is not established by that success. Issue remains QA pending the remaining SQL-provider scenarios and independent review.
 
+- C-7 · 2026-11-17 · Codex: Reproduced the supplied [PR #12](https://github.com/alxkio/vacate/pull/12) CI failure at `3a3f74d`: the database-ordering test rejected `continue-on-error` globally after a separate artifact-cleanup job intentionally added it. Scoped ordering, failure tolerance and release-lock inspection to the `deploy` job. Added positive cleanup isolation and negative cases for job/step failure tolerance and both plain/expression `always()` publication conditions. Deployment workflow, application/API code, SQL and tenant permissions are unchanged. Acceptance: cleanup may run after failures, while any failure-tolerant deployment/database/publication step or always-run publication still fails the guard. All 7 database workflow tests and all 27 Python script tests passed locally, with whitespace checks. This is offline CI verification, not SQL execution, hosted deployment or a new CI pass. Issue/backlog status, summary and dependencies remain QA/unchanged.
+
 ## Decisions
 
 - D-1 · 2026-11-06 · Founder acceptance: Database migration, runtime grants and verification precede API/frontend publication on every SQL backend release; separate identity, same-commit artifacts, environment serialization and compatible forward migrations are required. See the canonical deployment runbook and ADR-0004 amendment.
@@ -75,6 +77,7 @@ None. Existing ADR-0004 and operator tooling are present. VAC-31 is the incident
 | W-3   | 2026-11-06 | Codex / assistant, unmeasured | Handle reported first-connection SQL 40613 with read-only readiness retries and regression verification                   | Unknown  | Supplied deployment trace and local diff; no measured duration or live database change.        |
 | W-4   | 2026-11-06 | Codex / assistant, unmeasured | Commit/push and dispatch authorized dev deployment; inspect its timeout and correct read-only SqlClient -2 retry coverage | Unknown  | Workflow 42232427359, deployment-job log and local diff; no assistant/human duration measured. |
 | W-5   | 2026-11-06 | Codex / assistant, unmeasured | Push timeout correction, execute and monitor successful full dev deployment, record hosted evidence                       | Unknown  | Workflow 42234078829 and its deployment-job log; no measured assistant/human duration.         |
+| W-6   | 2026-11-17 | Codex / assistant, unmeasured | Reproduce PR #12 cleanup-related CI failure; scope database workflow guards and verify positive/negative regressions | Unknown | Supplied CI log, `python3 scripts/test_database_deployment.py`, and `python3 -m unittest discover -s scripts -p 'test_*.py'`; no measured duration. |
 
 Human actual: Unknown. Assistant duration: Unknown. Automation elapsed and estimates: not recorded.
 
