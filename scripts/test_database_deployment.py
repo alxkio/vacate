@@ -57,6 +57,17 @@ class DatabaseDeploymentWorkflowTests(unittest.TestCase):
         self.assertIn("always()", cleanup)
         self.assert_deployment_blocks_failure(self.workflow)
 
+    def test_reusable_ci_cleanup_permission_is_scoped_to_the_caller_job(self):
+        checks = self.job(self.workflow, "checks")
+        self.assertIn(
+            "    permissions:\n      contents: read\n      actions: write\n",
+            checks,
+        )
+        cleanup = self.job(self.ci, "cleanup-pr-artifacts")
+        self.assertIn("      actions: write", cleanup)
+        self.assertNotIn("actions: write", self.workflow[:self.workflow.index("jobs:")])
+        self.assertNotIn("actions: write", self.job(self.workflow, "deploy"))
+
     def test_failure_tolerance_in_deployment_is_rejected(self):
         mutations = [("  deploy:\n", "  deploy:\n    continue-on-error: true\n")]
         for name in ("Deploy and verify database", "Publish API", "Publish Angular"):

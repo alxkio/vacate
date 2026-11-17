@@ -33,6 +33,10 @@ concurrency:
 jobs:
   checks:
     if: github.event_name == 'workflow_dispatch' && inputs.apply
+    # Reusable CI's cleanup job requires permission at the caller boundary.
+    permissions:
+      contents: read
+      actions: write
     uses: ./.github/workflows/ci.yml
     with:
       skip_backend: ${{ !inputs.deploy_backend }}
