@@ -191,6 +191,7 @@ jobs:
       actions: write
     steps:
       - name: Delete pull request artifacts
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
