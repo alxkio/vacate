@@ -46,11 +46,15 @@ jobs:
           dotnet artifacts/database/Vacate.Database.dll script > artifacts/database/migrations.sql
           printf '%s\n' "$GITHUB_SHA" > artifacts/database/revision.txt
           python3 scripts/test_database_deployment.py
-      - uses: actions/upload-artifact@v7
+      - name: Upload database package
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v7
         with:
           name: database-package
           path: artifacts/database
           if-no-files-found: error
+          compression-level: 9
+          retention-days: 5
       - name: Publish Functions package
         run: dotnet publish api/src/Vacate.Api --configuration Release --no-restore --output artifacts/api -p:SourceRevisionId="$GITHUB_SHA"
       - name: Verify package and run Functions host from source
@@ -73,12 +77,16 @@ jobs:
       - name: Host diagnostics
         if: failure()
         run: cat "$RUNNER_TEMP/functions.log" 2>/dev/null || true
-      - uses: actions/upload-artifact@v7
+      - name: Upload Functions package
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v7
         with:
           name: functions-package
           path: artifacts/api
           include-hidden-files: true
           if-no-files-found: error
+          compression-level: 9
+          retention-days: 5
   frontend:
     runs-on: ubuntu-24.04
     defaults:
@@ -111,11 +119,14 @@ jobs:
           node --test testing/verify-chrome-startup.mjs
           python3 ../scripts/test_cloud_smoke.py
           python3 ../scripts/prepare-frontend.py --frontend-output dist/vacate-web/browser --revision "$GITHUB_SHA"
-      - uses: actions/upload-artifact@v7
+      - name: Upload Angular production build
+        uses: actions/upload-artifact@v7
         with:
           name: angular-production
           path: frontend/dist/vacate-web/browser
           if-no-files-found: error
+          compression-level: 9
+          retention-days: 1
 
   api-web:
     if: ${{ !inputs.skip_backend }}
@@ -159,7 +170,7 @@ jobs:
         if: failure()
         run: cat "$RUNNER_TEMP/functions-paired.log" 2>/dev/null || true
       - name: Browser failure evidence
-        if: failure()
+        if: ${{ failure() && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v7
         with:
           name: native-input-failure
@@ -169,3 +180,23 @@ jobs:
             ${{ runner.temp }}/vacate-api-browser-previews/chrome-startup.json
             ${{ runner.temp }}/vacate-api-browser-previews/chrome-stderr.log
           if-no-files-found: ignore
+          compression-level: 9
+          retention-days: 5
+
+  cleanup-pr-artifacts:
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    needs: [frontend, api-web]
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+    steps:
+      - name: Delete pull request artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[].id' |
+            while read -r id; do
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
+            done
