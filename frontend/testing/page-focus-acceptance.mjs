@@ -147,6 +147,7 @@ export async function runPageFocusAcceptance({
     await noPageFrame('Administrator login return');
 
     const openSystem = async () => {
+      await click('[data-action=account]');
       await click('[data-nav=settings]');
       await waitFor('!!document.querySelector("[data-settings-section=system]")');
       await click('[data-settings-section=system]');
@@ -192,6 +193,7 @@ export async function runPageFocusAcceptance({
         await waitFor('!!document.querySelector(".people-table [data-edit-membership]")');
         await screenshot(`page-focus-admin-people-brown-${width}.png`);
         await visibleRing('.people-table [data-edit-membership]');
+        await click('[data-action=account]');
         await click('[data-nav=settings]');
         await waitFor(
           '!!document.querySelector("vacate-unified-settings") && document.activeElement === document.querySelector("main#main")',

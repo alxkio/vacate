@@ -665,6 +665,7 @@ try {
     );
   };
   const saveDisplayPreferences = async (layout, colorScheme) => {
+    await click('[data-action=account]');
     await click('[data-nav=settings]');
     await waitFor('!!document.querySelector("[data-settings-section=system]")');
     await click('[data-settings-section=system]');
@@ -1169,6 +1170,7 @@ try {
       const ledgerBefore = await evaluate(
         'JSON.stringify(window.VacateFixtures.balancesFor(window.VacateSession.currentUser()))',
       );
+      await click('[data-action=account]');
       await click('[data-nav=settings]');
       await click('[data-settings-section=organization]');
       await waitFor('!!document.querySelector("#organization-form")');
@@ -1249,6 +1251,7 @@ try {
       assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'), true);
       await screenshot('organization-team-mobile.png');
       await viewport(1600, 1250);
+      await click('[data-action=account]');
       await click('[data-nav=settings]');
       await waitFor('!!document.querySelector("#profile-form")');
       assert.match(
@@ -1720,7 +1723,7 @@ try {
       await ready();
       assert.equal(
         await evaluate('document.querySelectorAll("nav#navigation [data-nav=settings]").length'),
-        1,
+        0,
       );
       assert.equal(
         await evaluate('!!document.querySelector(".topbar .sign-out,.topbar #demo-person")'),
@@ -1736,6 +1739,7 @@ try {
         ),
         false,
       );
+      await click('[data-action=account]');
       await click('[data-nav=settings]');
       await waitFor('!!document.querySelector("#profile-form")');
       assert.equal(
@@ -1900,6 +1904,7 @@ try {
       assert.equal(await evaluate('document.querySelectorAll(".org-members li").length'), 3);
       await keyboardClick('.org-breadcrumb button:first-child');
       await keyboardClick('[data-nav=calendar]');
+      await keyboardClick('[data-action=account]');
       await keyboardClick('[data-nav=settings]');
       await keyboardClick('[data-settings-section=organization]');
       await waitFor('!!document.querySelector("#organization-form")');
@@ -2963,10 +2968,11 @@ try {
           'org',
           'Account-change submit restores the new persona default',
         );
-        // VAC-12: real form, both settings entrances, account isolation and mobile.
+        // VAC-12: real form, account-menu entry, account isolation and mobile.
         await signOut();
         await signIn('maya', 'maya');
         await ready();
+        await click('[data-action=account]');
         await click('[data-nav=settings]');
         await waitFor('!!document.querySelector("#profile-form")');
         assert.equal(await evaluate('document.querySelector("#profile-first-name").value'), 'Maya');
@@ -3032,6 +3038,7 @@ try {
         await waitFor('!!document.querySelector("#login-form")');
         await signIn('nora', 'nora');
         await ready();
+        await click('[data-action=account]');
         await click('[data-nav=settings]');
         await waitFor('!!document.querySelector("#profile-form")');
         assert.equal(await evaluate('document.querySelector("#profile-first-name").value'), 'Nora');
@@ -3060,7 +3067,7 @@ try {
           'window.VacateSession.currentUser() && fetch(window.__vacateAcceptanceApiBase+"/users/20000000-0000-4000-8000-000000000004",{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"Bearer "+sessionStorage.getItem("vacate.session.token")},body:JSON.stringify({firstName:"Maya",gender:"woman",married:true,dependentChildren:2,soleCare:false})})',
         );
         console.log(
-          'PASS: VAC-12 sidebar/avatar settings, family validation, save/cancel, name/eligibility refresh, read-only membership, keyboard/Escape, mobile, direct entry, account isolation and API persistence.',
+          'PASS: VAC-12 account-menu settings, family validation, save/cancel, name/eligibility refresh, read-only membership, keyboard/Escape, mobile, direct entry, account isolation and API persistence.',
         );
         await organizationAcceptance();
         await feedbackAcceptance();
