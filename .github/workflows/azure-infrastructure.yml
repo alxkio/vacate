@@ -1,12 +1,6 @@
 name: Deploy Azure
 
 on:
-  pull_request:
-    paths:
-      - "infra/**"
-      - "scripts/verify-sql-free-template.py"
-      - "scripts/verify-functions-template.py"
-      - ".github/workflows/azure-infrastructure.yml"
   workflow_dispatch:
     inputs:
       environment:
@@ -27,8 +21,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: azure-validation-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: azure-validation-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   checks:

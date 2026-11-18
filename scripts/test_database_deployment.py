@@ -68,6 +68,28 @@ class DatabaseDeploymentWorkflowTests(unittest.TestCase):
         self.assertNotIn("actions: write", self.workflow[:self.workflow.index("jobs:")])
         self.assertNotIn("actions: write", self.job(self.workflow, "deploy"))
 
+    def test_pr_infrastructure_validation_belongs_to_the_single_ci_workflow(self):
+        deploy_triggers = self.workflow.split("permissions:", 1)[0]
+        ci_triggers = self.ci.split("permissions:", 1)[0]
+        self.assertIn("  workflow_dispatch:", deploy_triggers)
+        self.assertNotIn("  pull_request:", deploy_triggers)
+        self.assertNotIn("  push:", deploy_triggers)
+        self.assertIn("  pull_request:", ci_triggers)
+        self.assertIn("  workflow_call:", ci_triggers)
+        self.assertNotIn("  push:", ci_triggers)
+        infrastructure = self.job(self.ci, "infrastructure")
+        self.assertIn("if: github.event_name == 'pull_request'", infrastructure)
+        # Both entry points must retain every environment and mandatory template gate.
+        for job in (infrastructure, self.job(self.workflow, "compile")):
+            self.assertIn("az bicep build --file infra/main.bicep", job)
+            self.assertIn("scripts/verify-functions-template.py", job)
+            self.assertIn("infra/deployments/sql-access.bicep", job)
+            self.assertIn("scripts/verify-sql-free-template.py", job)
+            self.assertIn("for environment in dev staging prod", job)
+            self.assertIn("az bicep build-params", job)
+            self.assertNotIn("azure/login", job)
+            self.assertNotIn("continue-on-error", job)
+
     def test_failure_tolerance_in_deployment_is_rejected(self):
         mutations = [("  deploy:\n", "  deploy:\n    continue-on-error: true\n")]
         for name in ("Deploy and verify database", "Publish API", "Publish Angular"):

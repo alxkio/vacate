@@ -4,7 +4,7 @@ type: task
 summary: Avoid duplicate CI triggers and preview application builds
 status: qa
 created: 2026-11-05
-updated: 2026-11-05
+updated: 2026-11-18
 parent: null
 depends_on: []
 ---
@@ -78,3 +78,17 @@ Local checks passed: see [verification and event matrix](media/VAC-38/verificati
 ## Open questions and follow-up
 
 Hosted PR and full apply passed through the VAC-39 release; hosted preview, failed/skipped dependency and cancellation scenarios remain unobserved. Required PR checks and protection against direct master pushes are repository settings outside these files and were not changed. Additional reduction across successful CI and deployment requires a separate exact-revision artifact provenance design; this task retains the deployment gate.
+
+## Owner-feedback subtask · One PR workflow · 2026-11-18
+
+C3 · Assistant: the owner supplied PR #12's Actions list showing both CI #67 and Deploy Azure #48. The second run was infrastructure compilation triggered by deployment-workflow path changes, not an Azure deployment. The owner requested a single PR workflow. This supersedes the separate infrastructure PR run described in the historical verification matrix.
+
+D2 · Owner-requested refinement: CI is the sole automatic PR workflow. Add its `infrastructure` job to compile Bicep, SQL/firewall templates and all dev/staging/prod parameters without credentials, preserving the existing Functions and zero-cost SQL checks. This job runs on every PR, alongside application jobs. Deploy Azure exposes only `workflow_dispatch`; manual preview/apply still owns its original compile job, and reused application CI skips the PR-only infrastructure job. Preserve same-revision artifacts, manual apply gates, permissions, environment serialization and no deployment on merge.
+
+Acceptance: a PR update creates only CI, with backend/frontend/paired-browser and infrastructure validation. Manual preview still compiles before Azure validation/what-if; manual apply still requires successful application and infrastructure checks. No application/API/data/tenant behavior changes; existing tenant-isolation checks remain enabled. Branch-protection settings are UNVERIFIED and unchanged; an existing required Deploy Azure check would need owner adjustment after merge.
+
+Verification: nine offline deployment/workflow regression tests passed, including trigger ownership and mandatory template gates at both PR/manual entry points. Both workflow YAML files parse; changed-file whitespace checks passed. [Deployment guidance](../../infra/README.md) now identifies CI as the infrastructure PR check. Hosted observation of the new trigger policy is pending push; no manual Azure run is requested. Status, summary and dependencies remain unchanged, so the backlog row is unchanged.
+
+W2 · 2026-11-18 · Assistant recorded · Review screenshot/event ownership, consolidate PR checks and verify deployment gates · Duration Unknown (not measured); human actual Unknown. No inferred time totals.
+
+The complete offline script suite passed 29 tests; all embedded Bash in both workflows passed `bash -n`. The preceding Linux application CI at `bd0720e` passed all backend/frontend/browser jobs before this scheduling-only update.
