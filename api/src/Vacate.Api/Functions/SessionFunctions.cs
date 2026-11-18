@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Vacate.Api.Http;
 using Vacate.Application.Identity;
 using static Vacate.Api.Http.Endpoint;
 

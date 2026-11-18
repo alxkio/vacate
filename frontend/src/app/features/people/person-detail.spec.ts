@@ -57,8 +57,22 @@ describe('Person detail resource boundaries', () => {
     await vi.waitFor(() => expect(fixture.componentInstance.loading).toBe(false));
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Fictional Member');
-    expect(fixture.nativeElement.textContent).toContain('Account identity is read-only');
+    expect(fixture.nativeElement.textContent).toContain('fiction@example.invalid');
     expect(fixture.nativeElement.querySelector('[name="married"]')).toBeNull();
+  });
+
+  it('keeps the overview above recorded leave by default with a switch to membership editing', async () => {
+    const fixture = TestBed.createComponent(PersonDetail);
+    fixture.componentRef.setInput('personGuid', personGuid);
+    fixture.detectChanges();
+    await vi.waitFor(() => expect(fixture.componentInstance.loading).toBe(false));
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('dl')).not.toBeNull();
+    expect(element.querySelector('#person-history')?.textContent).toContain('Recorded leave');
+    expect(element.querySelector('vacate-organization')).toBeNull();
+    expect(element.querySelector('[data-edit-membership]')).not.toBeNull();
+    expect(element.querySelector('[data-show-leave]')).toBeNull();
   });
 
   it.each(['employee', 'malformed', 'foreign-company', 'mismatched-membership'])(

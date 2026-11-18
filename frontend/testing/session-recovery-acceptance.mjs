@@ -77,6 +77,7 @@ export async function runSessionRecoveryAcceptance({
     }
 
     failResponseOnce('/api/organizations/20000000-0000-4000-8000-000000000100/summary', 503);
+    await click('[data-action=account]');
     await click('[data-nav=settings]');
     await waitFor('!!document.querySelector("#retry-session")');
     const settingsReturn = await evaluate('new URLSearchParams(location.search).get("returnUrl")');

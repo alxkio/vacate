@@ -1,18 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { fixtureWorkspaceProvider } from '../../../../testing/fixture-provider';
-import { WorkspaceDataService } from '../../core/state/workspace-data.service';
 import { of } from 'rxjs';
 import { SessionApiService } from '../../core/http/session-api.service';
 import { Login } from './login';
 
 const personas = [
-  ['maya', 'Employee', 'employee'],
-  ['leah', 'Team lead', 'lead'],
-  ['ella', 'Department lead', 'lead'],
-  ['nora', 'Organization admin', 'admin'],
+  ['maya', 'Employee'],
+  ['leah', 'Team lead'],
+  ['ella', 'Department lead'],
+  ['nora', 'Organization admin'],
 ];
 
-describe('Test persona chooser', () => {
+describe('Login screen', () => {
   beforeEach(() => {
     sessionStorage.clear();
     TestBed.configureTestingModule({
@@ -32,52 +31,18 @@ describe('Test persona chooser', () => {
 
   afterEach(() => sessionStorage.clear());
 
-  it('offers one option per scenario while retaining all twelve people and their fixture data', async () => {
-    const data = TestBed.inject(WorkspaceDataService);
-    const before = JSON.stringify({ people: data.fixtures.people, entries: data.fixtures.entries });
+  it('lists the public demo accounts without a persona chooser or development notice', async () => {
     const fixture = TestBed.createComponent(Login);
     await fixture.whenStable();
     fixture.detectChanges();
-    const options = [
-      ...fixture.nativeElement.querySelectorAll('#demo-account option'),
-    ] as HTMLOptionElement[];
-    expect(options.filter((option) => option.value).map((option) => option.value)).toEqual(
-      personas.map(([id]) => id),
-    );
-    expect(data.fixtures.people).toHaveLength(12);
-    expect(JSON.stringify({ people: data.fixtures.people, entries: data.fixtures.entries })).toBe(
-      before,
-    );
-    expect(fixture.nativeElement.querySelector('.demo-credentials').textContent).not.toContain(
-      'user / user',
-    );
-    expect(fixture.nativeElement.querySelector('.demo-credentials').textContent).not.toContain(
-      'Every person',
-    );
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('#demo-account')).toBeNull();
+    expect(element.textContent).not.toContain('test persona');
+    expect(element.textContent).not.toContain('Development sign-in with public test accounts');
+    const credentials = element.querySelector('.demo-credentials')!.textContent!;
+    for (const [id, label] of personas) {
+      expect(credentials).toContain(label);
+      expect(credentials).toContain(`${id} / ${id}`);
+    }
   });
-
-  it.each(personas)(
-    'fills the existing credentials for %s (%s) without changing its permissions',
-    async (id, label, capability) => {
-      const data = TestBed.inject(WorkspaceDataService);
-      const fixture = TestBed.createComponent(Login);
-      await fixture.whenStable();
-      fixture.detectChanges();
-      const element = fixture.nativeElement as HTMLElement;
-      const select = element.querySelector('#demo-account') as HTMLSelectElement;
-      select.value = id;
-      select.dispatchEvent(new Event('change'));
-      fixture.detectChanges();
-      expect((element.querySelector('#username') as HTMLInputElement).value).toBe(id);
-      expect((element.querySelector('#password') as HTMLInputElement).value).toBe(id);
-      expect(element.querySelector('#persona-description')!.textContent).toContain(label);
-      expect(data.fixtures.person(id)?.capability).toBe(capability);
-      expect(data.fixtures.peopleFor(data.fixtures.person(id)!, 'org', 'foreign-company')).toEqual(
-        [],
-      );
-      if (capability === 'lead') {
-        expect(data.fixtures.allowedScopes(data.fixtures.person(id)!)).toContain('department');
-      }
-    },
-  );
 });

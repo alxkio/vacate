@@ -30,26 +30,10 @@
   <section class="login-card" aria-labelledby="login-title">
     <span class="eyebrow">VACATE DEMO</span>
     <h2 id="login-title">Welcome back.</h2>
-    <p>Choose a test account from the organization’s saved data.</p>
     @if (accountsError) {
       <p role="status">{{ accountsError }}</p>
       <button type="button" class="secondary" (click)="loadAccounts()">Retry test accounts</button>
     }
-    <label for="demo-account">Choose a test persona</label
-    ><select
-      #account
-      id="demo-account"
-      aria-describedby="persona-description"
-      (change)="choose(account.value, username, password, description)"
-    >
-      <option value="">Choose a persona…</option>
-      @for (persona of personas; track persona.id) {
-        <option [value]="persona.id">{{ persona.label }} · {{ persona.name }}</option>
-      }
-    </select>
-    <p #description id="persona-description" class="login-note">
-      Select a persona to fill their public demo credentials.
-    </p>
     @if (sessionEnded) {
       <p role="status" class="login-note">
         Your session ended. Sign in again to return to your previous page.
@@ -108,10 +92,6 @@
       }
       <p>Lead settings access depends on assigned scope and organization delegation.</p>
     </div>
-    <p class="login-note">
-      Development sign-in with public test accounts. Reference examples are downloadable. Submitted
-      requests and settings save through the API. Use test data only.
-    </p>
     <noscript><p>Enable JavaScript to use this interactive demo.</p></noscript>
   </section>
 </main>

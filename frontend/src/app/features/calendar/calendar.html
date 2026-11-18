@@ -156,11 +156,14 @@
   <ng-container [ngTemplateOutlet]="agenda" [ngTemplateOutletContext]="{ mobile: false }" />
 } @else if (state.layout === 'planner') {
   <p class="planner-description">
-    {{
+      <span>{{
       state.scope === 'self'
         ? 'Your all-day leave'
         : 'People in ' + scopeName + ' · availability only'
-    }}
+      }}</span>
+      @if (people.length > 1) {
+        <span class="planner-count">{{ people.length }} people</span>
+      }
   </p>
   <div class="planner-scroll">
     <table
@@ -180,9 +183,7 @@
       </caption>
       <thead>
         <tr>
-          <th class="person-cell" scope="col">
-            {{ people.length }} {{ state.scope === 'self' ? 'person' : 'people' }}
-          </th>
+          <th class="person-cell" scope="col"><span class="sr-only">Person</span></th>
           @for (date of plannerDates; track dateKey(date)) {
             <th scope="col" [class.today-col]="dateKey(date) === today">
               <small>{{ date.toLocaleDateString('en-GB', { weekday: 'short' }) }}</small

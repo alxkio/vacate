@@ -193,6 +193,9 @@ describe('API-backed demo state', () => {
     http
       .expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/summary')
       .flush({}, { status: 503, statusText: 'Unavailable' });
+    http
+      .expectOne('/api/organizations/20000000-0000-4000-8000-000000000100/workspace')
+      .flush({}, { status: 503, statusText: 'Unavailable' });
     await initialization;
     expect(api.profiles.read()).toBeNull();
     expect(api.organization.summary()).toBeNull();

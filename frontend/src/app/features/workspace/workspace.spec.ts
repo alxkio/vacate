@@ -109,9 +109,10 @@ describe('Workspace navigation', () => {
     expect(returned.balanceViewState.showAll).toBe(false);
   });
 
-  it('has one Settings entry, no separate organization or personal balance entry and sign-out only in the profile menu', async () => {
+  it('keeps Settings and Help out of the left menu and sign-out only in the profile menu', async () => {
     const { page, harness, element } = await setup('/index.html?page=settings');
-    expect(element.querySelectorAll('nav#navigation [data-nav="settings"]').length).toBe(1);
+    expect(element.querySelector('nav#navigation [data-nav="settings"]')).toBeNull();
+    expect(element.querySelector('nav#navigation [data-nav="help"]')).toBeNull();
     expect(element.querySelector('[data-nav="organization-settings"]')).toBeNull();
     expect(element.querySelector('nav#navigation [data-nav="balances"]')).toBeNull();
     expect(

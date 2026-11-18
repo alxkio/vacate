@@ -118,8 +118,6 @@ export class Workspace implements OnInit, OnDestroy {
     { id: 'leave', name: 'My leave & balances', icon: '☀', admin: false },
     { id: 'people', name: 'People', icon: '♧', admin: false },
     { id: 'approvals', name: 'Approval Requests', icon: '☑', admin: true },
-    { id: 'settings', name: 'Settings', icon: '⚙', admin: false },
-    { id: 'help', name: 'Help & feedback', icon: '?', admin: false },
   ];
   settingsSection = 'profile';
   mobileOpen = false;

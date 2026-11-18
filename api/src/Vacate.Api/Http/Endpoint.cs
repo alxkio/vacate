@@ -2,9 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 using Vacate.Application.Common;
 using Vacate.Application.Memberships.Commands;
-using Vacate.Application.Organizations.Commands;
 using Vacate.Application.Users.Commands;
 using Vacate.Domain.Common;
 
@@ -28,7 +28,8 @@ public static class Endpoint
             var body = new JsonObject();
             if (request.Method is "POST" or "PATCH" or "PUT")
             {
-                if (request.ContentType?.Split(';')[0] != "application/json")
+                if (!MediaTypeHeaderValue.TryParse(request.ContentType, out var media)
+                    || !media.MediaType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new RequestException(415, "Use application/json.");
                 }
@@ -63,7 +64,7 @@ public static class Endpoint
         }
         catch (DomainValidationException error) { return Error(400, error.Message); }
         catch (DomainConflictException error) { return Error(409, error.Message); }
-        catch (Exception error) when (error is JsonException or InvalidOperationException or FormatException or OverflowException or ArgumentException)
+        catch (Exception error) when (error is JsonException or FormatException or OverflowException)
         {
             return Error(400, "Invalid JSON field type or value.");
         }

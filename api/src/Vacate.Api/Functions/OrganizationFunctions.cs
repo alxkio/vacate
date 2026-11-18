@@ -2,14 +2,12 @@ using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Vacate.Api.Http;
 using Vacate.Application.Common;
 using Vacate.Application.Identity;
 using Vacate.Application.Memberships;
 using Vacate.Application.Memberships.Commands;
 using Vacate.Application.Organizations;
 using Vacate.Application.Organizations.Commands;
-using Vacate.Domain.Common;
 using static Vacate.Api.Http.Endpoint;
 
 namespace Vacate.Api.Functions;

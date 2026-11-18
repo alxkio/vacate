@@ -97,7 +97,7 @@ export async function runNavigationRoutesAcceptance({
     changed = true;
     await click('#membership-form button[type=submit]');
     await waitFor(
-      `location.pathname===${JSON.stringify('/people/' + person)} && !!document.querySelector('.person-tabs') && !document.querySelector('#membership-form')`,
+      `location.pathname===${JSON.stringify('/people/' + person)} && !!document.querySelector('#person-history') && !!document.querySelector('vacate-person-detail [data-edit-membership]') && !document.querySelector('#membership-form')`,
     );
     assert.equal(
       (await api('GET', membershipPath, adminToken)).data.membership.balance.customAllocation,

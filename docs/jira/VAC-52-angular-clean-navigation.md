@@ -4,7 +4,7 @@ type: task
 summary: Implement clean Angular routes and GUID-based detail navigation
 status: qa
 created: 2026-11-15
-updated: 2026-11-15
+updated: 2026-11-17
 parent: null
 depends_on: []
 ---
@@ -80,3 +80,17 @@ Follow the [VAC-42 lean-page refinement](VAC-42-implemented-page-design-review.m
 2026-11-16 local verification: [lean-page evidence and rendered samples](media/VAC-52/lean-pages-verification.md), including the [55-operation Angular/API parameter audit](media/VAC-52/route-parameter-audit.md). Complete browser/trusted-keyboard regression and 123 Angular tests passed with build/types/schema checks. No API, database, deployment or issue-metadata/backlog change.
 
 Owner then explicitly requested local QA, commit and push. Fresh tests/build/types passed. PR #10 is already merged, so the reviewed follow-up is prepared on `VAC-52-lean-page-refinements`; unrelated local notes and separate PR #9 database work are excluded. No merge or deployment is requested. Assistant work unmeasured; human actual Unknown. [Commit preparation and QA scope](media/VAC-52/lean-pages-verification.md#commit-preparation--2026-11-16).
+
+## PR #12 browser regression · 2026-11-17
+
+The owner supplied the paired-browser failure from [CI run 44176494130](https://github.com/alxkio/vacate/actions/runs/44176494130). Backend, frontend and API projection checks passed, but browser acceptance waited for twelve `#demo-account` options. Owner commit `eb27ec4` had intentionally removed that chooser and its automatic credential filling; the current login unit test explicitly requires its absence. The live page instead lists API-backed public credential hints. No application regression or missing API roster is inferred from the obsolete selector.
+
+Update acceptance to require all twelve displayed credential/role pairs from the fixture API, no chooser/description control, initially empty credential inputs, no unauthenticated company roster, and the existing invalid/manual-login and twelve-account isolation journeys. Keep the twelve-account count, auth checks and trusted-input assertions. Also replace the removed `.person-tabs` post-save expectation with the current recorded-leave and membership-edit controls; retain the exact GUID route, editor closure and server allocation readback checks. Application, API, data, permissions and current UI are unchanged.
+
+Local verification: the current production Angular build and fixture API build passed; the latter had zero warnings/errors. Eight targeted login/person-detail component tests passed, along with JavaScript syntax, formatting and whitespace checks. The initial browser attempt was stopped because the existing temporary Core Tools install lacked its workers directory and the API host could not start. A fresh pinned 4.16.0 runtime is being installed under `/private/tmp` for complete browser verification; that result and new Linux CI remain pending. Existing successful CI backend/frontend jobs do not establish this browser correction passed. No SQL-provider, hosted or release claim.
+
+Assistant work unmeasured; human actual Unknown. Existing QA status, summary and dependencies remain unchanged, so the backlog row is unchanged. Unrelated local notes remain excluded; no merge or deployment is requested.
+
+The next [Linux run 44179841494](https://github.com/alxkio/vacate/actions/runs/44179841494) passed login and all twelve account/isolation journeys, then exposed another obsolete assumption: Settings is available through the account menu, and its sidebar entry was intentionally removed. A fresh local full browser run reproduced the same missing Settings selector. Update affected display/profile/organization, navigation, session-recovery and page-focus journeys to open the account menu first, including the trusted keyboard route; assert there is no Settings sidebar item. Preserve profile/save, authorization, focus/recovery and persistence assertions. The isolated Core Tools 4.16.0 installation now starts successfully; the corrected full browser run is in progress against fresh InMemory fixtures.
+
+The corrected full local run passed trusted keyboard delivery, all twelve account/scope/privacy checks, logout history, saved leave, both display layouts/palettes, profile persistence and organization/membership journeys. It then stopped with a Chrome CDP `Runtime.evaluate` timeout in policy-feedback cleanup, rather than either reported selector failure; complete-suite success is not claimed. Isolated policy-feedback verification and a new Linux CI run are pending. Changed JavaScript syntax, formatting and scoped whitespace checks passed.
