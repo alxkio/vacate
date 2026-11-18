@@ -1,7 +1,10 @@
 """Offline regression checks for release ordering and mandatory database gates."""
 
+from itertools import product
 from pathlib import Path
+import os
 import re
+import subprocess
 import unittest
 
 
@@ -57,16 +60,104 @@ class DatabaseDeploymentWorkflowTests(unittest.TestCase):
         self.assertIn("always()", cleanup)
         self.assert_deployment_blocks_failure(self.workflow)
 
-    def test_reusable_ci_cleanup_permission_is_scoped_to_the_caller_job(self):
-        checks = self.job(self.workflow, "checks")
-        self.assertIn(
-            "    permissions:\n      contents: read\n      actions: write\n",
-            checks,
-        )
+    def test_artifact_cleanup_permission_is_scoped_to_cleanup_jobs(self):
         cleanup = self.job(self.ci, "cleanup-pr-artifacts")
         self.assertIn("      actions: write", cleanup)
+        self.assertIn("      actions: write", self.job(self.workflow, "cleanup-artifacts"))
         self.assertNotIn("actions: write", self.workflow[:self.workflow.index("jobs:")])
+        self.assertNotIn("actions: write", self.job(self.workflow, "build"))
         self.assertNotIn("actions: write", self.job(self.workflow, "deploy"))
+
+    def test_apply_builds_master_without_repeating_pr_tests(self):
+        build = self.job(self.workflow, "build")
+        self.assertIn("inputs.apply", build.split("steps:")[0])
+        guard = build.index("Require master for application deployment")
+        checkout = build.index("actions/checkout")
+        self.assertLess(guard, checkout)
+        self.assertIn('"$GITHUB_REF" != \'refs/heads/master\'', build[guard:checkout])
+        self.assertIn("exit 1", build[guard:checkout])
+        self.assertNotIn("uses: ./.github/workflows/ci.yml", self.workflow)
+        for command in ("dotnet test", "npm test", "verify.mjs", "verify-api.py"):
+            self.assertNotIn(command, build)
+        self.assertIn("dotnet publish api/src/Vacate.Api", build)
+        self.assertIn("dotnet publish api/tools/Vacate.Database", build)
+        self.assertIn("npm ci", build)
+        self.assertIn("npm run build -- --configuration production", build)
+        self.assertIn("scripts/prepare-frontend.py", build)
+        self.assertIn("include-hidden-files: true", build)
+        self.assertIn("if-no-files-found: error", build)
+        # Application tests remain in PR CI; only the deployment caller changes.
+        for command in ("dotnet test", "npm test", "node frontend/verify.mjs"):
+            self.assertIn(command, self.ci)
+
+    def test_build_guard_rejects_feature_branches_and_tags(self):
+        build = self.job(self.workflow, "build")
+        guard = re.search(
+            r"      - name: Require master.*?        run: \|\n(.*?)(?=      -)",
+            build,
+            re.S,
+        ).group(1)
+        for ref in ("refs/heads/master", "refs/heads/feature", "refs/tags/v1", ""):
+            result = subprocess.run(
+                ["bash", "-c", guard],
+                env={**os.environ, "GITHUB_REF": ref},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            with self.subTest(ref=ref):
+                self.assertEqual(result.returncode == 0, ref == "refs/heads/master")
+                if result.returncode:
+                    self.assertIn("Merge a green PR first", result.stderr)
+
+    def test_deploy_consumes_only_this_runs_artifacts_and_cleans_up_even_on_failure(self):
+        release = self.job(self.workflow, "deploy")
+        self.assertIn("needs: [compile, build]", release)
+        self.assertEqual(release.count("uses: actions/download-artifact@v8"), 3)
+        self.assertNotIn("run-id:", release)
+        self.assertNotIn("github-token:", release)
+        for name in ("database-package", "functions-package", "angular-production"):
+            self.assertIn("name: " + name, self.job(self.workflow, "build"))
+            self.assertIn("name: " + name, release)
+        cleanup = self.job(self.workflow, "cleanup-artifacts")
+        self.assertIn("always()", cleanup)
+        self.assertIn("needs: [build, deploy]", cleanup)
+        self.assertIn("actions/runs/$GITHUB_RUN_ID/artifacts", cleanup)
+        self.assertIn(
+            "actions/runs/$GITHUB_RUN_ID/artifacts",
+            self.job(self.ci, "cleanup-pr-artifacts"),
+        )
+
+    def test_preview_and_apply_gate_matrix(self):
+        release = self.job(self.workflow, "deploy")
+        condition = re.search(r"^    if: \$\{\{ (.*) \}\}", release, re.M).group(1)
+        states = ("success", "failure", "skipped", "cancelled")
+        for apply, cancelled, compile_state, build_state, event in product(
+            (False, True), (False, True), states, states, ("workflow_dispatch", "pull_request")
+        ):
+            expression = condition
+            for name, value in {
+                "cancelled()": cancelled,
+                "github.event_name": event,
+                "needs.compile.result": compile_state,
+                "needs.build.result": build_state,
+                "inputs.apply": apply,
+            }.items():
+                expression = expression.replace(name, repr(value))
+            expression = expression.replace("&&", " and ")
+            expression = expression.replace("||", " or ").replace("!", "not ")
+            allowed = eval(expression, {"__builtins__": {}}, {})
+            expected = (
+                not cancelled
+                and event == "workflow_dispatch"
+                and compile_state == "success"
+                and (not apply or build_state == "success")
+            )
+            with self.subTest(
+                apply=apply, cancelled=cancelled, compile=compile_state,
+                build=build_state, event=event,
+            ):
+                self.assertEqual(allowed, expected)
 
     def test_pr_infrastructure_validation_belongs_to_the_single_ci_workflow(self):
         deploy_triggers = self.workflow.split("permissions:", 1)[0]

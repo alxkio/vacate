@@ -13,7 +13,7 @@ on:
         type: boolean
         default: false
       deploy_backend:
-        description: Build, test and publish API (required for API-backed feature changes)
+        description: Build and publish API (required for API-backed feature changes)
         type: boolean
         default: true
 
@@ -25,15 +25,82 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  checks:
+  build:
     if: github.event_name == 'workflow_dispatch' && inputs.apply
-    # Reusable CI's cleanup job requires permission at the caller boundary.
-    permissions:
-      contents: read
-      actions: write
-    uses: ./.github/workflows/ci.yml
-    with:
-      skip_backend: ${{ !inputs.deploy_backend }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require master for application deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != 'refs/heads/master' ]]; then
+            echo 'Application deployment must run from master. Merge a green PR first.' >&2
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-dotnet@v5
+        if: inputs.deploy_backend
+        with:
+          global-json-file: global.json
+      - name: Build API and database packages
+        if: inputs.deploy_backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet restore api/src/Vacate.Api/Vacate.Api.csproj --locked-mode
+          dotnet restore api/tools/Vacate.Database/Vacate.Database.csproj --locked-mode
+          dotnet publish api/src/Vacate.Api --configuration Release --no-restore --output artifacts/api -p:SourceRevisionId="$GITHUB_SHA"
+          dotnet publish api/tools/Vacate.Database --configuration Release --no-restore --output artifacts/database -p:SourceRevisionId="$GITHUB_SHA"
+          dotnet artifacts/database/Vacate.Database.dll script > artifacts/database/migrations.sql
+          printf '%s\n' "$GITHUB_SHA" > artifacts/database/revision.txt
+          test -f artifacts/api/host.json
+          test -f artifacts/api/worker.config.json
+          test -f artifacts/api/.azurefunctions/function.deps.json
+          jq -e '.description.language == "dotnet-isolated" and .description.workerIndexing == "true"' artifacts/api/worker.config.json
+          if find artifacts/api -name 'local.settings*.json' -o -name 'appsettings*.json' | grep -q .; then
+            echo 'Local configuration must not be published' >&2
+            exit 1
+          fi
+      - name: Build Angular package
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build -- --configuration production
+          python3 ../scripts/prepare-frontend.py --frontend-output dist/vacate-web/browser --revision "$GITHUB_SHA"
+      - name: Upload database package
+        if: inputs.deploy_backend
+        uses: actions/upload-artifact@v7
+        with:
+          name: database-package
+          path: artifacts/database
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 1
+      - name: Upload Functions package
+        if: inputs.deploy_backend
+        uses: actions/upload-artifact@v7
+        with:
+          name: functions-package
+          path: artifacts/api
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 1
+      - name: Upload Angular production build
+        uses: actions/upload-artifact@v7
+        with:
+          name: angular-production
+          path: frontend/dist/vacate-web/browser
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 1
 
   compile:
     runs-on: ubuntu-24.04
@@ -55,9 +122,9 @@ jobs:
           done
 
   deploy:
-    # Preview permits skipped application checks; apply requires their success.
-    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && needs.compile.result == 'success' && (!inputs.apply || needs.checks.result == 'success') }}
-    needs: [compile, checks]
+    # Preview permits a skipped build; apply requires fresh packages from this run.
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && needs.compile.result == 'success' && (!inputs.apply || needs.build.result == 'success') }}
+    needs: [compile, build]
     runs-on: ubuntu-24.04
     concurrency:
       group: azure-infrastructure-${{ inputs.environment }}
@@ -238,13 +305,14 @@ jobs:
           if [[ "$DEPLOY_BACKEND" == 'true' ]]; then
             printf '\nBackend: deployed and checked at the same revision\n\nAPI health: %s/api/health\n' "$API_URL" >> "$GITHUB_STEP_SUMMARY"
           else
-            printf '\nBackend: build/tests/publish and API smoke skipped; existing API version retained\n' >> "$GITHUB_STEP_SUMMARY"
+            printf '\nBackend: build/publish and API smoke skipped; existing API version retained\n' >> "$GITHUB_STEP_SUMMARY"
           fi
+          printf '\nApplication tests run in PR CI and are not repeated during deployment. Only green PRs should be merged.\n' >> "$GITHUB_STEP_SUMMARY"
 
   cleanup-artifacts:
-    # Packages exist only to carry CI output into the deploy job; remove them once it finishes.
+    # Packages belong only to this deployment run; remove them on success or failure.
     if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.apply }}
-    needs: [checks, deploy]
+    needs: [build, deploy]
     runs-on: ubuntu-24.04
     permissions:
       actions: write
