@@ -4,7 +4,7 @@ type: task
 summary: Implement clean Angular routes and GUID-based detail navigation
 status: qa
 created: 2026-11-15
-updated: 2026-11-17
+updated: 2026-11-18
 parent: null
 depends_on: []
 ---
@@ -94,3 +94,7 @@ Assistant work unmeasured; human actual Unknown. Existing QA status, summary and
 The next [Linux run 44179841494](https://github.com/alxkio/vacate/actions/runs/44179841494) passed login and all twelve account/isolation journeys, then exposed another obsolete assumption: Settings is available through the account menu, and its sidebar entry was intentionally removed. A fresh local full browser run reproduced the same missing Settings selector. Update affected display/profile/organization, navigation, session-recovery and page-focus journeys to open the account menu first, including the trusted keyboard route; assert there is no Settings sidebar item. Preserve profile/save, authorization, focus/recovery and persistence assertions. The isolated Core Tools 4.16.0 installation now starts successfully; the corrected full browser run is in progress against fresh InMemory fixtures.
 
 The corrected full local run passed trusted keyboard delivery, all twelve account/scope/privacy checks, logout history, saved leave, both display layouts/palettes, profile persistence and organization/membership journeys. It then stopped with a Chrome CDP `Runtime.evaluate` timeout in policy-feedback cleanup, rather than either reported selector failure; complete-suite success is not claimed. Isolated policy-feedback verification and a new Linux CI run are pending. Changed JavaScript syntax, formatting and scoped whitespace checks passed.
+
+2026-11-18 verification follow-up: the isolated clean-route browser suite passed GUID login return, person/membership save/readback and denials, own/approval links, Calendar history, Help and 1440/375/320px layouts. The additional session-recovery browser invocation was declined and was not run. `MOCK_FEEDBACK_ONLY` exercises a separate module, rather than the inline policy-feedback routine that timed out; that separate mode failed its existing People relationship-style assertion, so it does not resolve the timeout. Full Linux CI at `bd0720e` remains the relevant complete-suite check. [VAC-38](VAC-38-ci-trigger-deduplication.md#owner-feedback-subtask--one-pr-workflow--2026-11-18) owns the subsequent request to consolidate PR workflows.
+
+[Linux CI run 44359044940](https://github.com/alxkio/vacate/actions/runs/44359044940) at `bd0720e32c5dcdc191e8040575ce7864e8d266a7` subsequently completed successfully: backend, frontend and the full real-API/Angular browser suite all passed. This verifies both selector corrections and the complete browser regression on Linux; it does not establish SQL-provider or hosted deployment evidence. The local Chrome protocol timeout was not reproduced on that runner.

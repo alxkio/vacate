@@ -4,11 +4,11 @@ Accepted by the founder on 2026-11-06 after the VAC-31 hosted invalid-column inc
 
 ## Release order
 
-The existing **Deploy Azure** workflow builds and tests the selected commit, prepares infrastructure, deploys and verifies its database, publishes the API, publishes Angular, then runs HTTP smoke checks. One environment lock spans infrastructure, database and both application publications; cancellation does not interrupt an active release. Build checks can run independently before that lock.
+The existing **Deploy Azure** workflow builds fresh packages from the selected `master` commit without repeating PR tests, prepares infrastructure, deploys and verifies its database, publishes the API, publishes Angular, then runs HTTP smoke checks. One environment lock spans infrastructure, database and both application publications; cancellation does not interrupt an active release. Package builds can run independently before that lock. The owner assumes only green PRs are merged; no extra CI run is triggered after merge or during deployment.
 
 Every full deployment to a SQL-backed environment runs the database stage. EF migration history makes an already-current schema a no-op, while runtime grants and schema reads are checked again. There is no optional database checkbox or changed-file heuristic. Preview (`apply=false`), frontend-only (`deploy_backend=false`) and InMemory environments do not mutate the database. SQL infrastructure provisioning remains separate: the application workflow expects the designated database to exist and never creates a paid replacement or changes firewall rules to recover connectivity.
 
-CI publishes a `database-package` artifact alongside the API and frontend packages from the same workflow run. It contains the operator executable, generated idempotent `migrations.sql` for review and `revision.txt`. Deployment verifies both the artifact revision file and the operator's embedded assembly revision against the release commit. Review the migration source/generated SQL before dispatching an apply; there is no automatic human approval claim.
+The deployment build publishes a `database-package` artifact alongside the API and frontend packages from that same deployment run. PR artifacts are not used, and failed builds block deployment even if artifact cleanup fails. It contains the operator executable, generated idempotent `migrations.sql` for review and `revision.txt`. Deployment verifies both the artifact revision file and the operator's embedded assembly revision against the release commit. Review the migration source/generated SQL before dispatching an apply; there is no automatic human approval claim.
 
 The `deploy RUNTIME_NAME RUNTIME_CLIENT_ID` operator command:
 
